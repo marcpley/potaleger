@@ -27,6 +27,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    SQL/MajStru2024-12-16_2024-12-17.sql
+    SQL/MajStru2024-12-16_2024-12-17.sql \
+    SQL/Stru2024-12-17.sql
 
 RESOURCES +=

@@ -79,14 +79,14 @@ void MainWindow::OuvrirBDD(QString sFichier)
     QFile fBDD(sFichier);
     if (!fBDD.exists())
     {
-        ui->lDBErr->setText(tr("Le fichier de base de données n'existe pas."));
+        ui->lDBErr->setText(tr("Le fichier de BDD n'existe pas."));
         return;
     }
 
     db.open();
     if (db.tables(QSql::Tables).count()==0)
     {
-        ui->lDBErr->setText(tr("Impossible d'ouvrir la base de données."));
+        ui->lDBErr->setText(tr("Impossible d'ouvrir la BDD."));
         db.close();
         return;
     }
@@ -94,7 +94,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
     QString sVerBDD = "";
     if (!ExecSql(model,"SELECT Valeur FROM Info_Potaléger WHERE N=1")) //La vue Info n'existe pas ou pas correcte. On tente pas de mettre cette BDD à jour.
     {
-        ui->tbInfoDB->append(tr("Cette base de données n'est pas une base de données Potaléger."));
+        ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
         db.close();
         return;
     }
@@ -103,14 +103,14 @@ void MainWindow::OuvrirBDD(QString sFichier)
 
     if (sVerBDD < "2024-12-16")
     {
-        ui->tbInfoDB->append(tr("La version de cette base de données Potaléger est trop ancienne: ")+sVerBDD);
+        ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
         db.close();
         return;
     }
 
     if (sVerBDD > ui->lVerBDDAttendue->text())
     {
-        ui->tbInfoDB->append(tr("La version de cette base de données est trop récente: ")+sVerBDD);
+        ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
         ui->tbInfoDB->append(tr("-> Utilisez une version plus récente de Potaléger."));
         db.close();
         return;
@@ -120,7 +120,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
         (OkCancelDialog("Base de données trop ancienne:\n"+
                         ui->lDB->text()+"\n" +
                         "version "+sVerBDD + "\n\n" +
-                        "Mettre à jour cette base de données vers la version "+ ui->lVerBDDAttendue->text()+" ?\n\n" +
+                        "Mettre à jour cette BDD vers la version "+ ui->lVerBDDAttendue->text()+" ?\n\n" +
                         "Cette opération est irréversible")))
     {   //Mettre à jour la BDD.
         if (MaJStruBDD(sVerBDD))
@@ -150,7 +150,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
     }
     else
     {
-        ui->tbInfoDB->append(tr("La version de cette base de données est incorrecte: ")+sVerBDD);
+        ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
         db.close();
         return;
     }
@@ -201,9 +201,8 @@ int main(int argc, char *argv[])
     QSettings settings("greli.net", "Potaléger");
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
 
-    //dVerBDDAttendue.fromString("2024-12-18","yyyy-MM-dd");
     w.RestaureParams();
-    //w.setWindowTitle(w.windowTitle() + " " + sVer + " - db " + sVerBDDAttendue);
+
     w.show();
     return a.exec();
 

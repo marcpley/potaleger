@@ -14,13 +14,13 @@ bool MainWindow::MaJStruBDD(QString sVersionBDD)
         ExecSql(model,"DROP VIEW IF EXISTS Info_Potaléger");
         if (!ExecSql(model,sDDL20241217))
         {
-            ui->tbInfoDB->append(tr("Echec de la mise à jour de la structure de la base de données ")+sVersionBDD+" > "+ui->lVerBDDAttendue->text());
+            ui->tbInfoDB->append(tr("Echec de la mise à jour de la version de la BDD ")+" ("+sVersionBDD+" > "+ui->lVerBDDAttendue->text()+")");
             db.rollback();
             return false;
         }
     }
     else {
-        ui->tbInfoDB->append(tr("Version de base de données inconnue:")+sVersionBDD);
+        ui->tbInfoDB->append(tr("Version de BDD inconnue:")+sVersionBDD);
         return false;
     }
     db.commit();

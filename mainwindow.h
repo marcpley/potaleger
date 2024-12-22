@@ -37,6 +37,8 @@ private slots:
 
     void on_mCopyBDD_triggered();
 
+    void on_mCreerBDDVide_triggered();
+
 private:
     Ui::MainWindow *ui;
     void ActiverMenusData(bool b);

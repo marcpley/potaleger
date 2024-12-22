@@ -674,7 +674,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
    </property>
    <property name="text">
-    <string>Créer une base de données avec les données de base </string>
+    <string>Créer une BDD avec les données de base </string>
    </property>
   </action>
   <action name="mCreerBDDVide">
@@ -682,7 +682,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
    </property>
    <property name="text">
-    <string>Créer une base de données vide</string>
+    <string>Créer une BDD vide</string>
    </property>
   </action>
   <action name="mCopyBDD">
@@ -693,7 +693,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <iconset theme="QIcon::ThemeIcon::EditCopy"/>
    </property>
    <property name="text">
-    <string>Faire une copie de  la base de données</string>
+    <string>Faire une copie de  la BDD</string>
    </property>
   </action>
  </widget>
