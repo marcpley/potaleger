@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>862</width>
+    <height>552</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Potaléger</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="Info">
+       <attribute name="title">
+        <string>Info</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
+        <item>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="palette">
+             <palette>
+              <active>
+               <colorrole role="WindowText">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>154</red>
+                  <green>153</green>
+                  <blue>150</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </active>
+              <inactive>
+               <colorrole role="WindowText">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>154</red>
+                  <green>153</green>
+                  <blue>150</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </inactive>
+              <disabled/>
+             </palette>
+            </property>
+            <property name="text">
+             <string>Base de donnée :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="lDB">
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QTextBrowser" name="tbInfoDB">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="palette">
+             <palette>
+              <active>
+               <colorrole role="Text">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>255</red>
+                  <green>190</green>
+                  <blue>111</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </active>
+              <inactive>
+               <colorrole role="Text">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>255</red>
+                  <green>190</green>
+                  <blue>111</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </inactive>
+              <disabled/>
+             </palette>
+            </property>
+            <property name="font">
+             <font>
+              <italic>true</italic>
+             </font>
+            </property>
+            <property name="html">
+             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:italic;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="2">
+           <widget class="QPlainTextEdit" name="pteNotes">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="wData">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <attribute name="title">
+        <string>Tab 2</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="leftMargin">
+            <number>2</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>2</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QToolButton" name="toolButton">
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>32</width>
+               <height>32</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButton_2">
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>741</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableView" name="tableView">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="lDBErr">
+        <property name="palette">
+         <palette>
+          <active>
+           <colorrole role="WindowText">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>246</red>
+              <green>97</green>
+              <blue>81</blue>
+             </color>
+            </brush>
+           </colorrole>
+          </active>
+          <inactive>
+           <colorrole role="WindowText">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>246</red>
+              <green>97</green>
+              <blue>81</blue>
+             </color>
+            </brush>
+           </colorrole>
+          </inactive>
+          <disabled/>
+         </palette>
+        </property>
+        <property name="margin">
+         <number>2</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lVer">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>lVer</string>
+        </property>
+        <property name="margin">
+         <number>2</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lVerBDDAttendue">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>lVerBDDAttendue</string>
+        </property>
+        <property name="margin">
+         <number>2</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>862</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="mFichiers">
+    <property name="title">
+     <string>Fichiers</string>
+    </property>
+    <addaction name="mSelecDB"/>
+    <addaction name="mCopyBDD"/>
+    <addaction name="mCreerBDD"/>
+    <addaction name="mCreerBDDVide"/>
+   </widget>
+   <widget class="QMenu" name="mBaseData">
+    <property name="title">
+     <string>Données de base</string>
+    </property>
+    <addaction name="mFamilles"/>
+    <addaction name="mEspeces"/>
+    <addaction name="mVarietes"/>
+    <addaction name="mApports"/>
+    <addaction name="mFournisseurs"/>
+    <addaction name="mITP"/>
+   </widget>
+   <widget class="QMenu" name="mAssolement">
+    <property name="title">
+     <string>Assolement</string>
+    </property>
+    <addaction name="mRotations"/>
+    <addaction name="mDetailsRotations"/>
+    <addaction name="mPlanches"/>
+    <addaction name="mIlots"/>
+    <addaction name="mSuccessionParPlanche"/>
+   </widget>
+   <widget class="QMenu" name="mPlanif">
+    <property name="title">
+     <string>Planification</string>
+    </property>
+    <addaction name="mCulturesParIlots"/>
+    <addaction name="mCulturesParEspeces"/>
+    <addaction name="mCulturesParPlanche"/>
+    <addaction name="mCreerCultures"/>
+    <addaction name="mSemencesNecessaires"/>
+    <addaction name="mSemences"/>
+   </widget>
+   <widget class="QMenu" name="mCultures">
+    <property name="title">
+     <string>Cultures</string>
+    </property>
+    <addaction name="mCuNonTer"/>
+    <addaction name="separator"/>
+    <addaction name="mCuSemisAFaire"/>
+    <addaction name="mCuPlantationsAFaire"/>
+    <addaction name="mCuRecoltesAFaire"/>
+    <addaction name="mCuSaisieRecoltes"/>
+    <addaction name="mCuATerminer"/>
+    <addaction name="separator"/>
+    <addaction name="mCuToutes"/>
+   </widget>
+   <widget class="QMenu" name="mAnalyses">
+    <property name="title">
+     <string>Analyses</string>
+    </property>
+    <addaction name="mAnaITP"/>
+    <addaction name="mAnaEspeces"/>
+   </widget>
+   <widget class="QMenu" name="mEdition">
+    <property name="title">
+     <string>Édition</string>
+    </property>
+    <addaction name="mRafraichir"/>
+    <addaction name="mValiderModifs"/>
+    <addaction name="mAbandonnerModifs"/>
+    <addaction name="mFermerOnglet"/>
+    <addaction name="mFermerOnglets"/>
+    <addaction name="mParam"/>
+   </widget>
+   <addaction name="mFichiers"/>
+   <addaction name="mEdition"/>
+   <addaction name="mBaseData"/>
+   <addaction name="mAssolement"/>
+   <addaction name="mPlanif"/>
+   <addaction name="mCultures"/>
+   <addaction name="mAnalyses"/>
+  </widget>
+  <action name="mSelecDB">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::FolderOpen"/>
+   </property>
+   <property name="text">
+    <string>Sélectionner une base de données</string>
+   </property>
+  </action>
+  <action name="mFamilles">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Familles botaniques</string>
+   </property>
+  </action>
+  <action name="mEspeces">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Espèces</string>
+   </property>
+  </action>
+  <action name="mFournisseurs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Fournisseurs</string>
+   </property>
+  </action>
+  <action name="mApports">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Apports</string>
+   </property>
+  </action>
+  <action name="mPlanches">
+   <property name="text">
+    <string>Planches</string>
+   </property>
+  </action>
+  <action name="mITP">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Itinéraires techniques</string>
+   </property>
+  </action>
+  <action name="mRotations">
+   <property name="text">
+    <string>Rotations</string>
+   </property>
+  </action>
+  <action name="mDetailsRotations">
+   <property name="text">
+    <string>Détails des rotations</string>
+   </property>
+  </action>
+  <action name="mParam">
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="emblem-system"/>
+   </property>
+   <property name="text">
+    <string>Paramètres</string>
+   </property>
+  </action>
+  <action name="mIlots">
+   <property name="text">
+    <string>Ilots</string>
+   </property>
+  </action>
+  <action name="mCulturesParIlots">
+   <property name="text">
+    <string>Cultures prévues par ilots</string>
+   </property>
+  </action>
+  <action name="mCulturesParEspeces">
+   <property name="text">
+    <string>Cultures prévues par espèces</string>
+   </property>
+  </action>
+  <action name="mCulturesParPlanche">
+   <property name="text">
+    <string>Cultures prévues par planche</string>
+   </property>
+  </action>
+  <action name="mCreerCultures">
+   <property name="text">
+    <string>Créer les cultures</string>
+   </property>
+  </action>
+  <action name="mSuccessionParPlanche">
+   <property name="text">
+    <string>Successions de cultures par planche</string>
+   </property>
+  </action>
+  <action name="mSemences">
+   <property name="text">
+    <string>Inventaire et commandes semences</string>
+   </property>
+  </action>
+  <action name="mSemencesNecessaires">
+   <property name="text">
+    <string>Semences nécessaires</string>
+   </property>
+  </action>
+  <action name="mVarietes">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Variétés</string>
+   </property>
+  </action>
+  <action name="mCuSemisAFaire">
+   <property name="text">
+    <string>Semis à faire</string>
+   </property>
+  </action>
+  <action name="mCuPlantationsAFaire">
+   <property name="text">
+    <string>Plantations à faire</string>
+   </property>
+  </action>
+  <action name="mCuRecoltesAFaire">
+   <property name="text">
+    <string>Récoltes à faire</string>
+   </property>
+  </action>
+  <action name="mCuSaisieRecoltes">
+   <property name="text">
+    <string>Saisie des récoltes</string>
+   </property>
+  </action>
+  <action name="mCuATerminer">
+   <property name="text">
+    <string>A terminer</string>
+   </property>
+  </action>
+  <action name="mCuToutes">
+   <property name="text">
+    <string>Toutes les cultures</string>
+   </property>
+  </action>
+  <action name="mAnaITP">
+   <property name="text">
+    <string>Itinéraires techniques</string>
+   </property>
+  </action>
+  <action name="mAnaEspeces">
+   <property name="text">
+    <string>Espèces</string>
+   </property>
+  </action>
+  <action name="mCuNonTer">
+   <property name="text">
+    <string>Toutes les cultures non terminées</string>
+   </property>
+  </action>
+  <action name="mRafraichir">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ViewRefresh"/>
+   </property>
+   <property name="text">
+    <string>Rafraichir</string>
+   </property>
+   <property name="toolTip">
+    <string>Rafraichir l'onglet courant</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="mFermerOnglet">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MailReplySender"/>
+   </property>
+   <property name="text">
+    <string>Fermer l'onglet courant</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="mFermerOnglets">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MailReplyAll"/>
+   </property>
+   <property name="text">
+    <string>Fermer tous les onglets</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+W</string>
+   </property>
+  </action>
+  <action name="mValiderModifs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="emblem-default"/>
+   </property>
+   <property name="text">
+    <string>Valider les modifications</string>
+   </property>
+  </action>
+  <action name="mAbandonnerModifs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="face-smirk"/>
+   </property>
+   <property name="text">
+    <string>Abandonner les modifications</string>
+   </property>
+  </action>
+  <action name="mCreerBDD">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
+   </property>
+   <property name="text">
+    <string>Créer une base de données avec les données de base </string>
+   </property>
+  </action>
+  <action name="mCreerBDDVide">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
+   </property>
+   <property name="text">
+    <string>Créer une base de données vide</string>
+   </property>
+  </action>
+  <action name="mCopyBDD">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditCopy"/>
+   </property>
+   <property name="text">
+    <string>Faire une copie de  la base de données</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
