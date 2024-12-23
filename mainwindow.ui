@@ -558,16 +558,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuSemisAFaire">
+   <property name="icon">
+    <iconset resource="images/images.qrc">
+     <normaloff>:/images/cultures_a_semer.svg</normaloff>:/images/cultures_a_semer.svg</iconset>
+   </property>
    <property name="text">
     <string>Semis à faire</string>
    </property>
   </action>
   <action name="mCuPlantationsAFaire">
+   <property name="icon">
+    <iconset resource="images/images.qrc">
+     <normaloff>:/images/cultures_a_planter.svg</normaloff>:/images/cultures_a_planter.svg</iconset>
+   </property>
    <property name="text">
     <string>Plantations à faire</string>
    </property>
   </action>
   <action name="mCuRecoltesAFaire">
+   <property name="icon">
+    <iconset resource="images/images.qrc">
+     <normaloff>:/images/cultures.svg</normaloff>:/images/cultures.svg</iconset>
+   </property>
    <property name="text">
     <string>Récoltes à faire</string>
    </property>
@@ -697,6 +709,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="images/images.qrc"/>
+ </resources>
  <connections/>
 </ui>

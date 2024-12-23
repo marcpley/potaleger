@@ -5,6 +5,7 @@
 #include <QtSql/QSqlQueryModel>
 #include <QSqlTableModel>
 #include <QMessageBox>
+#include <QtSvg>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,6 +23,7 @@ protected:
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    Ui::MainWindow *ui;
     void RestaureParams();
     void SauvParams();
 
@@ -39,11 +41,13 @@ private slots:
 
     void on_mCreerBDDVide_triggered();
 
+    void on_mFamilles_triggered();
+
+    void on_mEspeces_triggered();
+
 private:
-    Ui::MainWindow *ui;
+
     void ActiverMenusData(bool b);
-    bool ExecSql(QSqlQueryModel &model,QString sSQL);
-    bool ExecSql(QSqlTableModel &model);
     bool InfosBDD();
     bool MaJStruBDD(QString sVersionBDD);
     bool OkCancelDialog(QString sMessage);
@@ -51,7 +55,7 @@ private:
     void MessageDialog(QString sMessage);
     void FermerBDD();
     void OuvrirBDD(QString sFichier);
-    void OuvrirOnglet(QString const sNames,QString const sTableName, QString const sTitre);
+    bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre);
     void FermerOnglet(QWidget *Tab);
 };
 #endif // MAINWINDOW_H

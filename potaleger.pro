@@ -1,4 +1,4 @@
-QT       += core gui sql
+QT       += core gui sql svg
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,10 +13,12 @@ SOURCES += \
     Structure.cpp \
     data/Data.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    potawidget.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    potawidget.h
 
 FORMS += \
     mainwindow.ui
@@ -30,4 +32,5 @@ DISTFILES += \
     SQL/MajStru2024-12-16_2024-12-17.sql \
     SQL/Stru2024-12-17.sql
 
-RESOURCES +=
+RESOURCES += \
+    images/images.qrc

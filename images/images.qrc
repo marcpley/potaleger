@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>cultures.svg</file>
+        <file>cultures_a_planter.svg</file>
+        <file>cultures_a_recolter.svg</file>
+        <file>cultures_a_semer.svg</file>
+    </qresource>
+</RCC>

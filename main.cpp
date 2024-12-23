@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "potawidget.h"
 #include "qdir.h"
 #include "ui_mainwindow.h"
 #include <QApplication>
@@ -33,28 +34,6 @@ void MainWindow::ActiverMenusData(bool b)
         ui->mAnalyses->actions().at(i)->setEnabled(b);
 }
 
-bool MainWindow::ExecSql(QSqlQueryModel &model,QString sSQL)
-{
-    model.setQuery(sSQL);
-    if (model.lastError().type() != QSqlError::NoError)
-    {
-        ui->lDBErr->setText(model.lastError().text());
-        return false;
-    }
-    return true;
-}
-
-bool MainWindow::ExecSql(QSqlTableModel &model)
-{
-    model.select();
-    if (model.lastError().type() != QSqlError::NoError)
-    {
-        ui->lDBErr->setText(model.lastError().text());
-        return false;
-    }
-    return true;
-}
-
 void MainWindow::FermerBDD()
 {
     QSqlDatabase db = QSqlDatabase::database();
@@ -73,7 +52,7 @@ void MainWindow::FermerBDD()
 void MainWindow::OuvrirBDD(QString sFichier)
 {
     QSqlDatabase db = QSqlDatabase::database();
-    QSqlQueryModel model;
+    PotaQueryModel model;
     ui->lDB->setText(sFichier);
     db.setDatabaseName(sFichier);
     QFile fBDD(sFichier);
@@ -92,7 +71,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
     }
 
     QString sVerBDD = "";
-    if (!ExecSql(model,"SELECT Valeur FROM Info_Potaléger WHERE N=1")) //La vue Info n'existe pas ou pas correcte. On tente pas de mettre cette BDD à jour.
+    if (!model.setQueryShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) //La vue Info n'existe pas ou pas correcte. On tente pas de mettre cette BDD à jour.
     {
         ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
         db.close();
@@ -158,9 +137,6 @@ void MainWindow::OuvrirBDD(QString sFichier)
 
 void MainWindow::RestaureParams()
 {
-    ui->lVer->setText("1.0b1");
-    ui->lVerBDDAttendue->setText("2024-12-17");
-
     QSettings settings("greli.net", "Potaléger");
     settings.beginGroup("MainWindow");
     const auto geometry = settings.value("geometry").toByteArray();
@@ -185,8 +161,6 @@ void MainWindow::SauvParams()
 
 void MainWindow::ShowEvent(QShowEvent *)
 {
-    ui->lVer->setText("1.0b1");
-    ui->lVerBDDAttendue->setText("2024-12-17");
 }
 
 void MainWindow::closeEvent(QCloseEvent *)

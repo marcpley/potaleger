@@ -1,12 +1,12 @@
 #include "mainwindow.h"
-#include "qsqlquerymodel.h"
+#include "potawidget.h"
 #include "ui_mainwindow.h"
 #include <QtSql/QSqlQueryModel>
 
 bool MainWindow::InfosBDD()
 {
-    QSqlQueryModel model;
-    if (ExecSql(model,"SELECT * FROM Info_Potaléger"))
+    PotaQueryModel model;
+    if (model.setQueryShowErr("SELECT * FROM Info_Potaléger"))
     {
         ui->tbInfoDB->clear();
         for (int i = 0; i < 5; i++)

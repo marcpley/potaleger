@@ -6,20 +6,25 @@
 #include <QSqlTableModel>
 #include <QSqlRelationalTableModel>
 #include <QSqlRelationalDelegate>
-#include <filesystem>
+#include "potawidget.h"
+#include <QSqlQuery>
+#include <QSettings>
 
-class QPotaWidget: public QWidget {
-public:
-    QSqlTableModel *model = new QSqlTableModel(this);
-    QTableView *tv = new QTableView(this);
-    };
+// class QPotaWidget: public QWidget {
+// public:
+//     QSqlRelationalTableModel *model = new QSqlRelationalTableModel(this);
+//     QTableView *tv = new QTableView(this);
+//     };
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    ui->tabWidget->widget(1)->deleteLater();//Utilisé pour concevoir les onglets data.
+    ui->tabWidget->widget(1)->deleteLater();//Utilisé comme modèle pour concevoir les onglets data.
+    ui->lVer->setText("1.0b2");//Version de l'application.
+    ui->lVerBDDAttendue->setText("2024-12-17");//Version de la BDD attendue par l'application.
+
 }
 
 MainWindow::~MainWindow()
@@ -27,34 +32,61 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::OuvrirOnglet(QString const sNames,QString const sTableName, QString const sTitre)
+bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, QString const sTitre)
 {
     //Recherche parmis les onglets existants.
     for (int i = 1; i < ui->tabWidget->count(); i++)
     {
-        if (ui->tabWidget->widget(i)->objectName()=="wOD"+sNames )//Widget Onglet Data
+        if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName )//Widget Onglet Data
         {
             ui->tabWidget->setCurrentIndex(i);
             break;
         }
     }
-    if (ui->tabWidget->currentWidget()->objectName()!="wDO"+sNames)
+    if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName)
     {
         //Créer l'onglet
-        QPotaWidget *w = new QPotaWidget;
-        w->setObjectName("wDO"+sNames);
-        //w->model->setObjectName("mod"+sNames);
+        PotaWidget *w = new PotaWidget();
+        w->setObjectName("PW"+sObjName);
         w->model->setTable(sTableName);
-        w->model->setEditStrategy(QSqlTableModel::OnFieldChange);//OnManualSubmit
-        //model->select();
-        if (ExecSql(*w->model))
+        w->model->setEditStrategy(QSqlTableModel::OnFieldChange);//OnManualSubmit A faire, avec détection de l'état de la table pour activer les menu de validation ou abandon des modif.
+        if (w->model->SelectShowErr())
         {
-            //model->removeColumn(0);
+            //Pawel code :-)
+            QSqlQuery query("PRAGMA foreign_key_list("+sTableName+");");
+            while (query.next()) {
+                QString referencedTable = query.value("table").toString();
+                QString localColumn = query.value("from").toString();
+                QString referencedClumn = query.value("to").toString();
+                int localColumnIndex = w->model->fieldIndex(localColumn);
+                w->model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));
+                qDebug() << query.value(0);
+                qDebug() << query.value("table");
+                qDebug() << query.value("from");
+                qDebug() << query.value("to");
+            }
+            QSqlQuery query2("PRAGMA foreign_keys");
+            query.next();
+            qDebug() << query.value(0);
+
             w->tv->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
             w->tv->setModel(w->model);
             w->tv->verticalHeader()->setDefaultSectionSize(0);//Mini.
             w->tv->setItemDelegate(new QSqlRelationalDelegate(w));
             //w->tv->itemDelegate()->
+
+            //Largeurs de colonne
+            QSettings settings("greli.net", "Potaléger");
+            settings.beginGroup("LargeursColonnes");
+            for (int i=0; i<w->model->columnCount();i++)
+            {
+                int iWidth=settings.value(sTableName+"-"+w->model->FieldName(i)).toInt(nullptr);
+                if (iWidth>0)
+                    w->tv->setColumnWidth(i,iWidth);
+                else
+                    w->tv->resizeColumnToContents(i);
+            }
+            settings.endGroup();
 
             QStackedLayout *l1 = new QStackedLayout(w);
             l1->setContentsMargins(2,2,2,2);
@@ -68,16 +100,30 @@ void MainWindow::OuvrirOnglet(QString const sNames,QString const sTableName, QSt
             ui->mFermerOnglet->setEnabled(true);
             ui->mValiderModifs->setEnabled(true);
             ui->mAbandonnerModifs->setEnabled(true);
+
+            return true;
         }
         else
             w->deleteLater();//Echec de la création de l'onglet.
     }
-
+    return false;
 };
 
 void MainWindow::FermerOnglet(QWidget *Tab)
 {
+    PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
     //A faire : commit ?
+
+    //Largeurs de colonne
+    QSettings settings("greli.net", "Potaléger");
+    settings.beginGroup("LargeursColonnes");
+        for (int i=0; i<w->model->columnCount();i++)
+        {
+            settings.setValue(w->model->tableName()+"-"+w->model->FieldName(i),w->tv->columnWidth(i));
+            //w->tv->setColumnWidth(i,settings.value(sTableName+"-"+w->model->FieldName(i)).toInt(nullptr));
+        }
+    settings.endGroup();
+
     if (ui->tabWidget->count()<3)//Fermeture du dernier onglet data ouvert.
     {
         ui->mFermerOnglets->setEnabled(false);
@@ -102,17 +148,13 @@ void MainWindow::on_mSelecDB_triggered()
 void MainWindow::on_mRafraichir_triggered()
 {//A faire
     if (ui->tabWidget->currentIndex()==0)
-      InfosBDD();
+        InfosBDD();
     else
-        ui->tabWidget->currentWidget()->focusWidget();
+    {
+        dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget())->model->submitAll();
+        dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget())->model->SelectShowErr();
+    }
 }
-
-
-void MainWindow::on_mParam_triggered()
-{
-    OuvrirOnglet("Param","Params",tr("Paramètres"));
-}
-
 
 void MainWindow::on_mFermerOnglet_triggered()
 {
@@ -141,9 +183,16 @@ void MainWindow::on_mAbandonnerModifs_triggered()
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
     //A faire : Activer les menus valider et abandonner modifs en fonction de l'état de l'onget courant.
-    //MessageDialog(ui->tabWidget->widget(index)::QPotaWidget->tv->objectName());
-    //QPotaWidget *ptw = ui->tabWidget->widget(index);
-    //ui->mValiderModifs->setEnabled(dynamic_cast<QPotaWidget*>(ui->tabWidget->currentWidget())->model)
+    if (ui->tabWidget->currentIndex()==0)
+    {
+        ui->mValiderModifs->setEnabled(false);
+        ui->mAbandonnerModifs->setEnabled(false);
+    }
+    else
+    {
+        ui->mValiderModifs->setEnabled(dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget())->ModifsEnCours);
+        ui->mAbandonnerModifs->setEnabled(dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget())->ModifsEnCours);
+    }
 }
 
 
@@ -239,5 +288,27 @@ void MainWindow::on_mCreerBDDVide_triggered()
         OuvrirBDD(sFichier);
     }
 
+}
+
+void MainWindow::on_mParam_triggered()
+{
+    if (OuvrirOnglet("Param","Params",tr("Paramètres")))
+    {
+        //PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        //w->model->setRelation(4,QSqlRelation("Espèces","Espèce","Espèce"));//A faire : retrouver l'info dans la BDD.
+
+    }
+}
+
+
+void MainWindow::on_mFamilles_triggered()
+{
+    OuvrirOnglet("Familles","Familles",tr("Familles"));
+}
+
+
+void MainWindow::on_mEspeces_triggered()
+{
+    OuvrirOnglet("Especes","Espèces",tr("Espèces"));
 }
 
