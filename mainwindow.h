@@ -45,6 +45,8 @@ private slots:
 
     void on_mEspeces_triggered();
 
+    void on_mValiderModifs_triggered();
+
 private:
 
     void ActiverMenusData(bool b);
@@ -57,5 +59,6 @@ private:
     void OuvrirBDD(QString sFichier);
     bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre);
     void FermerOnglet(QWidget *Tab);
+    void FermerOnglets();
 };
 #endif // MAINWINDOW_H

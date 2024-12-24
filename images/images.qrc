@@ -4,5 +4,9 @@
         <file>cultures_a_planter.svg</file>
         <file>cultures_a_recolter.svg</file>
         <file>cultures_a_semer.svg</file>
+        <file>saisie_recolte.svg</file>
+        <file>cultures_non_ter.svg</file>
+        <file>cultures_a_ter.svg</file>
+        <file>cultures_toutes.svg</file>
     </qresource>
 </RCC>

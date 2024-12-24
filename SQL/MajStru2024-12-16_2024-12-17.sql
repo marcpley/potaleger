@@ -1,4 +1,8 @@
-QString sDDL20241217 = QStringLiteral(R"(
+QString sDDL20241217 = QStringLiteral(R"#(
+BEGIN TRANSACTION;
+
+DROP VIEW IF EXISTS Info_Potaléger;
+
 CREATE VIEW Info_Potaléger AS SELECT 1 N,'Version de la BDD' Info, '2024-12-17' Valeur
 UNION
 SELECT 2, 'Utilisateur',(SELECT Valeur FROM Params WHERE Paramètre = 'Utilisateur')
@@ -15,5 +19,6 @@ SELECT 5, 'Planches',(SELECT count() || ' dont '  FROM Planches) ||
                      (SELECT count() || ' en culture actuellement et '  FROM (SELECT DISTINCT Planche FROM C_en_place ORDER BY Planche))  ||
                      (SELECT count() || ' en culture planifiée.'  FROM (SELECT DISTINCT Planche FROM C_a_venir ORDER BY Planche))
 UNION
-SELECT 6, 'Cultures',(SELECT count() || ' dont '  FROM Cultures) || (SELECT count() || ' non terminées.'  FROM Cultures WHERE Terminée ISNULL)
-)");
+SELECT 6, 'Cultures',(SELECT count() || ' dont '  FROM Cultures) || (SELECT count() || ' non terminées.'  FROM Cultures WHERE Terminée ISNULL);
+COMMIT TRANSACTION;
+)#");

@@ -1,23 +1,31 @@
 #ifndef POTAWIDGET_H
 #define POTAWIDGET_H
 
-#include <QSqlRelationalTableModel>
+#include "qlabel.h"
+#include "qsqlrelationaltablemodel.h"
 #include <QTableView>
 
-class PotaModel: public QSqlRelationalTableModel
+class PotaTableModel: public QSqlRelationalTableModel
 {
 public:
-    PotaModel(QWidget *parent = 0);
+    PotaTableModel(QWidget *parent = 0) {}
+
     QString FieldName(int index);
     bool SelectShowErr();
+    bool SubmitAllShowErr();
+    bool RevertAllShowErr();
 };
 
 class PotaQueryModel: public QSqlQueryModel
 {
 public:
-    PotaQueryModel(QWidget *parent = 0);
+    PotaQueryModel(QWidget *parent = 0) {}
+
+    QString TableName;
+    QLabel *lErr;
     QString FieldName(int index);
     bool setQueryShowErr(QString query);
+    bool setMultiQueryShowErr(QString querys);
 };
 
 class PotaWidget: public QWidget
@@ -26,8 +34,10 @@ class PotaWidget: public QWidget
 
 public:
     PotaWidget(QWidget *parent = 0);
-    PotaModel *model = new PotaModel(this);
-    QTableView *tv = new QTableView(this);
+
+    PotaTableModel *model;
+    QTableView *tv;
+    QLabel *lErr;
     bool ModifsEnCours=false;
 };
 

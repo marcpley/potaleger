@@ -38,7 +38,7 @@ void MainWindow::FermerBDD()
 {
     QSqlDatabase db = QSqlDatabase::database();
     //fermer tous les onglets de données et désactiver les menus.
-    ui->mFermerOnglets->trigger();
+    FermerOnglets();
     ActiverMenusData(false);
 
     //fermer la BDD (si ouverte)
@@ -53,6 +53,8 @@ void MainWindow::OuvrirBDD(QString sFichier)
 {
     QSqlDatabase db = QSqlDatabase::database();
     PotaQueryModel model;
+    model.lErr = ui->lDBErr;
+    ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
     db.setDatabaseName(sFichier);
     QFile fBDD(sFichier);
@@ -113,23 +115,29 @@ void MainWindow::OuvrirBDD(QString sFichier)
         }
     }
 
-    if (sVerBDD == ui->lVerBDDAttendue->text())
-    {
-        //Afficher infos
-        if (InfosBDD())
-        {
-            //Activer les menus
-            ActiverMenusData(true);
-        }
-        else
-        {   //Ce cas ne devrait pas arriver, le SELECT précédent à validé l'existence de la vue Info_Potaléger.
-            db.close();
-            return;
-        }
-    }
-    else
+    if (sVerBDD != ui->lVerBDDAttendue->text())
     {
         ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
+        db.close();
+        return;
+    }
+
+    //Les Foreing Key ne semblent pas activées lors de l'ouverture. Pourquoi ?
+    if (!model.setQueryShowErr("PRAGMA foreign_keys = ON"))
+    {
+        ui->tbInfoDB->append(tr("Impossible d'activer les clés étrangères."));
+        db.close();
+        return;
+    }
+
+    //Afficher infos
+    if (InfosBDD())
+    {
+        //Activer les menus
+        ActiverMenusData(true);
+    }
+    else
+    {   //Ce cas ne devrait pas arriver, le SELECT précédent à validé l'existence de la vue Info_Potaléger.
         db.close();
         return;
     }

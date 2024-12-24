@@ -1,16 +1,29 @@
---
--- File generated with SQLiteStudio v3.4.9 on sam. déc. 21 18:25:50 2024
---
--- Text encoding used: UTF-8
---
+QString sDDLNouvelle = QStringLiteral(R"#(
 PRAGMA foreign_keys = off;
 BEGIN TRANSACTION;
 
--- Table: Apports
 CREATE TABLE Apports (Apport TEXT PRIMARY KEY, Description TEXT, Poids_m² REAL, Notes) WITHOUT ROWID;
 
 -- Table: Cultures
-CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT, IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE, Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE, Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur), Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE, "TYPE(a)" TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?' WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis sous abris' WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant' WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis direct' WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte' WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END), Longueur REAL, Nb_rangs REAL, Espacement REAL, "D_planif(a)" DATE, Date_semis DATE, Semis_fait TEXT, Date_plantation DATE, Plantation_faite TEXT, Début_récolte DATE, Fin_récolte DATE, Récolte_faite TEXT, Terminée TEXT, Notes TEXT);
+CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
+                       IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
+                       Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE,
+                       Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur),
+                       Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE,
+                       "TYPE(a)" TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?' WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis sous abris' WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant' WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis direct' WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte' WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                       Longueur REAL,
+                       Nb_rangs REAL,
+                       Espacement REAL,
+                       "D_planif(a)" DATE,
+                       Date_semis DATE,
+                       Semis_fait TEXT,
+                       Date_plantation DATE,
+                       Plantation_faite TEXT,
+                       Début_récolte DATE,
+                       Fin_récolte DATE,
+                       Récolte_faite TEXT,
+                       Terminée TEXT,
+                       Notes TEXT);
 
 -- Table: Debug
 CREATE TABLE Debug (Table_vue TEXT, Mot_clé TEXT, Description TEXT, Notes TEXT);
@@ -719,3 +732,4 @@ CREATE VIEW R_ITP AS SELECT R.Rotation||--coalesce(R.Fi_planches,'')||
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
+)#");
