@@ -10,6 +10,7 @@ CONFIG += c++17 sql
 
 SOURCES += \
     Dialogs.cpp \
+    PotaUtils.cpp \
     Structure.cpp \
     data/Data.cpp \
     main.cpp \
@@ -17,6 +18,8 @@ SOURCES += \
     potawidget.cpp
 
 HEADERS += \
+    Dialogs.h \
+    PotaUtils.h \
     mainwindow.h \
     potawidget.h
 

@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "potawidget.h"
 #include "qdir.h"
 #include "ui_mainwindow.h"
 #include <QApplication>
@@ -8,16 +7,17 @@
 #include <QtSql/QSqlQueryModel>
 #include <QtSql/QSqlError>
 #include "QDebug"
+#include "PotaUtils.h"
+// #include "sqlite3.h"
+// #include "define.h"
+
 
 void MainWindow::ActiverMenusData(bool b)
 {
-    ui->mRafraichir->setEnabled(b);
     if (!b)
     {   //Menus qui ne sont pas systématiquement activés quand une BDD valide est ouverte.
         ui->mFermerOnglet->setEnabled(false);
         ui->mFermerOnglets->setEnabled(false);
-        ui->mValiderModifs->setEnabled(false);
-        ui->mAbandonnerModifs->setEnabled(false);
     }
 
     ui->mCopyBDD->setEnabled(b);
@@ -27,11 +27,11 @@ void MainWindow::ActiverMenusData(bool b)
     for (int i = 0; i < ui->mAssolement->actions().count(); i++)
         ui->mAssolement->actions().at(i)->setEnabled(b);
     for (int i = 0; i < ui->mPlanif->actions().count(); i++)
-        ui->mPlanif->actions().at(i)->setEnabled(b);
+        ui->mPlanif->actions().at(i)->setEnabled(false);
     for (int i = 0; i < ui->mCultures->actions().count(); i++)
-        ui->mCultures->actions().at(i)->setEnabled(b);
+        ui->mCultures->actions().at(i)->setEnabled(false);
     for (int i = 0; i < ui->mAnalyses->actions().count(); i++)
-        ui->mAnalyses->actions().at(i)->setEnabled(b);
+        ui->mAnalyses->actions().at(i)->setEnabled(false);
 }
 
 void MainWindow::FermerBDD()
@@ -52,35 +52,39 @@ void MainWindow::FermerBDD()
 void MainWindow::OuvrirBDD(QString sFichier)
 {
     QSqlDatabase db = QSqlDatabase::database();
-    PotaQueryModel model;
-    model.lErr = ui->lDBErr;
+    PotaQuery pQuery;
+    pQuery.lErr = ui->lDBErr;
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
     db.setDatabaseName(sFichier);
     QFile fBDD(sFichier);
     if (!fBDD.exists())
     {
-        ui->lDBErr->setText(tr("Le fichier de BDD n'existe pas."));
+        SetColoredText(ui->lDBErr,tr("Le fichier de BDD n'existe pas."),"Err");
         return;
     }
 
     db.open();
     if (db.tables(QSql::Tables).count()==0)
     {
-        ui->lDBErr->setText(tr("Impossible d'ouvrir la BDD."));
+        SetColoredText(ui->lDBErr,tr("Impossible d'ouvrir la BDD."),"Err");
+
         db.close();
         return;
     }
 
     QString sVerBDD = "";
-    if (!model.setQueryShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) //La vue Info n'existe pas ou pas correcte. On tente pas de mettre cette BDD à jour.
+    if (!pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) //La vue Info n'existe pas ou pas correcte. On tente pas de mettre cette BDD à jour.
     {
         ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
         db.close();
         return;
     }
     else
-        sVerBDD = model.data(model.index(0,0)).toString();
+    {
+        pQuery.next();
+        sVerBDD = pQuery.value(0).toString();
+    }
 
     if (sVerBDD < "2024-12-16")
     {
@@ -123,7 +127,8 @@ void MainWindow::OuvrirBDD(QString sFichier)
     }
 
     //Les Foreing Key ne semblent pas activées lors de l'ouverture. Pourquoi ?
-    if (!model.setQueryShowErr("PRAGMA foreign_keys = ON"))
+    //qDebug() << query.value(0);
+    if (!pQuery.ExecShowErr("PRAGMA foreign_keys = ON"))
     {
         ui->tbInfoDB->append(tr("Impossible d'activer les clés étrangères."));
         db.close();

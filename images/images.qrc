@@ -8,5 +8,12 @@
         <file>cultures_non_ter.svg</file>
         <file>cultures_a_ter.svg</file>
         <file>cultures_toutes.svg</file>
+        <file>Arrow_GreenDown.svg</file>
+        <file>Arrow_RedUp.svg</file>
+        <file>delete_row.svg</file>
+        <file>rollback.svg</file>
+        <file>commit.svg</file>
+        <file>reload.svg</file>
+        <file>insert_row.svg</file>
     </qresource>
 </RCC>

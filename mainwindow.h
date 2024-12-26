@@ -29,23 +29,21 @@ public:
 
 private slots:
     void on_mSelecDB_triggered();
-    void on_mRafraichir_triggered();
     void on_mParam_triggered();
     void on_mFermerOnglet_triggered();
     void on_mFermerOnglets_triggered();
-    void on_mAbandonnerModifs_triggered();
-
-    void on_tabWidget_currentChanged(int index);
-
     void on_mCopyBDD_triggered();
-
     void on_mCreerBDDVide_triggered();
-
     void on_mFamilles_triggered();
-
     void on_mEspeces_triggered();
-
-    void on_mValiderModifs_triggered();
+    void on_mVarietes_triggered();
+    void on_mApports_triggered();
+    void on_mFournisseurs_triggered();
+    void on_mITP_triggered();
+    void on_mRotations_triggered();
+    void on_mDetailsRotations_triggered();
+    void on_mPlanches_triggered();
+    void on_mIlots_triggered();
 
 private:
 
