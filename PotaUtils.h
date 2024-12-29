@@ -2,7 +2,7 @@
 #define POTAUTILS_H
 
 #include "qlabel.h"
-#include "qpushbutton.h"
+#include "qtoolbutton.h"
 #include <QSqlQuery>
 #include <QStandardItemModel>
 #include <QPainter>
@@ -19,8 +19,9 @@ public:
 };
 
 void SetColoredText(QLabel *l, QString text, QString type);
-void SetButtonSize(QPushButton *b);
+void SetButtonSize(QToolButton *b);
 QString str(int i);
 QString str(float i);
+QString str(qsizetype i);
 
 #endif // POTAUTILS_H

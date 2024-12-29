@@ -3,9 +3,9 @@
 
 #include "qboxlayout.h"
 #include "qlabel.h"
-#include "qpushbutton.h"
 #include "qspinbox.h"
 #include "qsqlrelationaltablemodel.h"
+#include "qtoolbutton.h"
 #include <QSqlRelationalDelegate>
 #include <QTableView>
 #include <QCheckBox>
@@ -42,7 +42,7 @@ class PotaQueryModel: public QSqlQueryModel
 public:
     PotaQueryModel() {}
 
-    QString TableName;
+    QString TableName = "";
     QLabel *lErr;
     QString FieldName(int index);
     bool setQueryShowErr(QString query);
@@ -56,8 +56,8 @@ class PotaItemDelegate : public QSqlRelationalDelegate
 public:
     PotaItemDelegate() {}//QObject *parent
 
-    QColor Couleur;
-    QColor CouleursColonnes[50];//Seules les 50 1ères colonnes d'une tables peuvent avoir une FK.
+    QColor cTableColor;
+    QColor cColColors[50];
 
 protected:
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const    override;
@@ -76,23 +76,25 @@ public:
     PotaTableModel *model;
     QTableView *tv;
     PotaItemDelegate *delegate;
+    QTabWidget *twParent;
     int iSortCol = -1;
     bool bSortDes = false;
-    //bool isPendingModifs=false;
     bool isCommittingError=false;
+    bool isView = false;
 
     QWidget *toolbar;
-    QPushButton *pbRefresh;
-    QPushButton *pbCommit;
-    QPushButton *pbRollback;
+    QToolButton *pbRefresh;
+    QToolButton *pbCommit;
+    QToolButton *pbRollback;
     QSpinBox *sbInsertRows;
-    QPushButton *pbInsertRow;
-    QPushButton *pbDeleteRow;
-    QFrame * fSort;
-    QCheckBox *cbSort;
-    QLineEdit *leSort;
-    QSpinBox *sbSort;
-    QHBoxLayout *ls;
+    QToolButton *pbInsertRow;
+    QToolButton *pbDeleteRow;
+    QFrame * fFilter;
+    QCheckBox *cbFilter;
+    QLineEdit *leFilter;
+    QLabel *lFilter;
+    QSpinBox *sbFilter;
+    QHBoxLayout *lf;
     QHBoxLayout *ltb;
     QVBoxLayout *lw;
 
@@ -102,13 +104,14 @@ private slots:
     void curChanged(const QModelIndex cur, const QModelIndex pre);
     void dataChanged(const QModelIndex &topLeft,const QModelIndex &bottomRight,const QList<int> &roles);
     void headerColClicked(int logicalIndex);
-    void headerRowClicked(int logicalIndex);
+    void headerRowClicked();//int logicalIndex
     void pbRefreshClick();
     void pbCommitClick();
     void pbRollbackClick();
     void pbInsertRowClick();
     void pbDeleteRowClick();
-    void cbSortClick(Qt::CheckState state);
+    void cbFilterClick(Qt::CheckState state);
+    void leFilterReturnPressed();
 };
 
 #endif // POTAWIDGET_H

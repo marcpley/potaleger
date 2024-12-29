@@ -1,6 +1,5 @@
 #include "qcolor.h"
 #include "qlabel.h"
-#include "qpushbutton.h"
 #include "qsqlerror.h"
 #include "PotaUtils.h"
 
@@ -36,7 +35,7 @@ bool PotaQuery::ExecMultiShowErr(QString querys)
     return true;
 }
 
-void SetButtonSize(QPushButton *b)
+void SetButtonSize(QToolButton *b)
 {
     b->setFixedSize(24,24);
     b->setIconSize(QSize(24,24));
@@ -60,12 +59,18 @@ void SetColoredText(QLabel *l, QString text, QString type)
 QString str(int i)
 {
     QString s;
-    s.number(i);
+    s.setNum(i);
     return s;
 }
 QString str(float i)
 {
     QString s;
-    s.number(i);
+    s.setNum(i);
+    return s;
+}
+QString str(qsizetype i)
+{
+    QString s;
+    s.setNum(i);
     return s;
 }

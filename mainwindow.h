@@ -45,6 +45,8 @@ private slots:
     void on_mPlanches_triggered();
     void on_mIlots_triggered();
 
+    void on_mSuccessionParPlanche_triggered();
+
 private:
 
     void ActiverMenusData(bool b);
@@ -55,7 +57,7 @@ private:
     void MessageDialog(QString sMessage);
     void FermerBDD();
     void OuvrirBDD(QString sFichier);
-    bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre);
+    bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre, bool bView);
     void FermerOnglet(QWidget *Tab);
     void FermerOnglets();
 };

@@ -104,7 +104,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
     if ((sVerBDD != ui->lVerBDDAttendue->text())and
         (OkCancelDialog("Base de données trop ancienne:\n"+
                         ui->lDB->text()+"\n" +
-                        "version "+sVerBDD + "\n\n" +
+                        "Version "+sVerBDD + "\n\n" +
                         "Mettre à jour cette BDD vers la version "+ ui->lVerBDDAttendue->text()+" ?\n\n" +
                         "Cette opération est irréversible")))
     {   //Mettre à jour la BDD.
@@ -140,6 +140,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
     {
         //Activer les menus
         ActiverMenusData(true);
+        SetColoredText(ui->lDBErr,"","");
     }
     else
     {   //Ce cas ne devrait pas arriver, le SELECT précédent à validé l'existence de la vue Info_Potaléger.
@@ -178,6 +179,7 @@ void MainWindow::ShowEvent(QShowEvent *)
 
 void MainWindow::closeEvent(QCloseEvent *)
 {
+    FermerOnglets();//todo: abort if user click cancel
     SauvParams();
 }
 
@@ -185,7 +187,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
-    QSettings settings("greli.net", "Potaléger");
+    //QSettings settings("greli.net", "Potaléger");
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
 
     w.RestaureParams();

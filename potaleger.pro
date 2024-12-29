@@ -20,6 +20,7 @@ SOURCES += \
 HEADERS += \
     Dialogs.h \
     PotaUtils.h \
+    data/Data.h \
     mainwindow.h \
     potawidget.h
 
@@ -32,8 +33,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    SQL/MajStru2024-12-16_2024-12-17.sql \
-    SQL/Stru2024-12-17.sql
+    SQL/Stru2024-12-17.sql \
+    SQL/UpdateStru2024-12-16_2024-12-17.sql \
+    SQL/UpdateStru2024-12-17_2024-12-27.sql
 
 RESOURCES += \
     images/images.qrc

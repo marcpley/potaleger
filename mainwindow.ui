@@ -41,8 +41,19 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="font">
+       <font>
+        <bold>false</bold>
+       </font>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::TabShape::Rounded</enum>
+      </property>
       <property name="currentIndex">
        <number>1</number>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
       </property>
       <widget class="QWidget" name="Info">
        <attribute name="title">
@@ -142,6 +153,7 @@
             <property name="font">
              <font>
               <italic>true</italic>
+              <bold>false</bold>
              </font>
             </property>
             <property name="html">
@@ -179,6 +191,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <bold>false</bold>
+        </font>
        </property>
        <attribute name="title">
         <string>Tab 2</string>

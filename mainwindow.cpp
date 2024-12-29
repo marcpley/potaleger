@@ -11,7 +11,8 @@
 #include <QSqlQuery>
 #include <QSettings>
 #include "PotaUtils.h"
-#include <QPushButton>
+#include <QToolButton>
+#include "data/Data.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -20,8 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Utilisé comme modèle pour concevoir les onglets data.
-    ui->lVer->setText("1.0b4");//Version de l'application.
-    ui->lVerBDDAttendue->setText("2024-12-17");//Version de la BDD attendue par l'application.
+    ui->lVer->setText("1.0b5");//Version de l'application.
+    ui->lVerBDDAttendue->setText("2024-12-27");//Version de la BDD attendue par l'application.
 
 }
 
@@ -30,7 +31,26 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, QString const sTitre)
+bool MainWindow::InfosBDD()
+{
+    PotaQuery pQuery;
+    pQuery.lErr = ui->lDBErr;
+    if (pQuery.ExecShowErr("SELECT * FROM Info_Potaléger"))
+    {
+        ui->tbInfoDB->clear();
+        while (pQuery.next())
+            ui->tbInfoDB->append(pQuery.value(1).toString()+": "+
+                                 pQuery.value(2).toString());
+        return true;
+    }
+    else
+    {
+        ui->tbInfoDB->append(tr("Impossible de lire la vue 'Info_Potaléger'."));
+        return false;
+    }
+}
+
+bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, QString const sTitre,bool bView)
 {
     //Recherche parmis les onglets existants.
     for (int i = 1; i < ui->tabWidget->count(); i++)
@@ -44,7 +64,7 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
     if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName)
     {
         //Create tab
-        PotaWidget *w = new PotaWidget(this);
+        PotaWidget *w = new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
         w->lErr = ui->lDBErr;
         w->Init(sTableName);
@@ -54,12 +74,38 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
             ui->tabWidget->addTab(w,sTitre);
             ui->tabWidget->setCurrentWidget(w);
 
-            //col width
-            QSettings settings("greli.net", "Potaléger");
-            settings.beginGroup("LargeursColonnes");
+            //View special settings
+            w->isView=bView;
+            if (bView)
+            {
+                w->sbInsertRows->setEnabled(false);
+                w->pbInsertRow->setEnabled(false);
+                w->pbDeleteRow->setEnabled(false);
+                w->lFilter->setText(str(w->model->rowCount())+" "+tr("lignes"));
+            }
+            else
+                w->lFilter->setText(str(w->model->rowCount())+" "+w->model->tableName().toLower());
+
+            w->delegate->cTableColor=TableColor(sTableName);
             for (int i=0; i<w->model->columnCount();i++)
             {
-                int iWidth=settings.value(sTableName+"-"+w->model->FieldName(i)).toInt(nullptr);
+                w->delegate->cColColors[i]=TableColor(w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+            }
+
+
+            //Tab user settings
+            QSettings settings("greli.net", "Potaléger");
+
+            //filter
+            settings.beginGroup("Filter");
+            w->sbFilter->setValue(settings.value(sTableName+"-nCar").toInt());
+            settings.endGroup();
+
+            //col width
+            settings.beginGroup("ColWidth");
+            for (int i=0; i<w->model->columnCount();i++)
+            {
+                int iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
                 if (iWidth>0)
                     w->tv->setColumnWidth(i,iWidth);
                 else
@@ -70,9 +116,9 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
             ui->mFermerOnglets->setEnabled(true);
             ui->mFermerOnglet->setEnabled(true);
 
-            QString s;
-            s.setNum(w->model->rowCount());
-            SetColoredText(ui->lDBErr,sTableName+" - "+s,"Ok");
+            SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
+
+            w->tv->setFocus();
 
             return true;
         }
@@ -90,22 +136,38 @@ void MainWindow::FermerOnglet(QWidget *Tab)
 
         if (w->pbCommit->isEnabled())
         {
-            if (!OkCancelDialog(w->windowTitle()+"\n\n"+//A faire titre marche pas
-                               tr("Valider les données en cours de modification ?")))
-                return;
-            if (!w->model->SubmitAllShowErr())
+            if (!OkCancelDialog(ui->tabWidget->tabText(ui->tabWidget->currentIndex())+"\n\n"+
+                               tr("Valider les modifications avant de fermer ?")))
             {
-                w->isCommittingError=true;
-                return;
+                if (!w->model->SubmitAllShowErr())
+                {
+                    w->isCommittingError=true;
+                    return;
+                }
+            }
+            else
+            {
+                if (!w->model->RevertAllShowErr())
+                {
+                    w->isCommittingError=true;
+                    return;
+                }
             }
         }
 
-        //Largeurs de colonne
+        //Save user settings
         QSettings settings("greli.net", "Potaléger");
-        settings.beginGroup("LargeursColonnes");
+
+        //Filter
+        settings.beginGroup("Filter");
+        settings.setValue(w->model->tableName()+"-nCar",w->sbFilter->value());
+        settings.endGroup();
+
+        //ColWidth
+        settings.beginGroup("ColWidth");
             for (int i=0; i<w->model->columnCount();i++)
             {
-                settings.setValue(w->model->tableName()+"-"+w->model->FieldName(i),w->tv->columnWidth(i));
+                settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->tv->columnWidth(i));
             }
         settings.endGroup();
 
@@ -181,7 +243,7 @@ void MainWindow::on_mCopyBDD_triggered()
         file.setFileName(ui->lDB->text());
         FermerBDD();
         if (file.copy(sFichierSauv))
-        {   //impossible de remettre la date de modif du fichier original. A faire.
+        {   //fail to keep original date file. todo
             //fileSauv2.setFileName(sFichierSauv);
             //qDebug() << FileInfo.lastModified();
             //qDebug() << sFichierSauv;
@@ -250,57 +312,61 @@ void MainWindow::on_mCreerBDDVide_triggered()
 
 void MainWindow::on_mParam_triggered()
 {
-    OuvrirOnglet("Param","Params",tr("Paramètres"));
+    OuvrirOnglet("Param","Params",tr("Paramètres"),false);
 }
 
 void MainWindow::on_mFamilles_triggered()
 {
-    OuvrirOnglet("Familles","Familles",tr("Familles"));
+    OuvrirOnglet("Familles","Familles",tr("Familles"),false);
 }
 
 void MainWindow::on_mEspeces_triggered()
 {
-    OuvrirOnglet("Especes","Espèces",tr("Espèces"));
+    OuvrirOnglet("Especes","Espèces",tr("Espèces"),false);
 }
 
 void MainWindow::on_mVarietes_triggered()
 {
-    OuvrirOnglet("Varietes","Variétés",tr("Variétés"));
+    OuvrirOnglet("Varietes","Variétés",tr("Variétés"),false);
 }
 
 void MainWindow::on_mApports_triggered()
 {
-    OuvrirOnglet("Apports","Apports",tr("Apports"));
+    OuvrirOnglet("Apports","Apports",tr("Apports"),false);
 }
 
 void MainWindow::on_mFournisseurs_triggered()
 {
-    OuvrirOnglet("Fournisseurs","Fournisseurs",tr("Fournisseurs"));
+    OuvrirOnglet("Fournisseurs","Fournisseurs",tr("Fournisseurs"),false);
 }
 
 void MainWindow::on_mITP_triggered()
 {
-    OuvrirOnglet("Itp","ITP",tr("ITP"));
+    OuvrirOnglet("Itp","ITP",tr("ITP"),false);
 }
 
 void MainWindow::on_mRotations_triggered()
 {
-    OuvrirOnglet("Rotations","Rotations",tr("Rotations"));
+    OuvrirOnglet("Rotations","Rotations",tr("Rotations"),false);
 }
 
 void MainWindow::on_mDetailsRotations_triggered()
 {
-    OuvrirOnglet("Rotations_details","Rotations_détails",tr("Rotations_détails"));
+    OuvrirOnglet("Rotations_Tempo","2-1_Rotations_Tempo",tr("Rot. (détails)"),true);
 }
 
 void MainWindow::on_mPlanches_triggered()
 {
-    OuvrirOnglet("Planches","Planches",tr("Planches"));
+    OuvrirOnglet("Planches","Planches",tr("Planches"),false);
 }
 
 void MainWindow::on_mIlots_triggered()
 {
-
+//todo
 }
 
+void MainWindow::on_mSuccessionParPlanche_triggered()
+{
+    OuvrirOnglet("SuccPlanches","2-4_Successions_par_planche",tr("Succ. planches"),true);
+}
 
