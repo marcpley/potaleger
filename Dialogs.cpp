@@ -28,3 +28,14 @@ void MainWindow::MessageDialog(QString sMessage)
     MessageDialog(sMessage,QMessageBox::NoIcon);
 }
 
+bool MainWindow::YesNoDialog(QString sMessage)
+{
+    QMessageBox msgBox;
+    msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    msgBox.setText(sMessage);
+    msgBox.addButton(QMessageBox::Yes);
+    msgBox.addButton(QMessageBox::No);
+    msgBox.setIcon(QMessageBox::Question);
+    return (msgBox.exec() == QMessageBox::Yes);
+}
+

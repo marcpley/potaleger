@@ -1,4 +1,5 @@
 #include "potawidget.h"
+#include "qapplication.h"
 #include "qheaderview.h"
 #include "qlineedit.h"
 #include "qsqlerror.h"
@@ -8,15 +9,19 @@
 #include <QItemSelectionModel>
 #include <QList>
 #include <Qt>
-#include "PotaUtils.h"
+#include <QLabel>
+
 
 PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 {
     twParent = dynamic_cast<QTabWidget*>(parent);
     model = new PotaTableModel();
     model->setParent(this);
-    delegate = new PotaItemDelegate();
+    delegate = new PotaItemDelegate2();
     delegate->setParent(this);
+    //delegateFK = new PotaItemDelegateFK();
+    //delegateFK->setParent(this);
+    query = new PotaQuery();
     tv = new PotaTableView();
     tv->setParent(this);
     tv->setModel(model);
@@ -36,17 +41,31 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbRefresh = new QToolButton(this);
     pbRefresh->setIcon(QIcon(":/images/reload.svg"));
     SetButtonSize(pbRefresh);
+    pbRefresh->setShortcut( QKeySequence(Qt::Key_F5));
+    pbRefresh->setToolTip(tr("Recharger les données depuis le fichier.")+"\n"+
+                          tr("Les modifications en cours seront automatiquement enregistrées")+"\n"+
+                          "F5");
     connect(pbRefresh, &QToolButton::released, this, &PotaWidget::pbRefreshClick);
 
     pbCommit = new QToolButton(this);
     pbCommit->setIcon(QIcon(":/images/commit.svg"));
     SetButtonSize(pbCommit);
+    // Associer plusieurs raccourcis
+    QAction *action = new QAction(pbCommit);
+    action->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Enter), QKeySequence(Qt::CTRL | Qt::Key_Return)});
+    QObject::connect(action, &QAction::triggered, pbCommit, &QToolButton::click);
+    pbCommit->addAction(action);
+    pbCommit->setToolTip(tr("Enregistrer les modifications en cours dans le fichier.")+"\n"+
+                         "Ctrl + Enter");
     pbCommit->setEnabled(false);
     connect(pbCommit, &QToolButton::released, this, &PotaWidget::pbCommitClick);
 
     pbRollback = new QToolButton(this);
     pbRollback->setIcon(QIcon(":/images/rollback.svg"));
     SetButtonSize(pbRollback);
+    pbRollback->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Escape));
+    pbRollback->setToolTip(tr("Abandonner les modifications en cours.")+"\n"+
+                         "Ctrl + Escape");
     pbRollback->setEnabled(false);
     connect(pbRollback, &QToolButton::released, this, &PotaWidget::pbRollbackClick);
 
@@ -57,12 +76,17 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbInsertRow = new QToolButton(this);
     pbInsertRow->setIcon(QIcon(":/images/insert_row.svg"));
     SetButtonSize(pbInsertRow);
+    pbInsertRow->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Insert));
+    pbInsertRow->setToolTip(tr("Ajouter des lignes.")+"\n"+
+                            "Ctrl + Insert");
     connect(pbInsertRow, &QToolButton::released, this, &PotaWidget::pbInsertRowClick);
 
     pbDeleteRow = new QToolButton(this);
     pbDeleteRow->setIcon(QIcon(":/images/delete_row.svg"));
     SetButtonSize(pbDeleteRow);
-    pbDeleteRow->setEnabled(false);
+    pbDeleteRow->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Delete));
+    pbDeleteRow->setToolTip(tr("Supprimer des lignes.")+"\n"+
+                            "Ctrl + Delete (Suppr)");
     connect(pbDeleteRow, &QToolButton::released, this, &PotaWidget::pbDeleteRowClick);
 
     //Filtering
@@ -127,11 +151,11 @@ void PotaWidget::Init(QString TableName)
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 
     //FK
-    QSqlQuery query("PRAGMA foreign_key_list("+TableName+");");
-    while (query.next()) {
-        QString referencedTable = query.value("table").toString();
-        QString localColumn = query.value("from").toString();
-        QString referencedClumn = query.value("to").toString();
+    query->ExecShowErr("PRAGMA foreign_key_list("+TableName+");");
+    while (query->next()) {
+        QString referencedTable = query->value("table").toString();
+        QString localColumn = query->value("from").toString();
+        QString referencedClumn = query->value("to").toString();
         int localColumnIndex = model->fieldIndex(localColumn);
         model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
     }
@@ -143,10 +167,9 @@ void PotaWidget::Init(QString TableName)
 
 void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 {
-    tv->clearSpans();//Pour forcer le dessin de toute la grille, pour que la ligne sélectionnée soit visible.
+    tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
 
-    bool b=(tv->selectionModel()->selectedRows().count()>0);
-    pbDeleteRow->setEnabled(!isView and b);//b wrong true if user click a cell to deselect a header clicked line.
+    qDebug() << cur.row() << " " << cur.column();
 
     if (!cbFilter->isChecked())
     {
@@ -168,29 +191,21 @@ void PotaWidget::dataChanged(const QModelIndex &topLeft,const QModelIndex &botto
 {
     if (!isView)
     {
-        //isPendingModifs=true;
         pbCommit->setEnabled(true);
-        twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
         pbRollback->setEnabled(true);
         cbFilter->setEnabled(false);
-    }
+        twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
 
-    qDebug() << topLeft.row() << " - " << topLeft.column();
-    qDebug() << "UserRole" << topLeft.data(Qt::ItemDataRole::UserRole).toString();
-    model->index(topLeft.row(),topLeft.column()).data(Qt::ItemDataRole::UserRole).setValue("IsModified"); //todo.  Issue #3
-    qDebug() << "UserRole" << topLeft.data(Qt::ItemDataRole::UserRole).toString();
+        QVariant variant;
+        if (!topLeft.data(Qt::EditRole).isNull() and
+            (topLeft.data(Qt::EditRole) == ""))
+            model->setData(topLeft,variant,Qt::EditRole);//To avoid empty non null values.
+    }
 }
 
 void PotaWidget::headerColClicked(int logicalIndex)
 {
-    if (iSortCol==-1)//Pas de tri pour le moment.
-    {
-        model->sort(logicalIndex,Qt::SortOrder::AscendingOrder);
-        model->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
-        iSortCol=logicalIndex;
-        bSortDes=false;
-    }
-    else if (iSortCol==logicalIndex)//Tri actuel sur cette colonne.
+    if (iSortCol==logicalIndex)//Sort on this column.
     {
         if (!bSortDes)
         {
@@ -198,16 +213,16 @@ void PotaWidget::headerColClicked(int logicalIndex)
             model->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_RedUp.svg")), Qt::DecorationRole);
             bSortDes=true;
         }
-        else//Sort on 0 col. Best would be reset sorting.
+        else//Reset sorting.
         {
             model->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
-            model->sort(0,Qt::SortOrder::AscendingOrder);
-            model->setHeaderData(0, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
+            model->sort( -1,Qt::SortOrder::AscendingOrder);
+            //model->setHeaderData(0, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
             iSortCol=0;
             bSortDes=false;
         }
     }
-    else
+    else//Actual sort on another column.
     {
         model->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
         model->sort(logicalIndex,Qt::SortOrder::AscendingOrder);
@@ -219,7 +234,7 @@ void PotaWidget::headerColClicked(int logicalIndex)
 
 void PotaWidget::headerRowClicked() //int logicalIndex
 {
-    pbDeleteRow->setEnabled(true);
+    //pbDeleteRow->setEnabled(true);
 }
 
 void PotaWidget::pbRefreshClick()
@@ -228,18 +243,22 @@ void PotaWidget::pbRefreshClick()
     int j=tv->selectionModel()->currentIndex().column();
     if (pbCommit->isEnabled())
         model->SubmitAllShowErr();
+    model->clearCellCopied();
     model->SelectShowErr();
     tv->selectionModel()->setCurrentIndex(model->index(i,j),QItemSelectionModel::Current);//todo: retreive the reccord, not the line
 }
 
 void PotaWidget::pbCommitClick()
 {
+    tv->setFocus();
     model->SubmitAllShowErr();
 }
 
 void PotaWidget::pbRollbackClick()
 {
+    model->clearCellCopied();
     model->RevertAllShowErr();
+    tv->setFocus();
 }
 
 void PotaWidget::pbInsertRowClick()
@@ -257,14 +276,17 @@ void PotaWidget::cbFilterClick(Qt::CheckState state)
     if (state==Qt::CheckState::Checked)
     {
         //Sort
-        model->setFilter(cbFilter->text()+" LIKE '"+leFilter->text()+"%'");//Issue #4
+        if (leFilter->text()=="")
+            model->setFilter("\""+cbFilter->text()+"\" ISNULL");
+        else
+            model->setFilter("\""+cbFilter->text()+"\" LIKE '"+leFilter->text()+"%'");//todo : escape ' caracter in leFilter->text()
         fFilter->setFrameShape(QFrame::Box);
 
     }
     else
     {
         //Reset sort
-        model->setFilter("TRUE");
+        model->setFilter("");
         fFilter->setFrameShape(QFrame::NoFrame);
     }
     if (isView)
@@ -292,9 +314,11 @@ void PotaWidget::leFilterReturnPressed()
 
 QString PotaTableModel::FieldName(int index)
 {
-    QSqlQuery query("PRAGMA table_xinfo("+tableName()+");");
-    if (query.seek(index))
-        return query.value("name").toString();
+    PotaQuery *q = dynamic_cast<PotaWidget*>(parent())->query;
+    q->ExecShowErr("PRAGMA table_xinfo("+tableName()+");");
+
+    if (q->seek(index))
+        return q->value("name").toString();
     else
         return "";
 }
@@ -302,7 +326,8 @@ QString PotaTableModel::FieldName(int index)
 bool PotaTableModel::SelectShowErr()
 {
     select();
-    //Combo FK are not updated and could out of date. A recall off setRelation() don't fix that.
+
+    //Combo FK are not updated and could be out of date. A recall off setRelation() don't fix that.
     if ((lastError().type() == QSqlError::NoError)and(parent()->objectName().startsWith("PW")))
     {
         SetColoredText(dynamic_cast<PotaWidget*>(parent())->lErr,tableName()+" - "+str(rowCount()),"Ok");
@@ -323,7 +348,6 @@ bool PotaTableModel::SubmitAllShowErr()
         if (lastError().type() == QSqlError::NoError)
         {
             SetColoredText(pw->lErr,tableName()+": "+tr("modifications enregistrées."),"Ok");
-            //pw->isPendingModifs=false;
             pw->isCommittingError=false;
             pw->pbCommit->setEnabled(false);
             pw->pbRollback->setEnabled(false);
@@ -352,7 +376,6 @@ bool PotaTableModel::RevertAllShowErr()
         if (lastError().type() == QSqlError::NoError)
         {
             SetColoredText(pw->lErr,tableName()+": "+tr("modifications abandonnées."),"Info");
-            //pw->isPendingModifs=false;/
             pw->isCommittingError=false;
             pw->pbCommit->setEnabled(false);
             pw->pbRollback->setEnabled(false);
@@ -401,20 +424,15 @@ bool PotaTableModel::DeleteRowShowErr()
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
     if (!pw->isView)
     {
-        QItemSelectionModel *sel = pw->tv->selectionModel();
+        QModelIndexList selectedIndexes = pw->tv->selectionModel()->selectedIndexes();
         int rr=0;
-        for (int i = 0 ; i<rowCount() ; i++)
-        {
-            if (sel->isRowSelected(i))
-            {
-                if (removeRow(i))
-                    rr++;
-                else
-                    SetColoredText(pw->lErr,"removeRows("+str(i)+")","Err");
-            }
+        for (const QModelIndex &index : selectedIndexes) {
+            if (removeRow(index.row()))
+                rr++;
+            else
+                SetColoredText(pw->lErr,"removeRow("+str(index.row())+")","Err");
         }
-        if (rr>0)
-        {
+        if (rr>0) {
             pw->pbCommit->setEnabled(true);
             pw->pbRollback->setEnabled(true);
             pw->cbFilter->setEnabled(false);
@@ -429,113 +447,63 @@ bool PotaTableModel::DeleteRowShowErr()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-//                                 PotaQueryModel
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-QString PotaQueryModel::FieldName(int index)
-{
-    if (TableName=="")
-        return "";
-    else
-    {
-        if (index < columnCount())
-            return headerData(index,Qt::Horizontal).toString();
-        else
-            return "";
-    }
-}
-
-bool PotaQueryModel::setQueryShowErr(QString query)
-{
-    setQuery(query);
-    if (lastError().type() != QSqlError::NoError)
-    {
-        if (lErr!=nullptr)
-            SetColoredText(lErr,lastError().text(),"Err");
-        return false;
-
-    }
-    return true;
-}
-
-bool PotaQueryModel::setMultiQueryShowErr(QString querys)
-{
-    QStringList QueryList = querys.split(";");
-    QString s;
-    s=lErr->text();
-    if ((s.length()>11)and(s.last(11)==" statements"))
-        s=s.first(s.length()-11)+"+"+str(QueryList.count())+" statements";
-    else
-        s=str(QueryList.count())+" statements";
-    SetColoredText(lErr,s,"Info");
-    for (int i=0;i<QueryList.count();i++)
-    {
-        if (QueryList[i].trimmed().isEmpty())
-            continue;
-        setQuery(QueryList[i]);
-        if (lastError().type() != QSqlError::NoError)
-        {
-            if (lErr!=nullptr)
-                SetColoredText(lErr,lastError().text(),"Err");
-            return false;
-
-        }
-    }
-    return true;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  PotaItemDelegate
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-//QWidget *PotaItemDelegate::createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const {
-//    return QStyledItemDelegate::createEditor(parent,option,index);
-//}
 
-void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+void PotaItemDelegate2::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    PotaWidget* pw = dynamic_cast<PotaWidget*>(parent());
+    //if (isDarkTheme()) todo
 
     QBrush b;
     b.setStyle(Qt::SolidPattern);
     QColor c;
-    QItemSelectionModel *selection = dynamic_cast<PotaWidget*>(parent())->tv->selectionModel();
+    QItemSelectionModel *selection = pw->tv->selectionModel();
 
-    if (index.row() == selection->currentIndex().row())//Line selected
-    {
-        c=Qt::blue;
+    // if (pw->model && pw->model->isCellCopied(index)) {
+    //     c=QApplication::palette().color(QPalette::Highlight);
+    //     c.setAlpha(100);
+    // } else
+    if (pw->model && pw->model->isRowMarkedForRemoval(index.row())) {
+        // Surligner les cellules de la ligne supprimée avec un fond gris clair
+        QStyleOptionViewItem opt = option;
+        opt.backgroundBrush = QBrush(QColor(220, 220, 220)); // Gris clair
+        return;
+    } else if (index.row() == selection->currentIndex().row()) {//Line selected
+        //c=Qt::blue;
+        c=QApplication::palette().color(QPalette::Highlight);
         c.setAlpha(70);
+    } else {//Row data color
+        if (!index.data(Qt::EditRole).isNull() and
+            (index.data(Qt::EditRole) == "")) {
+            //Not null empty value. Not normal, it causes SQL failure.
+            c=Qt::red;
+            c.setAlpha(100);
+        }
     }
-    else //Row data color
-    {
-        // if (index.data(Qt::DisplayRole) == "1") todo
-        // {
-        //     c=Qt::green;
-        //     c.setAlpha(50);
-        // }
-    }
-    if (!c.isValid())//Table color.
-    {
+    if (!c.isValid()) {//Table color.
         c=cColColors[index.column()];//FK
         if (!c.isValid())
             c=cTableColor;
         c.setAlpha(30);
     }
-    if (c.isValid())
-    {
+    if (c.isValid()) {
         b.setColor(c);
         painter->fillRect(option.rect,b);
     }
 
-    QSqlRelationalDelegate::paint(painter, option, index);
+    QStyledItemDelegate::paint(painter, option, index);
 
-    if (index.data(Qt::ItemDataRole::UserRole).toString()=="isModified")//Don't work. todo. Issue #3
-    {
+    if (pw->model && pw->model->isCellCopied(index)) {
         painter->save();
-        painter->setPen(dynamic_cast<PotaWidget*>(parent())->isCommittingError ? QColor(Qt::red) : QColor(Qt::blue));
+        painter->setPen(QColor(Qt::green));
+        painter->drawRect(option.rect.x(), option.rect.y(), option.rect.width()-1, option.rect.height()-1);
+        painter->restore();
+    }
+    if (pw->model && pw->model->isCellModified(index)) {
+        painter->save();
+        painter->setPen(pw->isCommittingError ? QColor(Qt::red) : QColor(Qt::blue));
         painter->drawRect(option.rect.x(), option.rect.y(), option.rect.width()-1, option.rect.height()-1);
         painter->restore();
     }
 }
-
-//void PotaItemDelegate::setEditorData(QWidget * editor, const QModelIndex & index) const {
-//    QStyledItemDelegate::setEditorData(editor,index);
-//}

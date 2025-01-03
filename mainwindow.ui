@@ -46,6 +46,9 @@
         <bold>false</bold>
        </font>
       </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
       <property name="tabShape">
        <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
@@ -54,6 +57,9 @@
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
       </property>
       <widget class="QWidget" name="Info">
        <attribute name="title">
@@ -122,6 +128,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>500</width>
+              <height>110</height>
+             </size>
             </property>
             <property name="palette">
              <palette>
@@ -265,6 +277,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <property name="text">
               <string>...</string>
              </property>
+             <property name="shortcut">
+              <string>Ctrl+Enter, Ctrl+Return</string>
+             </property>
             </widget>
            </item>
            <item>
@@ -396,6 +411,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
         <property name="frameShape">
          <enum>QFrame::Shape::Box</enum>
         </property>
+        <property name="wordWrap">
+         <bool>false</bool>
+        </property>
         <property name="margin">
          <number>2</number>
         </property>
@@ -481,7 +499,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="mVarietes"/>
     <addaction name="mApports"/>
     <addaction name="mFournisseurs"/>
+    <addaction name="mTypes_de_planche"/>
     <addaction name="mITP"/>
+    <addaction name="mITPTempo"/>
    </widget>
    <widget class="QMenu" name="mAssolement">
     <property name="title">
@@ -489,9 +509,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
     </property>
     <addaction name="mRotations"/>
     <addaction name="mDetailsRotations"/>
+    <addaction name="mRotationManquants"/>
     <addaction name="mPlanches"/>
-    <addaction name="mIlots"/>
     <addaction name="mSuccessionParPlanche"/>
+    <addaction name="mIlots"/>
    </widget>
    <widget class="QMenu" name="mPlanif">
     <property name="title">
@@ -582,6 +603,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mPlanches">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Planches</string>
    </property>
@@ -595,11 +619,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mRotations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Rotations</string>
    </property>
   </action>
   <action name="mDetailsRotations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Détails des rotations</string>
    </property>
@@ -619,41 +649,65 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mIlots">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Ilots</string>
    </property>
   </action>
   <action name="mCulturesParIlots">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Cultures prévues par ilots</string>
    </property>
   </action>
   <action name="mCulturesParEspeces">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Cultures prévues par espèces</string>
    </property>
   </action>
   <action name="mCulturesParPlanche">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Cultures prévues par planche</string>
    </property>
   </action>
   <action name="mCreerCultures">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Créer les cultures</string>
    </property>
   </action>
   <action name="mSuccessionParPlanche">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Successions de cultures par planche</string>
    </property>
   </action>
   <action name="mSemences">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Inventaire et commandes semences</string>
    </property>
   </action>
   <action name="mSemencesNecessaires">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Semences nécessaires</string>
    </property>
@@ -667,6 +721,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuSemisAFaire">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/cultures_a_semer.svg</normaloff>:/images/cultures_a_semer.svg</iconset>
@@ -676,6 +733,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuPlantationsAFaire">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/cultures_a_planter.svg</normaloff>:/images/cultures_a_planter.svg</iconset>
@@ -685,6 +745,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuRecoltesAFaire">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/cultures_a_recolter.svg</normaloff>:/images/cultures_a_recolter.svg</iconset>
@@ -694,6 +757,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuSaisieRecoltes">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/saisie_recolte.svg</normaloff>:/images/saisie_recolte.svg</iconset>
@@ -703,6 +769,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuATerminer">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/cultures_a_ter.svg</normaloff>:/images/cultures_a_ter.svg</iconset>
@@ -712,6 +781,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mCuToutes">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/cultures_toutes.svg</normaloff>:/images/cultures_toutes.svg</iconset>
@@ -721,16 +793,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mAnaITP">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Itinéraires techniques</string>
    </property>
   </action>
   <action name="mAnaEspeces">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Espèces</string>
    </property>
   </action>
   <action name="mCuNonTer">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="images/images.qrc">
      <normaloff>:/images/cultures_non_ter.svg</normaloff>:/images/cultures_non_ter.svg</iconset>
@@ -792,6 +873,54 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="text">
     <string>Faire une copie de  la BDD</string>
+   </property>
+  </action>
+  <action name="mTypes_de_planche">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Types de planche</string>
+   </property>
+  </action>
+  <action name="mITRotationsIlots">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cultures prévues dans les rotations, par ilots</string>
+   </property>
+  </action>
+  <action name="mITRotations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cultures prévues dans les rotations</string>
+   </property>
+  </action>
+  <action name="mITRotationsManq">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cultures manquantes dans les rotations</string>
+   </property>
+  </action>
+  <action name="mRotationManquants">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Espèces manquantes dans les rotations</string>
+   </property>
+  </action>
+  <action name="mITPTempo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Itinéraires tech. (tempo)</string>
    </property>
   </action>
  </widget>
