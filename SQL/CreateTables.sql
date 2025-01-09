@@ -12,7 +12,19 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE,
                        Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE,
-                       Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?' WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis sous abris' WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant' WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis direct' WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte' WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                       Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?'
+                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis sous abris'
+                                          WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant'
+                                          WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis direct'
+                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte'
+                                          WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                       Etat TEXT AS (CASE WHEN Terminée NOTNULL THEN 'Terminée' --gris
+                                          WHEN Récolte_faite NOTNULL THEN 'A terminer' --bleu
+                                          WHEN Plantation_faite NOTNULL THEN 'En place' --vert
+                                          WHEN Semis_fait NOTNULL THEN iif(Date_plantation IS NULL,'En place', --vert
+                                                                                                   'Sous abris') --rouge
+                                          ELSE 'Prévue'
+                                          END),
                        Longueur REAL,
                        Nb_rangs REAL,
                        Espacement REAL,
@@ -54,13 +66,17 @@ CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY,
 CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY,
                   Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL,
                   Type_planche TEXT REFERENCES Types_planche (Type) ON UPDATE CASCADE,
-                  Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis sous abris' WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant' WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis direct' WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL THEN 'Sans récolte' WHEN Déb_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
-                  Déb_semis TEXT CONSTRAINT "Déb_semis, ex: 04-01 ou 04-15" CHECK (Déb_semis #FmtPlanif#),
-                  Fin_semis TEXT CONSTRAINT "Fin_semis, ex: 05-01 ou 05-15" CHECK (Fin_semis  #FmtPlanif#),
-                  Déb_plantation TEXT CONSTRAINT "Déb_plantation, ex: 05-01 ou 05-15" CHECK (Déb_plantation  #FmtPlanif#),
-                  Fin_plantation TEXT CONSTRAINT "Fin_plantation, ex: 07-01 ou 07-15" CHECK (Fin_plantation #FmtPlanif#),
-                  Déb_récolte TEXT CONSTRAINT "Déb_récolte, ex: 08-01 ou 08-15" CHECK (Déb_récolte #FmtPlanif#),
-                  Fin_récolte TEXT CONSTRAINT "Fin_récolte, ex: 10-01 ou 10-15" CHECK (Fin_récolte #FmtPlanif#),
+                  Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis sous abris'
+                                             WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant'
+                                             WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis direct'
+                                             WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL THEN 'Sans récolte'
+                                             WHEN Déb_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                  Déb_semis TEXT CONSTRAINT 'Déb_semis, ex: 04-01 ou 04-15' CHECK (Déb_semis #FmtPlanif#),
+                  Fin_semis TEXT CONSTRAINT 'Fin_semis, ex: 05-01 ou 05-15' CHECK (Fin_semis  #FmtPlanif#),
+                  Déb_plantation TEXT CONSTRAINT 'Déb_plantation, ex: 05-01 ou 05-15' CHECK (Déb_plantation  #FmtPlanif#),
+                  Fin_plantation TEXT CONSTRAINT 'Fin_plantation, ex: 07-01 ou 07-15' CHECK (Fin_plantation #FmtPlanif#),
+                  Déb_récolte TEXT CONSTRAINT 'Déb_récolte, ex: 08-01 ou 08-15' CHECK (Déb_récolte #FmtPlanif#),
+                  Fin_récolte TEXT CONSTRAINT 'Fin_récolte, ex: 10-01 ou 10-15' CHECK (Fin_récolte #FmtPlanif#),
                   Nb_rangs REAL,
                   Espacement REAL,
                   Nb_graines_trou REAL,
@@ -71,12 +87,12 @@ CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY,
  INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('1 Général', 'Utilisateur', 'Personne, entreprise ou organisation utilisant cette BDD Potaléger', NULL, NULL);
  INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('2 Données de base', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production.
  Ex: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', NULL);
- INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('3 Assolement', 'NA 3', NULL, NULL, NULL);
+ INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('3 Assolement', 'non utilisé 3', NULL, NULL, NULL);
  INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('4 Planification', 'Année_culture', 'Année en cours de culture', '2024', NULL);
  INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('4 Planification', 'Année_planif', 'Année à planifier', '2025', NULL);
  INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('4 Planification', 'Planifier_planches', 'Début du nom des planches à planifier', NULL, NULL);
- INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('5 Cultures', 'NA 5', NULL, NULL, NULL);
- INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('6 Analyses', 'NA 6', NULL, NULL, NULL);
+ INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('5 Cultures', 'non utilisé 5', NULL, NULL, NULL);
+ INSERT INTO Params (Section, Paramètre, Description, Valeur, Date_modif) VALUES ('6 Analyses', 'non utilisé 6', NULL, NULL, NULL);
 
 
 CREATE TABLE Planches (Planche TEXT PRIMARY KEY,

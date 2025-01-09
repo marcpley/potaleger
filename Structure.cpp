@@ -75,7 +75,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
     if (bResult and(sDBVersion == ui->lVerBDDAttendue->text()))
     {
-        //Create up to date triggers
+        //Create uptodate triggers
         bResult = model->ExecMultiShowErr(sDDLTriggers,";;");//";" exists in CREATE TRIGGER statments
         sResult.append(sDBVersion+" -> triggers : "+iif(bResult,"ok","Err").toString()+"\n");
     }

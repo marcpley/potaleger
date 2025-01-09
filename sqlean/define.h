@@ -1,3 +1,8 @@
+// Copyright (c) 2023 Anton Zhiyanov, MIT License
+// https://github.com/nalgeon/sqlean
+
+// User-defined functions in SQLite.
+
 #ifndef DEFINE_H
 #define DEFINE_H
 
@@ -7,8 +12,10 @@
 extern "C" {
 #endif
 
-int define_manage_init(sqlite3* db);
 int define_eval_init(sqlite3* db);
+int define_manage_init(sqlite3* db);
+int define_module_init(sqlite3* db);
+
 
 #ifdef __cplusplus
 }

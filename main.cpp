@@ -58,35 +58,6 @@ bool MainWindow::dbOpen(QString sFichier)
     QSqlDatabase db = QSqlDatabase::database();
     db.setDatabaseName(sFichier);
 
-
-    //Pawel
-    // qDebug() << "test Pawel";
-    // auto handle = db.driver()->handle();
-    // sqlite3 *db_handle = *static_cast<sqlite3 **>(handle.data());
-    // if (db_handle != 0) {
-    //     sqlite3_initialize();
-    //     define_manage_init(db_handle);
-    //     define_eval_init(db_handle);
-
-    //     QSqlQuery q1;
-    //     if (!q1.exec("select define('subxy1', '? - ?');"))
-    //         qDebug() << "error" << q1.lastError();
-
-    //     q1.clear();
-    //     if (!q1.exec("select subxy1(3, 2);"))
-    //         qDebug() << "error" << q1.lastError();
-
-    //     q1.next();
-    //     qDebug() << "v:" << q1.value(0).toString();
-
-    //     q1.clear();
-    //     if (!q1.exec("select eval('insert into tmp(value) values (1), (2), (3)');"))
-    //         qDebug() << "error" << q1.lastError();
-
-    //     q1.next();
-    //     qDebug() << "v:" << q1.value(0).toString();
-    // }
-
     if (!db.open()) {
         dbClose();
         SetColoredText(ui->lDBErr, tr("Impossible d'ouvrir la base de données."), "Err");
@@ -99,22 +70,30 @@ bool MainWindow::dbOpen(QString sFichier)
         return false;
     }
 
-    if (false) {
+    QSqlQuery query;
+    query.exec("PRAGMA journal_mode = DELETE;");
+    query.exec("PRAGMA locking_mode = NORMAL;");
+    query.exec("PRAGMA quick_check;");
+    query.next();
+    qDebug() << "quick_check: " << query.value(0).toString();
+
+    if (true) {
         if (!initCustomFunctions()) {
             dbClose();
-            SetColoredText(ui->lDBErr, tr("Impossible d'implémenter sqlean."), "Err");
+            SetColoredText(ui->lDBErr, tr("Impossible d'implémenter %1.").arg("sqlean"), "Err");
             return false;
         }
 
         if (!registerCustomFunctions()) {
             dbClose();
-            SetColoredText(ui->lDBErr, tr("Impossible d'implémenter les fonctions SQLite."), "Err");
+            SetColoredText(ui->lDBErr, tr("Impossible d'implémenter les fonctions %1.").arg("sqlean"), "Err");
             return false;
         }
 
-        if (!testCustomFunctions()){
+        QString s=testCustomFunctions();
+        if (!s.isEmpty()){
             dbClose();
-            SetColoredText(ui->lDBErr, tr("Les fonctions ne fonctionnent pas."), "Err");
+            SetColoredText(ui->lDBErr, tr("La fonction %1 ne fonctionnent pas.").arg(s), "Err");
             return false;
         }
     }
@@ -124,8 +103,12 @@ bool MainWindow::dbOpen(QString sFichier)
 void MainWindow::dbClose()
 {
     QSqlDatabase db = QSqlDatabase::database();
-    if (db.isOpen())
+    if (db.isOpen()){
+        QSqlQuery q1;
+        q1.exec("SELECT define_free();");
+
         db.close();
+    }
 }
 
 void MainWindow::OuvrirBDD(QString sFichier)
@@ -138,7 +121,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
         return;
     }
 
-    bool bForceUpdateViewsAndTriggers=false;
+    bool const bForceUpdateViewsAndTriggers=false;
 
     PotaQuery pQuery;
     pQuery.lErr = ui->lDBErr;

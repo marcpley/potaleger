@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
-    ui->lVer->setText("1.0b6");//Application version.
+    ui->lVer->setText("1.0b7");//Application version.
     ui->lVerBDDAttendue->setText("2024-12-30");//Expected database version.
 }
 
@@ -88,8 +88,15 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
             w->delegate->cTableColor=TableColor(sTableName,"");
             for (int i=0; i<w->model->columnCount();i++)
             {
-                //Color.
+                //Table color.
                 w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Etat"){
+                    w->delegate->RowColorCol=i;
+                }
+                if (w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="TEMPO"){
+                    w->delegate->TempoCol=i;
+                    dynamic_cast<PotaHeaderView*>(w->tv->horizontalHeader())->TempoCol=i;
+                }
 
                 //Tooltip
                 QString sTT=ToolTip(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
@@ -97,11 +104,16 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
                 //Read only columns
-                if (bView or ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
-                    w->model->setColumnEditable(i, false);
+                if (!bView) {
+                    if (ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
+                        w->model->nonEditableColumns.insert(i);
+                    }
+                } else {
+                    if (ReadOnlyView(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
+                        w->model->nonEditableColumns.insert(i);
+                    }
                 }
             }
-
 
             //Tab user settings
             QSettings settings("greli.net", "Potaléger");
@@ -116,7 +128,7 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
             for (int i=0; i<w->model->columnCount();i++)
             {
                 int iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
-                if (iWidth>0)
+                if (iWidth>0 and iWidth<1000)
                     w->tv->setColumnWidth(i,iWidth);
                 else
                     w->tv->resizeColumnToContents(i);
@@ -327,8 +339,9 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
 void MainWindow::on_mParam_triggered()
 {
-    OuvrirOnglet("test","test","test",false);
-    return;
+    //OuvrirOnglet("sqlean_define","sqlean_define","test",false);
+    //OuvrirOnglet("test","test","test",true);
+    //return;
 
     if (OuvrirOnglet("Param","Params",tr("Paramètres"),false))
     {
@@ -380,7 +393,7 @@ void MainWindow::on_mITP_triggered()
 
 void MainWindow::on_mITPTempo_triggered()
 {
-    OuvrirOnglet("ITP_tempo","ITP_tempo",tr("ITP (tempo)"),true);
+    OuvrirOnglet("ITP_tempo","ITP__tempo",tr("ITP (tempo)"),true);
 }
 
 void MainWindow::on_mRotations_triggered()
@@ -390,7 +403,7 @@ void MainWindow::on_mRotations_triggered()
 
 void MainWindow::on_mDetailsRotations_triggered()
 {
-    OuvrirOnglet("Rotations_Tempo","Rotations_Tempo",tr("Rot. (détails)"),true);
+    OuvrirOnglet("Rotations_Tempo","Rotations__Tempo",tr("Rot. (détails)"),true);
 }
 
 void MainWindow::on_mRotationManquants_triggered()
@@ -468,32 +481,32 @@ void MainWindow::on_mCreerCultures_triggered()
 
 void MainWindow::on_mSemencesNecessaires_triggered()
 {
-    OuvrirOnglet("Cultures_semences_necessaires","Cultures_semences_nécessaires",tr("Semence nécessaire"),true);
+    OuvrirOnglet("Cultures_semences_necessaires","Cultures__semences_nécessaires",tr("Semence nécessaire"),true);
 }
 
 void MainWindow::on_mSemences_triggered()
 {
-    OuvrirOnglet("Varietes_inv_et_cde","Variétés_inv_et_cde",tr("Inv. et cde semence"),true);
+    OuvrirOnglet("Varietes_inv_et_cde","Variétés__inv_et_cde",tr("Inv. et cde semence"),true);
 }
 
 void MainWindow::on_mCuNonTer_triggered()
 {
-    OuvrirOnglet("Cultures_non_terminees","Cultures_non_terminées",tr("Non terminées"),true);
+    OuvrirOnglet("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"),true);
 }
 
 void MainWindow::on_mCuSemisAFaire_triggered()
 {
-    OuvrirOnglet("Cultures_Semis_a_faire","Cultures_Semis_à_faire",tr("A semer"),true);
+    OuvrirOnglet("Cultures_Semis_a_faire","Cultures__Semis_à_faire",tr("A semer"),true);
 }
 
 void MainWindow::on_mCuPlantationsAFaire_triggered()
 {
-    OuvrirOnglet("Cultures_Plantations_a_faire","Cultures_Plantations_à_faire",tr("A planter"),true);
+    OuvrirOnglet("Cultures_Plantations_a_faire","Cultures__Plantations_à_faire",tr("A planter"),true);
 }
 
 void MainWindow::on_mCuRecoltesAFaire_triggered()
 {
-    OuvrirOnglet("Cultures_Recoltes_a_faire","Cultures_Récoltes_à_faire",tr("A récolter"),true);
+    OuvrirOnglet("Cultures_Recoltes_a_faire","Cultures__Récoltes_à_faire",tr("A récolter"),true);
 }
 
 void MainWindow::on_mCuSaisieRecoltes_triggered()
@@ -503,7 +516,7 @@ void MainWindow::on_mCuSaisieRecoltes_triggered()
 
 void MainWindow::on_mCuATerminer_triggered()
 {
-    OuvrirOnglet("Cultures_a_terminer","Cultures_à_terminer",tr("A terminer"),true);
+    OuvrirOnglet("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"),true);
 }
 
 void MainWindow::on_mCuToutes_triggered()
@@ -513,10 +526,24 @@ void MainWindow::on_mCuToutes_triggered()
 
 void MainWindow::on_mAnaITP_triggered()
 {
-    OuvrirOnglet("ITP_analyse","ITP_analyse",tr("Analyse IT"),true);
+    OuvrirOnglet("ITP_analyse","ITP__analyse",tr("Analyse IT"),true);
 }
 
 void MainWindow::on_mAnaEspeces_triggered()
 {
-    OuvrirOnglet("Cultures_Tempo_Espece","Cultures_Tempo_Espèce",tr("Analyse espèces"),true);
+    OuvrirOnglet("Cultures_Tempo_Espece","Cultures__Tempo_Espèce",tr("Analyse espèces"),true);
 }
+
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+    // for (int i = 1; i < ui->tabWidget->count(); i++)
+    // {
+    //     if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName )//Widget Onglet Data
+    //     {
+    //         ui->tabWidget->setCurrentIndex(i);
+    //         break;
+    //     }
+    // }
+    // ui->tabWidget->widget(index)-
+}
+

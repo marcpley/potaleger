@@ -4,6 +4,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 sql
 
+# Remplacement de la version 3.45 de SQLite par la 3.47.2
 #LIBS += -lsqlite3
 # Inclure le dossier contenant sqlite3.h 3.47.2
 INCLUDEPATH += $$PWD/libs/sqlite
@@ -17,22 +18,23 @@ LIBS += $$PWD/libs/sqlite/libsqlite3.a
 SOURCES += \
     Dialogs.cpp \
     PotaUtils.cpp \
-    SQL/FonctionsSQLite.cpp \
-    SQL/TestSQLite.cpp \
+    SQL/FunctionsSQLite.cpp \
     Structure.cpp \
     data/Data.cpp \
     main.cpp \
     mainwindow.cpp \
     potawidget.cpp \
     sqlean/eval.c \
-    sqlean/manage.c
+    sqlean/manage.c \
+    sqlean/module.c
 
 HEADERS += \
     PotaUtils.h \
     data/Data.h \
     mainwindow.h \
     potawidget.h \
-    sqlean/define.h
+    sqlean/define.h \
+    sqlean/sqlite3.h
 
 FORMS += \
     mainwindow.ui
@@ -47,7 +49,17 @@ DISTFILES += \
     SQL/CreateTables.sql \
     SQL/CreateTriggers.sql \
     SQL/CreateViews.sql \
-    SQL/UpdateStru2024-12-30_2025-01-xx.sql
+    SQL/FunctionsSQLite.sql \
+    SQL/UpdateStru2024-12-30_2025-01-xx.sql \
+    zNoRepo/todo.txt
 
 RESOURCES += \
     images/images.qrc
+
+# librairie sqlean (à la place des fichiers de Pawel ?)
+# win32:CONFIG(release, debug|release): LIBS += -L$$PWD/sqlean.so/release/ -ldefine
+# else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/sqlean.so/debug/ -ldefine
+# else:unix: LIBS += -L$$PWD/sqlean.so/ -ldefine
+
+# INCLUDEPATH += $$PWD/sqlean.so
+# DEPENDPATH += $$PWD/sqlean.so

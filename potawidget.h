@@ -5,7 +5,10 @@
 #include "qapplication.h"
 #include "qboxlayout.h"
 #include "qclipboard.h"
+#include "qdatetimeedit.h"
 #include "qevent.h"
+#include "qheaderview.h"
+#include "qlineedit.h"
 #include "qspinbox.h"
 #include "qsqlrelationaltablemodel.h"
 #include "qtoolbutton.h"
@@ -28,6 +31,13 @@ public:
     // explicit PotaTableModel(QObject *parent = nullptr)
     //     : QSqlRelationalTableModel(parent) {}
     QString sOrderByClause="";
+    QSet<QString> generatedColumns;
+    QSet<int> nonEditableColumns;
+    QSet<QModelIndex> modifiedCells;
+    QSet<QModelIndex> commitedCells;
+    QSet<QModelIndex> copiedCells;
+    QSet<int> rowsToRemove;
+    QSet<int> modifiedRows;
 
     QString FieldName(int index);
     bool SelectShowErr();
@@ -35,18 +45,6 @@ public:
     bool RevertAllShowErr();
     bool InsertRowShowErr();
     bool DeleteRowShowErr();
-
-    void setColumnEditable(int column, bool editable) {
-        if (editable) {
-            nonEditableColumns.remove(column);
-        } else {
-            nonEditableColumns.insert(column);
-        }
-    }
-
-    bool isColumnEditable(int column) const {
-        return !nonEditableColumns.contains(column);
-    }
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
         if (!index.isValid())
@@ -68,11 +66,6 @@ public:
             }
         }
 
-        // if (orientation == Qt::Horizontal && role == Qt::BackgroundRole) {
-        //     if (!nonEditableColumns.contains(section))
-        //         return QBrush(QColor(127,127,127));
-        // }
-
         if (orientation == Qt::Horizontal && role == Qt::TextAlignmentRole) {
             return Qt::AlignLeft;
         }
@@ -89,6 +82,25 @@ public:
             font.setItalic(true);
             return font;
         }
+        if (role == Qt::DisplayRole) {
+            QString columnName = headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
+            if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) { //todo: limit to modified rows since tab open
+                QSqlQuery query;
+                QString primaryKey = headerData(0, Qt::Horizontal, Qt::DisplayRole).toString(); // todo : Suppose que la première colonne est la clé primaire
+                QVariant primaryKeyValue = record(index.row()).value(primaryKey);
+
+                // Construire une requête pour lire directement la colonne générée
+                query.prepare(QString("SELECT %1 FROM %2 WHERE %3 = :key")
+                                  .arg(columnName)
+                                  .arg(tableName())
+                                  .arg(primaryKey));
+                query.bindValue(":key", primaryKeyValue);
+
+                if (query.exec() && query.next()) {
+                    return query.value(0).toString();//+"(q)";
+                }
+            }
+        }
         return QSqlRelationalTableModel::data(index, role);
     }
 
@@ -96,7 +108,9 @@ public:
         if (role == Qt::EditRole) {
             if (QSqlRelationalTableModel::data(index, role).toString() != value.toString()) {
                 modifiedCells.insert(index);
-                if (isCellCopied(index)) clearCellCopied();
+                modifiedRows.insert(index.row());
+                if (copiedCells.contains(index))
+                    copiedCells.clear();
             }
             if (relation(index.column()).isValid()) {
                 //Column with FK. #FKnull
@@ -114,34 +128,21 @@ public:
         return QSqlRelationalTableModel::setData(index, value, role);
     }
 
-    bool isCellModified(const QModelIndex &index) const {
-        return modifiedCells.contains(index);
-    }
-
-    bool isCellCopied(const QModelIndex &index) const {
-        return copiedCells.contains(index);
-    }
-
-    void setCellCopied(const QModelIndex &index) {
-        copiedCells.insert(index);
-    }
-
-    void clearCellCopied() {
-        copiedCells.clear();
-    }
-
     bool select() override {
+        //return QSqlRelationalTableModel::select();
         //If use of QSqlRelationalTableModel select(), the generated columns and null FK value rows are not displayed. #FKNull
         QString sQuery="SELECT * FROM "+tableName();
 
-        if (filter().toStdString()!="")//Add filter
+        if (filter().toStdString()!="") {//Add filter
             sQuery+=" WHERE "+filter();
+        }
 
         if (sOrderByClause.toStdString()!="")//Add order by
             sQuery+=" "+sOrderByClause;
 
-        qDebug() << sQuery << " (" << sOrderByClause << ")";
+        qDebug() << sQuery;
 
+        QSqlRelationalTableModel::select();//Avoids duplicate display of inserted lines
         setQuery(sQuery);
 
         return (lastError().type() == QSqlError::NoError);
@@ -163,9 +164,9 @@ public:
 
     bool submitAll()  {
         if (QSqlRelationalTableModel::submitAll()) {
+            commitedCells.unite(modifiedCells);
             modifiedCells.clear();
             rowsToRemove.clear();
-            //setQuery("SELECT * FROM "+tableName());//To preserve dispay of ligne with null foreign key. #FKNull
             return true;
         }
         return false;
@@ -191,20 +192,6 @@ public:
         return QSqlRelationalTableModel::removeRow(row, parent);
     }
 
-    bool isRowMarkedForRemoval(int row) const {
-        return rowsToRemove.contains(row);
-    }
-
-    void clearRemovedRows() {
-        rowsToRemove.clear();
-    }
-
-
-private:
-    QSet<int> nonEditableColumns;
-    QSet<QModelIndex> modifiedCells;
-    QSet<QModelIndex> copiedCells;
-    QSet<int> rowsToRemove;
 };
 
 class PotaTableView: public QTableView
@@ -215,25 +202,8 @@ public:
     PotaTableView() {}
 
 protected:
-    void keyPressEvent(QKeyEvent *event) override {
-        QModelIndex currentIndex = selectionModel()->currentIndex();
+    void keyPressEvent(QKeyEvent *event) override;
 
-        if ((event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) && !(event->modifiers() == Qt::ControlModifier)) {
-            if (currentIndex.isValid()) {
-                edit(currentIndex);
-            }
-        } else if (event->key() == Qt::Key_Delete) {
-            clearSelectionData();
-        } else if (event->matches(QKeySequence::Copy)) {
-            copySelectionToClipboard();
-        } else if (event->matches(QKeySequence::Cut)) {
-            cutSelectionToClipboard();
-        } else if (event->matches(QKeySequence::Paste)) {
-            pasteFromClipboard();
-        } else {
-            QTableView::keyPressEvent(event);
-        }
-    }
 private:
     void copySelectionToClipboard() {
         QClipboard *clipboard = QApplication::clipboard();
@@ -243,7 +213,7 @@ private:
         QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
         if (selectedIndexes.isEmpty()) return;
 
-        dynamic_cast<PotaTableModel*>(model())->clearCellCopied();
+        dynamic_cast<PotaTableModel*>(model())->copiedCells.clear();
         QApplication::clipboard()->setText("");
 
         // Déterminer le rectangle englobant
@@ -268,7 +238,7 @@ private:
             int row = index.row() - minRow;
             int col = index.column() - minCol;
             clipboardGrid[row][col] = model()->data(index, Qt::DisplayRole).toString();
-            dynamic_cast<PotaTableModel*>(model())->setCellCopied(index);
+            dynamic_cast<PotaTableModel*>(model())->copiedCells.insert(index);
         }
 
         // Convertir la grille en texte formaté pour le presse-papier
@@ -333,7 +303,7 @@ private:
                                                               selectedIndexes.value(iSel).column()+jCB);
                     if (index.isValid() and
                         (clipboardData[iCB][jCB] != "erbg-Ds45") and
-                        dynamic_cast<PotaTableModel*>(model())->isColumnEditable(index.column()))
+                        !dynamic_cast<PotaTableModel*>(model())->nonEditableColumns.contains(index.column()))
                         model()->setData(index,clipboardData[iCB][jCB], Qt::EditRole);
                 }
             }
@@ -360,6 +330,84 @@ private:
 
 };
 
+class PotaHeaderView : public QHeaderView {
+    Q_OBJECT
+public:
+    explicit PotaHeaderView(Qt::Orientation orientation, QWidget *parent = nullptr)
+        : QHeaderView(orientation, parent) {
+        //setStretchLastSection(false);
+    }
+    int TempoCol=-1;
+
+protected:
+    int iSortCol = 0;
+    bool bSortDes = false;
+
+    void paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const override {
+
+        if (logicalIndex == TempoCol) {
+            painter->save();
+            int xOffset = -22;
+            int yOffset = rect.height()-5;
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
+            painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(8).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(9).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(10).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(11).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(12).left(3));
+
+            for (int i=1;i<13;i++){
+            }
+            painter->restore();
+        } else
+            QHeaderView::paintSection(painter, rect, logicalIndex);
+    }
+
+    void mouseDoubleClickEvent(QMouseEvent *event) override {
+        // Obtenir l'index de la section cliquée
+        int logicalIndex = logicalIndexAt(event->pos());
+        if (logicalIndex != -1) {
+            qDebug() << "Section clicked:" << logicalIndex;
+
+            if (iSortCol==logicalIndex)//Sort on this column.
+            {
+                if (!bSortDes)
+                {
+                    model()->sort(logicalIndex,Qt::SortOrder::DescendingOrder);
+                    model()->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_RedUp.svg")), Qt::DecorationRole);
+                    bSortDes=true;
+                }
+                else//Reset sorting.
+                {
+                    model()->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
+                    model()->sort( -1,Qt::SortOrder::AscendingOrder);
+                    iSortCol=0;
+                    bSortDes=false;
+                }
+            }
+            else//Actual sort on another column.
+            {
+                model()->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
+                model()->sort(logicalIndex,Qt::SortOrder::AscendingOrder);
+                model()->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
+                iSortCol=logicalIndex;
+                bSortDes=false;
+            }
+
+            emit sectionClicked(logicalIndex);
+        }
+
+        // Appeler la méthode parente pour le comportement standard
+        QHeaderView::mouseDoubleClickEvent(event);
+    }
+};
+
 class PotaItemDelegate2 : public QStyledItemDelegate {
     Q_OBJECT
 
@@ -368,6 +416,8 @@ public:
 
     QColor cTableColor;
     QColor cColColors[50];
+    int RowColorCol=-1;
+    int TempoCol=-1;
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const    override;
 
@@ -379,27 +429,39 @@ public:
         }
 
         QSqlRelationalTableModel *model = const_cast<QSqlRelationalTableModel *>(constModel);
-        if (!model->relation(index.column()).isValid()) {
-            return QStyledItemDelegate::createEditor(parent, option, index); // Standard editor
+        if (model->relation(index.column()).isValid()) {
+            //Create QComboBox for relational columns
+            QComboBox *comboBox = new QComboBox(parent);
+            QSqlTableModel *relationModel = model->relationModel(index.column());
+            int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
+
+            qDebug() << objectName();
+            qDebug() << parent->objectName();
+            qDebug() << parent->parent()->objectName();
+
+            comboBox->addItem("", QVariant()); // Option for setting a NULL
+            for (int i = 0; i < relationModel->rowCount(); ++i) {
+                QString value = relationModel->record(i).value(relationIndex).toString();
+                QString displayValue = relationModel->record(i).value(0).toString();
+                if (!relationModel->record(i).value(1).toString().isEmpty())
+                    displayValue+=" | "+relationModel->record(i).value(1).toString();
+                if (!relationModel->record(i).value(2).toString().isEmpty())
+                    displayValue+=" | "+relationModel->record(i).value(2).toString();
+                comboBox->addItem( displayValue,value);
+            }
+            return comboBox;
+        } else if (DataType(model->tableName(),
+                            model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="REAL"){
+            return new QLineEdit(parent);
+        } else if (DataType(model->tableName(),
+                            model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="DATE"){
+            QDateEdit *dateEdit = new QDateEdit(parent);
+            dateEdit->setButtonSymbols(QAbstractSpinBox::NoButtons);
+            //dateEdit->setDisplayFormat("yyyy-MM-dd");
+            return dateEdit;
         }
+        return QStyledItemDelegate::createEditor(parent, option, index); // Standard editor
 
-        //Create QComboBox for relational columns
-        QComboBox *comboBox = new QComboBox(parent);
-        QSqlTableModel *relationModel = model->relationModel(index.column());
-        int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
-
-        comboBox->addItem("", QVariant()); // Option for setting a NULL
-        for (int i = 0; i < relationModel->rowCount(); ++i) {
-            QString value = relationModel->record(i).value(relationIndex).toString();
-            QString displayValue = relationModel->record(i).value(0).toString();
-            if (!relationModel->record(i).value(1).toString().isEmpty())
-                displayValue+=" | "+relationModel->record(i).value(1).toString();
-            if (!relationModel->record(i).value(2).toString().isEmpty())
-                displayValue+=" | "+relationModel->record(i).value(2).toString();
-            comboBox->addItem(value, value);
-        }
-
-        return comboBox;
     }
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const override {
@@ -408,9 +470,22 @@ public:
             QVariant currentValue = index.data();
             int comboIndex = comboBox->findData(currentValue);
             comboBox->setCurrentIndex(comboIndex != -1 ? comboIndex : 0);
-        } else {
-            QStyledItemDelegate::setEditorData(editor, index); // Éditeur standard
+            return;
         }
+        QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
+        if (lineEdit) {
+            lineEdit->setText(index.data().toString());
+            return;
+        }
+        QDateEdit *dateEdit = qobject_cast<QDateEdit *>(editor);
+        if (dateEdit) {
+            if (index.data().isNull())
+                dateEdit->setDate(QDate::currentDate());
+            else
+                dateEdit->setDate(index.data().toDate());
+            return;
+        }
+        QStyledItemDelegate::setEditorData(editor, index); // Éditeur standard
     }
 
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override {
@@ -422,12 +497,29 @@ public:
             } else {
                 model->setData(index, selectedValue, Qt::EditRole);
             }
-        } else {
-            QStyledItemDelegate::setModelData(editor, model, index); // Éditeur standard
+            return;
         }
+        QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
+        if (lineEdit) {
+            if (lineEdit->text().isEmpty()) {
+                model->setData(index, QVariant(), Qt::EditRole); // Définit à NULL
+            } else {
+                model->setData(index, lineEdit->text(), Qt::EditRole);
+            }
+            return;
+        }
+        QDateEdit *dateEdit = qobject_cast<QDateEdit *>(editor);
+        if (dateEdit) {
+                model->setData(index, dateEdit->date(), Qt::EditRole);
+            return;
+        }
+        QStyledItemDelegate::setModelData(editor, model, index); // Éditeur standard
     }
-};
 
+private:
+    void paintTempo(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+};
 
 class PotaWidget: public QWidget
 {
@@ -440,13 +532,11 @@ public:
     PotaTableModel *model;
     QTableView *tv;
     PotaItemDelegate2 *delegate;
-    //PotaItemDelegateFK *delegateFK;
     PotaQuery *query;//for specials coded querys.
     QTabWidget *twParent;
-    int iSortCol = 0;
-    bool bSortDes = false;
     bool isCommittingError=false;
     bool isView = false;
+
 
     QWidget *toolbar;
     QToolButton *pbRefresh;
@@ -469,7 +559,6 @@ public:
 private slots:
     void curChanged(const QModelIndex cur, const QModelIndex pre);
     void dataChanged(const QModelIndex &topLeft,const QModelIndex &bottomRight,const QList<int> &roles);
-    void headerColClicked(int logicalIndex);
     void headerRowClicked();//int logicalIndex
     void pbRefreshClick();
     void pbCommitClick();

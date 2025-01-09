@@ -1,6 +1,12 @@
 QString sDDLViews = QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
+CREATE VIEW test AS
+    VALUES (Test('09-15','04-01')),
+    (Test('10-01','02-01')),
+    (Test('08-15','04-15')),
+    (Test('12-15','04-15'));
+
 CREATE VIEW Info_Potaléger AS
     SELECT 1 N,
            'Version de la BDD' Info,
@@ -52,7 +58,7 @@ CREATE VIEW Info_Potaléger AS
                                    FROM Cultures
                                   WHERE Terminée ISNULL);
 
-CREATE VIEW Variétés_inv_et_cde AS SELECT E.Famille,
+CREATE VIEW Variétés__inv_et_cde AS SELECT E.Famille,
        V.Espèce,
        V.Variété,
        V.Qté_stock,
@@ -76,7 +82,7 @@ CREATE VIEW Variétés_inv_et_cde AS SELECT E.Famille,
           V.Espèce,
           V.Variété;
 
-CREATE VIEW ITP_Tempo AS SELECT I.IT_plante,
+CREATE VIEW ITP__Tempo AS SELECT I.IT_plante,
        I.Type_planche,
        I.Type_culture,
        I.Déb_semis,
@@ -85,16 +91,16 @@ CREATE VIEW ITP_Tempo AS SELECT I.IT_plante,
        I.Fin_plantation,
        I.Déb_récolte,
        I.Fin_récolte,
-       '<ItpTempo>' TEMPO, --ItpTempo(I.Type_culture,
-        --ItpTempoNJ(I.Déb_semis),
-        --ItpTempoNJ(I.Fin_semis),
-        --ItpTempoNJ(I.Déb_plantation),
-        --ItpTempoNJ(I.Fin_plantation),
-        --ItpTempoNJ(I.Déb_récolte),
-        --ItpTempoNJ(I.Fin_récolte)) __Jan____Fév___Mars___Avril___Mai____Juin___Juil___Août____Sept___Oct____Nov____Déc__,
-       '<ItpTempoNJPeriode>' J_semis, --ItpTempoNJPeriode(ItpTempoNJ(I.Déb_semis),ItpTempoNJ(I.Fin_semis),365) J_SEMIS,
-       '<ItpTempoNJPeriode>' J_plantation, --ItpTempoNJPeriode(ItpTempoNJ(I.Déb_plantation),ItpTempoNJ(I.Fin_plantation),365) J_PLANTATION,
-       '<ItpTempoNJPeriode>' J_récolte, --ItpTempoNJPeriode(ItpTempoNJ(I.Déb_récolte),ItpTempoNJ(I.Fin_récolte),365) J_RECOLTE,
+       ItpTempo(I.Type_culture,
+                ItpTempoNJ(I.Déb_semis),
+                ItpTempoNJ(I.Fin_semis),
+                ItpTempoNJ(I.Déb_plantation),
+                ItpTempoNJ(I.Fin_plantation),
+                ItpTempoNJ(I.Déb_récolte),
+                ItpTempoNJ(I.Fin_récolte)) TEMPO,
+       ItpTempoNJPeriode(ItpTempoNJ(I.Déb_semis),ItpTempoNJ(I.Fin_semis),365) J_semis,
+       ItpTempoNJPeriode(ItpTempoNJ(I.Déb_plantation),ItpTempoNJ(I.Fin_plantation),365) J_plantation,
+       ItpTempoNJPeriode(ItpTempoNJ(I.Déb_récolte),ItpTempoNJ(I.Fin_récolte),365) J_récolte,
        I.Notes,
        I.Espèce,
        E.Famille
@@ -102,7 +108,7 @@ FROM ITP I
 LEFT JOIN Espèces E USING(Espèce)
 ORDER BY coalesce(I.Déb_semis,I.Déb_plantation,I.Type_culture);
 
-CREATE VIEW Espèces_Stock_récoltes AS SELECT E.Espèce,
+CREATE VIEW Espèces__Stock_récoltes AS SELECT E.Espèce,
        E.Inventaire,
        E.Date_inv,
        E.Inventaire+(SELECT sum(R.Quantité)
@@ -111,7 +117,7 @@ CREATE VIEW Espèces_Stock_récoltes AS SELECT E.Espèce,
                      WHERE I.Espèce=E.Espèce) Stock_récolte
 FROM Espèces E WHERE E.Inventaire NOTNULL;
 
-CREATE VIEW Rotations_Tempo AS SELECT R.Rotation,
+CREATE VIEW Rotations__Tempo AS SELECT R.Rotation,
        R.Année,
        R.IT_plante,
        R.Pc_planches,
@@ -182,20 +188,18 @@ CREATE VIEW Cult_planif AS SELECT trim(RD.IT_plante) IT_plante,
        (SELECT Valeur
           FROM Params
          WHERE Paramètre='Année_planif') Année_à_planifier,
-       '<PlanifCultureCalcDate>' Date_semis,--PlanifCultureCalcDate(I.Déb_semis, CASE WHEN (I.Déb_plantation NOTNULL) AND
-                                            --        (I.Déb_plantation<I.Déb_semis) THEN (SELECT Valeur-1
-                                            --                                               FROM Params
-                                            --                                              WHERE Paramètre='Année_planif') ||'-01-01' ELSE (SELECT Valeur
-                                            --                                                                                                 FROM Params
-                                            --                                                                                                WHERE Paramètre='Année_planif') ||'-01-01' END) DATE_SEMIS,
-       '<PlanifCultureCalcDate>' Date_plantation,--PlanifCultureCalcDate(I.Déb_plantation, coalesce(PlanifCultureCalcDate(I.Déb_semis, CASE WHEN (I.Déb_plantation NOTNULL) AND
-                                                 --                                                    (I.Déb_plantation<I.Déb_semis) THEN (SELECT Valeur-1
-                                                 --                                                                                           FROM Params
-                                                 --                                                                                          WHERE Paramètre='Année_planif') ||'-01-01' ELSE (SELECT Valeur
-                                                 --                                                                                                                                             FROM Params
-                                                 --                                                                                                                                            WHERE Paramètre='Année_planif') ||'-01-01' END), (SELECT Valeur
-                                                 --                                                                                                                                                                                                FROM Params
-                                                 --                                                                                                                                                                                               WHERE Paramètre='Année_planif') ||'-01-01') ) DATE_PLANTATION,
+       PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
+                                  THEN (SELECT Valeur-1 FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
+                                  ELSE (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
+                                  END,
+                             I.Déb_semis) DATE_SEMIS,
+       PlanifCultureCalcDate(coalesce(PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
+                                                            THEN (SELECT Valeur-1 FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
+                                                            ELSE (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
+                                                            END,
+                                                            I.Déb_semis),
+                                      (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'),
+                             I.Déb_plantation) DATE_PLANTATION,
        RD.Pc_planches/100*PL.Longueur Longueur,
        I.Nb_rangs,
        I.Espacement,
@@ -239,12 +243,12 @@ CREATE VIEW Successions_par_planche AS SELECT PL.Planche,
          WHERE C.Planche=PL.Planche ) A_faire_le
   FROM Planches PL;
 
-CREATE VIEW Cultures_non_terminées AS SELECT C.Planche,
+CREATE VIEW Cultures__non_terminées AS SELECT C.Planche,
        C.Culture,
        C.IT_plante,
        C.Variété,
        C.Type,
-       --ColoCult(C.Culture) Couleur,
+       C.Etat,
        C.D_planif,
        C.Date_semis,
        C.Semis_fait,
@@ -277,7 +281,7 @@ CREATE VIEW Cultures_non_terminées AS SELECT C.Planche,
           C.Date_plantation,
           C.IT_plante;
 
-CREATE VIEW Cultures_semences_nécessaires AS SELECT C.Variété VARIETE,
+CREATE VIEW Cultures__semences_nécessaires AS SELECT C.Variété, --todo fusionner avec inventaire
        count() Nb_cult,
        min(coalesce(C.Date_semis,C.Date_plantation)) Date,
        sum(C.Longueur) Long_planches,
@@ -308,7 +312,7 @@ WHERE C.Terminée ISNULL AND
  GROUP BY C.Variété
  ORDER BY C.Variété;
 
-CREATE VIEW Cultures_Semis_à_faire AS SELECT C.Planche,
+CREATE VIEW Cultures__Semis_à_faire AS SELECT C.Planche,
        C.Culture,
        C.IT_plante,
        C.Variété,
@@ -353,7 +357,7 @@ CREATE VIEW Cultures_Semis_à_faire AS SELECT C.Planche,
           Planche,
           IT_plante;
 
-CREATE VIEW Cultures_Plantations_à_faire AS SELECT C.Planche,
+CREATE VIEW Cultures__Plantations_à_faire AS SELECT C.Planche,
        C.Culture,
        C.IT_plante,
        C.Variété,
@@ -388,7 +392,7 @@ CREATE VIEW Cultures_Plantations_à_faire AS SELECT C.Planche,
           Planche,
           IT_plante;
 
-CREATE VIEW Cultures_Récoltes_à_faire AS SELECT C.Planche,
+CREATE VIEW Cultures__Récoltes_à_faire AS SELECT C.Planche,
        C.Culture,
        C.IT_plante,
        C.Type,
@@ -432,7 +436,7 @@ LEFT JOIN ITP I USING(IT_plante)
 WHERE R.Date>DATE('now','-30 days')
 ORDER BY R.Date,R.Culture;
 
-CREATE VIEW Cultures_à_terminer AS SELECT C.Planche,
+CREATE VIEW Cultures__à_terminer AS SELECT C.Planche,
        C.Culture,
        C.IT_plante,
        C.Type,
@@ -466,7 +470,7 @@ CREATE VIEW Cultures_à_terminer AS SELECT C.Planche,
           C.Fin_récolte,
           C.IT_plante;
 
-CREATE VIEW ITP_analyse AS SELECT I.IT_plante,
+CREATE VIEW ITP__analyse AS SELECT I.IT_plante,
        I.Type_culture,
        I.Déb_semis,
        I.Déb_plantation,
@@ -507,7 +511,7 @@ CREATE VIEW ITP_analyse AS SELECT I.IT_plante,
   FROM ITP I
  ORDER BY IT_plante;
 
-CREATE VIEW Cultures_Tempo_Espèce AS SELECT C.Culture,
+CREATE VIEW Cultures__Tempo_Espèce AS SELECT C.Culture,
        C.IT_plante,
        C.Variété,
        C.Planche,
@@ -517,18 +521,11 @@ CREATE VIEW Cultures_Tempo_Espèce AS SELECT C.Culture,
        C.Début_récolte,
        C.Fin_récolte,
        C.Récolte_faite,
-       '<CulTempo>' TEMPO, --CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)
-                    --__Jan____Fév___Mars___Avril___Mai____Juin___Juil___Août____Sept___Oct____Nov____Déc__,
+       CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte) TEMPO,
        C.Notes
   FROM Cultures C
        LEFT JOIN ITP I USING(IT_plante)
- WHERE (C.Terminée NOTNULL) AND
-       ( (I.Espèce= (SELECT Espèce
-                       FROM Params
-                      WHERE Paramètre='Focus') ) OR
-         (SELECT Espèce ISNULL
-            FROM Params
-           WHERE Paramètre='Focus') )
+ WHERE C.Terminée NOTNULL
 ORDER BY C.IT_plante,
           coalesce(C.Date_semis, C.Date_plantation);
 
@@ -657,21 +654,16 @@ CREATE VIEW IT_rotations_manquants AS
            E.Rendement,
            E.Niveau,
            E.Apport,
-           (SELECT sum(Qté_stock)
-              FROM Variétés V
-             WHERE V.Espèce=E.Espèce) Qté_stock,
+           (SELECT sum(Qté_stock) FROM Variétés V WHERE V.Espèce=E.Espèce) Qté_stock,
            ITP.Type_planche,
            ITP.Type_culture,
            ITP.Déb_semis,
            ITP.Déb_plantation,
            ITP.Déb_récolte,
-           (SELECT Valeur
-              FROM Params
-             WHERE Paramètre='Année_planif') Année_à_planifier
+           (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') Année_à_planifier
       FROM ITP
-           LEFT JOIN Espèces E USING(Espèce)
-     WHERE NOT (Espèce IN(SELECT ESPECE
-                            FROM IT_rotations_ilots) ) AND
+      LEFT JOIN Espèces E USING(Espèce)
+     WHERE NOT (Espèce IN(SELECT Espèce FROM IT_rotations_ilots) ) AND
            E.A_planifier NOTNULL;
 
 CREATE VIEW R_famille AS

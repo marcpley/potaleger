@@ -1,5 +1,6 @@
 #include "qapplication.h"
 #include "qcolor.h"
+#include "qdatetime.h"
 #include "qlabel.h"
 #include "qsqlerror.h"
 #include "qsqlquery.h"
@@ -59,6 +60,19 @@ QVariant PotaQuery::Selec0ShowErr(QString query)
         return vNull;
 }
 
+QString DataType(QString TableName, QString FieldName){
+    QSqlQuery query("PRAGMA table_xinfo("+TableName+")");
+    while (query.next()){
+        if (query.value(1).toString()==FieldName)
+            return query.value(2).toString();
+    }
+    return "";
+}
+
+// QString SQLiteDate() {
+//     return QDate::currentDate().toString("yyyy-MM-dd");
+// }
+
 QString DBInfo()
 {
     QSqlDatabase db = QSqlDatabase::database();
@@ -95,9 +109,9 @@ QString RemoveComment(QString sCde, QString sCommentMarker)
         s = LinesList[i];
         index = s.indexOf(sCommentMarker);
         if (index!=-1)
-            sResult += s.first(index)+"\n";
+            sResult += s.first(index).trimmed()+iif(s.first(index).trimmed().isEmpty(),""," ").toString();
         else
-            sResult += s+"\n";
+            sResult += s.trimmed()+iif(s.trimmed().isEmpty(),""," ").toString();
     }
     return sResult;
 }

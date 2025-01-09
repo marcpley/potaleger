@@ -1,8 +1,8 @@
+#include "data/Data.h"
 #include "PotaUtils.h"
 #include "qcolor.h"
 #include <QtSql/QSqlQueryModel>
 #include <QObject>
-
 
 QString DynDDL(QString sQuery)
 {
@@ -10,12 +10,21 @@ QString DynDDL(QString sQuery)
     return sQuery;
 }
 
+QString GeneratedFielnameForDummyFilter(const QString sTableName) {
+    if (sTableName=="Cultures")
+        return "Etat";
+    else if (sTableName=="ITP")
+        return "Type_culture";
+    else
+        return "";
+}
+
 bool ReadOnly(const QString sTableName,const QString sFieldName)
 {
     bool bReadOnly=false;
 
     if (sTableName=="Cultures"){
-        bReadOnly = (sFieldName=="Culture" or sFieldName=="Type");
+        bReadOnly = (sFieldName=="Culture" or sFieldName=="Type" or sFieldName=="Etat");
 
     } else if (sTableName=="ITP"){
         bReadOnly = (sFieldName=="Type_culture");
@@ -25,6 +34,58 @@ bool ReadOnly(const QString sTableName,const QString sFieldName)
     }
 
     return bReadOnly;
+}
+
+bool ReadOnlyView(const QString sTableName,const QString sFieldName)
+{
+    bool bReadOnly=true;
+
+    if (sTableName=="Cultures__non_terminées"){
+        bReadOnly = !(//sFieldName=="Planche" or
+                      sFieldName=="Date_semis" or
+                      sFieldName=="Semis_fait" or
+                      sFieldName=="Date_plantation" or
+                      sFieldName=="Plantation_faite" or
+                      sFieldName=="Début_récolte" or
+                      sFieldName=="Fin_récolte" or
+                      sFieldName=="Récolte_faite" or
+                      sFieldName=="Terminée" or
+                      sFieldName=="Longueur" or
+                      sFieldName=="Nb_rangs" or
+                      sFieldName=="Espacement" or
+                      sFieldName=="Notes");
+    } else if (sTableName=="Variétés__inv_et_cde"){
+        bReadOnly = !(sFieldName=="Qté_stock" or
+                    sFieldName=="Qté_cde" or
+                    sFieldName=="Fournisseur" or
+                    sFieldName=="Nb_graines_g" or
+                    sFieldName=="FG" or
+                    sFieldName=="Notes" or
+                    sFieldName=="N_espèce" or
+                    sFieldName=="N_famille");
+        }
+
+    return bReadOnly;
+}
+
+QColor RowColor(QString sValue){
+
+    QColor c;
+
+    if (sValue=="Prévue")
+        c=cPrevue;
+    else if (sValue=="Sous abris")
+        c=cSousAbris;
+    else if (sValue=="En place")
+        c=cEnPlace;
+    else if (sValue=="A terminer")
+        c=cATerminer;
+    else if (sValue=="Terminée")
+        c=cTerminee;
+    else
+        return QColor();
+    c.setAlpha(60);
+    return c;
 }
 
 QColor TableColor(QString sTName,QString sFName)
@@ -79,12 +140,14 @@ QColor TableColor(QString sTName,QString sFName)
     else if (sFName=="Valeur" or
              sFName=="Année_à_planifier")
         return cParam;
+    else if (sFName=="TEMPO")
+        return QColor();//Drawed column
 
     //Color by table name.
     else if (sTName.toUpper().startsWith("APPORTS"))
         return cBase;
     else if (sTName.toUpper().startsWith("CULTURES"))
-        return cCulture;
+        return QColor();//Color by row
     else if (sTName.toUpper().startsWith("ESPÈCES"))
         return cEspece;
     else if (sTName.toUpper().startsWith("FAMILLES"))

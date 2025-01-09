@@ -85,6 +85,8 @@ private slots:
 
     void on_mCreerCultures_triggered();
 
+    void on_tabWidget_currentChanged(int index);
+
 private:
     void ActiverMenusData(bool b);
     bool PotaBDDInfo();
@@ -96,7 +98,7 @@ private:
     bool dbOpen(QString sFichier);
     bool initCustomFunctions();
     bool registerCustomFunctions();
-    bool testCustomFunctions();
+    QString testCustomFunctions();
     void dbClose();
     void OuvrirBDD(QString sFichier);
     void FermerBDD();
@@ -104,5 +106,8 @@ private:
     void FermerOnglet(QWidget *Tab);
     void FermerOnglets();
     void CreateNewDB(bool bEmpty);
+    static void sommeFunc(sqlite3_context *context, int argc, sqlite3_value **argv);
+    void define_manage_init2(sqlite3 *db_handle);
+    static void logCallback(void *pArg, int iErrCode, const char *zMsg);
 };
 #endif // MAINWINDOW_H

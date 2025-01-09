@@ -19,6 +19,8 @@ public:
     QVariant Selec0ShowErr(QString query);
 };
 
+QString DataType(QString TableName, QString FieldName);
+//QString SQLiteDate();
 QString DBInfo();
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2);
 bool isDarkTheme();
