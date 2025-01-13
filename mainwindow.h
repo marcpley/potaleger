@@ -59,8 +59,6 @@ private slots:
 
     void on_mCulturesParPlanche_triggered();
 
-    void on_mSemencesNecessaires_triggered();
-
     void on_mSemences_triggered();
 
     void on_mCuNonTer_triggered();
@@ -87,6 +85,8 @@ private slots:
 
     void on_tabWidget_currentChanged(int index);
 
+    void on_mCulturesParplante_triggered();
+
 private:
     void ActiverMenusData(bool b);
     bool PotaBDDInfo();
@@ -102,7 +102,7 @@ private:
     void dbClose();
     void OuvrirBDD(QString sFichier);
     void FermerBDD();
-    bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre, bool bView);
+    bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre);
     void FermerOnglet(QWidget *Tab);
     void FermerOnglets();
     void CreateNewDB(bool bEmpty);

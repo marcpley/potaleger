@@ -1,6 +1,7 @@
 #include "data/Data.h"
 #include "PotaUtils.h"
 #include "qcolor.h"
+#include <QSqlTableModel>
 #include <QtSql/QSqlQueryModel>
 #include <QObject>
 
@@ -23,6 +24,7 @@ bool ReadOnly(const QString sTableName,const QString sFieldName)
 {
     bool bReadOnly=false;
 
+    //Tables: explicit readonly
     if (sTableName=="Cultures"){
         bReadOnly = (sFieldName=="Culture" or sFieldName=="Type" or sFieldName=="Etat");
 
@@ -31,17 +33,14 @@ bool ReadOnly(const QString sTableName,const QString sFieldName)
 
     } else if (sTableName=="Params"){
         bReadOnly = (sFieldName!="Valeur");
-    }
 
-    return bReadOnly;
-}
-
-bool ReadOnlyView(const QString sTableName,const QString sFieldName)
-{
-    bool bReadOnly=true;
-
-    if (sTableName=="Cultures__non_terminées"){
-        bReadOnly = !(//sFieldName=="Planche" or
+    //Views: explicit editable.
+    } else if (sTableName=="Cultures__non_terminées"){
+        bReadOnly = !(sFieldName=="Planche" or
+                      sFieldName=="IT_plante" or
+                      sFieldName=="Variété" or
+                      sFieldName=="Fournisseur" or
+                      sFieldName=="D_planif" or
                       sFieldName=="Date_semis" or
                       sFieldName=="Semis_fait" or
                       sFieldName=="Date_plantation" or
@@ -54,16 +53,88 @@ bool ReadOnlyView(const QString sTableName,const QString sFieldName)
                       sFieldName=="Nb_rangs" or
                       sFieldName=="Espacement" or
                       sFieldName=="Notes");
+    } else if (sTableName=="Cultures__Semis_à_faire"){
+        bReadOnly = !(sFieldName=="Planche" or
+                      sFieldName=="Variété" or
+                      sFieldName=="Fournisseur" or
+                      sFieldName=="D_planif" or
+                      sFieldName=="Date_semis" or
+                      sFieldName=="Semis_fait" or
+                      sFieldName=="Longueur" or
+                      sFieldName=="Nb_rangs" or
+                      sFieldName=="Espacement" or
+                      sFieldName=="Notes");
+    } else if (sTableName=="Cultures__Plantations_à_faire"){
+        bReadOnly = !(sFieldName=="Planche" or
+                      sFieldName=="Variété" or
+                      sFieldName=="Fournisseur" or
+                      sFieldName=="D_planif" or
+                      sFieldName=="Date_semis" or
+                      sFieldName=="Semis_fait" or
+                      sFieldName=="Date_plantation" or
+                      sFieldName=="Plantation_faite" or
+                      sFieldName=="Longueur" or
+                      sFieldName=="Nb_rangs" or
+                      sFieldName=="Espacement" or
+                      sFieldName=="Notes");
+    } else if (sTableName=="Cultures__Récoltes_à_faire"){
+        bReadOnly = !(sFieldName=="Date_semis" or
+                      sFieldName=="Semis_fait" or
+                      sFieldName=="Date_plantation" or
+                      sFieldName=="Plantation_faite" or
+                      sFieldName=="Début_récolte" or
+                      sFieldName=="Fin_récolte" or
+                      sFieldName=="Récolte_faite" or
+                      sFieldName=="Terminée" or
+                      sFieldName=="Notes");
+    } else if (sTableName=="Cultures__à_terminer"){
+        bReadOnly = !(sFieldName=="Date_semis" or
+                      sFieldName=="Date_plantation" or
+                      sFieldName=="Début_récolte" or
+                      sFieldName=="Fin_récolte" or
+                      sFieldName=="Récolte_faite" or
+                      sFieldName=="Terminée" or
+                      sFieldName=="Notes");
+    } else if (sTableName=="ITP__Tempo"){
+        bReadOnly = !(sFieldName=="IT_plante" or
+                      sFieldName=="Espèce" or
+                      sFieldName=="Type_planche" or
+                      sFieldName=="Déb_semis" or
+                      sFieldName=="Fin_semis" or
+                      sFieldName=="Déb_plantation" or
+                      sFieldName=="Fin_plantation" or
+                      sFieldName=="Déb_récolte" or
+                      sFieldName=="Fin_récolte" or
+                      sFieldName=="Nb_rangs" or
+                      sFieldName=="Espacement" or
+                      sFieldName=="Nb_graines_trou" or
+                      sFieldName=="Dose_semis" or
+                      sFieldName=="Notes" or
+                      sFieldName=="N_espèce");
+
+    } else if (sTableName=="Rotations_détails__Tempo"){
+        bReadOnly = !(sFieldName=="Rotation" or
+                      sFieldName=="Année" or
+                      sFieldName=="IT_plante" or
+                      sFieldName=="Pc_planches" or
+                      sFieldName=="Fi_planches" or
+                      sFieldName=="Notes");
+
     } else if (sTableName=="Variétés__inv_et_cde"){
         bReadOnly = !(sFieldName=="Qté_stock" or
-                    sFieldName=="Qté_cde" or
-                    sFieldName=="Fournisseur" or
-                    sFieldName=="Nb_graines_g" or
-                    sFieldName=="FG" or
-                    sFieldName=="Notes" or
-                    sFieldName=="N_espèce" or
-                    sFieldName=="N_famille");
-        }
+                      sFieldName=="Qté_cde" or
+                      sFieldName=="Fournisseur" or
+                      sFieldName=="Nb_graines_g" or
+                      sFieldName=="FG" or
+                      sFieldName=="Notes" or
+                      sFieldName=="N_espèce" or
+                      sFieldName=="N_famille");
+
+    } else {
+        QSqlQuery query("PRAGMA table_list("+sTableName+")");
+        query.next();
+        bReadOnly=(query.value(2).toString()!="table");
+    }
 
     return bReadOnly;
 }
@@ -86,6 +157,39 @@ QColor RowColor(QString sValue){
         return QColor();
     c.setAlpha(60);
     return c;
+}
+
+QString RowSummary(QString TableName,const QModelIndex &index){
+    int col=0;
+    if (TableName=="Cult_planif")
+        return index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(3).data(Qt::DisplayRole).toString();
+    else if (TableName=="Cultures")
+        return index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(4).data(Qt::DisplayRole).toString();
+    else if (TableName.startsWith("Cultures__"))
+        return index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(2).data(Qt::DisplayRole).toString();
+    else if (TableName=="IT_rotations")
+        col=1;
+    else if (TableName=="IT_rotations_ilots")
+        return index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
+               QObject::tr("ilot ")+index.siblingAtColumn(2).data(Qt::DisplayRole).toString();
+    else if (TableName=="Params")
+        return index.model()->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString()+" : "+
+               index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(1).data(Qt::DisplayRole).toString();
+    else if (TableName=="Rotations_détails__Tempo")
+        return index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
+               QObject::tr("année ")+index.siblingAtColumn(2).data(Qt::DisplayRole).toString()+" - "+
+               index.siblingAtColumn(3).data(Qt::DisplayRole).toString();
+    else if (TableName=="Variétés__inv_et_cde")
+        col=2;
+
+    return index.model()->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString()+" : "+
+           index.siblingAtColumn(col).data(Qt::DisplayRole).toString();
 }
 
 QColor TableColor(QString sTName,QString sFName)
@@ -168,76 +272,30 @@ QColor TableColor(QString sTName,QString sFName)
         return cVariete;
     else
         return QColor();
-
-
-    // if (TableName=="Apports")
-    //     return QColor("#799e26");
-    // //else if (TableName=="Cultures")//Pas de couleur unique, couleur en fonction des données.
-    // //    return QColor("#00ff00");
-    // else if (TableName=="Espèces")//Vert
-    //     return QColor("#00ff00");
-    // else if (TableName=="Familles")//Bleu
-    //     return QColor("#002bff");
-    // else if (TableName=="Fournisseurs")
-    //     return QColor("#799e26");
-    // else if (TableName=="ITP")//Rouge
-    //     return QColor("#ff0000");
-    // else if (TableName=="Niveaux")
-    //     return QColor("#799e26");
-    // else if (TableName=="Planches")//Orange
-    //     return QColor("#ff8100");
-    // else if (TableName=="Rotations")
-    //     return QColor("#799e26");
-    // else if (TableName=="Rotations_détails")
-    //     return QColor("#799e26");
-    // else if (TableName=="Récoltes")//Violet
-    //     return QColor("#ec00ff");
-    // else if (TableName=="Types_planche")
-    //     return QColor("#799e26");
-    // else if (TableName=="Variétés")//Jaune
-    //     return QColor("#b7b202");
-    // else
-    //     return QColor();
 }
 
 QString ToolTip(const QString sTableName,const QString sFieldName)
 {
     QString sToolTip="";
 
+    //Champs présents dans plusieurs tables avec des significations différentes.
     if (sTableName=="Apports"){
-        if (sFieldName=="Poids_m²")
-            sToolTip=QObject::tr("Ammendement en kg par m².");
 
     } else if (sTableName=="Cultures"){
-        if (sFieldName=="TYPE")
+        if (sFieldName=="Type")
             sToolTip=QObject::tr("Automatique, en fonction des date de semis, plantation et récolte.");
+        else if (sFieldName=="Nb_rangs")
+            sToolTip=QObject::tr("Nombre de rangs cultivés sur la planche.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         else if (sFieldName=="Longueur")
             sToolTip=QObject::tr("Longueur de la culture sur la planche (m).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
-        else if (sFieldName=="D_planif")
-            sToolTip=QObject::tr("Date de calcul des date de semis, plantation et récolte.");
         else if (sFieldName=="Date_semis" or sFieldName=="Date_plantation" or sFieldName=="Début_récolte" or sFieldName=="Fin_récolte")
             sToolTip=QObject::tr("Date réelle ou prévue.");
 
     } else if (sTableName=="Espèces"){
-        if (sFieldName=="Rendement")
-            sToolTip=QObject::tr("Production moyenne (kg/m²).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
-        else if (sFieldName=="Niveau")
-            sToolTip=QObject::tr("Niveau de difficulté.")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
-        else if (sFieldName=="Dose_semis")
+        if (sFieldName=="Dose_semis")
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Valeur par défaut pour les itinéraires techniques.");
         else if (sFieldName=="Nb_graines_g")
             sToolTip=QObject::tr("Nombre de graines par gramme.")+"\n"+QObject::tr("Valeur par défaut pour les variétés.");
-        else if (sFieldName=="FG")
-            sToolTip=QObject::tr("Faculté germinative.")+"\n"+QObject::tr("Durée de conservation des graines (années).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
-        else if (sFieldName=="T_germ")
-            sToolTip=QObject::tr("Température de germination (min-max °C).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
-        else if (sFieldName=="Levée")
-            sToolTip=QObject::tr("Temps de levée (jours).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
-        else if (sFieldName=="Inventaire")
-            sToolTip=QObject::tr("Quantité en stock (kg).");
-        else if (sFieldName=="A_planifier")
-            sToolTip=QObject::tr("Espèce à cultiver l'année prochaine.");
-
     } else if (sTableName=="Familles"){
         if (sFieldName=="Intervalle")
             sToolTip=QObject::tr("Nombre d'années nécessaires entre 2 cultures consécutives sur la même planche.");
@@ -249,34 +307,26 @@ QString ToolTip(const QString sTableName,const QString sFieldName)
     } else if (sTableName=="ITP"){
         if (sFieldName=="Dose_semis")
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire SI ESPACEMENT = 0.");
-        else if (sFieldName=="TYPE")
-            sToolTip=QObject::tr("Automatique, en fonction des début de périodes de semis, plantation et récolte.");
-        else if (sFieldName.startsWith("Déb_") or sFieldName.startsWith("Fin_"))
-            sToolTip=QObject::tr("Début de mois (ex: 04-01 pour début avril)\nou milieu du mois (ex: 04-15 pour mi-avril).");
+        else if (sFieldName=="Nb_rangs")
+            sToolTip=QObject::tr("Nombre de rangs cultivés sur une planche.")+
+                                 "\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.")+
+                                 "\n"+QObject::tr("Valeur par défaut pour les cultures.");
 
     } else if (sTableName=="Planches"){
         if (sFieldName=="Longueur")
             sToolTip=QObject::tr("Longueur de la planche (m).");
-        else if (sFieldName=="Largeur")
-            sToolTip=QObject::tr("Largeur de la planche (m).");
         else if (sFieldName=="Rotation")
             sToolTip=QObject::tr("Rotation de cultures qui utilise cette planche.");
 
     } else if (sTableName=="Rotations"){
-        if (sFieldName=="Année_1")
-            sToolTip=QObject::tr("Année de début de la rotation.")+"\n"+QObject::tr("Cette valeur ne doit pas être changée d'une année sur l'autre tant que la rotation se poursuit.");
-        else if (sFieldName=="Nb_années")
-            sToolTip=QObject::tr("3 à 6 ans en général.");
+        if (sFieldName=="Nb_années")
+            sToolTip=QObject::tr("Automatique, en fonction des détails de la rotation.\n3 à 6 ans en général.");
 
     } else if (sTableName=="Rotations_détails"){
         if (sFieldName=="Année")
             sToolTip=QObject::tr("Année de culture dans la rotation.")+"\n"+QObject::tr("Nombre entier entre 1 et 5 si la rotation est sur 5 ans.");
-        else if (sFieldName=="Pc_planches")
-            sToolTip=QObject::tr("Pourcentage d'occupation des planches (1 à 100%).")+"\n"+QObject::tr("Plusieurs cultures peuvent partager une planches.");
         else if (sFieldName=="Nb_planches")
             sToolTip=QObject::tr("Nombre de planches occupées.")+"\n"+QObject::tr("Souvent un ilot de production entier.");
-        else if (sFieldName=="Fi_planches")
-            sToolTip=QObject::tr("Filtre de sélection de planches.")+"\n"+QObject::tr("Si filtre = 'AD', seules les planches se terminant par A ou D seront utilisées.");
 
     } else if (sTableName=="Récoltes"){
         if (sFieldName=="Quantité")
@@ -289,27 +339,67 @@ QString ToolTip(const QString sTableName,const QString sFieldName)
     } else if (sTableName=="Variétés"){
         if (sFieldName=="Nb_graines_g")
             sToolTip=QObject::tr("Nombre de graines par gramme.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
+    }
+
+    //Champs ayant la même signification partout.
+    if (sToolTip==""){
+
+        //Champs existant dans plusieurs tables
+        if (sFieldName=="")
+            sToolTip=QObject::tr("");
+        else if (sFieldName=="Espacement")
+            sToolTip=QObject::tr("Espacement entre 2 plants dans un rang de culture (cm)")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
+        else if (sFieldName=="IT_plante")
+            sToolTip=QObject::tr("Itinéraire technique: une espèce de plante et une manière de la cultiver.");
+        else if (sFieldName=="Rotation")
+            sToolTip=QObject::tr("Ensemble de cultures qui se succèdent sur un ensemble de planches.");
+
+        //Apports
+        else if (sFieldName=="Apport")
+            sToolTip=QObject::tr("Ammendement nécessaire avant culture.");
+        else if (sFieldName=="Poids_m²")
+            sToolTip=QObject::tr("Quantité d'ammendement avant culture (kg/m²).");
+        //Cultures
+        else if (sFieldName=="D_planif")
+            sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte.");
+        //Espèces
+        else if (sFieldName=="Niveau")
+            sToolTip=QObject::tr("Niveau de difficulté.")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
+        else if (sFieldName=="FG")
+            sToolTip=QObject::tr("Faculté germinative.")+"\n"+QObject::tr("Durée de conservation des graines (années).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
+        else if (sFieldName=="T_germ")
+            sToolTip=QObject::tr("Température de germination (min-max °C).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
+        else if (sFieldName=="Levée")
+            sToolTip=QObject::tr("Temps de levée (jours).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
+        else if (sFieldName=="Inventaire")
+            sToolTip=QObject::tr("Quantité de récolte en stock (kg).");
+        else if (sFieldName=="A_planifier")
+            sToolTip=QObject::tr("Espèce à cultiver l'année prochaine.");
+        else if (sFieldName=="Rendement")
+            sToolTip=QObject::tr("Production moyenne (kg/m²).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
+        //ITP
+        else if (sFieldName=="Type_culture")
+            sToolTip=QObject::tr("Automatique, en fonction des débuts de période de semis, plantation et récolte.");
+        else if (sFieldName.startsWith("Déb_") or sFieldName.startsWith("Fin_"))
+            sToolTip=QObject::tr("Début de mois (ex: 04-01 pour début avril)\nou milieu du mois (ex: 04-15 pour mi-avril).");
+        else if (sFieldName=="Nb_graines_trou")
+            sToolTip=QObject::tr("Nombre de graines par trou.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
+        //Planches
+        else if (sFieldName=="Largeur")
+            sToolTip=QObject::tr("Largeur de la planche (m).");
+        //Rotations
+        else if (sFieldName=="Année_1")
+            sToolTip=QObject::tr("Année de début de la rotation.")+"\n"+QObject::tr("Cette valeur ne doit pas être changée d'une année sur l'autre tant que la rotation se poursuit.");
+        //Rotations_détails
+        else if (sFieldName=="Pc_planches")
+            sToolTip=QObject::tr("Pourcentage d'occupation des planches (1 à 100%).")+"\n"+QObject::tr("Plusieurs cultures peuvent partager une planches.");
+        else if (sFieldName=="Fi_planches")
+            sToolTip=QObject::tr("Filtre de sélection de planches.")+"\n"+QObject::tr("Si filtre = 'AD', seules les planches se terminant par A ou D seront utilisées.");
+        //Variétés
         else if (sFieldName=="Qté_stock")
             sToolTip=QObject::tr("Semence en stock (g).");
         else if (sFieldName=="Qté_cde")
             sToolTip=QObject::tr("Semence commandée (g).")+"\n"+QObject::tr("A réception, mettre à 0 et ajouter la quantité à la quantité en stock.");
-    }
-
-    if (sToolTip==""){
-        if (sFieldName=="")
-            sToolTip=QObject::tr("");
-        else if (sFieldName=="Apport")
-            sToolTip=QObject::tr("Ammendement nécessaire avant culture.");
-        else if (sFieldName=="Espacement")
-            sToolTip=QObject::tr("Espacement entre 2 plants dans un rang de culture (cm)")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
-        else if (sFieldName=="IT_plante")
-            sToolTip=QObject::tr("Itinéraire technique");
-        else if (sFieldName=="Nb_graines_trou")
-            sToolTip=QObject::tr("Nombre de graines par trou.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
-        else if (sFieldName=="Nb_rangs")
-            sToolTip=QObject::tr("Nombre de rangs cultivés sur une planche.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
-        else if (sFieldName=="Rotation")
-            sToolTip=QObject::tr("Ensemble de cultures qui se succèdent sur un ensemble de planches.");
     }
     return sToolTip;
 }

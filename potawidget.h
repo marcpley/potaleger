@@ -84,9 +84,9 @@ public:
         }
         if (role == Qt::DisplayRole) {
             QString columnName = headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
-            if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) { //todo: limit to modified rows since tab open
+            if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) {
                 QSqlQuery query;
-                QString primaryKey = headerData(0, Qt::Horizontal, Qt::DisplayRole).toString(); // todo : Suppose que la première colonne est la clé primaire
+                QString primaryKey = headerData(0, Qt::Horizontal, Qt::DisplayRole).toString(); //First column must be primaryKey !
                 QVariant primaryKeyValue = record(index.row()).value(primaryKey);
 
                 // Construire une requête pour lire directement la colonne générée
@@ -535,7 +535,6 @@ public:
     PotaQuery *query;//for specials coded querys.
     QTabWidget *twParent;
     bool isCommittingError=false;
-    bool isView = false;
 
 
     QWidget *toolbar;
@@ -550,6 +549,7 @@ public:
     QLineEdit *leFilter;
     QLabel *lFilter;
     QSpinBox *sbFilter;
+    QLabel *lRowSummary;
     QHBoxLayout *lf;
     QHBoxLayout *ltb;
     QVBoxLayout *lw;

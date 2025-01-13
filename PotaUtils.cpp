@@ -1,6 +1,5 @@
 #include "qapplication.h"
 #include "qcolor.h"
-#include "qdatetime.h"
 #include "qlabel.h"
 #include "qsqlerror.h"
 #include "qsqlquery.h"
@@ -50,6 +49,7 @@ bool PotaQuery::ExecMultiShowErr(QString querys, QString spliter)
 
 QVariant PotaQuery::Selec0ShowErr(QString query)
 {
+    clear();
     QVariant vNull;
     if (ExecShowErr(query))
     {

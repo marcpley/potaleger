@@ -53,7 +53,7 @@
        <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -309,19 +309,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <widget class="QSpinBox" name="spinBox"/>
            </item>
            <item>
-            <widget class="Line" name="line">
-             <property name="minimumSize">
-              <size>
-               <width>100</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QFrame" name="frame">
              <property name="frameShape">
               <enum>QFrame::Shape::Panel</enum>
@@ -526,10 +513,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <string>Planification</string>
     </property>
     <addaction name="mCulturesParIlots"/>
-    <addaction name="mCulturesParEspeces"/>
+    <addaction name="mCulturesParplante"/>
     <addaction name="mCulturesParPlanche"/>
     <addaction name="mCreerCultures"/>
-    <addaction name="mSemencesNecessaires"/>
     <addaction name="mSemences"/>
    </widget>
    <widget class="QMenu" name="mCultures">
@@ -622,7 +608,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Itinéraires techniques</string>
+    <string>Itinéraires techniques (table)</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="mRotations">
@@ -671,12 +660,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>Cultures prévues par ilots</string>
    </property>
   </action>
-  <action name="mCulturesParEspeces">
+  <action name="mCulturesParplante">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Cultures prévues par espèces</string>
+    <string>Cultures prévues par plante</string>
    </property>
   </action>
   <action name="mCulturesParPlanche">
@@ -708,15 +697,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Inventaire et commandes semences</string>
+    <string>Semences</string>
    </property>
-  </action>
-  <action name="mSemencesNecessaires">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Semences nécessaires</string>
+   <property name="toolTip">
+    <string>Inventaire et commandes des semences</string>
    </property>
   </action>
   <action name="mVarietes">
@@ -927,7 +911,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Itinéraires tech. (tempo)</string>
+    <string>Itinéraires techniques</string>
    </property>
   </action>
  </widget>

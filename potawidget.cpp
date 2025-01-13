@@ -60,6 +60,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     //Add delete rows
     sbInsertRows = new QSpinBox(this);
     sbInsertRows->setMinimum(1);
+    sbInsertRows->setEnabled(false);
 
     pbInsertRow = new QToolButton(this);
     pbInsertRow->setIcon(QIcon(":/images/insert_row.svg"));
@@ -68,6 +69,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbInsertRow->setToolTip(tr("Ajouter des lignes.")+"\n"+
                             "Ctrl + Insert");
     connect(pbInsertRow, &QToolButton::released, this, &PotaWidget::pbInsertRowClick);
+    pbInsertRow->setEnabled(false);
 
     pbDeleteRow = new QToolButton(this);
     pbDeleteRow->setIcon(QIcon(":/images/delete_row.svg"));
@@ -76,24 +78,29 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbDeleteRow->setToolTip(tr("Supprimer des lignes.")+"\n"+
                             "Ctrl + Delete (Suppr)");
     connect(pbDeleteRow, &QToolButton::released, this, &PotaWidget::pbDeleteRowClick);
+    pbDeleteRow->setEnabled(false);
 
     //Filtering
     fFilter = new QFrame(this);
     fFilter->setFrameShape(QFrame::NoFrame);
+    fFilter->setBackgroundRole(QPalette::Midlight);
+    fFilter->setAutoFillBackground(true);
     cbFilter = new QCheckBox(this);
     cbFilter->setLayoutDirection(Qt::RightToLeft);
-    cbFilter->setFixedWidth(150);
+    cbFilter->setFixedWidth(120);
     cbFilter->setEnabled(false);
     cbFilter->setText(tr("Filtrer"));
     leFilter = new QLineEdit(this);
+    leFilter->setFixedWidth(100);
     connect(leFilter, &QLineEdit::returnPressed, this, &PotaWidget::leFilterReturnPressed);
     sbFilter = new QSpinBox(this);
     sbFilter->setMinimum(-1);
     sbFilter->setValue(5);
     connect(cbFilter, &QCheckBox::checkStateChanged, this, &PotaWidget::cbFilterClick);
     lFilter = new QLabel(this);
-    lFilter->setFixedWidth(150);
+    lFilter->setFixedWidth(120);
 
+    lRowSummary = new QLabel(this);
 
     tv = new PotaTableView();
     tv->setParent(this);
@@ -135,6 +142,8 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     ltb->addWidget(pbDeleteRow);
     ltb->addSpacing(10);
     ltb->addWidget(fFilter);
+    ltb->addSpacing(10);
+    ltb->addWidget(lRowSummary);
     toolbar->setLayout(ltb);
 
     //Main layout
@@ -149,20 +158,22 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 void PotaWidget::Init(QString TableName)
 {
     model->setTable(TableName);
+    QString RealTableName=TableName;
+    if (RealTableName.contains("__"))
+        RealTableName=RealTableName.first(RealTableName.indexOf("__"));
+
+    qDebug() << RealTableName;
+
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 
     //FK
-    if (!isView){
-        query->ExecShowErr("PRAGMA foreign_key_list("+TableName+");");
-        while (query->next()) {
-            QString referencedTable = query->value("table").toString();
-            QString localColumn = query->value("from").toString();
-            QString referencedClumn = query->value("to").toString();
-            int localColumnIndex = model->fieldIndex(localColumn);
-            model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
-        }
-    } else {
-
+    query->ExecShowErr("PRAGMA foreign_key_list("+RealTableName+");");
+    while (query->next()) {
+        QString referencedTable = query->value("table").toString();
+        QString localColumn = query->value("from").toString();
+        QString referencedClumn = query->value("to").toString();
+        int localColumnIndex = model->fieldIndex(localColumn);
+        model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
     }
     //Generated columns
     query->clear();
@@ -175,6 +186,7 @@ void PotaWidget::Init(QString TableName)
     tv->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     tv->verticalHeader()->setDefaultSectionSize(0);//Mini.
     tv->verticalHeader()->setDefaultAlignment(Qt::AlignTop);
+    tv->verticalHeader()->hide();
     tv->setTabKeyNavigation(false);
 }
 
@@ -182,7 +194,7 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 {
     tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
 
-    qDebug() << cur.row() << " " << cur.column();
+    lRowSummary->setText(RowSummary(model->tableName(),cur));
 
     if (!cbFilter->isChecked())
     {
@@ -202,17 +214,15 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 
 void PotaWidget::dataChanged(const QModelIndex &topLeft,const QModelIndex &bottomRight,const QList<int> &roles)
 {
-    //if (!isView) {
-        pbCommit->setEnabled(true);
-        pbRollback->setEnabled(true);
-        cbFilter->setEnabled(false);
-        twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
+    pbCommit->setEnabled(true);
+    pbRollback->setEnabled(true);
+    cbFilter->setEnabled(false);
+    twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
 
-        QVariant variant;
-        if (!topLeft.data(Qt::EditRole).isNull() and
-            (topLeft.data(Qt::EditRole) == ""))
-            model->setData(topLeft,variant,Qt::EditRole);//To avoid empty non null values.
-    //}
+    QVariant variant;
+    if (!topLeft.data(Qt::EditRole).isNull() and
+        (topLeft.data(Qt::EditRole) == ""))
+        model->setData(topLeft,variant,Qt::EditRole);//To avoid empty non null values.
 }
 
 void PotaWidget::headerRowClicked() //int logicalIndex
@@ -286,11 +296,7 @@ void PotaWidget::cbFilterClick(Qt::CheckState state)
     model->setFilter(filter);
     tv->setFocus();
 
-    if (isView)
-        lFilter->setText(str(model->rowCount())+" "+tr("lignes"));
-    else
-        lFilter->setText(str(model->rowCount())+" "+model->tableName().toLower());
-
+    lFilter->setText(str(model->rowCount())+" "+tr("lignes"));
 }
 
 void PotaWidget::leFilterReturnPressed()
@@ -338,105 +344,89 @@ bool PotaTableModel::SelectShowErr()
 bool PotaTableModel::SubmitAllShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
-    //if (!pw->isView) {
-        int i = rowCount();
-        submitAll();
-        if (lastError().type() == QSqlError::NoError)
-        {
-            SetColoredText(pw->lErr,tableName()+": "+tr("modifications enregistrées."),"Ok");
-            pw->isCommittingError=false;
-            pw->pbCommit->setEnabled(false);
-            pw->pbRollback->setEnabled(false);
-            pw->cbFilter->setEnabled(true);
-            pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
-            if (i != rowCount())
-                commitedCells.clear();//Display commited cells could be unconsistent.
-        }
-        else
-        {
-            SetColoredText(pw->lErr,lastError().text(),"Err");
-            pw->isCommittingError=true;
-            return false;
-        }
-        return true;
-    // } else
-    //     return false;
+    int i = rowCount();
+    submitAll();
+    if (lastError().type() == QSqlError::NoError)
+    {
+        SetColoredText(pw->lErr,tableName()+": "+tr("modifications enregistrées."),"Ok");
+        pw->isCommittingError=false;
+        pw->pbCommit->setEnabled(false);
+        pw->pbRollback->setEnabled(false);
+        pw->cbFilter->setEnabled(true);
+        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
+        if (i != rowCount())
+            commitedCells.clear();//Display commited cells could be unconsistent.
+    }
+    else
+    {
+        SetColoredText(pw->lErr,lastError().text(),"Err");
+        pw->isCommittingError=true;
+        return false;
+    }
+    return true;
 }
 
 bool PotaTableModel::RevertAllShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
-    //if (!pw->isView) {
-        revertAll();
-        if (lastError().type() == QSqlError::NoError)
-        {
-            SetColoredText(pw->lErr,tableName()+": "+tr("modifications abandonnées."),"Info");
-            pw->isCommittingError=false;
-            pw->pbCommit->setEnabled(false);
-            pw->pbRollback->setEnabled(false);
-            pw->cbFilter->setEnabled(true);
-            pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
+    revertAll();
+    if (lastError().type() == QSqlError::NoError)
+    {
+        SetColoredText(pw->lErr,tableName()+": "+tr("modifications abandonnées."),"Info");
+        pw->isCommittingError=false;
+        pw->pbCommit->setEnabled(false);
+        pw->pbRollback->setEnabled(false);
+        pw->cbFilter->setEnabled(true);
+        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
 
-        }
-        else
-        {
-            SetColoredText(pw->lErr,lastError().text(),"Err");
-            pw->isCommittingError=true;
-            return false;
-        }
-        return true;
-    // } else
-    //     return false;
+    }
+    else
+    {
+        SetColoredText(pw->lErr,lastError().text(),"Err");
+        pw->isCommittingError=true;
+        return false;
+    }
+    return true;
 }
 
 bool PotaTableModel::InsertRowShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
-    if (!pw->isView)
+    if (insertRows(pw->tv->currentIndex().row()+1,
+                   pw->sbInsertRows->value()))
     {
-        if (insertRows(pw->tv->currentIndex().row()+1,
-                       pw->sbInsertRows->value()))
-        {
-            pw->pbCommit->setEnabled(true);
-            pw->pbRollback->setEnabled(true);
-            pw->cbFilter->setEnabled(false);
-            pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
-        }
-        else
-        {
-            SetColoredText(pw->lErr,"insertRows(x,y)","Err");
-            return false;
-        }
-        return true;
+        pw->pbCommit->setEnabled(true);
+        pw->pbRollback->setEnabled(true);
+        pw->cbFilter->setEnabled(false);
+        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
     }
     else
+    {
+        SetColoredText(pw->lErr,"insertRows(x,y)","Err");
         return false;
+    }
+    return true;
 }
 
 bool PotaTableModel::DeleteRowShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
-    if (!pw->isView)
-    {
-        QModelIndexList selectedIndexes = pw->tv->selectionModel()->selectedIndexes();
-        int rr=0;
-        for (const QModelIndex &index : selectedIndexes) {
-            if (removeRow(index.row()))
-                rr++;
-            else
-                SetColoredText(pw->lErr,"removeRow("+str(index.row())+")","Err");
-        }
-        if (rr>0) {
-            pw->pbCommit->setEnabled(true);
-            pw->pbRollback->setEnabled(true);
-            pw->cbFilter->setEnabled(false);
-            pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
-            return true;
-        }
-        return false;
+    QModelIndexList selectedIndexes = pw->tv->selectionModel()->selectedIndexes();
+    int rr=0;
+    for (const QModelIndex &index : selectedIndexes) {
+        if (removeRow(index.row()))
+            rr++;
+        else
+            SetColoredText(pw->lErr,"removeRow("+str(index.row())+")","Err");
     }
-    else
-        return false;
+    if (rr>0) {
+        pw->pbCommit->setEnabled(true);
+        pw->pbRollback->setEnabled(true);
+        pw->cbFilter->setEnabled(false);
+        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
+        return true;
+    }
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -450,20 +440,6 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
         if (currentIndex.isValid()) {
             edit(currentIndex);
         }
-    // } else if ((event->key() == Qt::Key_D) && (event->modifiers() == Qt::ControlModifier)) {
-    //     if (currentIndex.data(Qt::DisplayRole).isNull()) {
-    //         QString sDataType=DataType(dynamic_cast<PotaTableModel*>(model())->tableName(),model()->headerData(currentIndex.column(),Qt::Horizontal,Qt::DisplayRole).toString());
-    //         if (sDataType=="DATE"){
-    //             model()->setData(currentIndex,SQLiteDate(),Qt::EditRole);//Todo calendar editor
-    //             //updateEditorData();
-    //         }
-    //     }
-    // } else if (event->key() == Qt::Key_Comma) {
-    //     QString sDataType=DataType(dynamic_cast<PotaTableModel*>(model())->tableName(),model()->headerData(currentIndex.column(),Qt::Horizontal,Qt::DisplayRole).toString());
-    //     if (sDataType=="REAL"){
-    //         QKeyEvent *e = new QKeyEvent(event->type(),Qt::Key_Comma,event->modifiers(),",");
-    //         QTableView::keyPressEvent(e);
-    //     }
     } else if (event->key() == Qt::Key_Delete) {
         clearSelectionData();
     } else if (event->matches(QKeySequence::Copy)) {

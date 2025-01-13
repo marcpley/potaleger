@@ -255,6 +255,7 @@ void MainWindow::closeEvent(QCloseEvent *)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    a.addLibraryPath("/libs_potaleger");
     MainWindow w;
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
 

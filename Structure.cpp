@@ -21,7 +21,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
     if (sDBVersion == "New" or sDBVersion == "NewWithBaseData")
     {
-        //bNew=true; todo mettre à false quand debug fait.
+        //bNew=true; mettre à false quand debug fait.
         if (model->ExecMultiShowErr(DynDDL(sDDLTables),";"))
         {
             sResult.append("Create tables : ok\n");

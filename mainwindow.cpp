@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
-    ui->lVer->setText("1.0b7");//Application version.
+    ui->lVer->setText("1.0b9");//Application version.
     ui->lVerBDDAttendue->setText("2024-12-30");//Expected database version.
 }
 
@@ -49,7 +49,7 @@ bool MainWindow::PotaBDDInfo()
     }
 }
 
-bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, QString const sTitre,bool bView)
+bool MainWindow::OuvrirOnglet(QString const sObjName, QString const sTableName, QString const sTitre)
 {
     //Recherche parmis les onglets existants.
     for (int i = 1; i < ui->tabWidget->count(); i++)
@@ -74,16 +74,18 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
             ui->tabWidget->setCurrentWidget(w);
 
             //View special settings
-            w->isView=bView;
-            if (bView)
-            {
-                w->sbInsertRows->setEnabled(false);
-                w->pbInsertRow->setEnabled(false);
-                w->pbDeleteRow->setEnabled(false);
-                w->lFilter->setText(str(w->model->rowCount())+" "+tr("lignes"));
+
+            if (w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
+                                        "WHERE (tbl_name='"+sTableName+"')AND"
+                                              "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
+                w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "
+                                        "WHERE (tbl_name='"+sTableName+"')AND"    //View avec trigger instead of insert
+                                              "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
+                w->sbInsertRows->setEnabled(true);
+                w->pbInsertRow->setEnabled(true);
+                w->pbDeleteRow->setEnabled(true);
             }
-            else
-                w->lFilter->setText(str(w->model->rowCount())+" "+w->model->tableName().toLower());
+            w->lFilter->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
             w->delegate->cTableColor=TableColor(sTableName,"");
             for (int i=0; i<w->model->columnCount();i++)
@@ -104,14 +106,8 @@ bool MainWindow::OuvrirOnglet(QString const sObjName,QString const sTableName, Q
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
                 //Read only columns
-                if (!bView) {
-                    if (ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
-                        w->model->nonEditableColumns.insert(i);
-                    }
-                } else {
-                    if (ReadOnlyView(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
-                        w->model->nonEditableColumns.insert(i);
-                    }
+                if (ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
+                    w->model->nonEditableColumns.insert(i);
                 }
             }
 
@@ -339,15 +335,13 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
 void MainWindow::on_mParam_triggered()
 {
-    //OuvrirOnglet("sqlean_define","sqlean_define","test",false);
-    //OuvrirOnglet("test","test","test",true);
-    //return;
+    // //OuvrirOnglet("sqlean_define","sqlean_define","test");
+    // OuvrirOnglet("test","Rotations_détails","test");
+    // return;
 
-    if (OuvrirOnglet("Param","Params",tr("Paramètres"),false))
-    {
+    if (OuvrirOnglet("Param","Params",tr("Paramètres"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->model->sort(0,Qt::SortOrder::AscendingOrder);
-        w->tv->verticalHeader()->hide();
         w->sbInsertRows->setVisible(false);
         w->pbInsertRow->setEnabled(false);
         w->pbInsertRow->setVisible(false);
@@ -358,87 +352,95 @@ void MainWindow::on_mParam_triggered()
 
 void MainWindow::on_mFamilles_triggered()
 {
-    OuvrirOnglet("Familles","Familles",tr("Familles"),false);
+    OuvrirOnglet("Familles","Familles",tr("Familles"));
 }
 
 void MainWindow::on_mEspeces_triggered()
 {
-    OuvrirOnglet("Especes","Espèces",tr("Espèces"),false);
+    OuvrirOnglet("Especes","Espèces",tr("Espèces"));
 }
 
 void MainWindow::on_mVarietes_triggered()
 {
-    OuvrirOnglet("Varietes","Variétés",tr("Variétés"),false);
+    OuvrirOnglet("Varietes","Variétés",tr("Variétés"));
 }
 
 void MainWindow::on_mApports_triggered()
 {
-    OuvrirOnglet("Apports","Apports",tr("Apports"),false);
+    OuvrirOnglet("Apports","Apports",tr("Apports"));
 }
 
 void MainWindow::on_mFournisseurs_triggered()
 {
-    OuvrirOnglet("Fournisseurs","Fournisseurs",tr("Fournisseurs"),false);
+    OuvrirOnglet("Fournisseurs","Fournisseurs",tr("Fournisseurs"));
 }
 
 void MainWindow::on_mTypes_de_planche_triggered()
 {
-    OuvrirOnglet("TypesPlanche","Types_planche",tr("Types planche"),false);
+    OuvrirOnglet("TypesPlanche","Types_planche",tr("Types planche"));
 }
 
 void MainWindow::on_mITP_triggered()
 {
-    OuvrirOnglet("Itp","ITP",tr("ITP"),false);
+    OuvrirOnglet("Itp","ITP",tr("ITP"));
 }
 
 void MainWindow::on_mITPTempo_triggered()
 {
-    OuvrirOnglet("ITP_tempo","ITP__tempo",tr("ITP (tempo)"),true);
+    OuvrirOnglet("ITP_tempo","ITP__Tempo",tr("ITP"));
 }
 
 void MainWindow::on_mRotations_triggered()
 {
-    OuvrirOnglet("Rotations","Rotations",tr("Rotations"),false);
+    OuvrirOnglet("Rotations","Rotations",tr("Rotations"));
 }
 
 void MainWindow::on_mDetailsRotations_triggered()
 {
-    OuvrirOnglet("Rotations_Tempo","Rotations__Tempo",tr("Rot. (détails)"),true);
+    if (OuvrirOnglet("Rotations_Tempo","Rotations_détails__Tempo",tr("Rot. (détails)"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+    }
 }
 
 void MainWindow::on_mRotationManquants_triggered()
 {
-    OuvrirOnglet("IT_rotations_manquants","IT_rotations_manquants",tr("Cult.manquantes"),true);
+    OuvrirOnglet("IT_rotations_manquants","IT_rotations_manquants",tr("Espèces manquantes"));
 }
 
 void MainWindow::on_mPlanches_triggered()
 {
-    OuvrirOnglet("Planches","Planches",tr("Planches"),false);
+    OuvrirOnglet("Planches","Planches",tr("Planches"));
 }
 
 void MainWindow::on_mIlots_triggered()
 {
-    OuvrirOnglet("Planches_Ilots","Planches_Ilots",tr("Ilots"),true);
+    OuvrirOnglet("Planches_Ilots","Planches_Ilots",tr("Ilots"));
 }
 
 void MainWindow::on_mSuccessionParPlanche_triggered()
 {
-    OuvrirOnglet("SuccPlanches","Successions_par_planche",tr("Succ. planches"),true);
+    OuvrirOnglet("SuccPlanches","Successions_par_planche",tr("Succ. planches"));
 }
 
 void MainWindow::on_mCulturesParIlots_triggered()
 {
-    OuvrirOnglet("IT_rotations_ilots","IT_rotations_ilots",tr("Cult.prévues ilots"),true);
+    OuvrirOnglet("IT_rotations_ilots","IT_rotations_ilots",tr("Cult.prévues ilots"));
 }
 
 void MainWindow::on_mCulturesParEspeces_triggered()
 {
-    OuvrirOnglet("IT_rotations","IT_rotations",tr("Cult.prévues esp."),true);
+
+}
+
+void MainWindow::on_mCulturesParplante_triggered()
+{
+    OuvrirOnglet("IT_rotations","IT_rotations",tr("Plantes prévues"));
 }
 
 void MainWindow::on_mCulturesParPlanche_triggered()
 {
-    OuvrirOnglet("Cult_planif","Cult_planif",tr("Cult.prévues"),true);
+    OuvrirOnglet("Cult_planif","Cult_planif",tr("Cult.prévues"));
 }
 
 void MainWindow::on_mCreerCultures_triggered()
@@ -479,59 +481,54 @@ void MainWindow::on_mCreerCultures_triggered()
     }
 }
 
-void MainWindow::on_mSemencesNecessaires_triggered()
-{
-    OuvrirOnglet("Cultures_semences_necessaires","Cultures__semences_nécessaires",tr("Semence nécessaire"),true);
-}
-
 void MainWindow::on_mSemences_triggered()
 {
-    OuvrirOnglet("Varietes_inv_et_cde","Variétés__inv_et_cde",tr("Inv. et cde semence"),true);
+    OuvrirOnglet("Varietes_inv_et_cde","Variétés__inv_et_cde",tr("Inv. et cde semence"));
 }
 
 void MainWindow::on_mCuNonTer_triggered()
 {
-    OuvrirOnglet("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"),true);
+    OuvrirOnglet("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"));
 }
 
 void MainWindow::on_mCuSemisAFaire_triggered()
 {
-    OuvrirOnglet("Cultures_Semis_a_faire","Cultures__Semis_à_faire",tr("A semer"),true);
+    OuvrirOnglet("Cultures_Semis_a_faire","Cultures__Semis_à_faire",tr("A semer"));
 }
 
 void MainWindow::on_mCuPlantationsAFaire_triggered()
 {
-    OuvrirOnglet("Cultures_Plantations_a_faire","Cultures__Plantations_à_faire",tr("A planter"),true);
+    OuvrirOnglet("Cultures_Plantations_a_faire","Cultures__Plantations_à_faire",tr("A planter"));
 }
 
 void MainWindow::on_mCuRecoltesAFaire_triggered()
 {
-    OuvrirOnglet("Cultures_Recoltes_a_faire","Cultures__Récoltes_à_faire",tr("A récolter"),true);
+    OuvrirOnglet("Cultures_Recoltes_a_faire","Cultures__Récoltes_à_faire",tr("A récolter"));
 }
 
 void MainWindow::on_mCuSaisieRecoltes_triggered()
 {
-    OuvrirOnglet("Saisie_recoltes","Saisie_récoltes",tr("Récoltes"),true);
+    OuvrirOnglet("Saisie_recoltes","Saisie_récoltes",tr("Récoltes"));
 }
 
 void MainWindow::on_mCuATerminer_triggered()
 {
-    OuvrirOnglet("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"),true);
+    OuvrirOnglet("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"));
 }
 
 void MainWindow::on_mCuToutes_triggered()
 {
-    OuvrirOnglet("Cultures","Cultures",tr("Cultures"),false);
+    OuvrirOnglet("Cultures","Cultures",tr("Cultures"));
 }
 
 void MainWindow::on_mAnaITP_triggered()
 {
-    OuvrirOnglet("ITP_analyse","ITP__analyse",tr("Analyse IT"),true);
+    OuvrirOnglet("ITP_analyse","ITP__analyse",tr("Analyse IT"));
 }
 
 void MainWindow::on_mAnaEspeces_triggered()
 {
-    OuvrirOnglet("Cultures_Tempo_Espece","Cultures__Tempo_Espèce",tr("Analyse espèces"),true);
+    OuvrirOnglet("Cultures_Tempo_Espece","Cultures__Tempo_Espèce",tr("Analyse espèces"));
 }
 
 void MainWindow::on_tabWidget_currentChanged(int index)

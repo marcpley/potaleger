@@ -94,23 +94,38 @@ bool MainWindow::registerCustomFunctions() {
         return false;
     }
 
+    q1.clear();
+    if (!q1.exec("SELECT define('RotDecalDateMeP','"+RemoveComment(sRotDecalDateMeP,"--")+"')")){
+        qCritical() << "Failed to register function 'RotDecalDateMeP': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
 
+    q1.clear();
+    if (!q1.exec("SELECT define('RotTempo','"+RemoveComment(sRotTempo,"--")+"')")){
+        qCritical() << "Failed to register function 'RotTempo': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
 
-    // q1.clear();
-    // if (!q1.exec("SELECT define('Test','"+RemoveComment(sTest,"--")+"')")){
-    //     qCritical() << "Failed to register function 'Test': "<< q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return false;
-    // }
+    q1.clear();
+    q1.exec("DROP TABLE IF EXISTS RF_trop_proches");
+    q1.clear();
+    if (!q1.exec("CREATE VIRTUAL TABLE RF_trop_proches USING define(("+RemoveComment(sRF_trop_proches,"--")+"))")){
+        qCritical() << "Failed to register function 'RF_trop_proches': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    q1.clear();
+    if (!q1.exec("SELECT define('ItpPlus15jours','"+RemoveComment(sItpPlus15jours,"--")+"')")){
+        qCritical() << "Failed to register function 'ItpPlus15jours': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
 
     qCritical() << q1.lastQuery();
-
-    // q1.exec("SELECT undefine('PlanifCultureCalcDate')");
-    // q1.clear();
-    // if (!q1.exec("CREATE VIRTUAL TABLE PlanifCultureCalcDate USING define(("+sPlanifCultureCalcDate+"))")){
-    //     qCritical() << "Failed to register function 'PlanifCultureCalcDate': "<< q1.lastError();
-    //     return false;
-    // }
 
     qDebug() << "Functions registered successfully.";
 
@@ -192,6 +207,42 @@ QString MainWindow::testCustomFunctions() {
         return "CulTempo";
     }
     qDebug() << "Function ok : CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
+
+    q1.clear();
+    if (!q1.exec("SELECT RotDecalDateMeP('2000-09-02')") or !q1.next() or q1.value(0).toString()!="2000-05-02"){
+        qCritical() << "Function failed: RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "RotDecalDateMeP";
+    }
+    qDebug() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
+
+    q1.clear();
+    if (!q1.exec("SELECT RotTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:0:0:14:47:31"){
+        qCritical() << "Function failed: RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "RotTempo";
+    }
+    qDebug() << "Function ok : RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+
+    q1.clear();
+    if (!q1.exec("SELECT * FROM RF_trop_proches('xxx')")){
+        qCritical() << "Function failed: RF_trop_proches('xxx')";
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "RF_trop_proches";
+    }
+    qDebug() << "Function ok : RF_trop_proches('xxx') = " << q1.value(0).toString();
+
+    q1.clear();
+    if (!q1.exec("SELECT ItpPlus15jours('09-15')") or !q1.next() or q1.value(0).toString()!="10-01"){
+        qCritical() << "Function failed: ItpPlus15jours('09-15') = " << q1.value(0).toString();
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "ItpPlus15jours";
+    }
+    qDebug() << "Function ok : ItpPlus15jours('09-15') = " << q1.value(0).toString();
 
     qDebug() << "Functions tested.";
     return "";

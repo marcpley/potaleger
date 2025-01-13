@@ -87,7 +87,7 @@ iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
 )#");
 
 QString sCulTempoNJPeriode = QStringLiteral(R"#(
--- :dDeb :dFin date (YYY-MM-DD)
+-- :dDeb :dFin date (YYYY-MM-DD)
 replace(-julianday(:dDeb)+julianday(:dFin),''.0'','''')
 -- out : nb de jour de la période.
 )#");
@@ -132,3 +132,84 @@ iif(:Type=''Sans récolte'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01''
 )))))
 -- out : 15:15:15:15:15:15
 )#");
+
+QString sRotDecalDateMeP = QStringLiteral(R"#(
+-- :DateMeP date (YYYY-MM-DD)
+iif(substr(:DateMeP,6,2)=''01'',DATE(:DateMeP,''-5 month''),
+iif(substr(:DateMeP,6,2)=''02'',DATE(:DateMeP,''-6 month''),
+iif(substr(:DateMeP,6,2)=''03'',DATE(:DateMeP,''-7 month''),
+iif(substr(:DateMeP,6,2)=''04'',DATE(:DateMeP,''-8 month''),
+iif(substr(:DateMeP,6,2)=''05'',DATE(:DateMeP,''-8 month''),
+iif(substr(:DateMeP,6,2)=''06'',DATE(:DateMeP,''-7 month''),
+iif(substr(:DateMeP,6,2)=''07'',DATE(:DateMeP,''-6 month''),
+iif(substr(:DateMeP,6,2)=''08'',DATE(:DateMeP,''-5 month''),
+iif(substr(:DateMeP,6,2)=''09'',DATE(:DateMeP,''-4 month''),
+iif(substr(:DateMeP,6,2)=''10'',DATE(:DateMeP,''-4 month''),
+iif(substr(:DateMeP,6,2)=''11'',DATE(:DateMeP,''-4 month''),
+iif(substr(:DateMeP,6,2)=''12'',DATE(:DateMeP,''-5 month''),:DateMeP
+))))))))))))
+-- out : date décallée de plusieurs mois, décalage en fonction de la saison.
+)#");
+
+QString sRotTempo = QStringLiteral(R"#(
+-- :Type : type_culture
+-- :dXxx nb de jour depuis le début de l'année.
+iif(:Type=''to force params oder'',:dSem||:fSem,
+iif(:Type=''Semis sous abris'',(:dPlant-1) ||'':''|| -- Attente
+                               ''0:''|| -- Durée semis
+                               ''0:''|| -- Semis fait attente plantation
+                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''|| -- Durée plantation
+                               ItpTempoNJInterPe(:dPlant,:fPlant,:dRec) ||'':''|| -- Plantation faite attente récolte
+                               ItpTempoNJPeriode(:dRec,:fRec,:fRec), -- Durée récolte
+iif(:Type=''Semis direct''    ,(:dSem-1) ||'':''|| -- Attente
+                               ItpTempoNJPeriode(:dSem,:fSem,:dRec) ||'':''||
+                               '':''||
+                               '':''||
+                               ItpTempoNJInterPe(:dSem,:fSem,:dRec) ||'':''||
+                               ItpTempoNJPeriode(:dRec,:fRec,:fRec),
+iif(:Type=''Plant''           ,(:dPlant-1) ||'':''|| -- Attente
+                               '':''||
+                               '':''||
+                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
+                               ItpTempoNJInterPe(:dPlant,:fPlant,:dRec) ||'':''||
+                               ItpTempoNJPeriode(:dRec,:fRec,:fRec),
+iif(:Type=''Engrais vert''    ,(:dSem-1) ||'':''|| -- Attente
+                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant) ||'':''||
+                               '':''||
+                               '':''||
+                               ItpTempoNJInterPe(:dSem,:fSem,coalesce(:fRec,365)) ||
+                               '':'',
+iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
+                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant) ||'':''||
+                               ItpTempoNJInterPe(:dSem,:fSem,:dPlant) ||'':''||
+                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
+                               ItpTempoNJInterPe(:dPlant,:fPlant,coalesce(:fRec,365)) ||
+                               '':'',''''
+))))))
+-- out : 15:15:15:15:15:15
+)#");
+
+QString sRF_trop_proches = QStringLiteral(R"#(
+SELECT RF.Famille || ' année ' || format('%i',RF.Année) result
+                                         FROM R_famille RF
+                                        WHERE (RF.Rotation=(SELECT Rotation FROM R_famille WHERE ID=:ID))AND --ITP de la rotation
+                                              (RF.Année<>(SELECT Année FROM R_famille WHERE ID=:ID))AND -- que les ITP des autres années de la rotation
+                                              (RF.Famille=(SELECT Famille FROM R_famille WHERE ID=:ID))AND -- que les ITP de la même famille
+                                              (((SELECT Année FROM R_famille WHERE ID=:ID) BETWEEN RF.Année-RF.Intervalle+1 AND
+                                                                                                   RF.Année+RF.Intervalle-1)OR -- en conflit lors du 1er cycle
+                                               ((SELECT Année FROM R_famille WHERE ID=:ID) BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND
+                                                                                                   RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
+)#");
+
+
+QString sItpPlus15jours = QStringLiteral(R"#(
+iif(:dPeriode ISNULL,NULL,
+iif(substr(:dPeriode,4,2)=''01'',substr(:dPeriode,1,3)||''15'', -- xx-01 > xx-15
+iif(substr(:dPeriode,1,2)=''09'',''10-01'', -- 09-15 > 10-01
+iif(substr(:dPeriode,1,2)=''10'',''11-01'', -- 10-15 > 11-01
+iif(substr(:dPeriode,1,2)=''11'',''12-01'', -- 11-15 > 12-01
+iif(substr(:dPeriode,1,2)=''12'',''01-01'', -- 12-15 > 01-01
+                                 ''0''||(substr(:dPeriode,2,1)+1)||''-01'' -- xx-15 > xx+1-01
+))))))
+)#");
+
