@@ -12,10 +12,23 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-                cache: true
-                version: 6.8.1
-                host: 'linux'
-                dir: '${{ steps.qt-installation-dir.DIR }}'
-                #setup-python: 'false'
-                #extra: '--external 7z'
+            cache: true
+            version: 6.8.1
+            host: 'linux'
+            dir: '${{ steps.qt-installation-dir.DIR }}'
+            #setup-python: 'false'
+            #extra: '--external 7z'
+      - name: Clone repo
+          uses: actions/checkout@v3
+          with:
+            ref: main
+
+      - name: Download Amalgamation
+          shell: bash
+          run: |
+            mkdir install
+            cd install
+            qmake ../potaleger.pro "QT += svg"
+            make -j 4
+            ls -l
       - run: echo "This job's status is ${{ job.status }}."
