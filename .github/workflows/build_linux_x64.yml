@@ -13,6 +13,7 @@ jobs:
         steps:
             - name: Qt installation dir
               id: qt-installation-dir
+              shell: bash
               run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
 
             - name: Install Qt
