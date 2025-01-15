@@ -9,22 +9,24 @@ jobs:
       - name: Qt installation dir
         id: qt-installation-dir
         run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-            cache: true
-            version: 6.8.1
-            host: 'linux'
-            dir: '${{ steps.qt-installation-dir.DIR }}'
-            #setup-python: 'false'
-            #extra: '--external 7z'
+#      - name: Install Qt
+#        uses: jurplel/install-qt-action@v4
+#        with:
+#            cache: true
+#            version: 6.8.1
+#            host: 'linux'
+#            dir: '${{ steps.qt-installation-dir.DIR }}'
+#            #setup-python: 'false'
+#            #extra: '--external 7z'
       #- name: Clone repo
       - uses: actions/checkout@v4
         with:
           repository: '${{ github.repository }}'
           ref: 'main'
+      - run: ls -l
       - run: mkdir install
       - run: cd install
+      - run: ls -l
       - run: qmake ../potaleger.pro "QT += svg"
       - run: make -j 4
       - run: ls -l
