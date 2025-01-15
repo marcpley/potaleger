@@ -23,8 +23,8 @@ jobs:
         with:
           repository: '${{ github.repository }}'
           ref: 'main'
-      - name: Download Amalgamation
-          shell: bash
+      - name: Compile
+          #shell: bash
           run: |
             mkdir install
             cd install
