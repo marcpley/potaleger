@@ -195,7 +195,6 @@ QString RowSummary(QString TableName,const QModelIndex &index){
 QColor TableColor(QString sTName,QString sFName)
 {
     const QColor cBase=QColor("#a17dc2");//Violet gris
-    const QColor cCulture=QColor("#00ff00");//Vert
     const QColor cEspece=QColor("#002bff");//Bleu
     const QColor cFamille=QColor("#0085c4");//Bleu gris
     const QColor cITP=QColor("#ff0000");//Rouge
@@ -274,7 +273,7 @@ QColor TableColor(QString sTName,QString sFName)
         return QColor();
 }
 
-QString ToolTip(const QString sTableName,const QString sFieldName)
+QString ToolTipField(const QString sTableName,const QString sFieldName)
 {
     QString sToolTip="";
 
@@ -400,6 +399,38 @@ QString ToolTip(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr("Semence en stock (g).");
         else if (sFieldName=="Qté_cde")
             sToolTip=QObject::tr("Semence commandée (g).")+"\n"+QObject::tr("A réception, mettre à 0 et ajouter la quantité à la quantité en stock.");
+    }
+    return sToolTip;
+}
+
+QString ToolTipTable(const QString sTableName) {
+    QString sToolTip="";
+
+    if (sTableName==""){
+
+    } else if (sTableName=="Cultures"){
+        sToolTip=QObject::tr("Une culture c'est une plante (variété+itinéraire technique) sur une planche.\nSi la même plante est présente sur plusieurs planches, il y a une culture (numérotée) par planche.");
+
+    } else if (sTableName=="Espèces"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="Familles"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="Fournisseurs"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="ITP"){
+        sToolTip=QObject::tr("Itinéraires techniques. Une espèce de plante cultivée d'une certaine manière.");
+    } else if (sTableName=="Planches"){
+        sToolTip=QObject::tr("Planches de cultures.");
+    } else if (sTableName=="Rotations"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="Rotations_détails"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="Récoltes"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="Types_planche"){
+        sToolTip=QObject::tr("");
+    } else if (sTableName=="Variétés"){
+        sToolTip=QObject::tr("");
     }
     return sToolTip;
 }

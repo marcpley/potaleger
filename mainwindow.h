@@ -88,6 +88,7 @@ private slots:
     void on_mCulturesParplante_triggered();
 
 private:
+    void updateTabStyles(QTabWidget *tabWidget);
     void ActiverMenusData(bool b);
     bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);

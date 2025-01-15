@@ -535,6 +535,7 @@ public:
     PotaQuery *query;//for specials coded querys.
     QTabWidget *twParent;
     bool isCommittingError=false;
+    QLabel *lTabTitle;
 
 
     QWidget *toolbar;

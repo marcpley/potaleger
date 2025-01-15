@@ -21,13 +21,21 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
-    ui->lVer->setText("1.0b9");//Application version.
+
+    //QObject::connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int) {
+    //                 updateTabStyles(ui->tabWidget);});
+
+    ui->lVer->setText("1.0b10");//Application version.
     ui->lVerBDDAttendue->setText("2024-12-30");//Expected database version.
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void updateTabStyles(QTabWidget *tabWidget) {
+
 }
 
 bool MainWindow::PotaBDDInfo()
@@ -73,13 +81,11 @@ bool MainWindow::OuvrirOnglet(QString const sObjName, QString const sTableName, 
             ui->tabWidget->addTab(w,sTitre);
             ui->tabWidget->setCurrentWidget(w);
 
-            //View special settings
-
             if (w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
                                         "WHERE (tbl_name='"+sTableName+"')AND"
                                               "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
                 w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "
-                                        "WHERE (tbl_name='"+sTableName+"')AND"    //View avec trigger instead of insert
+                                        "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
                                               "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
                 w->sbInsertRows->setEnabled(true);
                 w->pbInsertRow->setEnabled(true);
@@ -101,7 +107,7 @@ bool MainWindow::OuvrirOnglet(QString const sObjName, QString const sTableName, 
                 }
 
                 //Tooltip
-                QString sTT=ToolTip(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                QString sTT=ToolTipField(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
                 if (sTT!="")
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
@@ -110,6 +116,42 @@ bool MainWindow::OuvrirOnglet(QString const sObjName, QString const sTableName, 
                     w->model->nonEditableColumns.insert(i);
                 }
             }
+
+            //Colored tab title
+            ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
+            QColor c=w->delegate->cTableColor;
+            if (sTableName.startsWith("Cultures"))
+                c=cCulture;
+            w->lTabTitle->setStyleSheet(QString(
+                                     "background-color: rgba(%1, %2, %3, %4);"
+                                     "font-weight: bold;"
+                                     )
+                                     .arg(c.red())
+                                     .arg(c.green())
+                                     .arg(c.blue())
+                                     .arg(60));
+            w->lTabTitle->setText(sTitre);
+            w->lTabTitle->setContentsMargins(10, 4, 10, 4);
+            w->lTabTitle->setAlignment(Qt::AlignCenter);
+
+            ui->tabWidget->tabBar()->setTabButton(ui->tabWidget->currentIndex(), QTabBar::LeftSide, w->lTabTitle);
+
+            // ui->tabWidget->tabBar()->setStyleSheet("QTabBar::tab {" //Impossible d'obtenir le visuel natif.
+            //                                        "padding-top: 5px;"
+            //                                        "padding-right: 3px;"
+            //                                        "background: palette(light);"
+            //                                        "border: 1px solid palette(hilight);"
+            //                                        "}"
+            //                                        "QTabBar::tab:selected {"
+            //                                        "border-bottom: 0px;"
+            //                                        "border-top-left-radius: 8px 8px"
+            //                                        "border-top-right-radius: 8px 8px"
+            //                                        "}"
+            //                                        "QTabBar::tab:!selected {"
+            //                                        "margin-top: 2px;"
+            //                                        "}");
+
+            ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(sTableName));
 
             //Tab user settings
             QSettings settings("greli.net", "Potaléger");
@@ -154,7 +196,7 @@ void MainWindow::FermerOnglet(QWidget *Tab)
 
         if (w->pbCommit->isEnabled())
         {
-            if (YesNoDialog(ui->tabWidget->tabText(ui->tabWidget->currentIndex())+"\n\n"+
+            if (YesNoDialog(w->lTabTitle->text()+"\n\n"+
                                tr("Valider les modifications avant de fermer ?")))
             {
                 if (!w->model->SubmitAllShowErr())
@@ -533,14 +575,12 @@ void MainWindow::on_mAnaEspeces_triggered()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-    // for (int i = 1; i < ui->tabWidget->count(); i++)
-    // {
-    //     if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName )//Widget Onglet Data
-    //     {
-    //         ui->tabWidget->setCurrentIndex(i);
-    //         break;
-    //     }
-    // }
-    // ui->tabWidget->widget(index)-
+    for (int i = 1; i < ui->tabWidget->count(); ++i) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
+        if (i==ui->tabWidget->currentIndex())
+            w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
+        else
+            w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+    }
 }
 

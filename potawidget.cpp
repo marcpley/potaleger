@@ -22,6 +22,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     delegate = new PotaItemDelegate2();
     delegate->setParent(this);
     query = new PotaQuery();
+    lTabTitle = new QLabel();
 
     //Toolbar
     toolbar = new QWidget(this);
@@ -217,7 +218,8 @@ void PotaWidget::dataChanged(const QModelIndex &topLeft,const QModelIndex &botto
     pbCommit->setEnabled(true);
     pbRollback->setEnabled(true);
     cbFilter->setEnabled(false);
-    twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
+    twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
+    //lTabTitle->setStyleSheet(lTabTitle->styleSheet().append("color: red;"));
 
     QVariant variant;
     if (!topLeft.data(Qt::EditRole).isNull() and
@@ -354,6 +356,7 @@ bool PotaTableModel::SubmitAllShowErr()
         pw->pbRollback->setEnabled(false);
         pw->cbFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
+        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().replace("color: red;", ""));
         if (i != rowCount())
             commitedCells.clear();//Display commited cells could be unconsistent.
     }
@@ -378,6 +381,7 @@ bool PotaTableModel::RevertAllShowErr()
         pw->pbRollback->setEnabled(false);
         pw->cbFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
+        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().replace("color: red;", ""));
 
     }
     else
@@ -398,7 +402,8 @@ bool PotaTableModel::InsertRowShowErr()
         pw->pbCommit->setEnabled(true);
         pw->pbRollback->setEnabled(true);
         pw->cbFilter->setEnabled(false);
-        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
+        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
+        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().append("color: red;"));
     }
     else
     {
@@ -423,7 +428,8 @@ bool PotaTableModel::DeleteRowShowErr()
         pw->pbCommit->setEnabled(true);
         pw->pbRollback->setEnabled(true);
         pw->cbFilter->setEnabled(false);
-        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/yellowbullet.svg"));
+        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
+        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().append("color: red;"));
         return true;
     }
     return false;

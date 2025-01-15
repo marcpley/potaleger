@@ -16,5 +16,6 @@
         <file>reload.svg</file>
         <file>insert_row.svg</file>
         <file>yellowbullet.svg</file>
+        <file>toCommit.svg</file>
     </qresource>
 </RCC>

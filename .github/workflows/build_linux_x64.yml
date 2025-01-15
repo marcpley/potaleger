@@ -1,75 +1,40 @@
 name: Binaries - Linux x64
 
 env:
-    output_basename: sqlite3-linux-x64
-    compilation_options: |
-                    -DSQLITE_ENABLE_UPDATE_DELETE_LIMIT \
-                    -DSQLITE_ENABLE_DBSTAT_VTAB \
-                    -DSQLITE_ENABLE_BYTECODE_VTAB \
-                    -DSQLITE_ENABLE_COLUMN_METADATA \
-                    -DSQLITE_ENABLE_EXPLAIN_COMMENTS \
-                    -DSQLITE_ENABLE_FTS3 \
-                    -DSQLITE_ENABLE_FTS4 \
-                    -DSQLITE_ENABLE_FTS5 \
-                    -DSQLITE_ENABLE_GEOPOLY \
-                    -DSQLITE_ENABLE_JSON1 \
-                    -DSQLITE_ENABLE_RTREE \
-                    -DSQLITE_ENABLE_MATH_FUNCTIONS
 
 on:
     workflow_dispatch:
         inputs:
-          INT_VER:
-            description: 'SQLite version as integer'
-            required: true
-            type: number
-          PARENT_RUN_ID:
-            description: 'ID of workflow that created appropriate amalgamation artifact'
-            required: true
-            type: number
 
 jobs:
     build:
         runs-on: ubuntu-20.04
 
         steps:
-            - name: Download Amalgamation
+            - name: Qt installation dir
+              id: qt-installation-dir
+              run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
+
+            - name: Install Qt
+              uses: jurplel/install-qt-action@v4
+              with:
+                cache: true
+                version: 6.8.1
+                host: 'linux'
+                dir: '${{ steps.qt-installation-dir.DIR }}'
+                setup-python: 'false'
+                extra: '--external 7z'
+
+            - name: Clone repo
+              uses: actions/checkout@v3
+              with:
+                ref: main
+
+             - name: Download Amalgamation
               shell: bash
               run: |
-                set -x
-                URL=$(
-                    curl -s -L \
-                        -H "Accept: application/vnd.github+json" \
-                        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                        -H "X-GitHub-Api-Version: 2022-11-28" \
-                        https://api.github.com/repos/marcpley/potaleger/actions/runs/${{ inputs.PARENT_RUN_ID }}/artifacts \
-                        | jq -r '.artifacts[0].archive_download_url'
-                    )
-                    
-                ZIP_NAME=sqlite3-amalgamation-${{ inputs.INT_VER }}.zip
-                echo "Downloading $ZIP_NAME from $URL"
-                curl -s -L -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o $ZIP_NAME $URL
+                mkdir install
+                cd install
+                qmake ../potaleger.pro "QT += svg"
+                make -j 4
                 ls -l
-                
-                unzip $ZIP_NAME
-                ls -l
-
-                gcc sqlite3.c -lpthread -ldl -lm -Os -fpic -shared -o libsqlite3.so ${{ env.compilation_options }}
-                gcc shell.c sqlite3.c -lpthread -ldl -lm -Os -fpic -o sqlite3 ${{ env.compilation_options }}
-                ls -l
-
-                strip libsqlite3.so
-                strip sqlite3
-                ls -l
-                
-                OUTPUT_DIR=${{ env.output_basename }}-${{ inputs.INT_VER }}
-                echo "OUTPUT_DIR=$OUTPUT_DIR" >> $GITHUB_ENV
-                mkdir $OUTPUT_DIR
-                cp libsqlite3.so sqlite3 sqlite3.h sqlite3ext.h $OUTPUT_DIR/
-                
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                name: ${{ env.OUTPUT_DIR }}
-                path: ${{ env.OUTPUT_DIR }}
-
