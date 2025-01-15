@@ -418,11 +418,15 @@ QString ToolTipTable(const QString sTableName) {
     } else if (sTableName=="Fournisseurs"){
         sToolTip=QObject::tr("");
     } else if (sTableName=="ITP"){
-        sToolTip=QObject::tr("Itinéraires techniques. Une espèce de plante cultivée d'une certaine manière.");
+        sToolTip=QObject::tr(   "Itinéraires techniques de plantes.\n"
+                                "Une ITP c'est Une espèce de plante cultivée d'une certaine manière:\n"
+                                "Hative ou tardive, sous serre ou en extérieur, etc.\n"
+                                "Chaque ITP à une période de semis, de plantation et de récolte.\n"
+                                "Pour chaque culture, il faudra prendre une variété adaptée à l'itinéraire technique voulu.");
     } else if (sTableName=="Planches"){
         sToolTip=QObject::tr("Planches de cultures.");
     } else if (sTableName=="Rotations"){
-        sToolTip=QObject::tr("");
+        sToolTip=QObject::tr(   "Ensemble d'ITP qui vont se succéder sur un groupe de planches (ilot) en respectant les débuts et fin de chaque culture et le nombre d'année minimum nécessaire entre 2 cultures d'une même famille (intervale).");
     } else if (sTableName=="Rotations_détails"){
         sToolTip=QObject::tr("");
     } else if (sTableName=="Récoltes"){
