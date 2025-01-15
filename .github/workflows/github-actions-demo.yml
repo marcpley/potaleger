@@ -6,4 +6,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - name: Qt installation dir
+        id: qt-installation-dir
+        run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
       - run: echo "This job's status is ${{ job.status }}."
