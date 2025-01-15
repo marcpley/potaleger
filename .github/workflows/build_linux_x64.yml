@@ -11,16 +11,15 @@ jobs:
         id: qt-installation-dir
         run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
 
-#      - name: Install Qt
-#        uses: jurplel/install-qt-action@v4
-#        with:
-#            cache: true
-#            version: 6.8.1
-#            host: 'linux'
-#            dir: '${{ steps.qt-installation-dir.DIR }}'
-#            #setup-python: 'false'
-#            #extra: '--external 7z'
-      #- name: Clone repo
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+            cache: true
+            version: 6.8.1
+            host: 'linux'
+            dir: '${{ steps.qt-installation-dir.DIR }}'
+            #setup-python: 'false'
+            #extra: '--external 7z'
 
       - uses: actions/checkout@v4
         with:
