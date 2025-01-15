@@ -24,12 +24,9 @@ jobs:
           repository: '${{ github.repository }}'
           ref: 'main'
       - run: mkdir install
-      - name: Compile
-          shell: bash
-          run: |
-            mkdir install
-            cd install
-            qmake ../potaleger.pro "QT += svg"
-            make -j 4
-            ls -l
+      - run: cd install
+      - run: qmake ../potaleger.pro "QT += svg"
+      - run: make -j 4
+      - run: ls -l
+
       - run: echo "This job's status is ${{ job.status }}."
