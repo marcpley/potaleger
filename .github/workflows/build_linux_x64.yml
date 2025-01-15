@@ -1,40 +1,21 @@
-name: Binaries - Linux x64
-
-#env:
-
-on:
-    workflow_dispatch:
-        #inputs:
-
+name: Compil for Linux x64
+#run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
 jobs:
-    build:
-        runs-on: ubuntu-20.04
-
-        steps:
-            - name: Qt installation dir
-              id: qt-installation-dir
-              run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
-
-            - name: Install Qt
-              uses: jurplel/install-qt-action@v4
-              with:
+  Build:
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - name: Qt installation dir
+        id: qt-installation-dir
+        run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
                 cache: true
                 version: 6.8.1
                 host: 'linux'
                 dir: '${{ steps.qt-installation-dir.DIR }}'
                 #setup-python: 'false'
                 #extra: '--external 7z'
-
-            - name: Clone repo
-              uses: actions/checkout@v3
-              with:
-                ref: main
-
-             - name: Download Amalgamation
-              shell: bash
-              run: |
-                mkdir install
-                cd install
-                qmake ../potaleger.pro "QT += svg"
-                make -j 4
-                ls -l
+      - run: echo "This job's status is ${{ job.status }}."
