@@ -23,8 +23,9 @@ jobs:
         with:
           repository: '${{ github.repository }}'
           ref: 'main'
+      - run: mkdir install
       - name: Compile
-          shell: 'bash'
+          shell: bash
           run: |
             mkdir install
             cd install
