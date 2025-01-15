@@ -18,10 +18,11 @@ jobs:
             dir: '${{ steps.qt-installation-dir.DIR }}'
             #setup-python: 'false'
             #extra: '--external 7z'
-      - name: Clone repo
-          uses: actions/checkout@v4
-          #with:
-          #  ref: 'main'
+      #- name: Clone repo
+      - uses: actions/checkout@v4
+          with:
+            repository: ''${{ github.repository }}''
+            ref: 'main'
       - name: Download Amalgamation
           shell: bash
           run: |
