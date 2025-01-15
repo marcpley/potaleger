@@ -21,8 +21,7 @@ jobs:
       - name: Clone repo
           uses: actions/checkout@v4
           with:
-            ref: main
-
+            ref: 'main'
       - name: Download Amalgamation
           shell: bash
           run: |
