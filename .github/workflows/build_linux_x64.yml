@@ -20,8 +20,8 @@ jobs:
             #extra: '--external 7z'
       - name: Clone repo
           uses: actions/checkout@v4
-          with:
-            ref: 'main'
+          #with:
+          #  ref: 'main'
       - name: Download Amalgamation
           shell: bash
           run: |
