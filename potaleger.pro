@@ -4,12 +4,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 sql
 
-# Remplacement de la version 3.45 de SQLite par la 3.47.2
+# Do not use Qt SQLite (3.45)
 #LIBS += -lsqlite3
-# Inclure le dossier contenant sqlite3.h 3.47.2
-INCLUDEPATH += $$PWD/libs/sqlite
-# Lier la bibliothèque statique 3.47.2
-LIBS += $$PWD/libs/sqlite/libsqlite3.a
+
+# Use a home compiled shared lib (3.47.2)
+#INCLUDEPATH += $$PWD/libs/sqlite
+#LIBS += $$PWD/libs/sqlite/libsqlite3.a
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -26,7 +26,8 @@ SOURCES += \
     potawidget.cpp \
     sqlean/eval.c \
     sqlean/manage.c \
-    sqlean/module.c
+    sqlean/module.c \
+    sqlite/sqlite3.c
 
 HEADERS += \
     PotaUtils.h \

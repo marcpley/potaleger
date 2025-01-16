@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     //QObject::connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int) {
     //                 updateTabStyles(ui->tabWidget);});
 
-    ui->lVer->setText("1.0b10");//Application version.
+    ui->lVer->setText("1.0b11");//Application version.
     ui->lVerBDDAttendue->setText("2024-12-30");//Expected database version.
 }
 
