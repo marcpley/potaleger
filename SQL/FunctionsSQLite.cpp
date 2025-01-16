@@ -7,7 +7,8 @@
 #include <QVariant>
 #include <QDebug>
 //#include <sqlite3.h>
-#include "sqlean/sqlite3.h"
+//#include "sqlean/sqlite3.h"
+#include "sqlite/sqlite3.h"
 #include "sqlean/define.h"
 #include "SQL/FunctionsSQLite.sql"
 
