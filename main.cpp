@@ -10,8 +10,6 @@
 #include "QDebug"
 #include "PotaUtils.h"
 
-//#include <sqlite3.h>
-
 void MainWindow::ActiverMenusData(bool b)
 {
     if (!b)

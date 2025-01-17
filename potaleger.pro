@@ -35,7 +35,7 @@ HEADERS += \
     mainwindow.h \
     potawidget.h \
     sqlean/define.h \
-    sqlite/sqlite3.h
+    sqlean/sqlite3.h
 
 FORMS += \
     mainwindow.ui
