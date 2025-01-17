@@ -12,14 +12,16 @@ jobs:
         run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@v4.1.1
         with:
             cache: true
             version: 6.8.1
             host: 'linux'
             dir: '${{ steps.qt-installation-dir.DIR }}'
-            #setup-python: 'false'
+            setup-python: false
             #extra: '--external 7z'
+
+          
 
       - uses: actions/checkout@v4
         with:
