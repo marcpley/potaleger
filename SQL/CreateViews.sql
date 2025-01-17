@@ -26,7 +26,7 @@ CREATE VIEW Info_Potaléger AS
                                            FROM C_en_place
                                           ORDER BY Variété) ) || (SELECT count() ||' en culture planifiée.'
                                                                     FROM (SELECT DISTINCT Variété
-                                                                            FROM C_a_venir
+                                                                            FROM C_à_venir
                                                                            ORDER BY Variété) )
     UNION
     SELECT 4,
@@ -37,7 +37,7 @@ CREATE VIEW Info_Potaléger AS
                                       FROM C_en_place
                                      ORDER BY IT_plante) ) || (SELECT count() ||' en culture planifiée.'
                                                                  FROM (SELECT DISTINCT IT_plante
-                                                                         FROM C_a_venir
+                                                                         FROM C_à_venir
                                                                         ORDER BY IT_plante) )
     UNION
     SELECT 5,
@@ -48,7 +48,7 @@ CREATE VIEW Info_Potaléger AS
                                            FROM C_en_place
                                           ORDER BY Planche) ) || (SELECT count() ||' en culture planifiée.'
                                                                     FROM (SELECT DISTINCT Planche
-                                                                            FROM C_a_venir
+                                                                            FROM C_à_venir
                                                                            ORDER BY Planche) )
     UNION
     SELECT 6,
@@ -64,7 +64,7 @@ CREATE VIEW Variétés__inv_et_cde AS SELECT E.Famille,
        (SELECT round(sum(CASE WHEN C.Espacement>0
                               THEN C.Longueur*C.Nb_rangs/C.Espacement*100*I.Nb_graines_trou/V.Nb_graines_g
                               ELSE C.Longueur*PL.Largeur*I.Dose_semis END), 2)
-          FROM C_a_venir C
+          FROM C_non_commencées C
                LEFT JOIN ITP I USING(IT_plante)
                LEFT JOIN Planches PL USING(Planche)
          WHERE (C.Variété=V.Variété) ) Qté_nécess,
@@ -73,7 +73,7 @@ CREATE VIEW Variétés__inv_et_cde AS SELECT E.Famille,
        max((SELECT round(sum(CASE WHEN C.Espacement>0
                                   THEN C.Longueur*C.Nb_rangs/C.Espacement*100*I.Nb_graines_trou/V.Nb_graines_g
                                   ELSE C.Longueur*PL.Largeur*I.Dose_semis END), 2)
-              FROM C_a_venir C
+              FROM C_non_commencées C
                    LEFT JOIN ITP I USING(IT_plante)
                    LEFT JOIN Planches PL USING(Planche)
              WHERE (C.Variété=V.Variété) )-coalesce(V.Qté_stock,0)-coalesce(V.Qté_cde,0),0) Qté_manquante,
@@ -84,13 +84,13 @@ CREATE VIEW Variétés__inv_et_cde AS SELECT E.Famille,
        --    FROM C_en_place C
        --   WHERE (C.Variété=V.Variété) ) C_en_place,
        (SELECT count()
-          FROM C_a_venir C
-         WHERE (C.Variété=V.Variété) ) C_a_venir,
+          FROM C_non_commencées C
+         WHERE (C.Variété=V.Variété) ) C_non_commencées,
        (SELECT sum(C.Longueur)
-          FROM C_a_venir C
+          FROM C_non_commencées C
          WHERE (C.Variété=V.Variété) ) Long_planches,
        (SELECT round(sum(C.Longueur*C.Nb_rangs/C.Espacement*100) )
-          FROM C_a_venir C
+          FROM C_non_commencées C
          WHERE (C.Variété=V.Variété) ) Nb_plants,
        V.Notes,
        E.Notes N_espèce,
@@ -132,13 +132,14 @@ FROM ITP I
 LEFT JOIN Espèces E USING(Espèce);
 --ORDER BY coalesce(I.Déb_semis,I.Déb_plantation,I.Type_culture);
 
-CREATE VIEW Espèces__Stock_récoltes AS SELECT E.Espèce,
-       E.Inventaire,
-       E.Date_inv,
-       E.Inventaire+(SELECT sum(R.Quantité)
-                     FROM Récoltes R LEFT JOIN Cultures C USING(Culture)
-                                     LEFT JOIN ITP I USING(IT_plante)
-                     WHERE I.Espèce=E.Espèce) Stock_récolte
+CREATE VIEW Espèces__Stock_récoltes AS SELECT
+    E.Espèce,
+    E.Inventaire,
+    E.Date_inv,
+    E.Inventaire+(SELECT sum(R.Quantité)
+                  FROM Récoltes R LEFT JOIN Cultures C USING(Culture)
+                                  LEFT JOIN ITP I USING(IT_plante)
+                  WHERE I.Espèce=E.Espèce) Stock_récolte
 FROM Espèces E WHERE E.Inventaire NOTNULL;
 
 CREATE VIEW Rotations_détails__Tempo AS SELECT
@@ -211,44 +212,44 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
        LEFT JOIN R_ITP RI USING(ID)
  ORDER BY RI.Ind;
 
-CREATE VIEW IT_Rotations_vérif AS SELECT I.Espèce,
-       coalesce(IR.IT_plante,IC.IT_plante) IT_plante,
-       IR.Nb_planches Nb_planches_P,
-       IR.Longueur Long_P,
-       IR.Long_rang Long_rang_P,
-       IR.Nb_plants Nb_plants_P,
-       (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') Année_à_planifier,
-       IC.Nb_planches Nb_planches_C,
-       IC.Longueur Long_C,
-       IC.Long_rang Long_rang_C,
-       IC.Nb_plants Nb_plants_C,
-       (SELECT Valeur FROM Params WHERE Paramètre='Année_culture') Année_en_cours,
-       CASE WHEN IC.LONGUEUR NOTNULL THEN CAST((coalesce(IR.LONGUEUR,0)-coalesce(IC.LONGUEUR,0))/IC.LONGUEUR*100 AS INTEGER)
-            ELSE 1000 END Diff_long,
-       'pc' Unité
-FROM IT_rotations IR
-FULL JOIN IT_cultures IC USING(IT_plante)
-LEFT JOIN ITP I USING(IT_plante)
-UNION
-SELECT I.Espèce,
-       'z________________________TOTAL '||I.Espèce IT_plante,
-       sum(IR.NB_PLANCHES) Nb_planches_P,
-       sum(IR.LongueuR) Long_P,
-       sum(IR.Long_rang) Long_rang_P,
-       sum(IR.Nb_plants) Nb_plants_P,
-       null Année_à_planifier,
-       sum(IC.Nb_planches) Nb_planches_C,
-       sum(IC.Longueur) Long_C,
-       sum(IC.Long_rang) Long_rang_C,
-       sum(IC.Nb_plants) Nb_plants_C,
-       null Année_en_cours,
-       CAST(sum(coalesce(IR.LONGUEUR,0)-coalesce(IC.LONGUEUR,0)) AS INTEGER) Diff_long,
-       'm' Unité
-FROM IT_rotations IR
-FULL JOIN IT_cultures IC USING(IT_plante)
-LEFT JOIN ITP I USING(IT_plante)
-GROUP BY Espèce
-ORDER BY Espèce,IT_plante;
+-- CREATE VIEW IT_Rotations_vérif AS SELECT I.Espèce,
+--        coalesce(IR.IT_plante,IC.IT_plante) IT_plante,
+--        IR.Nb_planches Nb_planches_P,
+--        IR.Longueur Long_P,
+--        IR.Long_rang Long_rang_P,
+--        IR.Nb_plants Nb_plants_P,
+--        (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') Année_à_planifier,
+--        IC.Nb_planches Nb_planches_C,
+--        IC.Longueur Long_C,
+--        IC.Long_rang Long_rang_C,
+--        IC.Nb_plants Nb_plants_C,
+--        (SELECT Valeur FROM Params WHERE Paramètre='Année_culture') Année_en_cours,
+--        CASE WHEN IC.LONGUEUR NOTNULL THEN CAST((coalesce(IR.LONGUEUR,0)-coalesce(IC.LONGUEUR,0))/IC.LONGUEUR*100 AS INTEGER)
+--             ELSE 1000 END Diff_long,
+--        'pc' Unité
+-- FROM IT_rotations IR
+-- FULL JOIN IT_cultures IC USING(IT_plante)
+-- LEFT JOIN ITP I USING(IT_plante)
+-- UNION
+-- SELECT I.Espèce,
+--        'z________________________TOTAL '||I.Espèce IT_plante,
+--        sum(IR.NB_PLANCHES) Nb_planches_P,
+--        sum(IR.LongueuR) Long_P,
+--        sum(IR.Long_rang) Long_rang_P,
+--        sum(IR.Nb_plants) Nb_plants_P,
+--        null Année_à_planifier,
+--        sum(IC.Nb_planches) Nb_planches_C,
+--        sum(IC.Longueur) Long_C,
+--        sum(IC.Long_rang) Long_rang_C,
+--        sum(IC.Nb_plants) Nb_plants_C,
+--        null Année_en_cours,
+--        CAST(sum(coalesce(IR.LONGUEUR,0)-coalesce(IC.LONGUEUR,0)) AS INTEGER) Diff_long,
+--        'm' Unité
+-- FROM IT_rotations IR
+-- FULL JOIN IT_cultures IC USING(IT_plante)
+-- LEFT JOIN ITP I USING(IT_plante)
+-- GROUP BY Espèce
+-- ORDER BY Espèce,IT_plante;
 
 CREATE VIEW Cult_planif AS SELECT trim(RD.IT_plante) IT_plante,
        (SELECT V.Variété
@@ -306,15 +307,15 @@ CREATE VIEW Successions_par_planche AS SELECT PL.Planche,
          WHERE C.Planche=PL.Planche ) Libre_le,
 
        (SELECT count()
-          FROM C_a_venir C
+          FROM C_à_venir C
          WHERE C.Planche=PL.Planche) Nb_cu_AV,
        (SELECT group_concat(IT_plante, '/')
           FROM (SELECT DISTINCT IT_plante
-                  FROM C_a_venir C
+                  FROM C_à_venir C
                  WHERE C.Planche=PL.Planche)) ITP_à_venir,
 
        (SELECT min(coalesce(Date_semis,Date_plantation))
-          FROM C_a_venir C
+          FROM C_à_venir C
          WHERE C.Planche=PL.Planche ) A_faire_le
   FROM Planches PL;
 
@@ -565,7 +566,7 @@ CREATE VIEW C_non_commencées AS --Cultures ni semées (SD ou SSA) ni plantées.
      WHERE Terminée ISNULL AND Semis_fait ISNULL AND Plantation_faite ISNULL
      ORDER BY Planche;
 
-CREATE VIEW C_a_venir AS --Cultures ni semées (SD) ni plantées.
+CREATE VIEW C_à_venir AS --Cultures ni semées (SD) ni plantées.
     SELECT *
       FROM Cultures
      WHERE Terminée ISNULL AND
@@ -589,52 +590,52 @@ CREATE VIEW F_actives AS
                      LEFT JOIN Espèces USING(Espèce)
                WHERE Espèces.Famille=F.Famille) >0);
 
-CREATE VIEW IT_cultures AS
-    SELECT IT_plante,
-           sum(NB_PLANCHES) NB_PLANCHES,
-           sum(LONGUEUR) LONGUEUR,
-           sum(LONG_RANG) LONG_RANG,
-           sum(NB_PLANTS) NB_PLANTS,
-           (SELECT Valeur
-              FROM Params
-             WHERE Paramètre='Année_culture') ANNEE
-      FROM IT_cultures_ilots
-     GROUP BY IT_plante;
+-- CREATE VIEW IT_cultures AS
+--     SELECT IT_plante,
+--            sum(NB_PLANCHES) NB_PLANCHES,
+--            sum(LONGUEUR) LONGUEUR,
+--            sum(LONG_RANG) LONG_RANG,
+--            sum(NB_PLANTS) NB_PLANTS,
+--            (SELECT Valeur
+--               FROM Params
+--              WHERE Paramètre='Année_culture') ANNEE
+--       FROM IT_cultures_ilots
+--      GROUP BY IT_plante;
 
-CREATE VIEW IT_cultures_ilots AS
-    SELECT IT_plante,
-           substr(PLANCHE, 1, (SELECT Valeur
-                                 FROM Params
-                                WHERE Paramètre='Ilot_nb_car') ) ILOT,
-           sum(NB_PLANCHES) NB_PLANCHES,
-           sum(LONGUEUR) LONGUEUR,
-           sum(LONG_RANG) LONG_RANG,
-           sum(NB_PLANTS) NB_PLANTS,
-           (SELECT Valeur
-              FROM Params
-             WHERE Paramètre='Année_culture') ANNEE
-      FROM IT_cultures_planches
-     GROUP BY IT_plante,
-              ILOT;
+-- CREATE VIEW IT_cultures_ilots AS
+--     SELECT IT_plante,
+--            substr(PLANCHE, 1, (SELECT Valeur
+--                                  FROM Params
+--                                 WHERE Paramètre='Ilot_nb_car') ) ILOT,
+--            sum(NB_PLANCHES) NB_PLANCHES,
+--            sum(LONGUEUR) LONGUEUR,
+--            sum(LONG_RANG) LONG_RANG,
+--            sum(NB_PLANTS) NB_PLANTS,
+--            (SELECT Valeur
+--               FROM Params
+--              WHERE Paramètre='Année_culture') ANNEE
+--       FROM IT_cultures_planches
+--      GROUP BY IT_plante,
+--               ILOT;
 
-CREATE VIEW IT_cultures_planches AS
-    SELECT trim(C.IT_plante) IT_plante,
-           C.Planche PLANCHE,
-           1 NB_PLANCHES,-- 2 ITP sur la même planche la même année se partagent la planche, donc on en compte qu'une
-           sum(C.Longueur) LONGUEUR,
-           sum(C.Longueur*coalesce(C.Nb_rangs, 1) ) LONG_RANG,
-           CAST(sum(C.Longueur*coalesce(C.Nb_rangs, 1) /coalesce(C.Espacement/100, 1) ) AS INTEGER) NB_PLANTS,-- C.Longueur,
-           (SELECT Valeur
-              FROM Params
-             WHERE Paramètre='Année_culture') ANNEE
-      FROM Cultures C-- LEFT JOIN Rotations R USING(Rotation)
-     WHERE (substr(coalesce(C.Date_plantation, C.Date_semis), 1, 4) = (SELECT Valeur-- LEFT JOIN Planches P USING(Rotation)
-                                                                         FROM Params
-                                                                        WHERE Paramètre='Année_culture') )
-     GROUP BY IT_plante,
-              PLANCHE
-     ORDER BY IT_plante,
-              PLANCHE;
+-- CREATE VIEW IT_cultures_planches AS
+--     SELECT trim(C.IT_plante) IT_plante,
+--            C.Planche PLANCHE,
+--            1 NB_PLANCHES,-- 2 ITP sur la même planche la même année se partagent la planche, donc on en compte qu'une
+--            sum(C.Longueur) LONGUEUR,
+--            sum(C.Longueur*coalesce(C.Nb_rangs, 1) ) LONG_RANG,
+--            CAST(sum(C.Longueur*coalesce(C.Nb_rangs, 1) /coalesce(C.Espacement/100, 1) ) AS INTEGER) NB_PLANTS,-- C.Longueur,
+--            (SELECT Valeur
+--               FROM Params
+--              WHERE Paramètre='Année_culture') ANNEE
+--       FROM Cultures C-- LEFT JOIN Rotations R USING(Rotation)
+--      WHERE (substr(coalesce(C.Date_plantation, C.Date_semis), 1, 4) = (SELECT Valeur-- LEFT JOIN Planches P USING(Rotation)
+--                                                                          FROM Params
+--                                                                         WHERE Paramètre='Année_culture') )
+--      GROUP BY IT_plante,
+--               PLANCHE
+--      ORDER BY IT_plante,
+--               PLANCHE;
 
 CREATE VIEW IT_rotations AS
     SELECT Espèce,

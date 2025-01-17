@@ -114,7 +114,7 @@ CREATE TABLE Rotations_détails (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                                 Année INTEGER DEFAULT (1),
                                 IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
                                 Pc_planches REAL DEFAULT (100) NOT NULL,
-                                Nb_planches INTEGER,
+                                -- Nb_planches INTEGER,
                                 Fi_planches TEXT,
                                 Notes TEXT);
 

@@ -15,9 +15,6 @@
 bool MainWindow::initCustomFunctions() {
     qDebug() << "SQLite version:" << sqlite3_libversion();
 
-    QSqlQuery q1;
-    q1.exec("DELETE FROM sqlean_define");//"SELECT define_free('<function_name>')" don't work.
-
     QSqlDatabase db = QSqlDatabase::database();
     auto handle = db.driver()->handle();
     sqlite3 *db_handle = *static_cast<sqlite3 **>(handle.data());

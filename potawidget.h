@@ -454,6 +454,9 @@ public:
                             model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="REAL"){
             return new QLineEdit(parent);
         } else if (DataType(model->tableName(),
+                            model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="BOOL"){
+            return new QLineEdit(parent);
+        } else if (DataType(model->tableName(),
                             model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="DATE"){
             QDateEdit *dateEdit = new QDateEdit(parent);
             dateEdit->setButtonSymbols(QAbstractSpinBox::NoButtons);

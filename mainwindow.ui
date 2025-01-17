@@ -537,8 +537,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <property name="title">
      <string>Planification</string>
     </property>
-    <addaction name="mCulturesParIlots"/>
     <addaction name="mCulturesParplante"/>
+    <addaction name="mCulturesParIlots"/>
     <addaction name="mCulturesParPlanche"/>
     <addaction name="mCreerCultures"/>
     <addaction name="mSemences"/>

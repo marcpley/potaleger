@@ -51,7 +51,7 @@ void MainWindow::FermerBDD()
     ui->lDBErr->clear();
 }
 
-bool MainWindow::dbOpen(QString sFichier)
+bool MainWindow::dbOpen(QString sFichier, bool UpdateSQLean)
 {
     dbClose();
 
@@ -78,22 +78,28 @@ bool MainWindow::dbOpen(QString sFichier)
     qDebug() << "quick_check: " << query.value(0).toString();
 
     if (true) {
+        if (UpdateSQLean){
+            QSqlQuery q1;
+            q1.exec("DELETE FROM sqlean_define");//"SELECT define_free('<function_name>')" don't work.
+        }
         if (!initCustomFunctions()) {
             dbClose();
             SetColoredText(ui->lDBErr, tr("Impossible d'implémenter %1.").arg("sqlean"), "Err");
             return false;
         }
 
-        if (!registerCustomFunctions()) {
-            dbClose();
-            SetColoredText(ui->lDBErr, tr("Impossible d'implémenter les fonctions %1.").arg("sqlean"), "Err");
-            return false;
+        if (UpdateSQLean){
+            if (!registerCustomFunctions()) {
+                dbClose();
+                SetColoredText(ui->lDBErr, tr("Impossible d'implémenter les fonctions %1.").arg("sqlean"), "Err");
+                return false;
+            }
         }
 
         QString s=testCustomFunctions();
         if (!s.isEmpty()){
             dbClose();
-            SetColoredText(ui->lDBErr, tr("La fonction %1 ne fonctionnent pas.").arg(s), "Err");
+            SetColoredText(ui->lDBErr, tr("La fonction %1 ne fonctionne pas.").arg(s), "Err");
             return false;
         }
     }
@@ -128,7 +134,7 @@ void MainWindow::OuvrirBDD(QString sFichier)
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
 
-    if (!dbOpen(sFichier))
+    if (!dbOpen(sFichier,bForceUpdateViewsAndTriggers))
         return;
 
     QString sVerBDD = "";
@@ -176,6 +182,8 @@ void MainWindow::OuvrirBDD(QString sFichier)
             dbClose();
             return;
         }
+        dbClose();
+        dbOpen(sFichier,true);
         if (UpdateDBShema(sVerBDD))
         {
             sVerBDD = ui->lVerBDDAttendue->text();

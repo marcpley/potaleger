@@ -251,18 +251,20 @@ void PotaWidget::pbRefreshClick()
 void PotaWidget::pbCommitClick()
 {
     QModelIndex index=tv->selectionModel()->currentIndex();
-    model->SubmitAllShowErr();
-    tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
-    tv->setFocus();
+    if (model->SubmitAllShowErr()){
+        tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
+        tv->setFocus();
+    }
 }
 
 void PotaWidget::pbRollbackClick()
 {
     QModelIndex index=tv->selectionModel()->currentIndex();
-    model->copiedCells.clear();
-    model->RevertAllShowErr();
-    tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
-    tv->setFocus();
+    if (model->RevertAllShowErr()){
+        model->copiedCells.clear();
+        tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
+        tv->setFocus();
+    }
 }
 
 void PotaWidget::pbInsertRowClick()

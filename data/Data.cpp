@@ -280,9 +280,12 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
     //Champs présents dans plusieurs tables avec des significations différentes.
     if (sTableName=="Apports"){
 
-    } else if (sTableName=="Cultures"){
+    } else if (sTableName=="Cultures" or sTableName.startsWith("Cultures__")){
         if (sFieldName=="Type")
             sToolTip=QObject::tr("Automatique, en fonction des date de semis, plantation et récolte.");
+        else if (sFieldName=="Etat")
+            sToolTip=QObject::tr("Automatique, en fonction des semis, plantation et récolte faites ou pas.\n"
+                                   "Donne la couleur de la ligne dans les tableaux de données.");
         else if (sFieldName=="Nb_rangs")
             sToolTip=QObject::tr("Nombre de rangs cultivés sur la planche.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         else if (sFieldName=="Longueur")
@@ -319,14 +322,25 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
 
     } else if (sTableName=="Rotations"){
         if (sFieldName=="Nb_années")
-            sToolTip=QObject::tr("Automatique, en fonction des détails de la rotation.\n3 à 6 ans en général.");
+            sToolTip=QObject::tr(   "Automatique, en fonction des détails de la rotation.\n"
+                                    "3 à 6 ans en général.");
 
     } else if (sTableName=="Rotations_détails"){
         if (sFieldName=="Année")
-            sToolTip=QObject::tr("Année de culture dans la rotation.")+"\n"+QObject::tr("Nombre entier entre 1 et 5 si la rotation est sur 5 ans.");
-        else if (sFieldName=="Nb_planches")
-            sToolTip=QObject::tr("Nombre de planches occupées.")+"\n"+QObject::tr("Souvent un ilot de production entier.");
-
+            sToolTip=QObject::tr(   "Année de culture dans la rotation.\n"
+                                    "Nombre entier entre 1 et 5 si la rotation est sur 5 ans.");
+        else if (sFieldName=="Pc_planches")
+            sToolTip=QObject::tr(   "Pourcentage d'occupation des planches de l'UdP.\n"
+                                    "Exemple: planche de 10m de long occupée à 40% -> la culture sur cette planche fera 4m.");
+        else if (sFieldName=="Fi_planches")
+            sToolTip=QObject::tr(  "Filtrage des planches de l'UdP.\n"
+                                   "Exemple: l'ilot AA contient une UdP (1) de 4 planches (A, B, C et D)\n"
+                                   "Les planches sont: AA1A, AA1B, AA1C et AA1D\n"
+                                   "Fi_planches = AC -> seule les planches AA1A et AA1C seront occupées par les cultures.");
+        else if (sFieldName=="Mise_en_place")
+            sToolTip=QObject::tr(  "Momment où la culture sera mise en place sur la planche.\n"
+                                   "* indique un chevauchement avec la culture précédente (pas encore récoltée).\n"
+                                   "- indique u temps important d'inoccupation de la planche.");
     } else if (sTableName=="Récoltes"){
         if (sFieldName=="Quantité")
             sToolTip=QObject::tr("En kg.");
@@ -336,8 +350,6 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr("Par exemple 'Serre', 'Extérieur'...");
 
     } else if (sTableName=="Variétés"){
-        if (sFieldName=="Nb_graines_g")
-            sToolTip=QObject::tr("Nombre de graines par gramme.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
     }
 
     //Champs ayant la même signification partout.
@@ -352,13 +364,18 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr("Itinéraire technique: une espèce de plante et une manière de la cultiver.");
         else if (sFieldName=="Rotation")
             sToolTip=QObject::tr("Ensemble de cultures qui se succèdent sur un ensemble de planches.");
-
+        else if (sFieldName=="Planches_Ilots")
+            sToolTip=QObject::tr(   "Regroupement de planches\n"
+                                    "(voir le paramètre 'Ilot_nb_car').");
         //Apports
         else if (sFieldName=="Apport")
             sToolTip=QObject::tr("Ammendement nécessaire avant culture.");
         else if (sFieldName=="Poids_m²")
             sToolTip=QObject::tr("Quantité d'ammendement avant culture (kg/m²).");
         //Cultures
+        else if (sFieldName=="Culture")
+            sToolTip=QObject::tr("Numéro unique de la culture\n"
+                                 "(pas de remise à zéro tous les ans).");
         else if (sFieldName=="D_planif")
             sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte.");
         //Espèces
@@ -395,10 +412,46 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
         else if (sFieldName=="Fi_planches")
             sToolTip=QObject::tr("Filtre de sélection de planches.")+"\n"+QObject::tr("Si filtre = 'AD', seules les planches se terminant par A ou D seront utilisées.");
         //Variétés
+        else if (sFieldName=="Nb_graines_g")
+            sToolTip=QObject::tr("Nombre de graines par gramme.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         else if (sFieldName=="Qté_stock")
             sToolTip=QObject::tr("Semence en stock (g).");
         else if (sFieldName=="Qté_cde")
             sToolTip=QObject::tr("Semence commandée (g).")+"\n"+QObject::tr("A réception, mettre à 0 et ajouter la quantité à la quantité en stock.");
+
+        //Views
+        else if (sFieldName=="A_faire_le")
+            sToolTip=QObject::tr("Plus petite date de semis (direct) ou de plantation parmis les cultures à venir.");
+        else if (sFieldName=="Année_à_planifier")
+            sToolTip=QObject::tr("Paramétrable: 'Année_planif'.");
+        else if (sFieldName=="C_à_venir")
+            sToolTip=QObject::tr(   "Cultures prévues mais pas encore en place sur leur planche.\n"
+                                    "Sont incluses les cultures déjà semées sous abris.");
+        else if (sFieldName=="C_en_place")
+            sToolTip=QObject::tr(   "Cultures en place sur leur planche: semées (semis direct) ou plantées.\n"
+                                    "Ne sont pas incluses les cultures semées sous abris mais non plantées.");
+        else if (sFieldName=="C_non_commencées")
+            sToolTip=QObject::tr(   "Cultures prévues mais ni semées ni plantées.");
+        else if (sFieldName=="Libre_le")
+            sToolTip=QObject::tr("Plus grande date de fin de récolte parmis les cultures en place.");
+        else if (sFieldName=="Nb_cu_AV")
+            sToolTip=QObject::tr(   "Nombre de cultures à venir (AV) sur la planche.\n"
+                                   "Ces cultures ne sont pour le moment ni semées (semis direct) ni plantées.");
+        else if (sFieldName=="Nb_cu_EP")
+            sToolTip=QObject::tr(   "Nombre de cultures en place (EP) sur la planche.\n"
+                                   "Ces cultures ne sont pas terminées.");
+        else if (sFieldName=="Qté_nécess")
+            sToolTip=QObject::tr(   "Semence nécessaire (g) pour les cultures non encore semées.");
+        else if (sFieldName=="Qté_manquante")
+            sToolTip=QObject::tr(   "Qté nécessaire moins Qté en stock moins Qté commandée.");
+    }
+
+    if (sToolTip==""){
+        if (DataType(sTableName,sFieldName)=="BOOL")
+            sToolTip=QObject::tr(  "Champ Oui/Non\n"
+                                   "Vide = Non (ou faux)\n"
+                                   "Saisie quelconque = Oui (ou vrai).\n"
+                                   "'X', 'Oui', 'Non', '0' ou n'importe quoi veulent dire OUI.");
     }
     return sToolTip;
 }
@@ -406,35 +459,68 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
 QString ToolTipTable(const QString sTableName) {
     QString sToolTip="";
 
-    if (sTableName==""){
+    if (sTableName=="")
+        sToolTip="";
 
-    } else if (sTableName=="Cultures"){
+    //Tables
+    else if (sTableName=="Apports")
+        sToolTip=QObject::tr("Ammendement devant être apporté à une planche avant d'y cultiver une espèce de plante.");
+    else if (sTableName=="Cultures")
         sToolTip=QObject::tr("Une culture c'est une plante (variété+itinéraire technique) sur une planche.\nSi la même plante est présente sur plusieurs planches, il y a une culture (numérotée) par planche.");
-
-    } else if (sTableName=="Espèces"){
+    else if (sTableName=="Espèces")
         sToolTip=QObject::tr("");
-    } else if (sTableName=="Familles"){
+    else if (sTableName=="Familles")
         sToolTip=QObject::tr("");
-    } else if (sTableName=="Fournisseurs"){
+    else if (sTableName=="Fournisseurs")
         sToolTip=QObject::tr("");
-    } else if (sTableName=="ITP"){
+    else if (sTableName=="ITP")
         sToolTip=QObject::tr(   "Itinéraires techniques de plantes.\n"
                                 "Une ITP c'est Une espèce de plante cultivée d'une certaine manière:\n"
                                 "Hative ou tardive, sous serre ou en extérieur, etc.\n"
                                 "Chaque ITP à une période de semis, de plantation et de récolte.\n"
                                 "Pour chaque culture, il faudra prendre une variété adaptée à l'itinéraire technique voulu.");
-    } else if (sTableName=="Planches"){
-        sToolTip=QObject::tr("Planches de cultures.");
-    } else if (sTableName=="Rotations"){
-        sToolTip=QObject::tr(   "Ensemble d'ITP qui vont se succéder sur un groupe de planches (ilot) en respectant les débuts et fin de chaque culture et le nombre d'année minimum nécessaire entre 2 cultures d'une même famille (intervale).");
-    } else if (sTableName=="Rotations_détails"){
+    else if (sTableName=="Planches")
+        sToolTip=QObject::tr(   "Planches de cultures.\n"
+                                "Les 1ers caractères (nb paramétrable) indiquent l'ilot dans lequel se trouve la planche.\n"
+                                "Pour ");
+    else if (sTableName=="Rotations")
+        sToolTip=QObject::tr(   "Ensemble d'ITP qui vont se succéder sur un groupe de planches (ilot)\n"
+                                "en respectant les débuts et fin de chaque culture\n"
+                                "et le nombre d'année minimum nécessaire entre 2 cultures d'une même famille (intervale).");
+    else if (sTableName=="Rotations_détails")
+        sToolTip=QObject::tr(   "Les ITP (donc les espèces cultivées) vont être déplacés chaque année\n"
+                                "sur une nouvelle unité de production (UdP).\n"
+                                "Si Pc_planches = 100%, les cultures occuperont la totalité des planches de l'UdP.\n"
+                                "Si Fi_planches est vide, les cultures occupperont toutes les planches de l'UdP\n"
+                                "Si Pc_planches = 50% et Fi_planches = A, les cultures occuperont\n"
+                                "la moitié de chaque planche se terminant par A.");
+    else if (sTableName=="Récoltes")
         sToolTip=QObject::tr("");
-    } else if (sTableName=="Récoltes"){
+    else if (sTableName=="Types_planche")
         sToolTip=QObject::tr("");
-    } else if (sTableName=="Types_planche"){
+    else if (sTableName=="Variétés")
         sToolTip=QObject::tr("");
-    } else if (sTableName=="Variétés"){
-        sToolTip=QObject::tr("");
-    }
+
+    //Views
+    else if (sTableName=="Cult_planif")
+        sToolTip=QObject::tr(  "Cultures qui vont être créées lors de la prochaîne planification.\n"
+                               "La variété choisie pour chaque culture est celle dont\n"
+                               "la quantité de semence en stock est la plus importante.")+"\n"+
+                   QObject::tr(  "Liste non directement modifiable, déduite des 'Rotations'.");
+    else if (sTableName=="IT_rotations" or sTableName=="IT_rotations_Ilots")
+        sToolTip=QObject::tr(  "Espèces pour lesquelles des cultures vont être créées\n"
+                               "lors de la prochaîne planification.")+"\n"+
+                 QObject::tr(  "Liste non directement modifiable, déduite des 'Rotations'.");
+    else if (sTableName=="IT_rotations_manquants")
+        sToolTip=QObject::tr(   "Espèces marquées 'A planifier' et qui ne sont\n"
+                                "pourtant pas incluses dans une rotation.\n"
+                                "La planification ne générera donc aucune culture pour ces espèces.");
+    else if (sTableName=="Planches_Ilots")
+        sToolTip=QObject::tr(  "Les ilots sont des regroupements de planches.\n"
+                               "Ils ne sont pas saisis mais déduits des planches saisies.\n"
+                               "Le débuts du nom des planches indique leur ilot (voir le paramètre 'Ilot_nb_car').");
+    else if (sTableName=="Variétés__inv_et_cde")
+        sToolTip=QObject::tr(   "Inventaire des semences pour chaque variété de plante.");
+
     return sToolTip;
 }

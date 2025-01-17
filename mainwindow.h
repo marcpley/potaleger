@@ -7,7 +7,8 @@
 #include <QSqlTableModel>
 #include <QMessageBox>
 #include <QtSvg>
-#include <sqlite3.h>
+//#include <sqlite3.h>
+#include "sqlite/sqlite3.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -88,7 +89,6 @@ private slots:
     void on_mCulturesParplante_triggered();
 
 private:
-    void updateTabStyles(QTabWidget *tabWidget);
     void ActiverMenusData(bool b);
     bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
@@ -96,7 +96,7 @@ private:
     void MessageDialog(QString sMessage, QMessageBox::Icon Icon);
     void MessageDialog(QString sMessage);
     bool YesNoDialog(QString sMessage);
-    bool dbOpen(QString sFichier);
+    bool dbOpen(QString sFichier, bool UpdateSQLean);
     bool initCustomFunctions();
     bool registerCustomFunctions();
     QString testCustomFunctions();

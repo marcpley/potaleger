@@ -22,9 +22,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
 
-    //QObject::connect(ui->tabWidget, &QTabWidget::currentChanged, [=](int) {
-    //                 updateTabStyles(ui->tabWidget);});
-
     ui->lVer->setText("1.0b11");//Application version.
     ui->lVerBDDAttendue->setText("2024-12-30");//Expected database version.
 }
@@ -32,10 +29,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void updateTabStyles(QTabWidget *tabWidget) {
-
 }
 
 bool MainWindow::PotaBDDInfo()
@@ -352,24 +345,24 @@ void MainWindow::CreateNewDB(bool bEmpty)
         FileInfo1.setFileName(ui->lDB->text());
         FermerBDD();
         QSqlDatabase db = QSqlDatabase::database();
-        db.setDatabaseName(sFileName);
-        db.open();
+        //db.setDatabaseName(sFileName);
+        dbOpen(sFileName,true);
         if (db.tables(QSql::Tables).count()>0)
         {
             MessageDialog("Empty file has tables!\n"+sFileName,QMessageBox::Critical);
-            db.close();
+            dbClose();
             OuvrirBDD(sFileNameSave);
         }
         else if (UpdateDBShema(iif(bEmpty,"New","NewWithBaseData").toString()))
         {
-            db.close();
+            dbClose();
             OuvrirBDD(sFileName);
         }
         else
         {
             MessageDialog(tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
                               sFileName,QMessageBox::Critical);
-            db.close();
+            dbClose();
             OuvrirBDD(sFileNameSave);
         }
     }
