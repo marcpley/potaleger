@@ -18,7 +18,7 @@ jobs:
             version: 6.8.1
             host: 'linux'
             dir: '${{ steps.qt-installation-dir.DIR }}'
-            setup-python: false
+            #setup-python: false
             #extra: '--external 7z'
 
           
