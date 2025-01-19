@@ -24,7 +24,9 @@ jobs:
       - name: Debug
         shell: bash
         run: |
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/
             ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/
 
       - uses: actions/checkout@v4
         with:
@@ -45,8 +47,31 @@ jobs:
         run: |
             mkdir artifact
             mkdir artifact/libs
-            cp ./build/potaleger ./artifact/
-            cp -P /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Core.so* ./artifact/libs/
+            mkdir artifact/bin
+            mkdir artifact/bin/plugins
+            mkdir artifact/bin/plugins/iconengines
+            mkdir artifact/bin/plugins/platforminputcontexts
+            mkdir artifact/bin/plugins/platforms
+            mkdir artifact/bin/plugins/platformthemes
+            mkdir artifact/bin/plugins/sqldrivers
+            cp ./potaleger.sh ./artifact/
+            cp ./build/potaleger ./artifact/bin/
+            cp ./Qt/6.8.1/gcc_64/lib/libicu*.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6Core.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6DBus.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6Gui.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6Sql.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6Svg.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6SvgWidgets.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6Widgets.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/lib/libQt6XcbQpa.so* ./artifact/libs/
+            cp ./Qt/6.8.1/gcc_64/plugins/iconengines/libqsvgicon* ./artifact/plugins/iconengines/
+            cp ./Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so* ./artifact/plugins/platforminputcontexts/
+            cp ./Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so* ./artifact/plugins/platforminputcontexts/
+            cp ./Qt/6.8.1/gcc_64/plugins/platforms/libqxcb.so* ./artifact/plugins/platforms/
+            cp ./Qt/6.8.1/gcc_64/plugins/platformthemes/libqgtk3.so* ./artifact/plugins/platformthemes/
+            cp ./Qt/6.8.1/gcc_64/plugins/platformthemes/libqxdgdesktopportal.so ./artifact/plugins/platformthemes/
+            cp ./Qt/6.8.1/gcc_64/plugins/sqldrivers/libqsqlite.so ./artifact/plugins/sqldrivers/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
