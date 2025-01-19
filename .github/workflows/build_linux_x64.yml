@@ -21,7 +21,10 @@ jobs:
             #setup-python: false
             #extra: '--external 7z'
 
-
+      - name: Debug
+        shell: bash
+        run: |
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/
 
       - uses: actions/checkout@v4
         with:
@@ -43,11 +46,7 @@ jobs:
             mkdir artifact
             mkdir artifact/libs
             cp ./build/potaleger ./artifact/
-            cp -P ${{ env.Qt6_Dir }}/lib/libQt6Core.so* ./artifact/libs/
-            echo env.Qt6_Dir
-            ls -l ${{ env.Qt6_Dir }}/
-            echo env.Qt6_Dir/lib
-            ls -l ${{ env.Qt6_Dir }}/lib/
+            cp -P /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Core.so* ./artifact/libs/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
