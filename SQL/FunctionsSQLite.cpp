@@ -232,7 +232,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "RF_trop_proches";
     }
-    qInfo() << "Function ok : RF_trop_proches('xxx') = " << q1.value(0).toString();
+    qInfo() << "Function ok : RF_trop_proches('xxx')";
 
     q1.clear();
     if (!q1.exec("SELECT ItpPlus15jours('09-15')") or !q1.next() or q1.value(0).toString()!="10-01"){

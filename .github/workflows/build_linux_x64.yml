@@ -31,14 +31,21 @@ jobs:
       - name: Compile
         shell: bash
         run: |
-          mkdir install
-          cd install
+          mkdir compil
+          cd compil
           qmake ../potaleger.pro "QT += svg"
           make -j 4
+          ls -l
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir artifact
+          cp ./compil/potaleger ./artifact/
           ls -l
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
            name: potaleger0100linux
-           path: install
+           path: artifact
