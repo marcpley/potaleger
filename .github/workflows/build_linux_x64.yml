@@ -37,4 +37,8 @@ jobs:
           make -j 4
           ls -l
 
-      - run: echo "This job's status is ${{ job.status }}."
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+           name: potaleger0100linux
+           path: artifact
