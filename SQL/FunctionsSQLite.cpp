@@ -13,7 +13,7 @@
 #include "SQL/FunctionsSQLite.sql"
 
 bool MainWindow::initCustomFunctions() {
-    qDebug() << "SQLite version:" << sqlite3_libversion();
+    qInfo() << "SQLite version:" << sqlite3_libversion();
 
     QSqlDatabase db = QSqlDatabase::database();
     auto handle = db.driver()->handle();
@@ -29,7 +29,7 @@ bool MainWindow::initCustomFunctions() {
     define_module_init(db_handle);
     sqlite3_close(db_handle);
 
-    qDebug() << "Init functions ok.";
+    qInfo() << "Init functions ok.";
 
     return true;
 }
@@ -125,7 +125,7 @@ bool MainWindow::registerCustomFunctions() {
 
     qCritical() << q1.lastQuery();
 
-    qDebug() << "Functions registered successfully.";
+    qInfo() << "Functions registered successfully.";
 
     return true;
 }
@@ -141,7 +141,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "SumTest";
     }
-    qDebug() << "Function ok : SumTest(1,2) = " << q1.value(0).toInt();
+    qInfo() << "Function ok : SumTest(1,2) = " << q1.value(0).toInt();
 
     q1.clear();
     if (!q1.exec("SELECT PlanifCultureCalcDate('2025-02-01','01-01')") or !q1.next() or q1.value(0).toString()!="2026-01-01"){
@@ -150,7 +150,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "PlanifCultureCalcDate";
     }
-    qDebug() << "Function ok : PlanifCultureCalcDate('2025-02-01','01-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : PlanifCultureCalcDate('2025-02-01','01-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT ItpTempoNJPeriode(360,5,10)") or !q1.next() or q1.value(0).toInt()!=10){
@@ -159,7 +159,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "ItpTempoNJPeriode";
     }
-    qDebug() << "Function ok : ItpTempoNJPeriode(360,5,10) = " << q1.value(0).toInt();
+    qInfo() << "Function ok : ItpTempoNJPeriode(360,5,10) = " << q1.value(0).toInt();
 
     q1.clear();
     if (!q1.exec("SELECT ItpTempoNJInterPe(360,5,10)") or !q1.next() or q1.value(0).toInt()!=5){
@@ -168,7 +168,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "ItpTempoNJInterPe";
     }
-    qDebug() << "Function ok : ItpTempoNJInterPe(360,5,10) = " << q1.value(0).toInt();
+    qInfo() << "Function ok : ItpTempoNJInterPe(360,5,10) = " << q1.value(0).toInt();
 
     q1.clear();
     if (!q1.exec("SELECT ItpTempoNJ('02-01')") or !q1.next() or q1.value(0).toInt()!=32){
@@ -177,7 +177,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "ItpTempoNJ";
     }
-    qDebug() << "Function ok : ItpTempoNJ('02-01') = " << q1.value(0).toInt();
+    qInfo() << "Function ok : ItpTempoNJ('02-01') = " << q1.value(0).toInt();
 
     q1.clear();
     if (!q1.exec("SELECT ItpTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="31:14:15:14:47:31"){
@@ -186,7 +186,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "ItpTempo";
     }
-    qDebug() << "Function ok : ItpTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : ItpTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT CulTempoNJPeriode('2000-01-01','2000-01-31')") or !q1.next() or q1.value(0).toInt()!=30){
@@ -195,7 +195,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "CulTempoNJPeriode";
     }
-    qDebug() << "Function ok : CulTempoNJPeriode('2000-01-01','2000-01-31') = " << q1.value(0).toInt();
+    qInfo() << "Function ok : CulTempoNJPeriode('2000-01-01','2000-01-31') = " << q1.value(0).toInt();
 
     q1.clear();
     if (!q1.exec("SELECT CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:2:12:2:13:14"){
@@ -204,7 +204,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "CulTempo";
     }
-    qDebug() << "Function ok : CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
+    qInfo() << "Function ok : CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT RotDecalDateMeP('2000-09-02')") or !q1.next() or q1.value(0).toString()!="2000-05-02"){
@@ -213,7 +213,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "RotDecalDateMeP";
     }
-    qDebug() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
+    qInfo() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT RotTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:0:0:14:47:31"){
@@ -222,7 +222,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "RotTempo";
     }
-    qDebug() << "Function ok : RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT * FROM RF_trop_proches('xxx')")){
@@ -231,7 +231,7 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "RF_trop_proches";
     }
-    qDebug() << "Function ok : RF_trop_proches('xxx') = " << q1.value(0).toString();
+    qInfo() << "Function ok : RF_trop_proches('xxx') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT ItpPlus15jours('09-15')") or !q1.next() or q1.value(0).toString()!="10-01"){
@@ -240,9 +240,9 @@ QString MainWindow::testCustomFunctions() {
         qCritical() << q1.lastQuery();
         return "ItpPlus15jours";
     }
-    qDebug() << "Function ok : ItpPlus15jours('09-15') = " << q1.value(0).toString();
+    qInfo() << "Function ok : ItpPlus15jours('09-15') = " << q1.value(0).toString();
 
-    qDebug() << "Functions tested.";
+    qInfo() << "Functions tested.";
     return "";
 }
 

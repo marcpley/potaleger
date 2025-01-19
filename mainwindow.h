@@ -54,8 +54,6 @@ private slots:
 
     void on_mCulturesParIlots_triggered();
 
-    void on_mCulturesParEspeces_triggered();
-
     void on_mRotationManquants_triggered();
 
     void on_mCulturesParPlanche_triggered();

@@ -140,7 +140,7 @@ public:
         if (sOrderByClause.toStdString()!="")//Add order by
             sQuery+=" "+sOrderByClause;
 
-        qDebug() << sQuery;
+        qInfo() << sQuery;
 
         QSqlRelationalTableModel::select();//Avoids duplicate display of inserted lines
         setQuery(sQuery);
@@ -262,7 +262,6 @@ private:
         QClipboard *clipboard = QApplication::clipboard();
         QString clipboardText = clipboard->text();
         if (clipboardText.isEmpty()) return;
-        qDebug() << clipboardText;
 
         QItemSelectionModel *selectionModel = this->selectionModel();
         if (!selectionModel || !selectionModel->hasSelection()) return;
@@ -296,9 +295,6 @@ private:
                 //Loop on clipboard columns.
                 for (int jCB=0;jCB<clipboardColCount;jCB++)
                 {
-                    qDebug() << "SelectedCount" << SelectedCount;
-                    qDebug() << "CB " << iCB << " " << jCB;
-                    qDebug() << "Sel " << iSel ;//<< " " << jSel;
                     index=selectedIndexes.value(iSel).sibling(selectedIndexes.value(iSel).row()+iCB,
                                                               selectedIndexes.value(iSel).column()+jCB);
                     if (index.isValid() and
@@ -318,12 +314,6 @@ private:
         for (const QModelIndex &index : selectedIndexes) {
             if (!model()->data(index,Qt::EditRole).isNull()) {
                 model()->setData(index, QVariant(), Qt::EditRole);
-                // qDebug() << "del " << index.row() << index.column();
-                // QSqlRelation relation = dynamic_cast<PotaTableModel*>(model())->relation(index.column());
-                // if (relation.isValid()) {
-                //     qDebug() << "Relation index col " << relation.indexColumn() << " display col " << relation.displayColumn();
-                //     qDebug() << relation.tableName();
-                // }
             }
         }
     }
@@ -373,7 +363,7 @@ protected:
         // Obtenir l'index de la section cliquée
         int logicalIndex = logicalIndexAt(event->pos());
         if (logicalIndex != -1) {
-            qDebug() << "Section clicked:" << logicalIndex;
+            //qDebug() << "Section clicked:" << logicalIndex;
 
             if (iSortCol==logicalIndex)//Sort on this column.
             {
@@ -435,9 +425,9 @@ public:
             QSqlTableModel *relationModel = model->relationModel(index.column());
             int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
 
-            qDebug() << objectName();
-            qDebug() << parent->objectName();
-            qDebug() << parent->parent()->objectName();
+            // qDebug() << objectName();
+            // qDebug() << parent->objectName();
+            // qDebug() << parent->parent()->objectName();
 
             comboBox->addItem("", QVariant()); // Option for setting a NULL
             for (int i = 0; i < relationModel->rowCount(); ++i) {

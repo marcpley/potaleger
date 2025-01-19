@@ -14,16 +14,20 @@
 #include <QToolButton>
 #include "data/Data.h"
 
+QString const Version="1.0b11";
+QString const DbVersion="2024-12-30";
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    qInfo() << "Potaléger " << Version.toStdString();
+    qInfo() << "Expected database version: " << DbVersion.toStdString();
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
 
-    ui->lVer->setText("1.0b11");//Application version.
-    ui->lVerBDDAttendue->setText("2024-12-30");//Expected database version.
+    ui->lVer->setText(Version);
+    ui->lVerBDDAttendue->setText(DbVersion);
 }
 
 MainWindow::~MainWindow()
@@ -461,11 +465,6 @@ void MainWindow::on_mSuccessionParPlanche_triggered()
 void MainWindow::on_mCulturesParIlots_triggered()
 {
     OuvrirOnglet("IT_rotations_ilots","IT_rotations_ilots",tr("Cult.prévues ilots"));
-}
-
-void MainWindow::on_mCulturesParEspeces_triggered()
-{
-
 }
 
 void MainWindow::on_mCulturesParplante_triggered()

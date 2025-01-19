@@ -163,7 +163,7 @@ void PotaWidget::Init(QString TableName)
     if (RealTableName.contains("__"))
         RealTableName=RealTableName.first(RealTableName.indexOf("__"));
 
-    qDebug() << RealTableName;
+    qInfo() << "Open " << TableName+" ("+RealTableName+")";
 
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 

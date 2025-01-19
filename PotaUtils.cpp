@@ -12,7 +12,6 @@ bool PotaQuery::ExecShowErr(QString query)
     {
         if (lErr!=nullptr)
             SetColoredText(lErr,lastError().text(),"Err");
-        qDebug() << lastError().text();
         return false;
 
     }

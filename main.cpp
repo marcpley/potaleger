@@ -73,7 +73,7 @@ bool MainWindow::dbOpen(QString sFichier, bool UpdateSQLean)
     query.exec("PRAGMA locking_mode = NORMAL;");
     query.exec("PRAGMA quick_check;");
     query.next();
-    qDebug() << "quick_check: " << query.value(0).toString();
+    qInfo() << "quick_check: " << query.value(0).toString();
 
     if (true) {
         if (UpdateSQLean){
