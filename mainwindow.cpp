@@ -14,7 +14,7 @@
 #include <QToolButton>
 #include "data/Data.h"
 
-QString const Version="1.0b12";
+QString const Version="1.0b11";
 QString const DbVersion="2024-12-30";
 
 MainWindow::MainWindow(QWidget *parent)
