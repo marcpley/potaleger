@@ -3,7 +3,7 @@ name: Compil for Linux x64
 on: [push]
 jobs:
   Build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
 

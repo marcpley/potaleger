@@ -16,8 +16,9 @@ int define_eval_init(sqlite3* db);
 int define_manage_init(sqlite3* db);
 int define_module_init(sqlite3* db);
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DEFINE_INTERNAL_H */
+#endif // DEFINE_H

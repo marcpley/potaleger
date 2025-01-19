@@ -15,11 +15,11 @@
 
 #include "sqlite3.h"
 
+#include "define.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "define.h"
 
 struct define_vtab {
     sqlite3_vtab base;

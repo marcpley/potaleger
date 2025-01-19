@@ -14,7 +14,7 @@
 
 bool MainWindow::initCustomFunctions() {
     qInfo() << "SQLite version:" << sqlite3_libversion();
-    return true;//todo
+    //return true;
 
     QSqlDatabase db = QSqlDatabase::database();
     auto handle = db.driver()->handle();
@@ -36,7 +36,7 @@ bool MainWindow::initCustomFunctions() {
 }
 
 bool MainWindow::registerCustomFunctions() {
-    return true;//todo
+    //return true;
     QSqlQuery q1;
 
     if (!q1.exec("SELECT define('SumTest', '? + ?')")){
@@ -133,8 +133,7 @@ bool MainWindow::registerCustomFunctions() {
 }
 
 QString MainWindow::testCustomFunctions() {
-    return "";//todo
-
+    //return "";
 
     QSqlQuery q1;
     if (!q1.exec("SELECT SumTest(1,2)") or !q1.next() or q1.value(0).toInt()!=3){
