@@ -14,15 +14,15 @@
 #include <QToolButton>
 #include "data/Data.h"
 
-QString const Version="1.0b11";
-QString const DbVersion="2024-12-30";
+char* const Version="1.0b11";
+char* const DbVersion="2024-12-30";
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    qInfo() << "Potaléger " << Version;
-    qInfo() << "Expected database version: " << DbVersion.toStdString();
+    qInfo() << "Potaléger" << Version;
+    qInfo() << "Expected database version:" << DbVersion;
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
 

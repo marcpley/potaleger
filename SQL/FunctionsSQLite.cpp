@@ -13,7 +13,7 @@
 #include "SQL/FunctionsSQLite.sql"
 
 bool MainWindow::initCustomFunctions() {
-    qInfo() << "SQLite version:" << sqlite3_libversion();
+
     //return true;
 
     QSqlDatabase db = QSqlDatabase::database();

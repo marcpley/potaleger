@@ -41,4 +41,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
            name: potaleger0100linux
-           path: artifact
+           path: install

@@ -51,6 +51,8 @@ void MainWindow::FermerBDD()
 
 bool MainWindow::dbOpen(QString sFichier, bool UpdateSQLean)
 {
+    qInfo() << "SQLite version:" << sqlite3_libversion();
+    qInfo() << "DB file:" << sFichier;
     dbClose();
 
     QSqlDatabase db = QSqlDatabase::database();
@@ -73,7 +75,7 @@ bool MainWindow::dbOpen(QString sFichier, bool UpdateSQLean)
     query.exec("PRAGMA locking_mode = NORMAL;");
     query.exec("PRAGMA quick_check;");
     query.next();
-    qInfo() << "quick_check: " << query.value(0).toString();
+    qInfo() << "SQLite quick_check:" << query.value(0).toString();
 
     if (true) {
         if (UpdateSQLean){
