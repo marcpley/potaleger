@@ -24,9 +24,13 @@ jobs:
       - name: Debug
         shell: bash
         run: |
-            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/
-            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/
             ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/
+
 
       - uses: actions/checkout@v4
         with:
@@ -65,13 +69,13 @@ jobs:
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6SvgWidgets.so* ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Widgets.so* ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6XcbQpa.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/libqsvgicon* ./artifact/plugins/iconengines/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/libqsvgicon.so* ./artifact/plugins/iconengines/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so* ./artifact/plugins/platforminputcontexts/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so* ./artifact/plugins/platforminputcontexts/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/libqxcb.so* ./artifact/plugins/platforms/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqgtk3.so* ./artifact/plugins/platformthemes/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqxdgdesktopportal.so ./artifact/plugins/platformthemes/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/libqsqlite.so ./artifact/plugins/sqldrivers/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqxdgdesktopportal.so* ./artifact/plugins/platformthemes/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/libqsqlite.so* ./artifact/plugins/sqldrivers/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
