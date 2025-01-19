@@ -7,8 +7,8 @@
 #include <QSqlTableModel>
 #include <QMessageBox>
 #include <QtSvg>
-//#include "sqlite/sqlite3.h"
-#include "sqlean/sqlite3.h"
+#include "sqlite/sqlite3.h"
+//#include "sqlean/sqlite3.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {

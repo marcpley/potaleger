@@ -7,13 +7,14 @@
 #include <QVariant>
 #include <QDebug>
 //#include <sqlite3.h>
-#include "sqlean/sqlite3.h"
-//#include "sqlite/sqlite3.h"
+//#include "sqlean/sqlite3.h"
+#include "sqlite/sqlite3.h"
 #include "sqlean/define.h"
 #include "SQL/FunctionsSQLite.sql"
 
 bool MainWindow::initCustomFunctions() {
     qInfo() << "SQLite version:" << sqlite3_libversion();
+    return true;//todo
 
     QSqlDatabase db = QSqlDatabase::database();
     auto handle = db.driver()->handle();
@@ -35,6 +36,7 @@ bool MainWindow::initCustomFunctions() {
 }
 
 bool MainWindow::registerCustomFunctions() {
+    return true;//todo
     QSqlQuery q1;
 
     if (!q1.exec("SELECT define('SumTest', '? + ?')")){
@@ -131,7 +133,7 @@ bool MainWindow::registerCustomFunctions() {
 }
 
 QString MainWindow::testCustomFunctions() {
-    //return "";
+    return "";//todo
 
 
     QSqlQuery q1;
