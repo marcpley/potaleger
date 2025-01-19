@@ -28,21 +28,26 @@ jobs:
           repository: '${{ github.repository }}'
           ref: 'main'
 
-      - name: Compile
+      - name: Build
         shell: bash
         run: |
-          mkdir compil
-          cd compil
-          qmake ../potaleger.pro "QT += svg"
-          make -j 4
-          ls -l
+            mkdir build
+            cd build
+            qmake ../potaleger.pro "QT += svg"
+            make -j 4
+            ls -l
 
       - name: Prepare artifact
         shell: bash
         run: |
-          mkdir artifact
-          cp ./compil/potaleger ./artifact/
-          ls -l
+            mkdir artifact
+            mkdir artifact/libs
+            cp ./build/potaleger ./artifact/
+            cp -P ${{ env.Qt6_Dir }}/lib/libQt6Core.so* ./artifact/libs/
+            echo env.Qt6_Dir
+            ls -l ${{ env.Qt6_Dir }}/
+            echo env.Qt6_Dir/lib
+            ls -l ${{ env.Qt6_Dir }}/lib/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
