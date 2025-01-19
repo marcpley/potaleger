@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    qInfo() << "Potaléger " << Version.toStdString();
+    qInfo() << "Potaléger " << Version;
     qInfo() << "Expected database version: " << DbVersion.toStdString();
     ui->setupUi(this);
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
