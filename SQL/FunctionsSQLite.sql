@@ -154,7 +154,7 @@ iif(substr(:DateMeP,6,2)=''12'',DATE(:DateMeP,''-5 month''),:DateMeP
 QString sRotTempo = QStringLiteral(R"#(
 -- :Type : type_culture
 -- :dXxx nb de jour depuis le début de l'année.
-iif(:Type=''to force params oder'',:dSem||:fSem,
+iif(:Type=''xxx'',:dSem||:fSem, --to force params oder
 iif(:Type=''Semis sous abris'',(:dPlant-1) ||'':''|| -- Attente
                                ''0:''|| -- Durée semis
                                ''0:''|| -- Semis fait attente plantation

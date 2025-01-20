@@ -87,23 +87,24 @@ private slots:
     void on_mCulturesParplante_triggered();
 
 private:
-    void ActiverMenusData(bool b);
+    void SetEnabledDataMenuEntries(bool b);
     bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
     bool OkCancelDialog(QString sMessage);
     void MessageDialog(QString sMessage, QMessageBox::Icon Icon);
     void MessageDialog(QString sMessage);
     bool YesNoDialog(QString sMessage);
-    bool dbOpen(QString sFichier, bool UpdateSQLean);
-    bool initCustomFunctions();
-    bool registerCustomFunctions();
+    bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean);
+    bool initSQLean();
+    bool registerScalarFunctions();
+    bool registerTableValuedFunctions();
     QString testCustomFunctions();
     void dbClose();
-    void OuvrirBDD(QString sFichier);
-    void FermerBDD();
-    bool OuvrirOnglet(QString const sObjName, QString sTableName, QString const sTitre);
-    void FermerOnglet(QWidget *Tab);
-    void FermerOnglets();
+    bool PotaDbOpen(QString sFichier, QString sNew);
+    void PotaDbClose();
+    bool OpenPotaTab(QString const sObjName, QString sTableName, QString const sTitre);
+    void ClosePotaTab(QWidget *Tab);
+    void ClosePotaTabs();
     void CreateNewDB(bool bEmpty);
     static void sommeFunc(sqlite3_context *context, int argc, sqlite3_value **argv);
     void define_manage_init2(sqlite3 *db_handle);

@@ -12,7 +12,7 @@
 #include "sqlean/define.h"
 #include "SQL/FunctionsSQLite.sql"
 
-bool MainWindow::initCustomFunctions() {
+bool MainWindow::initSQLean() {
 
     //return true;
 
@@ -35,7 +35,7 @@ bool MainWindow::initCustomFunctions() {
     return true;
 }
 
-bool MainWindow::registerCustomFunctions() {
+bool MainWindow::registerScalarFunctions() {
     //return true;
     QSqlQuery q1;
 
@@ -109,6 +109,24 @@ bool MainWindow::registerCustomFunctions() {
     }
 
     q1.clear();
+    if (!q1.exec("SELECT define('ItpPlus15jours','"+RemoveComment(sItpPlus15jours,"--")+"')")){
+        qCritical() << "Failed to register function 'ItpPlus15jours': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+
+    //qCritical() << q1.lastQuery();
+
+    qInfo() << "Scalar functions registered successfully.";
+
+    return true;
+}
+
+bool MainWindow::registerTableValuedFunctions() {
+    //return true;
+    QSqlQuery q1;
+
     q1.exec("DROP TABLE IF EXISTS RF_trop_proches");
     q1.clear();
     if (!q1.exec("CREATE VIRTUAL TABLE RF_trop_proches USING define(("+RemoveComment(sRF_trop_proches,"--")+"))")){
@@ -117,17 +135,9 @@ bool MainWindow::registerCustomFunctions() {
         return false;
     }
 
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpPlus15jours','"+RemoveComment(sItpPlus15jours,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpPlus15jours': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
+    //qCritical() << q1.lastQuery();
 
-
-    qCritical() << q1.lastQuery();
-
-    qInfo() << "Functions registered successfully.";
+    qInfo() << "Table valued functions registered successfully.";
 
     return true;
 }

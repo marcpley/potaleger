@@ -333,25 +333,25 @@ INSERT INTO Variétés (Variété, Espèce, Nb_graines_g, Qté_stock, Qté_cde, 
 INSERT INTO Rotations (Rotation, Type_planche, Année_1, Nb_années, Notes) VALUES ('Grande culture', 'Extérieur', 2025, 4, NULL);
 INSERT INTO Rotations (Rotation, Type_planche, Année_1, Nb_années, Notes) VALUES ('Potager', 'Extérieur', 2025, 5, NULL);
 
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (1, 'Potager', 1, 'Haricot SD-Ext', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (2, 'Potager', 1, 'EV automne Seigle Vesce Moutarde Phacélie', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (3, 'Potager', 5, 'Blette', 100.0, 1, 'C', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (5, 'Potager', 5, 'Laitue plant. printemps', 100.0, 2, 'AB', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (6, 'Potager', 5, 'Laitue plant. été', 100.0, 1, 'D', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (7, 'Potager', 5, 'Laitue plant. automne ext', 100.0, 2, 'AB', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (8, 'Potager', 3, 'Laitue plant. printemps précoce', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (9, 'Potager', 2, 'Chou frisé', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (10, 'Potager', 3, 'Poireau précoce', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (12, 'Potager', 4, 'Chou pommé plant. printemps', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (13, 'Potager', 4, 'Physalis', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (14, 'Grande culture', 2, 'Pomme de terre conservation', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (15, 'Grande culture', 1, 'Maïs', 100.0, 2, 'BD', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (16, 'Grande culture', 1, 'Courge', 100.0, 2, 'AC', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (17, 'Grande culture', 1, 'Haricot Tarbais (maïs)', 100.0, 2, 'BD', NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (18, 'Grande culture', 3, 'EV LD printemps Sorgho Trèfle Mélilot Sarrasin', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (19, 'Grande culture', 4, 'EV LD printemps Sorgho Trèfle Mélilot Sarrasin', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (81, 'Grande culture', 2, 'Ricin', 100.0, NULL, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Nb_planches, Fi_planches, Notes) VALUES (83, 'Potager', 1, 'Ricin', 100.0, NULL, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (1, 'Potager', 1, 'Haricot SD-Ext', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (2, 'Potager', 1, 'EV automne Seigle Vesce Moutarde Phacélie', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (3, 'Potager', 5, 'Blette', 100.0, 'C', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (5, 'Potager', 5, 'Laitue plant. printemps', 100.0, 'AB', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (6, 'Potager', 5, 'Laitue plant. été', 100.0, 'D', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (7, 'Potager', 5, 'Laitue plant. automne ext', 100.0, 'AB', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (8, 'Potager', 3, 'Laitue plant. printemps précoce', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (9, 'Potager', 2, 'Chou frisé', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (10, 'Potager', 3, 'Poireau précoce', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (12, 'Potager', 4, 'Chou pommé plant. printemps', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (13, 'Potager', 4, 'Physalis', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (14, 'Grande culture', 2, 'Pomme de terre conservation', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (15, 'Grande culture', 1, 'Maïs', 100.0, 'BD', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (16, 'Grande culture', 1, 'Courge', 100.0, 'AC', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (17, 'Grande culture', 1, 'Haricot Tarbais (maïs)', 100.0, 'BD', NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (18, 'Grande culture', 3, 'EV LD printemps Sorgho Trèfle Mélilot Sarrasin', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (19, 'Grande culture', 4, 'EV LD printemps Sorgho Trèfle Mélilot Sarrasin', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (81, 'Grande culture', 2, 'Ricin', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (83, 'Potager', 1, 'Ricin', 100.0, NULL, NULL);
 
 COMMIT TRANSACTION;
 

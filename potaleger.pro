@@ -3,7 +3,7 @@ QT       += core gui sql svg
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 sql
-
+LIBS += -ldl
 # Do not use Qt SQLite (3.45)
 #LIBS += -lsqlite3
 

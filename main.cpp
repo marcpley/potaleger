@@ -10,13 +10,13 @@
 #include "QDebug"
 #include "PotaUtils.h"
 
-void MainWindow::ActiverMenusData(bool b)
+void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
-    if (!b)
-    {   //These menus are enabled elsewhere.
-        ui->mFermerOnglet->setEnabled(false);
-        ui->mFermerOnglets->setEnabled(false);
-    }
+    // if (!b)
+    // {   //These menus are enabled elsewhere.
+    //     ui->mFermerOnglet->setEnabled(false);
+    //     ui->mFermerOnglets->setEnabled(false);
+    // }
 
     ui->mCopyBDD->setEnabled(b);
     ui->mParam->setEnabled(b);
@@ -36,72 +36,78 @@ void MainWindow::ActiverMenusData(bool b)
         ui->mAnalyses->actions().at(i)->setEnabled(b);
 }
 
-void MainWindow::FermerBDD()
+void MainWindow::PotaDbClose()
 {
-    //fermer tous les onglets de données et désactiver les menus.
-    FermerOnglets();
-    ActiverMenusData(false);
+    ClosePotaTabs();
+    SetEnabledDataMenuEntries(false);
 
-    //fermer la BDD (si ouverte)
     dbClose();
     ui->tbInfoDB->clear();
     ui->lDB->clear();
     ui->lDBErr->clear();
 }
 
-bool MainWindow::dbOpen(QString sFichier, bool UpdateSQLean)
+bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean)
 {
     qInfo() << "SQLite version:" << sqlite3_libversion();
     qInfo() << "DB file:" << sFichier;
     dbClose();
+
+    if (!bNew) {
+        QFile fBDD(sFichier);
+        if (!fBDD.exists()) {
+            SetColoredText(ui->lDBErr,tr("Le fichier de BDD n'existe pas.")+"\n"+
+                                          sFichier,"Err");
+            return false;
+        }
+    }
 
     QSqlDatabase db = QSqlDatabase::database();
     db.setDatabaseName(sFichier);
 
     if (!db.open()) {
         dbClose();
-        SetColoredText(ui->lDBErr, tr("Impossible d'ouvrir la base de données."), "Err");
-        return false;
-    }
-
-    if (db.tables(QSql::Tables).count() == 0) {
-        dbClose();
-        SetColoredText(ui->lDBErr, tr("Aucune table dans la BDD."), "Err");
+        SetColoredText(ui->lDBErr, tr("Impossible d'ouvrir la base de données.")+"\n"+
+                                       sFichier, "Err");
         return false;
     }
 
     QSqlQuery query;
-    query.exec("PRAGMA journal_mode = DELETE;");
-    query.exec("PRAGMA locking_mode = NORMAL;");
-    query.exec("PRAGMA quick_check;");
-    query.next();
-    qInfo() << "SQLite quick_check:" << query.value(0).toString();
+    if (!query.exec("PRAGMA journal_mode = DELETE;") or
+        !query.exec("PRAGMA locking_mode = NORMAL;") or
+        !query.exec("PRAGMA quick_check;") or
+        !query.next()) {
+        dbClose();
+        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite"), "Err");
+        return false;
+    } else
+        qInfo() << "SQLite quick_check:" << query.value(0).toString();
+
+    if (!query.exec("PRAGMA foreign_keys = ON"))
+    {
+        dbClose();
+        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser les clés étrangères."), "Err");
+        return false;
+    }
 
     if (true) {
-        if (UpdateSQLean){
-            QSqlQuery q1;
-            q1.exec("DELETE FROM sqlean_define");//"SELECT define_free('<function_name>')" don't work.
-        }
-        if (!initCustomFunctions()) {
+        if (bResetSQLean and !query.exec("DELETE FROM sqlean_define")) {//"SELECT define_free('<function_name>')" don't work.
             dbClose();
-            SetColoredText(ui->lDBErr, tr("Impossible d'implémenter %1.").arg("sqlean"), "Err");
+            SetColoredText(ui->lDBErr, tr("Impossible d'effacer les fonctions %1.").arg("SQLean"), "Err");
+            return false;
+        }
+        if (!initSQLean()) {
+            dbClose();
+            SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLean"), "Err");
             return false;
         }
 
-        if (UpdateSQLean){
-            if (!registerCustomFunctions()) {
-                dbClose();
-                SetColoredText(ui->lDBErr, tr("Impossible d'implémenter les fonctions %1.").arg("sqlean"), "Err");
-                return false;
-            }
-        }
-
-        QString s=testCustomFunctions();
-        if (!s.isEmpty()){
-            dbClose();
-            SetColoredText(ui->lDBErr, tr("La fonction %1 ne fonctionne pas.").arg(s), "Err");
-            return false;
-        }
+        // QString s=testCustomFunctions();
+        // if (!s.isEmpty()){
+        //     dbClose();
+        //     SetColoredText(ui->lDBErr, tr("La fonction %1 ne fonctionne pas.").arg(s), "Err");
+        //     return false;
+        // }
     }
     return true;
 }
@@ -117,112 +123,85 @@ void MainWindow::dbClose()
     }
 }
 
-void MainWindow::OuvrirBDD(QString sFichier)
+bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
 {
-    QFile fBDD(sFichier);
-    if (!fBDD.exists())
-    {
-        SetColoredText(ui->lDBErr,tr("Le fichier de BDD n'existe pas.")+"\n"+
-                                      sFichier,"Err");
-        return;
-    }
-
     bool const bForceUpdateViewsAndTriggers=false;
+
+    if (!dbOpen(sFichier,(sNew!=""),false))
+        return false;
 
     PotaQuery pQuery;
     pQuery.lErr = ui->lDBErr;
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
 
-    if (!dbOpen(sFichier,bForceUpdateViewsAndTriggers))
-        return;
-
-    QString sVerBDD = "";
-    if (pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) //La vue Info n'existe pas ou pas correcte. On tente pas de mettre cette BDD à jour.
-    {
-        pQuery.next();
-        sVerBDD = pQuery.value(0).toString();
-    }
-    else if (bForceUpdateViewsAndTriggers)
-        sVerBDD = ui->lVerBDDAttendue->text();
-    else
-    {
-        ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
-        dbClose();
-        return;
-    }
-
-
-    if (sVerBDD < "2024-12-30")
-    {
-        ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
-        dbClose();
-        return;
-    }
-
-    if (sVerBDD > ui->lVerBDDAttendue->text())
-    {
-        ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
-        ui->tbInfoDB->append(tr("-> Utilisez une version plus récente de Potaléger."));
-        dbClose();
-        return;
-    }
-
-    if (bForceUpdateViewsAndTriggers or
-        ((sVerBDD != ui->lVerBDDAttendue->text())and
-         (OkCancelDialog("Base de données trop ancienne:\n"+
-                         ui->lDB->text()+"\n" +
-                         "Version "+sVerBDD + "\n\n" +
-                         "Mettre à jour cette BDD vers la version "+ ui->lVerBDDAttendue->text()+" ?\n\n" +
-                                                                               "Cette opération est irréversible"))))
-    {   //Mettre à jour la BDD.
-        if (!pQuery.ExecShowErr("PRAGMA foreign_keys = OFF"))
-        {
-            ui->tbInfoDB->append(tr("Impossible de désactiver les clés étrangères."));
-            dbClose();
-            return;
+    if (sNew==""){//Vérifier une BDD existante.
+        QString sVerBDD = "";
+        if (pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) {//Si la vue Info n'existe pas ou pas correcte, on tente pas de mettre cette BDD à jour.
+            pQuery.next();
+            sVerBDD = pQuery.value(0).toString();
         }
-        dbClose();
-        dbOpen(sFichier,true);
-        if (UpdateDBShema(sVerBDD))
-        {
+        else if (bForceUpdateViewsAndTriggers)
             sVerBDD = ui->lVerBDDAttendue->text();
-        }
-        else
-        {
+        else {
+            ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
-            return;
+            return false;
+        }
+
+
+        if (sVerBDD < "2024-12-30") {
+            ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
+            dbClose();
+            return false;
+        }
+
+        if (sVerBDD > ui->lVerBDDAttendue->text()) {
+            ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
+            ui->tbInfoDB->append(tr("-> Utilisez une version plus récente de Potaléger."));
+            dbClose();
+            return false;
+        }
+
+        if (bForceUpdateViewsAndTriggers or
+            ((sVerBDD != ui->lVerBDDAttendue->text())and
+             (OkCancelDialog("Base de données trop ancienne:\n"+
+                             ui->lDB->text()+"\n" +
+                             "Version "+sVerBDD + "\n\n" +
+                             "Mettre à jour cette BDD vers la version "+ ui->lVerBDDAttendue->text()+" ?\n\n" +
+                             "Cette opération est irréversible")))) {   //Mettre à jour la BDD.
+            if (UpdateDBShema(sVerBDD)) {
+                sVerBDD = ui->lVerBDDAttendue->text();
+            }
+            else {
+                dbClose();
+                return false;
+            }
+        }
+
+        if (sVerBDD != ui->lVerBDDAttendue->text()) {
+            ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
+            dbClose();
+            return false;
         }
     }
-
-    if (sVerBDD != ui->lVerBDDAttendue->text())
-    {
-        ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
+    else if (!UpdateDBShema(sNew)) {
         dbClose();
-        return;
-    }
-
-    //Les Foreing Key ne semblent pas activées lors de l'ouverture. Pourquoi ?
-    //qDebug() << query.value(0);
-    if (!pQuery.ExecShowErr("PRAGMA foreign_keys = ON"))
-    {
-        ui->tbInfoDB->append(tr("Impossible d'activer les clés étrangères."));
-        dbClose();
-        return;
+        return false;
     }
 
     //Afficher infos
-    if (PotaBDDInfo())
-    {
+    if (PotaBDDInfo()) {
         //Activer les menus
-        ActiverMenusData(true);
+        SetEnabledDataMenuEntries(true);
         ui->lDBErr->clear();
     }
-    else
-    {   //Ce cas ne devrait pas arriver, le SELECT précédent à validé l'existence de la vue Info_Potaléger.
+    else {   //Ce cas ne devrait pas arriver, le SELECT précédent à validé l'existence de la vue Info_Potaléger.
         dbClose();
-        return;
+        return false;
     }
+
+    return true;
 }
 
 void MainWindow::RestaureParams()
@@ -235,7 +214,7 @@ void MainWindow::RestaureParams()
     else
         restoreGeometry(geometry);
     settings.endGroup();
-    OuvrirBDD(settings.value("database_path").toString());
+    PotaDbOpen(settings.value("database_path").toString(),"");
     ui->pteNotes->setPlainText(settings.value("notes").toString());
 }
 
@@ -257,7 +236,7 @@ void MainWindow::ShowEvent(QShowEvent *)
 void MainWindow::closeEvent(QCloseEvent *)
 {
     SauvParams();
-    FermerBDD();
+    PotaDbClose();
 }
 
 int main(int argc, char *argv[])

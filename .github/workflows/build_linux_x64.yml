@@ -3,7 +3,7 @@ name: Compil for Linux x64
 on: [push]
 jobs:
   Build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
 
@@ -58,22 +58,24 @@ jobs:
             mkdir artifact/bin/plugins/platforms
             mkdir artifact/bin/plugins/platformthemes
             mkdir artifact/bin/plugins/sqldrivers
-            cp ./potaleger.sh ./artifact/
-            cp ./build/potaleger ./artifact/bin/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libicu*.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Core.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6DBus.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Gui.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Sql.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Svg.so* ./artifact/libs/
+            cp ./install/mint21/install.sh   ./artifact/
+            cp ./install/mint21/potaleger.sh ./artifact/bin/
+            cp ./build/potaleger             ./artifact/bin/
+            cp ./install/mint21/qt.conf      ./artifact/bin/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libicu*.so*          ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Core.so*       ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6DBus.so*       ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Gui.so*        ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Sql.so*        ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Svg.so*        ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6SvgWidgets.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Widgets.so* ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6XcbQpa.so* ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Widgets.so*    ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6XcbQpa.so*     ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/libqsvgicon.so* ./artifact/bin/plugins/iconengines/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so* ./artifact/bin/plugins/platforminputcontexts/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so* ./artifact/bin/plugins/platforminputcontexts/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so*    ./artifact/bin/plugins/platforminputcontexts/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/libqxcb.so* ./artifact/bin/plugins/platforms/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqgtk3.so* ./artifact/bin/plugins/platformthemes/
+            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqgtk3.so*             ./artifact/bin/plugins/platformthemes/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqxdgdesktopportal.so* ./artifact/bin/plugins/platformthemes/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/libqsqlite.so* ./artifact/bin/plugins/sqldrivers/
 
