@@ -14,9 +14,6 @@
 #include <QToolButton>
 #include "data/Data.h"
 
-char* const Version="1.0b13.001";
-char* const DbVersion="2024-12-30";
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -264,7 +261,7 @@ void MainWindow::on_mCopyBDD_triggered()
     FileInfo.setFile(ui->lDB->text());
     if (!FileInfo.exists())
     {
-        MessageDialog(tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),QMessageBox::Critical);
+        MessageDialog(tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),"",QStyle::SP_MessageBoxCritical);
         return;
     }
 
@@ -276,7 +273,7 @@ void MainWindow::on_mCopyBDD_triggered()
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par")+"\n"+
                        ui->lDB->text()+"\n"+
-                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?"))
+                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",QStyle::SP_MessageBoxWarning))
     {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists())
@@ -285,7 +282,7 @@ void MainWindow::on_mCopyBDD_triggered()
             if (!FileInfo2.moveToTrash())
             {
                 MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
-                              sFileName,QMessageBox::Critical);
+                              sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             };
         }
@@ -303,7 +300,7 @@ void MainWindow::on_mCopyBDD_triggered()
             MessageDialog(tr("Impossible de copier le fichier")+"\n"+
                           sFileNameSave+"\n"+
                           tr("vers le fichier")+"\n"+
-                          sFileName,QMessageBox::Critical);
+                          sFileName,"",QStyle::SP_MessageBoxCritical);
         PotaDbOpen(sFileNameSave,"");
     }
 }
@@ -339,7 +336,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
         OkCancelDialog(tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
-                       tr("Remplacer par une base de données %1 ?").arg(sEmpty)))
+                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),QStyle::SP_MessageBoxWarning))
     {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists())
@@ -348,7 +345,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
             if (!FileInfo2.moveToTrash())
             {
                 MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
-                                  sFileName,QMessageBox::Critical);
+                                  sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             };
         }
@@ -358,7 +355,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
         if (!PotaDbOpen(sFileName,iif(bEmpty,"New","NewWithBaseData").toString())) {
             MessageDialog(tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
-                              sFileName,QMessageBox::Critical);
+                              sFileName,"",QStyle::SP_MessageBoxCritical);
             dbClose();
             PotaDbOpen(sFileNameSave,"");
         }
@@ -373,7 +370,6 @@ void MainWindow::on_mParam_triggered()
 
     if (OpenPotaTab("Param","Params",tr("Paramètres"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        w->model->sort(0,Qt::SortOrder::AscendingOrder);
         w->sbInsertRows->setVisible(false);
         w->pbInsertRow->setEnabled(false);
         w->pbInsertRow->setVisible(false);
@@ -479,7 +475,7 @@ void MainWindow::on_mCreerCultures_triggered()
     {
         MessageDialog(tr("Aucune culture à planifier:")+"\n\n"+
                           tr("- Créez des rotations")+"\n"+
-                          tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),QMessageBox::Information);
+                          tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
         return;
     }
 
@@ -487,7 +483,7 @@ void MainWindow::on_mCreerCultures_triggered()
     if (OkCancelDialog(tr("Créer les prochaines cultures en fonction des rotations?")+"\n\n"+
                        tr("%1 cultures vont être créées").arg(NbCultPlanif)+"\n"+
                        tr("Il y a déjà %1 cultures ni semées ni plantées.").arg(NbCultAVenir)+"\n"+
-                       tr("Id de la dernière culture:")+" "+str(NbCultAVenir)))
+                       tr("Id de la dernière culture:")+" "+str(NbCultAVenir),QStyle::SP_MessageBoxQuestion))
     {
         int IdCult1=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
         if (pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement) "
@@ -498,12 +494,12 @@ void MainWindow::on_mCreerCultures_triggered()
             int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
             if (IdCult3>IdCult2 and IdCult2>IdCult1)
                 MessageDialog(tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
-                                  tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3),QMessageBox::Information);
+                                  tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3),"",QStyle::SP_MessageBoxInformation);
             else
-                MessageDialog(tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),QMessageBox::Warning);
+                MessageDialog(tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
         }
         else
-            MessageDialog(tr("Impossible de créer les cultures."),QMessageBox::Critical);
+            MessageDialog(tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
 
     }
 }

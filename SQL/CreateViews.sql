@@ -251,7 +251,9 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
 -- GROUP BY Espèce
 -- ORDER BY Espèce,IT_plante;
 
-CREATE VIEW Cult_planif AS SELECT trim(RD.IT_plante) IT_plante,
+CREATE VIEW Cult_planif AS SELECT
+       PL.Planche,
+       RD.IT_plante,
        (SELECT V.Variété
           FROM Variétés V
          WHERE V.Espèce=I.Espèce
@@ -260,7 +262,6 @@ CREATE VIEW Cult_planif AS SELECT trim(RD.IT_plante) IT_plante,
           FROM Variétés V
          WHERE V.Espèce=I.Espèce
          ORDER BY V.Qté_stock DESC) Fournisseur,
-       PL.Planche,
        (SELECT Valeur
           FROM Params
          WHERE Paramètre='Année_planif') Année_à_planifier,
@@ -268,14 +269,14 @@ CREATE VIEW Cult_planif AS SELECT trim(RD.IT_plante) IT_plante,
                                   THEN (SELECT Valeur-1 FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
                                   ELSE (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
                                   END,
-                             I.Déb_semis) DATE_SEMIS,
+                             I.Déb_semis) Date_semis,
        PlanifCultureCalcDate(coalesce(PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
                                                             THEN (SELECT Valeur-1 FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
                                                             ELSE (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
                                                             END,
                                                             I.Déb_semis),
                                       (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'),
-                             I.Déb_plantation) DATE_PLANTATION,
+                             I.Déb_plantation) Date_plantation,
        RD.Pc_planches/100*PL.Longueur Longueur,
        I.Nb_rangs,
        I.Espacement,

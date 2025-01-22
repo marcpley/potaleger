@@ -9,12 +9,16 @@
 #include <QtSvg>
 #include "sqlite/sqlite3.h"
 //#include "sqlean/sqlite3.h"
+#include <QStyle>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
+
+QString const Version="1.0b14.01";
+QString const DbVersion="2024-12-30";
 
 class MainWindow : public QMainWindow
 {
@@ -90,10 +94,10 @@ private:
     void SetEnabledDataMenuEntries(bool b);
     bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
-    bool OkCancelDialog(QString sMessage);
-    void MessageDialog(QString sMessage, QMessageBox::Icon Icon);
-    void MessageDialog(QString sMessage);
-    bool YesNoDialog(QString sMessage);
+    void MessageDialog(const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
+    bool OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
+    int RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
+    bool YesNoDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
     bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean);
     bool initSQLean();
     bool registerScalarFunctions();

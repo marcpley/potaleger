@@ -158,18 +158,18 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
 
         if (sVerBDD > ui->lVerBDDAttendue->text()) {
             ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
-            ui->tbInfoDB->append(tr("-> Utilisez une version plus récente de Potaléger."));
+            ui->tbInfoDB->append("-> "+tr("Utilisez une version plus récente de Potaléger."));
             dbClose();
             return false;
         }
 
         if (bForceUpdateViewsAndTriggers or
             ((sVerBDD != ui->lVerBDDAttendue->text())and
-             (OkCancelDialog("Base de données trop ancienne:\n"+
+             (OkCancelDialog(tr("Base de données trop ancienne:")+"\n"+
                              ui->lDB->text()+"\n" +
-                             "Version "+sVerBDD + "\n\n" +
-                             "Mettre à jour cette BDD vers la version "+ ui->lVerBDDAttendue->text()+" ?\n\n" +
-                             "Cette opération est irréversible")))) {   //Mettre à jour la BDD.
+                             tr("Version ")+sVerBDD + "\n\n" +
+                             tr("Mettre à jour cette BDD vers la version %1 ?").arg(ui->lVerBDDAttendue->text())+" ?\n\n" +
+                             tr("Cette opération est irréversible"),QStyle::SP_MessageBoxQuestion)))) {   //Mettre à jour la BDD.
             if (UpdateDBShema(sVerBDD)) {
                 sVerBDD = ui->lVerBDDAttendue->text();
             }
@@ -214,7 +214,21 @@ void MainWindow::RestaureParams()
     else
         restoreGeometry(geometry);
     settings.endGroup();
-    PotaDbOpen(settings.value("database_path").toString(),"");
+
+    if (settings.value("database_path").toString().isEmpty()) {
+        int choice = RadiobuttonDialog(tr("Potaléger stoque ses données dans un fichier unique à l'emplacement de votre choix."),
+                                       {tr("Sélectionner une base de données existante"),
+                                        tr("Créer une BDD avec les données de base"),
+                                        tr("Créer une BDD vide")},1,QStyle::NStandardPixmap);
+        if (choice==0)
+            on_mSelecDB_triggered();
+        else if (choice==1)
+            on_mCreerBDD_triggered();
+        else if (choice==2)
+            on_mCreerBDDVide_triggered();
+    } else
+        PotaDbOpen(settings.value("database_path").toString(),"");
+
     ui->pteNotes->setPlainText(settings.value("notes").toString());
 }
 
@@ -242,7 +256,7 @@ void MainWindow::closeEvent(QCloseEvent *)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.addLibraryPath("/libs_potaleger");
+    //a.addLibraryPath("/libs_potaleger");
     MainWindow w;
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
 

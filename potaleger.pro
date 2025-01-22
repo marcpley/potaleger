@@ -52,6 +52,7 @@ DISTFILES += \
     SQL/CreateViews.sql \
     SQL/FunctionsSQLite.sql \
     SQL/UpdateStru2024-12-30_2025-01-xx.sql \
+    SQL/UpdateTableParams.sql \
     zNoRepo/todo.txt
 
 RESOURCES += \

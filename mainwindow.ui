@@ -378,23 +378,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </item>
         <item>
          <widget class="QLabel" name="label_2">
-          <property name="autoFillBackground">
-           <bool>false</bool>
+          <property name="font">
+           <font>
+            <fontweight>Thin</fontweight>
+           </font>
           </property>
           <property name="frameShape">
-           <enum>QFrame::Shape::Box</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Shadow::Plain</enum>
-          </property>
-          <property name="lineWidth">
-           <number>4</number>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="text">
            <string>TextLabel</string>
-          </property>
-          <property name="margin">
-           <number>10</number>
           </property>
           <property name="indent">
            <number>10</number>

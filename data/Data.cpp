@@ -20,6 +20,28 @@ QString GeneratedFielnameForDummyFilter(const QString sTableName) {
         return "";
 }
 
+int NaturalSortCol(const QString sTableName){
+    if (sTableName=="Params" or
+        sTableName=="Rotations_détails__Tempo")
+        return -1;
+    else if (sTableName=="Cult_planif")
+        return 5;//Date_semis
+    else if (sTableName=="Cultures__Semis_à_faire")
+        return 8;//Date_semis
+    else if (sTableName=="Cultures__Plantations_à_faire")
+        return 10;//Date_plantation
+    else if (sTableName=="Cultures__Récoltes_à_faire")
+        return 9;//Début_récolte
+    else if (sTableName=="Cultures__à_terminer")
+        return 8;//Fin_récolte
+    else if (sTableName=="Cultures__Tempo_Espèce")
+        return 1;//ITP
+    else if (sTableName=="IT_rotations_manquants")
+        return 1;//ITP
+    else
+        return 0;
+}
+
 bool ReadOnly(const QString sTableName,const QString sFieldName)
 {
     bool bReadOnly=false;

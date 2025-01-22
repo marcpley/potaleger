@@ -16,6 +16,7 @@ const QColor cTerminee=QColor("#808080");//Gris
 
 QString DynDDL(QString sQuery);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
+int NaturalSortCol(const QString sTableName);
 bool ReadOnly(const QString sTableName,const QString sFieldName);
 QColor RowColor(QString sValue);
 QString RowSummary(QString TableName, const QModelIndex &index);

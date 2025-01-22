@@ -94,7 +94,7 @@ QVariant iif(bool bCond,QVariant Var1,QVariant Var2)
 
 bool isDarkTheme() {
     QColor backgroundColor = QApplication::palette().color(QPalette::Window);
-    return backgroundColor.lightness() < 128; // Valeur arbitraire pour détecter un thème sombre
+    return backgroundColor.lightness() < 128;
 }
 
 QString RemoveComment(QString sCde, QString sCommentMarker)
@@ -159,6 +159,16 @@ QString str(qsizetype i)
     s.setNum(i);
     return s;
 }
+
+QString StrFirst(QString s, int i){
+    if (i>0 and i<s.length())
+        return s.first(i);
+    else if (i==0)
+        return "";
+    else
+        return s;
+}
+
 
 QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
     int index = 0;

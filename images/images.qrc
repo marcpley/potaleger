@@ -17,5 +17,7 @@
         <file>insert_row.svg</file>
         <file>yellowbullet.svg</file>
         <file>toCommit.svg</file>
+        <file>potaleger.svg</file>
+        <file>Arrow_BlueDown.svg</file>
     </qresource>
 </RCC>

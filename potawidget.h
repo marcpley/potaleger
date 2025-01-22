@@ -328,9 +328,9 @@ public:
         //setStretchLastSection(false);
     }
     int TempoCol=-1;
+    int iSortCol = 0;
 
 protected:
-    int iSortCol = 0;
     bool bSortDes = false;
 
     void paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const override {
@@ -352,50 +352,12 @@ protected:
             painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(11).left(3));
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(12).left(3));
 
-            for (int i=1;i<13;i++){
-            }
             painter->restore();
         } else
             QHeaderView::paintSection(painter, rect, logicalIndex);
     }
 
-    void mouseDoubleClickEvent(QMouseEvent *event) override {
-        // Obtenir l'index de la section cliquée
-        int logicalIndex = logicalIndexAt(event->pos());
-        if (logicalIndex != -1) {
-            //qDebug() << "Section clicked:" << logicalIndex;
-
-            if (iSortCol==logicalIndex)//Sort on this column.
-            {
-                if (!bSortDes)
-                {
-                    model()->sort(logicalIndex,Qt::SortOrder::DescendingOrder);
-                    model()->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_RedUp.svg")), Qt::DecorationRole);
-                    bSortDes=true;
-                }
-                else//Reset sorting.
-                {
-                    model()->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
-                    model()->sort( -1,Qt::SortOrder::AscendingOrder);
-                    iSortCol=0;
-                    bSortDes=false;
-                }
-            }
-            else//Actual sort on another column.
-            {
-                model()->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
-                model()->sort(logicalIndex,Qt::SortOrder::AscendingOrder);
-                model()->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
-                iSortCol=logicalIndex;
-                bSortDes=false;
-            }
-
-            emit sectionClicked(logicalIndex);
-        }
-
-        // Appeler la méthode parente pour le comportement standard
-        QHeaderView::mouseDoubleClickEvent(event);
-    }
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
 };
 
 class PotaItemDelegate2 : public QStyledItemDelegate {
@@ -408,6 +370,7 @@ public:
     QColor cColColors[50];
     int RowColorCol=-1;
     int TempoCol=-1;
+    int FilterCol=-1;
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const    override;
 
@@ -550,6 +513,20 @@ public:
 
     QLabel *lErr;
 
+private:
+    //Filtering
+    int iNCharDate=10;
+    int iNCharText=5;
+    int iNCharReal=1;
+    QString sDataNameFilter;
+    QString sDataFilter;
+    void SetFilterParamsFrom(QString sDataName, QString sData);
+    int iPositionCol=-1;
+    QString sPositionRow="";
+    QString sPositionRow2="";
+    void PositionSave();
+    void PositionRestore();
+
 private slots:
     void curChanged(const QModelIndex cur, const QModelIndex pre);
     void dataChanged(const QModelIndex &topLeft,const QModelIndex &bottomRight,const QList<int> &roles);
@@ -560,6 +537,7 @@ private slots:
     void pbInsertRowClick();
     void pbDeleteRowClick();
     void cbFilterClick(Qt::CheckState state);
+    void sbFilterClick(int i);
     void leFilterReturnPressed();
 };
 

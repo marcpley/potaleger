@@ -91,13 +91,14 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     cbFilter->setFixedWidth(120);
     cbFilter->setEnabled(false);
     cbFilter->setText(tr("Filtrer"));
+    connect(cbFilter, &QCheckBox::checkStateChanged, this, &PotaWidget::cbFilterClick);
     leFilter = new QLineEdit(this);
     leFilter->setFixedWidth(100);
     connect(leFilter, &QLineEdit::returnPressed, this, &PotaWidget::leFilterReturnPressed);
     sbFilter = new QSpinBox(this);
     sbFilter->setMinimum(-1);
     sbFilter->setValue(5);
-    connect(cbFilter, &QCheckBox::checkStateChanged, this, &PotaWidget::cbFilterClick);
+    connect(sbFilter, &QSpinBox::valueChanged, this, &PotaWidget::sbFilterClick);
     lFilter = new QLabel(this);
     lFilter->setFixedWidth(120);
 
@@ -109,6 +110,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     tv->setItemDelegate(delegate);
     auto *header = new PotaHeaderView( Qt::Horizontal, tv);
     tv->setHorizontalHeader(header);
+
     connect(tv->selectionModel(), SIGNAL(currentChanged(const QModelIndex,const QModelIndex)),
             this, SLOT(curChanged(const QModelIndex,const QModelIndex)));
     connect(model, SIGNAL(dataChanged(const QModelIndex,const QModelIndex,const QList<int>)),
@@ -189,6 +191,9 @@ void PotaWidget::Init(QString TableName)
     tv->verticalHeader()->setDefaultAlignment(Qt::AlignTop);
     tv->verticalHeader()->hide();
     tv->setTabKeyNavigation(false);
+    dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->iSortCol=NaturalSortCol(TableName);
+    dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->model()->setHeaderData(NaturalSortCol(TableName), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
+
 }
 
 void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
@@ -197,20 +202,111 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 
     lRowSummary->setText(RowSummary(model->tableName(),cur));
 
-    if (!cbFilter->isChecked())
-    {
-        //cbFilter->setText(model->FieldName(cur.column()));
-        cbFilter->setText(model->headerData(cur.column(),Qt::Horizontal,Qt::DisplayRole).toString());
+    if (!cbFilter->isChecked()) {
+        //Filtering
+        sDataNameFilter=model->headerData(cur.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+        sDataFilter=model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString();
 
-        cbFilter->setEnabled(true);
+        cbFilter->setText(sDataNameFilter);
 
-        if ((sbFilter->value()==-1)or
-            (sbFilter->value()>model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString().length()))
-            leFilter->setText(model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString());
-        else
-            leFilter->setText(model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString().first(sbFilter->value()));
+        cbFilter->setEnabled(true);//todo: when false ?
+
+        SetFilterParamsFrom(sDataNameFilter,sDataFilter);
     }
 
+}
+
+void PotaWidget::PositionSave() {
+    iPositionCol=tv->selectionModel()->currentIndex().column();
+    //Normal row to retreive.
+    sPositionRow=model->index(tv->selectionModel()->currentIndex().row(),0).data(Qt::DisplayRole).toString()+
+                 model->index(tv->selectionModel()->currentIndex().row(),1).data(Qt::DisplayRole).toString()+
+                 model->index(tv->selectionModel()->currentIndex().row(),2).data(Qt::DisplayRole).toString();
+    //Alternative row to retreive if normal row desapear.
+    sPositionRow2=model->index(tv->selectionModel()->currentIndex().row()+1,0).data(Qt::DisplayRole).toString()+
+                  model->index(tv->selectionModel()->currentIndex().row()+1,1).data(Qt::DisplayRole).toString()+
+                  model->index(tv->selectionModel()->currentIndex().row()+1,2).data(Qt::DisplayRole).toString();
+}
+
+void PotaWidget::PositionRestore() {
+    for (int i=0;i<model->rowCount();i++) {
+        if (sPositionRow==model->index(i,0).data(Qt::DisplayRole).toString()+
+                          model->index(i,1).data(Qt::DisplayRole).toString()+
+                          model->index(i,2).data(Qt::DisplayRole).toString()) {
+            //Normal row retreived.
+            tv->selectionModel()->setCurrentIndex(model->index(i,iPositionCol),QItemSelectionModel::Current);
+            break;
+        }
+        if (sPositionRow2==model->index(i,0).data(Qt::DisplayRole).toString()+
+                           model->index(i,1).data(Qt::DisplayRole).toString()+
+                           model->index(i,2).data(Qt::DisplayRole).toString()) {
+            //Normal row probably not in the the new row set.
+            tv->selectionModel()->setCurrentIndex(model->index(i,iPositionCol),QItemSelectionModel::Current);
+            break;
+        }
+    }
+    tv->setFocus();
+}
+
+void PotaWidget::SetFilterParamsFrom(QString sDataName, QString sData){
+    //Filtering
+    QString sDataType = DataType(model->tableName(),sDataName);
+    leFilter->setToolTip("");
+    if (sDataType=="TEXT" or sDataType=="BOOL") {
+        if (!cbFilter->isChecked())
+            sbFilter->setValue(iNCharText);
+        sbFilter->setMaximum(100);
+        sbFilter->setMinimum(-1);
+        sbFilter->setSingleStep(1);
+        sbFilter->setEnabled(true);
+        leFilter->setText(StrFirst(sData,sbFilter->value()));
+        leFilter->setToolTip(tr("'%1' commence par '%2'.")
+                                 .arg(sDataName)
+                                 .arg(leFilter->text()));
+    } else if (sDataType=="DATE") {
+        if (!cbFilter->isChecked())
+            sbFilter->setValue(iNCharDate);
+        sbFilter->setMaximum(10);
+        sbFilter->setMinimum(4);
+        sbFilter->setSingleStep(3);
+        sbFilter->setEnabled(true);
+        leFilter->setText(StrFirst(sData,sbFilter->value()));
+        if (sbFilter->value()==4) {
+            leFilter->setToolTip(tr("'%1' est de l'année '%2'.")
+                                     .arg(sDataName)
+                                     .arg(leFilter->text()));
+        } else if (sbFilter->value()==7) {
+            leFilter->setToolTip(tr("'%1' est du mois '%2'.")
+                                     .arg(sDataName)
+                                     .arg(leFilter->text()));
+        } else {
+            leFilter->setToolTip(tr("'%1' est '%2'.")
+                                     .arg(sDataName)
+                                     .arg(leFilter->text()));
+        }
+    } else if (sDataType=="REAL" or sDataType=="INTEGER") {
+        if (!cbFilter->isChecked())
+            sbFilter->setValue(iNCharReal);
+        sbFilter->setMaximum(1000);
+        sbFilter->setMinimum(0);
+        sbFilter->setSingleStep(1);
+        sbFilter->setEnabled(true);
+        leFilter->setText(sData);
+        leFilter->setToolTip(tr("'%1' égal à %2 plus ou moins %3.")
+                                 .arg(sDataName)
+                                 .arg(leFilter->text())
+                                 .arg(sbFilter->value()));
+    } else {
+        sbFilter->setEnabled(false);
+    }
+    if (leFilter->text()=="")
+        leFilter->setToolTip(tr("'%1' est vide.")
+                                 .arg(sDataName));
+    if (!cbFilter->isChecked())
+        leFilter->setToolTip(leFilter->toolTip()+"\n"+
+                             tr("Cocher la case pour activer la filtration."));
+    leFilter->setToolTip(tr("Filtrer les lignes:")+"\n"+
+                         leFilter->toolTip());
 }
 
 void PotaWidget::dataChanged(const QModelIndex &topLeft,const QModelIndex &bottomRight,const QList<int> &roles)
@@ -234,36 +330,31 @@ void PotaWidget::headerRowClicked() //int logicalIndex
 
 void PotaWidget::pbRefreshClick()
 {
-    // int i=tv->selectionModel()->currentIndex().row();
-    // int j=tv->selectionModel()->currentIndex().column();
-    QModelIndex index=tv->selectionModel()->currentIndex();
-
     if (pbCommit->isEnabled())
         model->SubmitAllShowErr();
     model->copiedCells.clear();
     model->commitedCells.clear();
 
+    PositionSave();
     model->SelectShowErr();
-    //tv->selectionModel()->setCurrentIndex(model->index(i,j),QItemSelectionModel::Current);
-    tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
+    PositionRestore();
 }
 
 void PotaWidget::pbCommitClick()
 {
-    QModelIndex index=tv->selectionModel()->currentIndex();
-    if (model->SubmitAllShowErr()){
-        tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
-        tv->setFocus();
-    }
+    PositionSave();
+
+    if (model->SubmitAllShowErr())
+        PositionRestore();
 }
 
 void PotaWidget::pbRollbackClick()
 {
-    QModelIndex index=tv->selectionModel()->currentIndex();
+    PositionSave();
+
     if (model->RevertAllShowErr()){
         model->copiedCells.clear();
-        tv->selectionModel()->setCurrentIndex(index,QItemSelectionModel::Current);//todo: retreive the reccord, not the line
-        tv->setFocus();
+        PositionRestore();
     }
 }
 
@@ -281,26 +372,67 @@ void PotaWidget::pbDeleteRowClick()
 
 void PotaWidget::cbFilterClick(Qt::CheckState state)
 {
+    //Filtering
     model->commitedCells.clear();
     QString filter="";
     if (state==Qt::CheckState::Checked) {
-        //Sort
-        if (leFilter->text()=="")
-            filter=cbFilter->text()+" ISNULL";
-        else
-            filter=cbFilter->text()+" LIKE '"+StrReplace(leFilter->text(),"'","\'")+"%'";//todo : escape ' caracter in leFilter->text()
+        //Filter
+        //QModelIndex index = tv->selectionModel()->currentIndex();
 
+        QString sDataType = DataType(model->tableName(),sDataNameFilter);
+        if (sDataType=="TEXT" or sDataType=="DATE" or sDataType=="BOOL") {
+            if (leFilter->text()=="")
+                filter=cbFilter->text()+" ISNULL";
+            else
+                filter=cbFilter->text()+" LIKE '"+StrReplace(leFilter->text(),"'","\'")+"%'";
+        } else if (sDataType=="REAL" or sDataType=="INTEGER") {
+            if (leFilter->text()=="")
+                filter=cbFilter->text()+" ISNULL";
+            else
+                filter=cbFilter->text()+" BETWEEN "+str(leFilter->text().toFloat()-sbFilter->value())+" AND "+
+                                                    str(leFilter->text().toFloat()+sbFilter->value());
+        }
+        delegate->FilterCol=model->fieldIndex(sDataNameFilter);
         fFilter->setFrameShape(QFrame::Box);
 
     } else {
-        //Reset sort
+        //Reset filter
+        delegate->FilterCol=-1;
         fFilter->setFrameShape(QFrame::NoFrame);
     }
 
+    PositionSave();
+
     model->setFilter(filter);
-    tv->setFocus();
+
+    PositionRestore();
 
     lFilter->setText(str(model->rowCount())+" "+tr("lignes"));
+}
+
+void PotaWidget::sbFilterClick(int i)
+{
+    //Filtering
+    QModelIndex index = tv->selectionModel()->currentIndex();
+    QString sDataType = DataType(model->tableName(),model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString());
+    if (sDataType=="TEXT") {
+        iNCharText=i;
+        //leFilter->setText(StrFirst(model->index(index.row(),index.column()).data(Qt::DisplayRole).toString(),sbFilter->value()));
+    } else if (sDataType=="DATE") {
+        iNCharDate=i;
+        //leFilter->setText(StrFirst(model->index(index.row(),index.column()).data(Qt::DisplayRole).toString(),sbFilter->value()));
+    } else if (sDataType=="REAL" or sDataType=="INTEGER"){
+        iNCharReal=i;
+        //leFilter->setText(StrFirst(model->index(index.row(),index.column()).data(Qt::DisplayRole).toString(),sbFilter->value()));
+    }
+
+    if (cbFilter->isChecked()) {
+        SetFilterParamsFrom(sDataNameFilter,sDataFilter);
+        cbFilterClick(Qt::CheckState::Checked);
+    } else {
+        SetFilterParamsFrom(model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString(),
+                            model->index(index.row(),index.column()).data(Qt::DisplayRole).toString());
+    }
 }
 
 void PotaWidget::leFilterReturnPressed()
@@ -462,6 +594,49 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
+//                                  PotaHeaderView
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PotaHeaderView::mouseDoubleClickEvent(QMouseEvent *event)  {
+    int logicalIndex = logicalIndexAt(event->pos());
+    if (logicalIndex != -1) {
+        //qDebug() << "Section clicked:" << logicalIndex;
+
+        if (iSortCol==logicalIndex)//Already sorted on this column.
+        {
+            if (!bSortDes)
+            {
+                model()->sort(logicalIndex,Qt::SortOrder::DescendingOrder);
+                model()->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_RedUp.svg")), Qt::DecorationRole);
+                bSortDes=true;
+            }
+            else//Reset sorting.
+            {
+                model()->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
+                model()->sort( -1,Qt::SortOrder::AscendingOrder);
+                int iCol=NaturalSortCol(dynamic_cast<PotaTableModel*>(model())->tableName());
+                model()->setHeaderData(iCol, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
+                iSortCol=iCol;
+                bSortDes=false;
+            }
+        }
+        else//Actual sort on another column.
+        {
+            model()->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
+            model()->sort(logicalIndex,Qt::SortOrder::AscendingOrder);
+            model()->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
+            iSortCol=logicalIndex;
+            bSortDes=false;
+        }
+
+        emit sectionClicked(logicalIndex);
+    }
+
+    // Appeler la méthode parente pour le comportement standard
+    QHeaderView::mouseDoubleClickEvent(event);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  PotaItemDelegate
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -472,13 +647,13 @@ void PotaItemDelegate2::paint(QPainter *painter, const QStyleOptionViewItem &opt
 
     QBrush b;
     b.setStyle(Qt::SolidPattern);
-    QColor c,cCopied,cModified,cModifiedError;
+    QColor c,cFiltered,cCopied,cModified,cModifiedError;
     QItemSelectionModel *selection = pw->tv->selectionModel();
 
     if (pw->model && pw->model->rowsToRemove.contains(index.row())) {
-        // Surligner les cellules de la ligne supprimée avec un fond gris clair
+        //Not painting the rows to remove.
         QStyleOptionViewItem opt = option;
-        opt.backgroundBrush = QBrush(QColor(220, 220, 220)); // Gris clair
+        opt.backgroundBrush = QBrush(QColor(220, 220, 220));
         return;
     // } else if (index.row() == selection->currentIndex().row()) {//Line selected
     //     //c=Qt::blue;
@@ -503,6 +678,18 @@ void PotaItemDelegate2::paint(QPainter *painter, const QStyleOptionViewItem &opt
     if (c.isValid()) {
         b.setColor(c);
         painter->fillRect(option.rect,b);
+    }
+
+    if (index.column()==FilterCol) { //Filtering column.
+        if (!isDarkTheme())
+            cFiltered=QColor("#000000");//palette
+        else
+            cFiltered=QColor("#ffffff");
+        cFiltered.setAlpha(150);
+        painter->save();
+        painter->setPen(cFiltered);
+        painter->drawRect(option.rect.x(), option.rect.y(), option.rect.width()-1, option.rect.height()-1);
+        painter->restore();
     }
 
     if (index.row() == selection->currentIndex().row()) {//Line selected

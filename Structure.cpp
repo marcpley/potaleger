@@ -7,6 +7,7 @@
 #include "SQL/CreateViews.sql"
 #include "SQL/CreateBaseData.sql"
 #include "SQL/CreateTriggers.sql"
+#include "SQL/UpdateTableParams.sql"
 #include "PotaUtils.h"
 #include "data/Data.h"
 
@@ -29,9 +30,8 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         //bNew=true; mettre à false quand debug fait.
         if (model->ExecMultiShowErr(DynDDL(sDDLTables),";"))
         {
-            sResult.append("Create tables : ok\n");
-            if (sDBVersion == "NewWithBaseData")
-            {
+            sResult.append("Create tables : ok (").append(DbVersion).append(")\n");
+            if (sDBVersion == "NewWithBaseData") {
                 if (!model->ExecMultiShowErr(DynDDL(sSQLBaseData),";"))
                 {
                     ui->tbInfoDB->append(tr("Echec de la création des données de base")+" ("+ui->lVerBDDAttendue->text()+")");
@@ -39,10 +39,8 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 }
                 sResult.append("Create base data : ok\n");
             }
-            sDBVersion = "2024-12-30";
-        }
-        else
-        {
+            sDBVersion = DbVersion;//"2024-12-30";
+        } else {
             ui->tbInfoDB->append(tr("Echec de la création de la BDD vide")+" ("+ui->lVerBDDAttendue->text()+")");
             return false;
         }
@@ -79,36 +77,44 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     // }
 
     if (bResult and(sDBVersion == ui->lVerBDDAttendue->text())) { //Tables shema ok.
+        if (sResult=="")
+            sResult.append("Version : "+sDBVersion+"\n");
 
         if (bResult){
             //Create scalar functions
             bResult = registerScalarFunctions();
-            sResult.append(sDBVersion+" -> Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
+            sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Create views
             bResult = model->ExecMultiShowErr(sDDLViews,";");
-            sResult.append(sDBVersion+" -> views : "+iif(bResult,"ok","Err").toString()+"\n");
+            sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Create table valued functions
             bResult = registerTableValuedFunctions();
-            sResult.append(sDBVersion+" -> Table valued functions : "+iif(bResult,"ok","Err").toString()+"\n");
+            sResult.append("Table valued functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Test functions
             QString sErrFunc = testCustomFunctions();
             bResult = (sErrFunc=="");
-            sResult.append(sDBVersion+" -> Function test : "+iif(bResult,"ok","Err ("+sErrFunc+")").toString()+"\n");
+            sResult.append("Function test : "+iif(bResult,"ok","Err ("+sErrFunc+")").toString()+"\n");
         }
 
         if (bResult){
             //Create triggers
             bResult = model->ExecMultiShowErr(sDDLTriggers,";;");//";" exists in CREATE TRIGGER statments
-            sResult.append(sDBVersion+" -> triggers : "+iif(bResult,"ok","Err").toString()+"\n");
+            sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+
+        if (bResult){
+            //Update params table
+            bResult = model->ExecMultiShowErr(sDDLTableParams,";");
+            sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }
 
@@ -123,8 +129,8 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         if (sDBVersion == ui->lVerBDDAttendue->text())
         {
             if (!bNew)
-                MessageDialog(tr("Mise à jour réussie.")+"\n\n"+
-                                  sResult,QMessageBox::Information);
+                MessageDialog(tr("Mise à jour réussie."),
+                                  sResult,QStyle::SP_MessageBoxInformation);
             return true;
         }
         else {
@@ -134,8 +140,8 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     }
     else
     {
-        MessageDialog(tr("Echec de la mise à jour.")+"\n\n"+
-                          sResult,QMessageBox::Critical);
+        MessageDialog(tr("Echec de la mise à jour."),
+                          sResult,QStyle::SP_MessageBoxCritical);
         ui->tbInfoDB->append(tr("Echec de la mise à jour de la version de la BDD ")+" ("+sDBVersion+" > "+ui->lVerBDDAttendue->text()+")");
         return false;
     }

@@ -30,6 +30,7 @@ void SetColoredText(QLabel *l, QString text, QString type);
 QString str(int i);
 QString str(float i);
 QString str(qsizetype i);
+QString StrFirst(QString s, int i);
 QString StrReplace(QString s, const QString sTarg, const QString sRepl);
 
 #endif // POTAUTILS_H
