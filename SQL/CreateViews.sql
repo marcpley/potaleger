@@ -1,5 +1,5 @@
 QString sDDLViews = QStringLiteral(R"#(
-BEGIN TRANSACTION;
+-- BEGIN TRANSACTION;
 
 -- CREATE VIEW test AS
 --     VALUES (Test('09-15','04-01')),
@@ -10,7 +10,7 @@ BEGIN TRANSACTION;
 CREATE VIEW Info_Potaléger AS
     SELECT 1 N,
            'Version de la BDD' Info,
-           '2024-12-30' Valeur
+           '#DbVer#' Valeur
     UNION
     SELECT 2,
            'Utilisateur',
@@ -119,9 +119,9 @@ CREATE VIEW ITP__Tempo AS SELECT I.IT_plante,
                 ItpTempoNJ(I.Fin_plantation),
                 ItpTempoNJ(I.Déb_récolte),
                 ItpTempoNJ(I.Fin_récolte)) TEMPO,
-       ItpTempoNJPeriode(ItpTempoNJ(I.Déb_semis),ItpTempoNJ(I.Fin_semis),365) J_semis,
-       ItpTempoNJPeriode(ItpTempoNJ(I.Déb_plantation),ItpTempoNJ(I.Fin_plantation),365) J_plantation,
-       ItpTempoNJPeriode(ItpTempoNJ(I.Déb_récolte),ItpTempoNJ(I.Fin_récolte),365) J_récolte,
+       CAST(ItpTempoNJPeriode(ItpTempoNJ(I.Déb_semis),ItpTempoNJ(I.Fin_semis),365) AS INTEGER) J_semis,
+       CAST(ItpTempoNJPeriode(ItpTempoNJ(I.Déb_plantation),ItpTempoNJ(I.Fin_plantation),365) AS INTEGER) J_plantation,
+       CAST(ItpTempoNJPeriode(ItpTempoNJ(I.Déb_récolte),ItpTempoNJ(I.Fin_récolte),365) AS INTEGER) J_récolte,
        I.Nb_rangs,
        I.Espacement,
        I.Nb_graines_trou,
@@ -758,5 +758,5 @@ CREATE VIEW Planches_Ilots AS
               Type,
               Rotation;
 
-COMMIT TRANSACTION;
+-- COMMIT TRANSACTION;
 )#");

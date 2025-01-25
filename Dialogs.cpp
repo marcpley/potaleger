@@ -34,18 +34,28 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
         headerLayout->addWidget(iconLabel);
     }
 
-    QLabel *messageLabel = new QLabel(message);
-    messageLabel->setWordWrap(true);
+    QString sMess=message;
+    QString sMess2=message2;
+    if (isDarkTheme()){
+        sMess=StrReplace(sMess,"<a href","<a style=\"color: #7785ff\" href");
+        sMess2=StrReplace(sMess2,"<a href","<a style=\"color: #7785ff\" href");
+    }
+    QLabel *messageLabel = new QLabel(sMess);
+    //messageLabel->setWordWrap(true);
+    messageLabel->setOpenExternalLinks(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    messageLabel->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
     headerLayout->addWidget(messageLabel);
     headerLayout->addStretch();
     layout->addLayout(headerLayout);
 
     if (message2!=""){
         QHBoxLayout *textLayout = new QHBoxLayout();
-        QLabel *messageLabel2 = new QLabel(message2);
+        QLabel *messageLabel2 = new QLabel(sMess2);
         messageLabel2->setWordWrap(true);
+        messageLabel2->setOpenExternalLinks(true);
         messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        messageLabel2->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
         QFont font = messageLabel2->font();
         font.setWeight(QFont::Light);
         messageLabel2->setFont(font);

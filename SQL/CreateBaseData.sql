@@ -1,6 +1,6 @@
 QString sSQLBaseData = QStringLiteral(R"#(
 
-BEGIN TRANSACTION;
+-- BEGIN TRANSACTION;
 
 INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Alliacées', 3.2, NULL);
 INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Apiacées', 3.0, NULL);
@@ -353,6 +353,6 @@ INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (81, 'Grande culture', 2, 'Ricin', 100.0, NULL, NULL);
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (83, 'Potager', 1, 'Ricin', 100.0, NULL, NULL);
 
-COMMIT TRANSACTION;
+-- COMMIT TRANSACTION;
 
 )#");

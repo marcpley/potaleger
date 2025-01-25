@@ -58,8 +58,10 @@ jobs:
             mkdir artifact/bin/plugins/platforms
             mkdir artifact/bin/plugins/platformthemes
             mkdir artifact/bin/plugins/sqldrivers
-            cp ./install/mint21/install.sh   ./artifact/
-            cp ./install/mint21/potaleger.sh ./artifact/bin/
+            cp ./install/mint21/install.sh    ./artifact/
+            cp ./install/mint21/potaleger.sh  ./artifact/
+            cp ./install/mint21/potaleger.svg ./artifact/
+            cp ./install/readme.md           ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/
             cp ./install/mint21/qt.conf      ./artifact/bin/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libicu*.so*          ./artifact/libs/

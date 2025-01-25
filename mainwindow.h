@@ -17,8 +17,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0b14.01";
-QString const DbVersion="2024-12-30";
+QString const Version="1.0b16.01";
+QString const DbVersion="2025-01-20";
 
 class MainWindow : public QMainWindow
 {
@@ -90,6 +90,12 @@ private slots:
 
     void on_mCulturesParplante_triggered();
 
+    void on_mLargeurs_triggered();
+
+    void on_mEditNotes_triggered();
+
+    void on_mAPropos_triggered();
+
 private:
     void SetEnabledDataMenuEntries(bool b);
     bool PotaBDDInfo();
@@ -98,7 +104,7 @@ private:
     bool OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
     int RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
     bool YesNoDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
-    bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean);
+    bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn);
     bool initSQLean();
     bool registerScalarFunctions();
     bool registerTableValuedFunctions();

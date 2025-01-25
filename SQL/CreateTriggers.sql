@@ -1,5 +1,5 @@
 QString sDDLTriggers = QStringLiteral(R"#(
-BEGIN TRANSACTION;;
+-- BEGIN TRANSACTION;;
 
 DROP TRIGGER IF EXISTS Cultures_INSERT_Planifier;;
 CREATE TRIGGER Cultures_INSERT_Planifier AFTER INSERT ON Cultures
@@ -467,5 +467,5 @@ BEGIN
      WHERE Famille=NEW.Famille;
 END;;
 
-COMMIT TRANSACTION;;
+-- COMMIT TRANSACTION;;
 )#");

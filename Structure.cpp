@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQueryModel>
-#include "SQL/UpdateStru2024-12-30_2025-01-xx.sql"
+#include "SQL/UpdateStru2024-12-30_2025-01-20.sql"
 #include "SQL/CreateTables.sql"
 #include "SQL/CreateViews.sql"
 #include "SQL/CreateBaseData.sql"
@@ -15,6 +15,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 {
     //QSqlDatabase db = QSqlDatabase::database();
     PotaQuery *model = new PotaQuery;
+    PotaQuery *model2 = new PotaQuery;
     model->lErr = ui->lDBErr;
     bool bNew=false;
     bool bResult=true;
@@ -32,7 +33,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         {
             sResult.append("Create tables : ok (").append(DbVersion).append(")\n");
             if (sDBVersion == "NewWithBaseData") {
-                if (!model->ExecMultiShowErr(DynDDL(sSQLBaseData),";"))
+                if (!model->ExecMultiShowErr(sSQLBaseData,";"))
                 {
                     ui->tbInfoDB->append(tr("Echec de la création des données de base")+" ("+ui->lVerBDDAttendue->text()+")");
                     return false;
@@ -59,26 +60,71 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         QSqlDatabase db = QSqlDatabase::database();
         QString sDbFile=db.databaseName();
         dbClose();
-        dbOpen(sDbFile,false,true);
+        dbOpen(sDbFile,false,true,false);
         dbClose();
-        dbOpen(sDbFile,false,false);
-    }
+        dbOpen(sDbFile,false,false,false);
 
+        if (bResult and(sDBVersion == "2024-12-30")) { //Spécific update shema.
+            bResult = model->ExecMultiShowErr(sDDL20250120,";");
+            sResult.append(sDBVersion+" -> 2025-01-20 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-01-20";
+        }
 
-    if (bResult and(sDBVersion == "2024-12-xx")) { //Update shema.
-        bResult = model->ExecMultiShowErr(sDDL202501xx,";");
-        sResult.append(sDBVersion+" -> 2025-01-xx : "+iif(bResult,"ok","Err").toString()+"\n");
-        if (bResult) sDBVersion = "2025-01-xx";
+        if (bResult) { //Update schema.
+            QString sUpdateSchema="BEGIN TRANSACTION;";
+            //Rename old tables.
+            model->clear();
+            model->ExecShowErr("PRAGMA table_list;");
+            while (model->next()) {
+                if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql"))//No sqlite or sqlean tables.
+                    sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+model->value("name").toString()+";"
+                                                                                                      "CREATE TABLE Temp_"+model->value("name").toString()+" AS "
+                                                                         "SELECT * FROM "+model->value("name").toString()+";"
+                                                                         "DROP TABLE "+model->value("name").toString()+";";
+            }
+
+            //Create new tables.
+            sUpdateSchema += DynDDL(sDDLTables);
+
+            //Import data from old to new tables.
+            QString sFieldsList;
+            model->clear();
+            model->ExecShowErr("PRAGMA table_list;");
+            while (model->next()) {
+                if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql")) {
+                    sFieldsList="";
+                    model2->ExecShowErr("PRAGMA table_xinfo("+model->value("name").toString()+");");
+                    while (model2->next()) {
+                        if (model2->value("hidden").toInt()==0) {
+
+                            sFieldsList +=model2->value("name").toString()+",";
+                        }
+                    }
+                    sFieldsList=sFieldsList.removeLast();
+                    sUpdateSchema +="INSERT INTO "+model->value("name").toString()+" ("+sFieldsList+") " //todo: spécifier les champs si pas le même nom ou ordre.
+                                                                                                             "SELECT "+sFieldsList+" FROM Temp_"+model->value("name").toString()+";";
+                }
+            }
+
+            //DROP Temp tables.
+            model->clear();
+            model->ExecShowErr("PRAGMA table_list;");
+            while (model->next()) {
+                if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql"))
+                    sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+model->value("name").toString()+";";
+            }
+
+            //Update schema.
+            sUpdateSchema += "COMMIT TRANSACTION;";
+            bResult = model->ExecMultiShowErr(sUpdateSchema,";");
+
+            sResult.append("Data transfert : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
     }
-    // if (bResult and(sDBVersion == "2024-12-xx")){ //Update shema.
-    //     bResult = model->ExecMultiShowErr(sDDL20241230,";");
-    //     sResult.append(sDBVersion+" -> 2024-12-30 : "+iif(bResult,"ok","Err").toString()+"\n");
-    //     if (bResult) sDBVersion = "2024-12-30";
-    // }
 
     if (bResult and(sDBVersion == ui->lVerBDDAttendue->text())) { //Tables shema ok.
-        if (sResult=="")
-            sResult.append("Version : "+sDBVersion+"\n");
+        //if (sResult=="")
+        //    sResult.append("Version : "+sDBVersion+"\n");
 
         if (bResult){
             //Create scalar functions
@@ -88,7 +134,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
         if (bResult){
             //Create views
-            bResult = model->ExecMultiShowErr(sDDLViews,";");
+            bResult = model->ExecMultiShowErr(DynDDL(sDDLViews),";");
             sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 

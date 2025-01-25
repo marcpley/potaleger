@@ -1,6 +1,6 @@
 QString sDDLTables = QStringLiteral(R"#(
 
-BEGIN TRANSACTION;
+-- BEGIN TRANSACTION;
 
 CREATE TABLE Apports (Apport TEXT PRIMARY KEY,
                       Description TEXT,
@@ -122,6 +122,6 @@ CREATE TABLE Variétés (Variété TEXT PRIMARY KEY,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur) ON UPDATE CASCADE,
                        Notes TEXT) WITHOUT ROWID;
 
-COMMIT TRANSACTION;
+-- COMMIT TRANSACTION;
 
 )#");

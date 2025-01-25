@@ -1,13 +1,46 @@
 #include "data/Data.h"
 #include "PotaUtils.h"
+#include "mainwindow.h"
 #include "qcolor.h"
 #include <QSqlTableModel>
 #include <QtSql/QSqlQueryModel>
 #include <QObject>
 
+int DefColWidth(const QString sTableName,const QString sFieldName) {
+    QString sType = DataType(sTableName,sFieldName);
+    if (sType=="DATE")
+        return 100;
+    else if (sType.startsWith("BOOL"))
+        return 50;
+    else if (sType.startsWith("INT"))
+        return 40;
+    else if (sType=="REAL")
+        return 50;
+
+    else if (sFieldName.startsWith("Déb_") or sFieldName.startsWith("Fin_"))
+        return 45;
+    else if (sFieldName=="Fi_planches")
+        return 40;
+    else if (sFieldName=="Mise_en_place")
+        return 55;
+    else if (sFieldName=="Notes" or sFieldName.startsWith("N_"))
+        return 150;
+    else if (sFieldName.startsWith("Pc_"))
+        return 40;
+    else if (sFieldName=="TEMPO")
+        return 400;
+    else if (sFieldName=="Type_culture")
+        return 100;
+    else if (sFieldName=="Type_planche")
+        return 65;
+    else
+        return -1;
+}
+
 QString DynDDL(QString sQuery)
 {
     sQuery=StrReplace(sQuery,"#FmtPlanif#","IN('','01-01','01-15','02-01','02-15','03-01','03-15','04-01','04-15','05-01','05-15','06-01','06-15','07-01','07-15','08-01','08-15','09-01','09-15','10-01','10-15','11-01','11-15','12-01','12-15')");
+    sQuery=StrReplace(sQuery,"#DbVer#",DbVersion);
     return sQuery;
 }
 
@@ -133,6 +166,9 @@ bool ReadOnly(const QString sTableName,const QString sFieldName)
                       sFieldName=="Dose_semis" or
                       sFieldName=="Notes" or
                       sFieldName=="N_espèce");
+
+    } else if (sTableName=="Rotations"){
+        bReadOnly = !(sFieldName=="Nb_Années");
 
     } else if (sTableName=="Rotations_détails__Tempo"){
         bReadOnly = !(sFieldName=="Rotation" or
@@ -328,9 +364,12 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
         if (sFieldName=="Priorité")
             sToolTip=QObject::tr("Chez qui commander en priorité.");
 
-    } else if (sTableName=="ITP"){
+    } else if (sTableName=="ITP" or sTableName.startsWith("ITP__")){
         if (sFieldName=="Dose_semis")
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire SI ESPACEMENT = 0.");
+        else if (sFieldName.startsWith("J_"))
+            sToolTip=QObject::tr("Nombre de jours pour...")+"\n"+
+                     QObject::tr("La date de prévue pour les cultures sera le début de période.");
         else if (sFieldName=="Nb_rangs")
             sToolTip=QObject::tr("Nombre de rangs cultivés sur une planche.")+
                                  "\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.")+
@@ -469,7 +508,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
     }
 
     if (sToolTip==""){
-        if (DataType(sTableName,sFieldName)=="BOOL")
+        if (DataType(sTableName,sFieldName).startsWith("BOOL"))
             sToolTip=QObject::tr(  "Champ Oui/Non\n"
                                    "Vide = Non (ou faux)\n"
                                    "Saisie quelconque = Oui (ou vrai).\n"

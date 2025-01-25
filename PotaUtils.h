@@ -24,6 +24,8 @@ QString DataType(QString TableName, QString FieldName);
 QString DBInfo();
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2);
 bool isDarkTheme();
+float min(float a,float b);
+int min(int a,int b);
 QString RemoveComment(QString sCde, QString sCommentMarker);
 void SetButtonSize(QToolButton *b);
 void SetColoredText(QLabel *l, QString text, QString type);

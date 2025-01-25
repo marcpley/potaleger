@@ -97,6 +97,20 @@ bool isDarkTheme() {
     return backgroundColor.lightness() < 128;
 }
 
+float min(float a,float b) {
+    if (a>b)
+        return b;
+    else
+        return a;
+}
+
+int min(int a,int b) {
+    if (a>b)
+        return b;
+    else
+        return a;
+}
+
 QString RemoveComment(QString sCde, QString sCommentMarker)
 {
     QStringList LinesList = sCde.split("\n");

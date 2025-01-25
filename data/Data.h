@@ -13,7 +13,7 @@ const QColor cATerminer=QColor("#007aff");//Bleu
 const QColor cTerminee=QColor("#808080");//Gris
 
 
-
+int DefColWidth(const QString sTableName,const QString sFieldName);
 QString DynDDL(QString sQuery);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
 int NaturalSortCol(const QString sTableName);

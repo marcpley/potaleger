@@ -53,7 +53,7 @@
        <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -135,33 +135,6 @@
               <height>110</height>
              </size>
             </property>
-            <property name="palette">
-             <palette>
-              <active>
-               <colorrole role="Text">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>255</red>
-                  <green>190</green>
-                  <blue>111</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </active>
-              <inactive>
-               <colorrole role="Text">
-                <brush brushstyle="SolidPattern">
-                 <color alpha="255">
-                  <red>255</red>
-                  <green>190</green>
-                  <blue>111</blue>
-                 </color>
-                </brush>
-               </colorrole>
-              </inactive>
-              <disabled/>
-             </palette>
-            </property>
             <property name="font">
              <font>
               <italic>true</italic>
@@ -181,12 +154,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item row="2" column="0" colspan="2">
-           <widget class="QPlainTextEdit" name="pteNotes">
+           <widget class="QTextEdit" name="pteNotes">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -563,7 +539,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
     </property>
     <addaction name="mFermerOnglet"/>
     <addaction name="mFermerOnglets"/>
+    <addaction name="mLargeurs"/>
     <addaction name="mParam"/>
+    <addaction name="mEditNotes"/>
+    <addaction name="mAPropos"/>
    </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
@@ -930,6 +909,39 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="text">
     <string>Itinéraires techniques</string>
+   </property>
+  </action>
+  <action name="mLargeurs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="object-flip-horizontal"/>
+   </property>
+   <property name="text">
+    <string>Largeurs de colonnes par défaut pour l'onglet courant</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="mEditNotes">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Editer les notes</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="mAPropos">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::HelpAbout"/>
+   </property>
+   <property name="text">
+    <string>A propos...</string>
    </property>
   </action>
  </widget>

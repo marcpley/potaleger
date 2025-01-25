@@ -68,6 +68,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         PotaWidget *w = new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
         w->lErr = ui->lDBErr;
+        w->mEditNotes = ui->mEditNotes;
         w->Init(sTableName);
 
         if (w->model->SelectShowErr())
@@ -160,15 +161,18 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             for (int i=0; i<w->model->columnCount();i++)
             {
                 int iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
-                if (iWidth>0 and iWidth<1000)
-                    w->tv->setColumnWidth(i,iWidth);
-                else
+                if (iWidth<=0 or iWidth>500)
+                    iWidth=DefColWidth(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                if (iWidth<=0 or iWidth>500)
                     w->tv->resizeColumnToContents(i);
+                else
+                    w->tv->setColumnWidth(i,iWidth);
             }
             settings.endGroup();
 
             ui->mFermerOnglets->setEnabled(true);
             ui->mFermerOnglet->setEnabled(true);
+            ui->mLargeurs->setEnabled(true);
 
             SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
 
@@ -223,6 +227,7 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         {
             ui->mFermerOnglets->setEnabled(false);
             ui->mFermerOnglet->setEnabled(false);
+            ui->mLargeurs->setEnabled(false);
         }
         Tab->deleteLater();
     }
@@ -563,5 +568,96 @@ void MainWindow::on_tabWidget_currentChanged(int index)
         else
             w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
     }
+
+    bool textEditReadOnly;
+    if (ui->tabWidget->currentIndex()==0)
+        textEditReadOnly=ui->pteNotes->isReadOnly();
+    else
+        textEditReadOnly=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget())->editNotes->isReadOnly();
+    ui->mEditNotes->setChecked(!textEditReadOnly);
+}
+
+
+void MainWindow::on_mLargeurs_triggered()
+{
+    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        for (int i=0; i<w->model->columnCount();i++)
+        {
+            int iWidth=DefColWidth(w->model->tableName(),w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+            if (iWidth<=0 or iWidth>500)
+                w->tv->resizeColumnToContents(i);
+            else
+                w->tv->setColumnWidth(i,iWidth);
+        }
+    }
+}
+
+
+void MainWindow::on_mEditNotes_triggered()
+{
+    QTextEdit *textEdit;
+    PotaWidget *w=nullptr;
+    if (ui->tabWidget->currentIndex()==0){
+        textEdit=ui->pteNotes;
+    } else {
+        w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        textEdit=w->editNotes;
+        QString FieldName = w->model->headerData(w->tv->currentIndex().column(),Qt::Horizontal,Qt::DisplayRole).toString();
+        if (!textEdit->isVisible())
+            w->SetVisibleEditNotes(FieldName=="Notes" or FieldName.startsWith("N_"));
+    }
+
+    if (textEdit->isVisible()) {
+        // qDebug() << "toMarkdown: " << textEdit->toMarkdown();
+        // qDebug() << "toPlainText: " << textEdit->toPlainText();
+        if (textEdit->isReadOnly()) {
+            ui->mEditNotes->setChecked(true);
+            textEdit->setReadOnly(false);
+            textEdit->setPlainText(textEdit->toMarkdown().trimmed());
+            //textEdit->setBackgroundRole(QPalette::Highlight);
+            textEdit->setLineWidth(4);
+            textEdit->setFrameShape(QFrame::Panel);
+            textEdit->setFocus();
+        } else {
+            ui->mEditNotes->setChecked(false);
+            textEdit->setReadOnly(true);
+            QString save = textEdit->toPlainText().trimmed();
+            int i = textEdit->toPlainText().count("<");
+            textEdit->setMarkdown(textEdit->toPlainText().trimmed());
+            if (i != textEdit->toMarkdown().count("<")) {
+                qDebug() << save;
+                textEdit->setPlainText(save);
+                textEdit->setReadOnly(false);
+                ui->mEditNotes->setChecked(true);
+                MessageDialog(tr("Les balises HTML (<b>, <br>, etc) ne sont pas accéptées."));
+            } else {
+                //textEdit->setBackgroundRole(QPalette::Midlight);
+                textEdit->setLineWidth(1);
+                textEdit->setFrameShape(QFrame::StyledPanel);
+                if (w) {
+                    if (save!=w->model->data(w->tv->currentIndex()).toString())
+                        w->model->setData(w->tv->currentIndex(),save);
+                    w->tv->setFocus();
+                }
+            }
+        }
+    } else
+        ui->mEditNotes->setChecked(false);
+
+}
+
+
+void MainWindow::on_mAPropos_triggered()
+{
+    MessageDialog("Auteur: Marc Pleysier<br>"
+                  "<a href=\"https://www.greli.net\">https://www.greli.net</a><br>"
+                  "Sources: <a href=\"https://github.com/marcpley/potaleger\">https://github.com/marcpley/potaleger</a>",
+                  "<b>Crédits</b>:<br>"
+                  "Qt Creator community 6.8.1<br>"
+                  "SQLite 3<br>"
+                  "SQLean<br>"
+                  "SQLiteStudio, thanks Pawel !<br>"
+                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">https://fermelegere.greli.net</a>");
 }
 

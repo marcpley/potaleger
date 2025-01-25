@@ -111,12 +111,19 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     auto *header = new PotaHeaderView( Qt::Horizontal, tv);
     tv->setHorizontalHeader(header);
 
-    connect(tv->selectionModel(), SIGNAL(currentChanged(const QModelIndex,const QModelIndex)),
-            this, SLOT(curChanged(const QModelIndex,const QModelIndex)));
-    connect(model, SIGNAL(dataChanged(const QModelIndex,const QModelIndex,const QList<int>)),
-            this, SLOT(dataChanged(const QModelIndex,const QModelIndex,const QList<int>)));
-    connect(tv->verticalHeader(), SIGNAL(sectionClicked(int)),
-            this, SLOT(headerRowClicked()));//int
+    connect(tv->selectionModel(), &QItemSelectionModel::currentChanged, this, &PotaWidget::curChanged);
+    connect(model, &PotaTableModel::dataChanged, this, &PotaWidget::dataChanged);
+    connect(tv->verticalHeader(), &QHeaderView::sectionClicked,this, &PotaWidget::headerRowClicked);
+
+    editNotes = new QTextEdit();
+    editNotes->setParent(tv);
+    editNotes->setVisible(false);
+    editNotes->setReadOnly(true);
+    //editNotes->setGeometry(400,300,400,300);
+    // editNotes->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    // editNotes->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    // editNotes->setAutoFillBackground(true);
+    //connect(editNotes, &::PotaWidget::mouseDoubleClickEvent, this, &PotaWidget::editNotesDoubleClicked);
 
     //Filter layout
     lf = new QHBoxLayout(this);
@@ -202,9 +209,10 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 
     lRowSummary->setText(RowSummary(model->tableName(),cur));
 
+    QString FieldName=model->headerData(cur.column(),Qt::Horizontal,Qt::DisplayRole).toString();
     if (!cbFilter->isChecked()) {
         //Filtering
-        sDataNameFilter=model->headerData(cur.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+        sDataNameFilter=FieldName;
         sDataFilter=model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString();
 
         cbFilter->setText(sDataNameFilter);
@@ -214,6 +222,34 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
         SetFilterParamsFrom(sDataNameFilter,sDataFilter);
     }
 
+    editNotes->setReadOnly(true);
+    mEditNotes->setChecked(!editNotes->isReadOnly());
+    SetVisibleEditNotes((FieldName=="Notes" or FieldName.startsWith("N_"))and
+                         model->data(cur,Qt::DisplayRole).toString().contains("\n"));
+}
+
+void PotaWidget::SetVisibleEditNotes(bool bVisible){
+    if (bVisible){
+        int x = tv->columnViewportPosition(tv->currentIndex().column())+5;
+        int y = tv->rowViewportPosition(tv->currentIndex().row())+
+                tv->horizontalHeader()->height()+
+                tv->rowHeight(tv->currentIndex().row());
+        int EditNotesWidth = 400;
+        int EditNotesHeight = 200;
+        x=min(x,tv->width()-EditNotesWidth-20);
+        editNotes->setGeometry(x,y,EditNotesWidth,EditNotesHeight);
+
+        if (editNotes->isReadOnly()) {
+            editNotes->setMarkdown(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
+        } else {
+            editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
+
+        }
+
+        editNotes->setVisible(true);
+    } else {
+        editNotes->setVisible(false);
+    }
 }
 
 void PotaWidget::PositionSave() {
@@ -252,7 +288,7 @@ void PotaWidget::SetFilterParamsFrom(QString sDataName, QString sData){
     //Filtering
     QString sDataType = DataType(model->tableName(),sDataName);
     leFilter->setToolTip("");
-    if (sDataType=="TEXT" or sDataType=="BOOL") {
+    if (sDataType=="TEXT" or sDataType.startsWith("BOOL")) {
         if (!cbFilter->isChecked())
             sbFilter->setValue(iNCharText);
         sbFilter->setMaximum(100);
@@ -284,7 +320,7 @@ void PotaWidget::SetFilterParamsFrom(QString sDataName, QString sData){
                                      .arg(sDataName)
                                      .arg(leFilter->text()));
         }
-    } else if (sDataType=="REAL" or sDataType=="INTEGER") {
+    } else if (sDataType=="REAL" or sDataType.startsWith("INT")) {
         if (!cbFilter->isChecked())
             sbFilter->setValue(iNCharReal);
         sbFilter->setMaximum(1000);
@@ -380,12 +416,12 @@ void PotaWidget::cbFilterClick(Qt::CheckState state)
         //QModelIndex index = tv->selectionModel()->currentIndex();
 
         QString sDataType = DataType(model->tableName(),sDataNameFilter);
-        if (sDataType=="TEXT" or sDataType=="DATE" or sDataType=="BOOL") {
+        if (sDataType=="TEXT" or sDataType=="DATE" or sDataType.startsWith("BOOL")) {
             if (leFilter->text()=="")
                 filter=cbFilter->text()+" ISNULL";
             else
                 filter=cbFilter->text()+" LIKE '"+StrReplace(leFilter->text(),"'","\'")+"%'";
-        } else if (sDataType=="REAL" or sDataType=="INTEGER") {
+        } else if (sDataType=="REAL" or sDataType.startsWith("INT")) {
             if (leFilter->text()=="")
                 filter=cbFilter->text()+" ISNULL";
             else
@@ -421,7 +457,7 @@ void PotaWidget::sbFilterClick(int i)
     } else if (sDataType=="DATE") {
         iNCharDate=i;
         //leFilter->setText(StrFirst(model->index(index.row(),index.column()).data(Qt::DisplayRole).toString(),sbFilter->value()));
-    } else if (sDataType=="REAL" or sDataType=="INTEGER"){
+    } else if (sDataType=="REAL" or sDataType.startsWith("INT")){
         iNCharReal=i;
         //leFilter->setText(StrFirst(model->index(index.row(),index.column()).data(Qt::DisplayRole).toString(),sbFilter->value()));
     }
@@ -445,6 +481,7 @@ void PotaWidget::leFilterReturnPressed()
             cbFilter->setChecked(true);
     }
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                           PotaTableModel
@@ -600,7 +637,6 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
 void PotaHeaderView::mouseDoubleClickEvent(QMouseEvent *event)  {
     int logicalIndex = logicalIndexAt(event->pos());
     if (logicalIndex != -1) {
-        //qDebug() << "Section clicked:" << logicalIndex;
 
         if (iSortCol==logicalIndex)//Already sorted on this column.
         {

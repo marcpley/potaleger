@@ -11,6 +11,7 @@
 #include "qlineedit.h"
 #include "qspinbox.h"
 #include "qsqlrelationaltablemodel.h"
+#include "qtextedit.h"
 #include "qtoolbutton.h"
 #include <QTableView>
 #include <QCheckBox>
@@ -382,6 +383,8 @@ public:
         }
 
         QSqlRelationalTableModel *model = const_cast<QSqlRelationalTableModel *>(constModel);
+        QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+        QString sDataType=DataType(model->tableName(),sFieldName);
         if (model->relation(index.column()).isValid()) {
             //Create QComboBox for relational columns
             QComboBox *comboBox = new QComboBox(parent);
@@ -403,14 +406,11 @@ public:
                 comboBox->addItem( displayValue,value);
             }
             return comboBox;
-        } else if (DataType(model->tableName(),
-                            model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="REAL"){
+        } else if (sDataType=="REAL"){
             return new QLineEdit(parent);
-        } else if (DataType(model->tableName(),
-                            model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="BOOL"){
+        } else if (sDataType.startsWith("BOOL")){
             return new QLineEdit(parent);
-        } else if (DataType(model->tableName(),
-                            model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="DATE"){
+        } else if (sDataType=="DATE"){
             QDateEdit *dateEdit = new QDateEdit(parent);
             dateEdit->setButtonSymbols(QAbstractSpinBox::NoButtons);
             //dateEdit->setDisplayFormat("yyyy-MM-dd");
@@ -441,6 +441,7 @@ public:
                 dateEdit->setDate(index.data().toDate());
             return;
         }
+
         QStyledItemDelegate::setEditorData(editor, index); // Éditeur standard
     }
 
@@ -469,6 +470,7 @@ public:
                 model->setData(index, dateEdit->date(), Qt::EditRole);
             return;
         }
+
         QStyledItemDelegate::setModelData(editor, model, index); // Éditeur standard
     }
 
@@ -492,7 +494,7 @@ public:
     QTabWidget *twParent;
     bool isCommittingError=false;
     QLabel *lTabTitle;
-
+    QTextEdit *editNotes;
 
     QWidget *toolbar;
     QToolButton *pbRefresh;
@@ -512,6 +514,9 @@ public:
     QVBoxLayout *lw;
 
     QLabel *lErr;
+    QAction *mEditNotes;
+
+    void SetVisibleEditNotes(bool bVisible);
 
 private:
     //Filtering
@@ -539,6 +544,7 @@ private slots:
     void cbFilterClick(Qt::CheckState state);
     void sbFilterClick(int i);
     void leFilterReturnPressed();
+
 };
 
 #endif // POTAWIDGET_H

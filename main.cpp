@@ -12,12 +12,6 @@
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
-    // if (!b)
-    // {   //These menus are enabled elsewhere.
-    //     ui->mFermerOnglet->setEnabled(false);
-    //     ui->mFermerOnglets->setEnabled(false);
-    // }
-
     ui->mCopyBDD->setEnabled(b);
     ui->mParam->setEnabled(b);
     for (int i = 0; i < ui->mBaseData->actions().count(); i++)
@@ -47,7 +41,7 @@ void MainWindow::PotaDbClose()
     ui->lDBErr->clear();
 }
 
-bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean)
+bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn)
 {
     qInfo() << "SQLite version:" << sqlite3_libversion();
     qInfo() << "DB file:" << sFichier;
@@ -83,8 +77,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean)
     } else
         qInfo() << "SQLite quick_check:" << query.value(0).toString();
 
-    if (!query.exec("PRAGMA foreign_keys = ON"))
-    {
+    if (SetFkOn and !query.exec("PRAGMA foreign_keys = ON")) {
         dbClose();
         SetColoredText(ui->lDBErr, tr("Impossible d'initialiser les clés étrangères."), "Err");
         return false;
@@ -127,7 +120,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
 {
     bool const bForceUpdateViewsAndTriggers=false;
 
-    if (!dbOpen(sFichier,(sNew!=""),false))
+    if (!dbOpen(sFichier,(sNew!=""),false,true))
         return false;
 
     PotaQuery pQuery;
@@ -168,13 +161,56 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
              (OkCancelDialog(tr("Base de données trop ancienne:")+"\n"+
                              ui->lDB->text()+"\n" +
                              tr("Version ")+sVerBDD + "\n\n" +
-                             tr("Mettre à jour cette BDD vers la version %1 ?").arg(ui->lVerBDDAttendue->text())+" ?\n\n" +
-                             tr("Cette opération est irréversible"),QStyle::SP_MessageBoxQuestion)))) {   //Mettre à jour la BDD.
+                             tr("Mettre à jour cette BDD vers la version %1 ?").arg(ui->lVerBDDAttendue->text())+" ?",QStyle::SP_MessageBoxQuestion)))) {   //Mettre à jour la BDD.
+            //Delete previous backup file.
+            QFile FileInfo;
+            QString FileName=ui->lDB->text();
+            FileInfo.setFileName(FileName+"-backup");
+            if (FileInfo.exists()) {
+                if (!FileInfo.moveToTrash()) {
+                    MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                                      FileName+"-backup","",QStyle::SP_MessageBoxCritical);
+                    dbClose();
+                    return false;
+                }
+            }
+            //Backup.
+            FileInfo.setFileName(FileName);
+            if (!FileInfo.copy(FileName+"-backup"))  {
+                MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                                  FileName+"\n"+
+                                  tr("vers le fichier")+"\n"+
+                                  FileName+"-backup","",QStyle::SP_MessageBoxCritical);
+                dbClose();
+                return false;
+            }
+
+            //Update schema.
             if (UpdateDBShema(sVerBDD)) {
                 sVerBDD = ui->lVerBDDAttendue->text();
             }
             else {
                 dbClose();
+
+                //Restore old db file.
+                FileInfo.setFileName(FileName+"-crashed");
+                if (FileInfo.exists())
+                    FileInfo.moveToTrash();
+
+                FileInfo.setFileName(FileName);
+                FileInfo.copy(FileName+"-crashed");
+                FileInfo.moveToTrash();
+                FileInfo.setFileName(FileName+"-backup");
+                if (FileInfo.copy(FileName))
+                    MessageDialog(tr("Le fichier")+"\n"+
+                                      FileName+"\n"+
+                                      tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation);
+                else
+                    MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                                      FileName+"-backup\n"+
+                                      tr("vers le fichier")+"\n"+
+                                      FileName,"",QStyle::SP_MessageBoxCritical);
+
                 return false;
             }
         }
@@ -201,6 +237,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
         return false;
     }
 
+    SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
     return true;
 }
 
@@ -229,7 +266,18 @@ void MainWindow::RestaureParams()
     } else
         PotaDbOpen(settings.value("database_path").toString(),"");
 
-    ui->pteNotes->setPlainText(settings.value("notes").toString());
+    if (!settings.value("notes").toString().isEmpty())
+        ui->pteNotes->setMarkdown(settings.value("notes").toString());
+    else {
+        QFile mdFile;
+        mdFile.setFileName(QApplication::applicationDirPath()+"/readme.md");
+        qDebug() << QApplication::applicationDirPath()+"/readme.md";
+        if (mdFile.exists()) {
+            mdFile.open(QFile::ReadOnly);
+            ui->pteNotes->setMarkdown(mdFile.readAll());
+        } else
+            ui->pteNotes->setPlainText("Notes, format Markdown, ctrl+N pour éditer.");
+    }
 }
 
 void MainWindow::SauvParams()
@@ -238,9 +286,16 @@ void MainWindow::SauvParams()
     settings.beginGroup("MainWindow");
     settings.setValue("geometry", saveGeometry());
     settings.endGroup();
-    if (!ui->lDB->text().isEmpty())
-        settings.setValue("database_path", ui->lDB->text());
-    settings.setValue("notes", ui->pteNotes->toPlainText());
+    if (!ui->lDB->text().isEmpty()) {
+        QFile file(ui->lDB->text());
+        if (file.exists())
+            settings.setValue("database_path", ui->lDB->text());
+    }
+
+    if (ui->pteNotes->isReadOnly())
+        settings.setValue("notes", ui->pteNotes->toMarkdown().trimmed());
+    else
+        settings.setValue("notes", ui->pteNotes->toPlainText().trimmed());
 }
 
 void MainWindow::ShowEvent(QShowEvent *)

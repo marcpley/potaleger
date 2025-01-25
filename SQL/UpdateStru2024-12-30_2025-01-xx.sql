@@ -1,5 +1,0 @@
-QString sDDL202501xx = QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-COMMIT TRANSACTION;
-)#");
