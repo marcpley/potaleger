@@ -76,7 +76,6 @@ jobs:
             cd build
             qmake ..\\potaleger.pro "QT += svg"
             nmake
-            Get-ChildItem
 
 - name: Prepare artifact
         shell: pwsh
