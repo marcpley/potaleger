@@ -1,11 +1,9 @@
 name: Compil for Windows x64
 on: [push]
-  #workflow_dispatch:
 jobs:
   Build:
     runs-on: windows-2019
     steps:
-
       - name: Qt installation dir
         id: qt-installation-dir
         run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
@@ -17,18 +15,6 @@ jobs:
             version: 6.8.1
             host: 'windows'
             dir: '${{ env.DIR }}'
-        continue-on-error: true # Continue even if installation fails to capture logs
-
-      - name: Capture Qt Installation Logs
-        if: failure() # Only run if the previous step failed
-        shell: pwsh
-        run: |
-            $logFile = $env:GITHUB_WORKSPACE\aqtinstall.log
-            if (Test-Path $logFile) {
-                Get-Content -Path $logFile
-            } else {
-                echo "Log file not found."
-            }
 
       - name: Set up Visual Studio
         uses: ilammy/msvc-dev-cmd@v1
@@ -43,14 +29,14 @@ jobs:
       - name: Verify qtDir
         shell: pwsh
         run: |
-            $qtDir = "${{ env.DIR }}\Qt\6.8.1\msvc2019_64"
+            $qtDir = "${{ env.DIR }}\Qt\6.8.1\msvc2022_64"
             echo "Qt Installation Directory: $qtDir"
             Get-ChildItem -Path $qtDir
 
       - name: Add Qt to PATH
         shell: pwsh
         run: |
-            $qtBinDir = "${{ env.DIR }}\Qt\6.8.1\msvc2019_64\bin"
+            $qtBinDir = "${{ env.DIR }}\Qt\6.8.1\msvc2022_64\bin"
             echo "Adding $qtBinDir to PATH"
             [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
 
@@ -74,7 +60,7 @@ jobs:
         run: |
             mkdir build
             cd build
-            qmake ..\\potaleger.pro "QT += svg"
+            qmake ..\potaleger.pro "QT += svg"
             nmake
 
       - name: Prepare artifact
@@ -95,13 +81,13 @@ jobs:
             Copy-Item -Path .\install\readme.md        -Destination .\artifact\bin\
             Copy-Item -Path .\build\potaleger.exe      -Destination .\artifact\bin\
             Copy-Item -Path .\install\win2019\qt.conf -Destination .\artifact\bin\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\bin\*.dll -Destination .\artifact\libs\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\iconengines\qsvgicon.dll -Destination .\artifact\bin\plugins\iconengines\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platforminputcontexts\composeplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platforminputcontexts\ibusplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platforms\qwindows.dll -Destination .\artifact\bin\plugins\platforms\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platformthemes\qwindowsvistastyle.dll -Destination .\artifact\bin\plugins\platformthemes\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\sqldrivers\qsqlite.dll -Destination .\artifact\bin\plugins\sqldrivers\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\bin\*.dll -Destination .\artifact\libs\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\iconengines\qsvgicon.dll -Destination .\artifact\bin\plugins\iconengines\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platforminputcontexts\composeplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platforminputcontexts\ibusplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platforms\qwindows.dll -Destination .\artifact\bin\plugins\platforms\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platformthemes\qwindowsvistastyle.dll -Destination .\artifact\bin\plugins\platformthemes\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\sqldrivers\qsqlite.dll -Destination .\artifact\bin\plugins\sqldrivers\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
