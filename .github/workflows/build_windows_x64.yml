@@ -77,7 +77,7 @@ jobs:
             qmake ..\\potaleger.pro "QT += svg"
             nmake
 
-- name: Prepare artifact
+      - name: Prepare artifact
         shell: pwsh
         run: |
             mkdir artifact
