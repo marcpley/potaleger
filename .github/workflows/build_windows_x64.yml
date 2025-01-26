@@ -16,12 +16,36 @@ jobs:
             cache: false
             version: 6.8.1
             host: 'windows'
-            dir: '$${{ env.DIR }}'
+            dir: '${{ env.DIR }}'
+        continue-on-error: true # Continue even if installation fails to capture logs
+
+      - name: Capture Qt Installation Logs
+        if: failure() # Only run if the previous step failed
+        shell: pwsh
+        run: |
+            $logFile = $env:GITHUB_WORKSPACE\aqtinstall.log
+            if (Test-Path $logFile) {
+                Get-Content -Path $logFile
+            } else {
+                echo "Log file not found."
+            }
 
       - name: Set up Visual Studio
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+
+      - name: Verify env.DIR
+        shell: pwsh
+        run: |
+            Get-ChildItem -Path ${{ env.DIR }}\
+
+      - name: Verify qtDir
+        shell: pwsh
+        run: |
+            $qtDir = "${{ env.DIR }}\Qt\6.8.1\msvc2019_64"
+            echo "Qt Installation Directory: $qtDir"
+            Get-ChildItem -Path $qtDir
 
       - name: Add Qt to PATH
         shell: pwsh
@@ -30,12 +54,12 @@ jobs:
             echo "Adding $qtBinDir to PATH"
             [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
 
-      - name: qtBinDir
+      - name: Verify qtBinDir
         shell: pwsh
         run: |
             Get-ChildItem -Path $qtBinDir
 
-      - name: DevEnvDir
+      - name: Verify DevEnvDir
         shell: pwsh
         run: |
             Get-ChildItem -Path $env:DevEnvDir
@@ -54,31 +78,31 @@ jobs:
             nmake
             Get-ChildItem
 
-      - name: Prepare artifact
-        shell: bash
+- name: Prepare artifact
+        shell: pwsh
         run: |
             mkdir artifact
-            mkdir artifact\\libs
-            mkdir artifact\\bin
-            mkdir artifact\\bin\\plugins
-            mkdir artifact\\bin\\plugins\\iconengines
-            mkdir artifact\\bin\\plugins\\platforminputcontexts
-            mkdir artifact\\bin\\plugins\\platforms
-            mkdir artifact\\bin\\plugins\\platformthemes
-            mkdir artifact\\bin\\plugins\\sqldrivers
-            Copy-Item -Path .\\install\\win2019\\install.ps1   -Destination .\\artifact\\
-            Copy-Item -Path .\\install\\win2019\\potaleger.ps1 -Destination .\\artifact\\
-            Copy-Item -Path .\\install\\win2019\\potaleger.svg -Destination .\\artifact\\
-            Copy-Item -Path .\\install\\readme.md        -Destination .\\artifact\\bin\\
-            Copy-Item -Path .\\build\\potaleger.exe      -Destination .\\artifact\\bin\\
-            Copy-Item -Path .\\install\\win2019\\qt.conf -Destination .\\artifact\\bin\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\bin\\*.dll -Destination .\\artifact\\libs\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines\\qsvgicon.dll -Destination .\\artifact\\bin\\plugins\\iconengines\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts\\composeplatforminputcontextplugin.dll -Destination .\\artifact\\bin\\plugins\\platforminputcontexts\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts\\ibusplatforminputcontextplugin.dll -Destination .\\artifact\\bin\\plugins\\platforminputcontexts\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms\\qwindows.dll -Destination .\\artifact\\bin\\plugins\\platforms\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes\\qwindowsvistastyle.dll -Destination .\\artifact\\bin\\plugins\\platformthemes\\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers\\qsqlite.dll -Destination .\\artifact\\bin\\plugins\\sqldrivers\\
+            mkdir artifact\libs
+            mkdir artifact\bin
+            mkdir artifact\bin\plugins
+            mkdir artifact\bin\plugins\iconengines
+            mkdir artifact\bin\plugins\platforminputcontexts
+            mkdir artifact\bin\plugins\platforms
+            mkdir artifact\bin\plugins\platformthemes
+            mkdir artifact\bin\plugins\sqldrivers
+            Copy-Item -Path .\install\win2019\install.ps1   -Destination .\artifact\
+            Copy-Item -Path .\install\win2019\potaleger.ps1 -Destination .\artifact\
+            Copy-Item -Path .\install\win2019\potaleger.svg -Destination .\artifact\
+            Copy-Item -Path .\install\readme.md        -Destination .\artifact\bin\
+            Copy-Item -Path .\build\potaleger.exe      -Destination .\artifact\bin\
+            Copy-Item -Path .\install\win2019\qt.conf -Destination .\artifact\bin\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\bin\*.dll -Destination .\artifact\libs\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\iconengines\qsvgicon.dll -Destination .\artifact\bin\plugins\iconengines\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platforminputcontexts\composeplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platforminputcontexts\ibusplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platforms\qwindows.dll -Destination .\artifact\bin\plugins\platforms\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\platformthemes\qwindowsvistastyle.dll -Destination .\artifact\bin\plugins\platformthemes\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2019_64\plugins\sqldrivers\qsqlite.dll -Destination .\artifact\bin\plugins\sqldrivers\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
