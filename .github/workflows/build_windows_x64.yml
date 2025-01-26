@@ -26,11 +26,9 @@ jobs:
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path $env:DIR
             Get-ChildItem -Path $env:GITHUB_WORKSPACE
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64
+            Get-ChildItem -Path "$env:ProgramFiles(x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build"
+            Get-ChildItem -Path $env:DevEnvDir
 
       - uses: actions/checkout@v4
         with:
