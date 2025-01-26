@@ -26,8 +26,6 @@ jobs:
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE
-            Get-ChildItem -Path "$env:ProgramFiles(x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build"
             Get-ChildItem -Path $env:DevEnvDir
 
       - uses: actions/checkout@v4
