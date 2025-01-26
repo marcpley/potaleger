@@ -8,7 +8,7 @@ jobs:
 
       - name: Qt installation dir
         id: qt-installation-dir
-        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
+        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_OUTPUT
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.1.1
@@ -16,17 +16,17 @@ jobs:
             cache: false
             version: 6.8.1
             host: 'windows'
-            dir: '${{ env.DIR }}'
+            dir: '${{ steps.qt-installation-dir.DIR }}'
 
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes
-            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers
+            Get-ChildItem -Path ${{ steps.qt-installation-dir.DIR }}
+#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines
+#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts
+#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms
+#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes
+#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers
 
       - uses: actions/checkout@v4
         with:
