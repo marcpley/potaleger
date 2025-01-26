@@ -21,34 +21,12 @@ jobs:
         with:
           arch: x64
 
-      - name: Verify env.DIR
-        shell: pwsh
-        run: |
-            Get-ChildItem -Path ${{ env.DIR }}\
-
-      - name: Verify qtDir
-        shell: pwsh
-        run: |
-            $qtDir = "${{ env.DIR }}\Qt\6.8.1\msvc2022_64"
-            echo "Qt Installation Directory: $qtDir"
-            Get-ChildItem -Path $qtDir
-
       - name: Add Qt to PATH
         shell: pwsh
         run: |
-            $qtBinDir = "${{ env.DIR }}\Qt\6.8.1\msvc2022_64\bin"
+            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\msvc2022_64\bin"
             echo "Adding $qtBinDir to PATH"
             [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
-
-      - name: Verify qtBinDir
-        shell: pwsh
-        run: |
-            Get-ChildItem -Path $qtBinDir
-
-      - name: Verify DevEnvDir
-        shell: pwsh
-        run: |
-            Get-ChildItem -Path $env:DevEnvDir
 
       - uses: actions/checkout@v4
         with:
