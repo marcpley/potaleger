@@ -18,15 +18,19 @@ jobs:
             host: 'windows'
             dir: '$${{ env.DIR }}'
 
+      - name: Set up Visual Studio
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Debug
         shell: pwsh
         run: |
             Get-ChildItem -Path $env:DIR
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64
 
       - uses: actions/checkout@v4
         with:
