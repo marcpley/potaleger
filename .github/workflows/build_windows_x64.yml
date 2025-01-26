@@ -8,7 +8,7 @@ jobs:
 
       - name: Qt installation dir
         id: qt-installation-dir
-        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_OUTPUT
+        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.1.1
@@ -16,7 +16,7 @@ jobs:
             cache: false
             version: 6.8.1
             host: 'windows'
-            dir: '${{ steps.qt-installation-dir.DIR }}'
+            dir: '$${{ env.DIR }}'
 
       - name: Debug
         shell: pwsh

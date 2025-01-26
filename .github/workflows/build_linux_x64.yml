@@ -1,6 +1,7 @@
 name: Compil for Linux x64
 on:
   #[push]
+  workflow_dispatch:
 jobs:
   Build:
     runs-on: ubuntu-20.04
