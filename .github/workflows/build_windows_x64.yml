@@ -23,7 +23,19 @@ jobs:
         with:
           arch: x64
 
-      - name: Debug
+      - name: Add Qt to PATH
+        shell: pwsh
+        run: |
+            $qtBinDir = "${{ env.DIR }}\Qt\6.8.1\msvc2019_64\bin"
+            echo "Adding $qtBinDir to PATH"
+            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
+
+      - name: qtBinDir
+        shell: pwsh
+        run: |
+            Get-ChildItem -Path $qtBinDir
+
+      - name: DevEnvDir
         shell: pwsh
         run: |
             Get-ChildItem -Path $env:DevEnvDir
