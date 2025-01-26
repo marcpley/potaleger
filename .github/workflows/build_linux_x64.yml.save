@@ -1,9 +1,12 @@
 name: Compil for Linux x64
-#on: [push]
+#run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
 jobs:
   Build:
     runs-on: ubuntu-20.04
     steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+
       - name: Qt installation dir
         id: qt-installation-dir
         run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
@@ -15,16 +18,19 @@ jobs:
             version: 6.8.1
             host: 'linux'
             dir: '${{ steps.qt-installation-dir.DIR }}'
+            #setup-python: false
+            #extra: '--external 7z'
 
-#      - name: Debug
-#        shell: bash
-#        run: |
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/
+      - name: Debug
+        shell: bash
+        run: |
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/
+
 
       - uses: actions/checkout@v4
         with:
@@ -52,12 +58,12 @@ jobs:
             mkdir artifact/bin/plugins/platforms
             mkdir artifact/bin/plugins/platformthemes
             mkdir artifact/bin/plugins/sqldrivers
-            cp ./install/ubuntu2004/install.sh    ./artifact/
-            cp ./install/ubuntu2004/potaleger.sh  ./artifact/
-            cp ./install/ubuntu2004/potaleger.svg ./artifact/
+            cp ./install/mint21/install.sh    ./artifact/
+            cp ./install/mint21/potaleger.sh  ./artifact/
+            cp ./install/mint21/potaleger.svg ./artifact/
             cp ./install/readme.md           ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/
-            cp ./install/ubuntu2004/qt.conf  ./artifact/bin/
+            cp ./install/mint21/qt.conf      ./artifact/bin/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libicu*.so*          ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Core.so*       ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6DBus.so*       ./artifact/libs/

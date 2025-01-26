@@ -1,0 +1,75 @@
+name: Compil for Windows x64
+on:
+  workflow_dispatch:
+jobs:
+  Build:
+    runs-on: windows-2019
+    steps:
+
+      - name: Qt installation dir
+        id: qt-installation-dir
+        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4.1.1
+        with:
+            cache: false
+            version: 6.8.1
+            host: 'windows'
+            dir: '${{ env.DIR }}'
+
+      - name: Debug
+        shell: pwsh
+        run: |
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers
+
+      - uses: actions/checkout@v4
+        with:
+          repository: '${{ github.repository }}'
+          ref: 'main'
+
+      - name: Build
+        shell: pwsh
+        run: |
+            mkdir build
+            cd build
+            qmake ..\\potaleger.pro "QT += svg"
+            nmake
+            Get-ChildItem
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+            mkdir artifact
+            mkdir artifact\\libs
+            mkdir artifact\\bin
+            mkdir artifact\\bin\\plugins
+            mkdir artifact\\bin\\plugins\\iconengines
+            mkdir artifact\\bin\\plugins\\platforminputcontexts
+            mkdir artifact\\bin\\plugins\\platforms
+            mkdir artifact\\bin\\plugins\\platformthemes
+            mkdir artifact\\bin\\plugins\\sqldrivers
+            Copy-Item -Path .\\install\\win2019\\install.ps1   -Destination .\\artifact\\
+            Copy-Item -Path .\\install\\win2019\\potaleger.ps1 -Destination .\\artifact\\
+            Copy-Item -Path .\\install\\win2019\\potaleger.svg -Destination .\\artifact\\
+            Copy-Item -Path .\\install\\readme.md        -Destination .\\artifact\\bin\\
+            Copy-Item -Path .\\build\\potaleger.exe      -Destination .\\artifact\\bin\\
+            Copy-Item -Path .\\install\\win2019\\qt.conf -Destination .\\artifact\\bin\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\bin\\*.dll -Destination .\\artifact\\libs\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines\\qsvgicon.dll -Destination .\\artifact\\bin\\plugins\\iconengines\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts\\composeplatforminputcontextplugin.dll -Destination .\\artifact\\bin\\plugins\\platforminputcontexts\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts\\ibusplatforminputcontextplugin.dll -Destination .\\artifact\\bin\\plugins\\platforminputcontexts\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms\\qwindows.dll -Destination .\\artifact\\bin\\plugins\\platforms\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes\\qwindowsvistastyle.dll -Destination .\\artifact\\bin\\plugins\\platformthemes\\
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers\\qsqlite.dll -Destination .\\artifact\\bin\\plugins\\sqldrivers\\
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+           name: potaleger0100windows
+           path: artifact
