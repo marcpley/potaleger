@@ -1,6 +1,6 @@
 name: Compil for Windows x64
-on:
-  workflow_dispatch:
+on: [push]
+  #workflow_dispatch:
 jobs:
   Build:
     runs-on: windows-2019
@@ -21,7 +21,7 @@ jobs:
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path ${{ steps.qt-installation-dir.DIR }}
+            Get-ChildItem -Path $env:DIR
 #            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines
 #            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts
 #            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms
