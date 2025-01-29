@@ -22,10 +22,11 @@ jobs:
       - name: Set up Qt environment
         shell: msys2 {0}
         run: |
-          echo "QT_DIR=/mingw64" >> $GITHUB_ENV
-          echo "QT_PLUGIN_PATH=/mingw64/lib/qt6/plugins" >> $GITHUB_ENV
-          echo "QT_QPA_PLATFORM_PLUGIN_PATH=/mingw64/lib/qt6/plugins/platforms" >> $GITHUB_ENV
-          echo "PATH=/mingw64/bin:$PATH" >> $GITHUB_ENV
+          export QT_DIR=/mingw64
+          export QT_PLUGIN_PATH=/mingw64/lib/qt6/plugins
+          export QT_QPA_PLATFORM_PLUGIN_PATH=/mingw64/lib/qt6/plugins/platforms
+          export PATH=/mingw64/bin:$PATH
+          echo "Qt environment set up"
 
       - name: Build
         shell: msys2 {0}

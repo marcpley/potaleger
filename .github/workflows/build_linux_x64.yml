@@ -1,4 +1,4 @@
-name: Compil for Linux x64
+name: Compile for Linux x64
 on:
   #[push]
   workflow_dispatch:
