@@ -6,6 +6,18 @@ jobs:
     runs-on: windows-2019
 
     steps:
+      - name: Qt installation dir
+        id: qt-installation-dir
+        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4.1.1
+        with:
+            cache: false
+            version: 6.8.1
+            host: 'windows'
+            dir: '${{ env.DIR }}'
+
       - name: Install MinGW
         uses: msys2/setup-msys2@v2
         with:
