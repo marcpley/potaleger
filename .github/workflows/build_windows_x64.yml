@@ -28,6 +28,13 @@ jobs:
           export PATH=/mingw64/bin:$PATH
           echo "Qt environment set up"
 
+      - name: Check qmake
+        shell: msys2 {0}
+        run: |
+          which qmake
+          qmake -v
+
+
       - name: Build
         shell: msys2 {0}
         run: |
