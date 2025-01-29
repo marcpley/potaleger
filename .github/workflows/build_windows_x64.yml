@@ -16,24 +16,24 @@ jobs:
             mingw-w64-x86_64-qt6-base
             mingw-w64-x86_64-qt6-svg
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Qt environment
+      - name: Find and Add qmake to PATH
         shell: msys2 {0}
         run: |
-          export QT_DIR=/mingw64
-          export QT_PLUGIN_PATH=/mingw64/lib/qt6/plugins
-          export QT_QPA_PLATFORM_PLUGIN_PATH=/mingw64/lib/qt6/plugins/platforms
-          export PATH=/mingw64/bin:$PATH
-          echo "Qt environment set up"
-
-      - name: Check qmake
-        shell: msys2 {0}
-        run: |
+          echo "Searching for qmake..."
+          find /mingw64 -name qmake -type f
+          QMAKE_PATH=$(find /mingw64 -name qmake -type f | head -n 1)
+          if [ -z "$QMAKE_PATH" ]; then
+            echo "Error: qmake not found!"
+            exit 1
+          fi
+          QMAKE_DIR=$(dirname "$QMAKE_PATH")
+          export PATH="$QMAKE_DIR:$PATH"
+          echo "qmake found in $QMAKE_DIR"
           which qmake
           qmake -v
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Build
         shell: msys2 {0}
