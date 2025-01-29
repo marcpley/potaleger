@@ -1,85 +1,56 @@
-name: Compil for Windows x64
+name: Compile for Windows x64 (MinGW)
 on: [push]
+
 jobs:
   Build:
     runs-on: windows-2019
+
     steps:
-      - name: Qt installation dir
-        id: qt-installation-dir
-        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4.1.1
+      - name: Install MinGW
+        uses: msys2/setup-msys2@v2
         with:
-            cache: false
-            version: 6.8.1
-            host: 'windows'
-            dir: '${{ env.DIR }}'
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-qt6-qmake
+            mingw-w64-x86_64-qt-creator
+            mingw-w64-x86_64-qt6-base
+            mingw-w64-x86_64-qt6-svg
 
-      - name: Set up Visual Studio
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Add Qt to PATH
-        shell: pwsh
+      - name: Set up Qt environment
+        shell: msys2 {0}
         run: |
-            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\msvc2022_64\bin"
-            echo "Adding $qtBinDir to PATH"
-            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
-
-      - uses: actions/checkout@v4
-        with:
-          repository: '${{ github.repository }}'
-          ref: 'main'
+          echo "QT_DIR=/mingw64" >> $GITHUB_ENV
+          echo "QT_PLUGIN_PATH=/mingw64/lib/qt6/plugins" >> $GITHUB_ENV
+          echo "QT_QPA_PLATFORM_PLUGIN_PATH=/mingw64/lib/qt6/plugins/platforms" >> $GITHUB_ENV
+          echo "PATH=/mingw64/bin:$PATH" >> $GITHUB_ENV
 
       - name: Build
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-            mkdir build
-            cd build
-            qmake ..\potaleger.pro "QT += svg"
-            nmake
-
-#      - name: Display Compilation Log
-#        if: failure()
-#        shell: pwsh
-#        run: |
-#            $logFile = "build\compile.log"
-#            if (Test-Path $logFile) {
-#                Get-Content -Path $logFile
-#            } else {
-#                echo "Log file not found."
-#            }
+          mkdir build
+          cd build
+          qmake ../potaleger.pro "QT += svg"
+          mingw32-make
 
       - name: Prepare artifact
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-            mkdir artifact
-            mkdir artifact\libs
-            mkdir artifact\bin
-            mkdir artifact\bin\plugins
-            mkdir artifact\bin\plugins\iconengines
-            mkdir artifact\bin\plugins\platforminputcontexts
-            mkdir artifact\bin\plugins\platforms
-            mkdir artifact\bin\plugins\platformthemes
-            mkdir artifact\bin\plugins\sqldrivers
-            Copy-Item -Path .\install\win2019\install.ps1   -Destination .\artifact\
-            Copy-Item -Path .\install\win2019\potaleger.ps1 -Destination .\artifact\
-            Copy-Item -Path .\install\win2019\potaleger.svg -Destination .\artifact\
-            Copy-Item -Path .\install\readme.md        -Destination .\artifact\bin\
-            Copy-Item -Path .\build\potaleger.exe      -Destination .\artifact\bin\
-            Copy-Item -Path .\install\win2019\qt.conf -Destination .\artifact\bin\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\bin\*.dll -Destination .\artifact\libs\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\iconengines\qsvgicon.dll -Destination .\artifact\bin\plugins\iconengines\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platforminputcontexts\composeplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platforminputcontexts\ibusplatforminputcontextplugin.dll -Destination .\artifact\bin\plugins\platforminputcontexts\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platforms\qwindows.dll -Destination .\artifact\bin\plugins\platforms\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\platformthemes\qwindowsvistastyle.dll -Destination .\artifact\bin\plugins\platformthemes\
-            Copy-Item -Path $env:GITHUB_WORKSPACE\Qt\6.8.1\msvc2022_64\plugins\sqldrivers\qsqlite.dll -Destination .\artifact\bin\plugins\sqldrivers\
+          mkdir -p artifact/bin
+          mkdir -p artifact/bin/plugins/platforms
+          cp ./build/potaleger.exe artifact/bin/
+          cp /mingw64/bin/Qt6Core.dll artifact/bin/
+          cp /mingw64/bin/Qt6Gui.dll artifact/bin/
+          cp /mingw64/bin/Qt6Widgets.dll artifact/bin/
+          cp /mingw64/bin/Qt6Svg.dll artifact/bin/
+          cp /mingw64/lib/qt6/plugins/platforms/qwindows.dll artifact/bin/plugins/platforms/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-           name: potaleger0100windows
-           path: artifact
+          name: potaleger0100windows
+          path: artifact
