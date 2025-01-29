@@ -1,7 +1,7 @@
 name: Compil for Linux x64
 on:
-  [push]
-  #workflow_dispatch:
+  #[push]
+  workflow_dispatch:
 jobs:
   Build:
     runs-on: ubuntu-20.04
@@ -17,16 +17,6 @@ jobs:
             version: 6.8.1
             host: 'linux'
             dir: '${{ steps.qt-installation-dir.DIR }}'
-
-#      - name: Debug
-#        shell: bash
-#        run: |
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/
-#            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/
 
       - uses: actions/checkout@v4
         with:

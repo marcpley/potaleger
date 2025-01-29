@@ -10,13 +10,11 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-make
-            mingw-w64-x86_64-qt6-qmake
-            mingw-w64-x86_64-qt-creator
-            mingw-w64-x86_64-qt6-base
-            mingw-w64-x86_64-qt6-svg
+        install: >-
+          base-devel
+          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-qt6-base
+          mingw-w64-x86_64-qt6-svg
 
       - name: Checkout repository
         uses: actions/checkout@v4
