@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sqlite3.h"
+#include "sqlite/sqlite3.h"
 
 #ifdef __cplusplus
 extern "C" {

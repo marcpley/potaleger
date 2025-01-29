@@ -6,7 +6,7 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
-#include "sqlite3.h"
+#include "sqlite/sqlite3.h"
 
 #ifdef __cplusplus
 extern "C" {

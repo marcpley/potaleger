@@ -81,7 +81,7 @@ iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
                                ItpTempoNJInterPe(:dSem,:fSem,:dPlant) ||'':''||
                                ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
                                ItpTempoNJInterPe(:dPlant,:fPlant,coalesce(:fRec,365)) ||
-                               '':'',''''
+                               '':'',NULL
 )))))
 -- out : 15:15:15:15:15:15
 )#");
@@ -128,7 +128,7 @@ iif(:Type=''Sans récolte'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01''
                            CulTempoNJPeriode(:dSem,:dPlant)-2 ||'':''|| -- Semis fait attente plantation
                            ''2:''|| -- Durée plantation
                            CulTempoNJPeriode(:dPlant,:dRec)-2 ||'':''|| -- Plantation faite attente récolte
-                           ''0'', '''' -- Durée récolte
+                           ''0'', NULL -- Durée récolte
 )))))
 -- out : 15:15:15:15:15:15
 )#");
@@ -184,7 +184,7 @@ iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
                                ItpTempoNJInterPe(:dSem,:fSem,:dPlant) ||'':''||
                                ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
                                ItpTempoNJInterPe(:dPlant,:fPlant,coalesce(:fRec,365)) ||
-                               '':'',''''
+                               '':'',NULL
 ))))))
 -- out : 15:15:15:15:15:15
 )#");

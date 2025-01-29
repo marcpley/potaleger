@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sqlite3.h"
+#include "sqlite/sqlite3.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

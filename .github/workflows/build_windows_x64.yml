@@ -39,18 +39,18 @@ jobs:
             mkdir build
             cd build
             qmake ..\potaleger.pro "QT += svg"
-            nmake /NOLOGO /K /F ..\Makefile.Debug
+            nmake
 
-      - name: Display Compilation Log
-        if: failure()
-        shell: pwsh
-        run: |
-            $logFile = "build\compile.log"
-            if (Test-Path $logFile) {
-                Get-Content -Path $logFile
-            } else {
-                echo "Log file not found."
-            }
+#      - name: Display Compilation Log
+#        if: failure()
+#        shell: pwsh
+#        run: |
+#            $logFile = "build\compile.log"
+#            if (Test-Path $logFile) {
+#                Get-Content -Path $logFile
+#            } else {
+#                echo "Log file not found."
+#            }
 
       - name: Prepare artifact
         shell: pwsh

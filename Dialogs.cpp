@@ -16,7 +16,7 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
     // msgBox.setText(sMessage);
     // msgBox.setIcon(Icon);
     // msgBox.exec();
-    QDialog dialog;
+    QDialog dialog(this);
     dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -92,7 +92,7 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
     // msgBox.setIcon(QMessageBox::Question);
     // return (msgBox.exec() == QMessageBox::Ok);
 
-    QDialog dialog;
+    QDialog dialog(this);
     dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -145,7 +145,7 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
 }
 
 int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType) {
-    QDialog dialog;
+    QDialog dialog(this);
     dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -221,7 +221,7 @@ bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap icon
     // msgBox.setIcon(QMessageBox::Question);
     // return (msgBox.exec() == QMessageBox::Yes);
 
-    QDialog dialog;
+    QDialog dialog(this);
     dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);

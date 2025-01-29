@@ -143,6 +143,7 @@ public:
 
         qInfo() << sQuery;
 
+        setLastError(QSqlError());
         QSqlRelationalTableModel::select();//Avoids duplicate display of inserted lines
         setQuery(sQuery);
 
@@ -405,6 +406,8 @@ public:
                     displayValue+=" | "+relationModel->record(i).value(2).toString();
                 comboBox->addItem( displayValue,value);
             }
+            qDebug() << "set combo FK";
+
             return comboBox;
         } else if (sDataType=="REAL"){
             return new QLineEdit(parent);
@@ -445,34 +448,7 @@ public:
         QStyledItemDelegate::setEditorData(editor, index); // Éditeur standard
     }
 
-    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override {
-        QComboBox *comboBox = qobject_cast<QComboBox *>(editor);
-        if (comboBox) {
-            QVariant selectedValue = comboBox->currentData();
-            if (!selectedValue.isValid() || selectedValue.toString().isEmpty()) {
-                model->setData(index, QVariant(), Qt::EditRole); // Définit à NULL
-            } else {
-                model->setData(index, selectedValue, Qt::EditRole);
-            }
-            return;
-        }
-        QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
-        if (lineEdit) {
-            if (lineEdit->text().isEmpty()) {
-                model->setData(index, QVariant(), Qt::EditRole); // Définit à NULL
-            } else {
-                model->setData(index, lineEdit->text(), Qt::EditRole);
-            }
-            return;
-        }
-        QDateEdit *dateEdit = qobject_cast<QDateEdit *>(editor);
-        if (dateEdit) {
-                model->setData(index, dateEdit->date(), Qt::EditRole);
-            return;
-        }
-
-        QStyledItemDelegate::setModelData(editor, model, index); // Éditeur standard
-    }
+    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 
 private:
     void paintTempo(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;

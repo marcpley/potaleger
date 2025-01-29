@@ -7,6 +7,7 @@
 
 bool PotaQuery::ExecShowErr(QString query)
 {
+    clear();
     exec(query);
     if (lastError().type() != QSqlError::NoError)
     {
@@ -33,6 +34,7 @@ bool PotaQuery::ExecMultiShowErr(QString querys, QString spliter)
         if (QueryList[i].trimmed().isEmpty())
             continue;
         QString sQuery=RemoveComment(QueryList[i].trimmed(),"--");
+        clear();
         ExecShowErr(sQuery);
         if (lastError().type() != QSqlError::NoError)
         {
@@ -131,9 +133,22 @@ QString RemoveComment(QString sCde, QString sCommentMarker)
 
 void SetColoredText(QLabel *l, QString text, QString type)
 {
-    QString s=text;
+    QString s;
     if (text.length()>400)
         s=text.first(200)+"...\n..."+text.last(400);
+
+    else if (text.startsWith("NOT NULL constraint failed")) {
+        int i=text.indexOf(".");
+        QString field=SubString(text,i+1,1000);
+        int j=field.indexOf(" ");
+        field=SubString(field,0,j-1);
+        s=QObject::tr("Saisir une valeur pour le champ %1").arg(field);
+    } else if (text.startsWith("CHECK constraint failed: ")) {
+        s=StrReplace(text,"CHECK constraint failed: ","");
+        s=StrReplace(s," Unable to fetch row","");
+        s="Valeur incorrecte pour "+s;
+    } else
+        s=text;
 
     l->setText(s);
 
@@ -193,4 +208,14 @@ QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
     return s;
 }
 
+QString SubString(QString s, int iDeb, int iFin) {
+    QString result="";
 
+    if (iDeb>iFin)
+        return "";
+
+    for (int i=iDeb;i<min(s.length(),iFin+1);i++)
+        result+=s[i];
+
+    return result;
+}

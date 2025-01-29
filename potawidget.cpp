@@ -168,23 +168,27 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 void PotaWidget::Init(QString TableName)
 {
     model->setTable(TableName);
-    QString RealTableName=TableName;
-    if (RealTableName.contains("__"))
-        RealTableName=RealTableName.first(RealTableName.indexOf("__"));
 
-    qInfo() << "Open " << TableName+" ("+RealTableName+")";
+    qInfo() << "Open " << TableName; //+" ("+RealTableName+")";
 
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 
     //FK
+    QString RealTableName=model->tableName();
+    if (RealTableName.contains("__"))
+        RealTableName=RealTableName.first(RealTableName.indexOf("__"));
+
+    query->clear();
     query->ExecShowErr("PRAGMA foreign_key_list("+RealTableName+");");
     while (query->next()) {
         QString referencedTable = query->value("table").toString();
         QString localColumn = query->value("from").toString();
         QString referencedClumn = query->value("to").toString();
         int localColumnIndex = model->fieldIndex(localColumn);
+
         model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
     }
+
     //Generated columns
     query->clear();
     query->ExecShowErr("PRAGMA table_xinfo("+TableName+")");
@@ -500,9 +504,25 @@ QString PotaTableModel::FieldName(int index)
 
 bool PotaTableModel::SelectShowErr()
 {
+    int i;
+    for (i=0;i<columnCount();i++) {
+        if (relationModel(i))
+            relationModel(i)->select();
+    }
+
+    i = rowCount();
+
+    setLastError(QSqlError());
+
     select();
 
-    //Combo FK are not updated and could be out of date. A recall off setRelation() don't fix that.
+    if (i != rowCount()) {
+        //Display modified, commited or copied cells could be unconsistent.
+        modifiedCells.clear();
+        commitedCells.clear();
+        copiedCells.clear();
+    }
+
     if ((lastError().type() == QSqlError::NoError)and(parent()->objectName().startsWith("PW")))
     {
         SetColoredText(dynamic_cast<PotaWidget*>(parent())->lErr,tableName()+" - "+str(rowCount()),"Ok");
@@ -518,6 +538,7 @@ bool PotaTableModel::SubmitAllShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
     int i = rowCount();
+    setLastError(QSqlError());
     submitAll();
     if (lastError().type() == QSqlError::NoError)
     {
@@ -528,8 +549,12 @@ bool PotaTableModel::SubmitAllShowErr()
         pw->cbFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
         //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().replace("color: red;", ""));
-        if (i != rowCount())
-            commitedCells.clear();//Display commited cells could be unconsistent.
+        if (i != rowCount()) {
+            //Display modified, commited or copied cells could be unconsistent.
+            modifiedCells.clear();
+            commitedCells.clear();
+            copiedCells.clear();
+        }
     }
     else
     {
@@ -543,6 +568,7 @@ bool PotaTableModel::SubmitAllShowErr()
 bool PotaTableModel::RevertAllShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
+    setLastError(QSqlError());
     revertAll();
     if (lastError().type() == QSqlError::NoError)
     {
@@ -771,18 +797,8 @@ void PotaItemDelegate2::paint(QPainter *painter, const QStyleOptionViewItem &opt
 }
 
 void PotaItemDelegate2::paintTempo(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-    QStringList ql = index.data(Qt::DisplayRole).toString().split(":");
-    if (ql.count()!=6)
-        return;
 
-    double const coef=1;//User parametrise
-    int const attente=ql[0].toInt()*coef;
-    int const semis=ql[1].toInt()*coef;
-    int const semisF=ql[2].toInt()*coef;
-    int const plant=ql[3].toInt()*coef;
-    int const plantF=ql[4].toInt()*coef;
-    int const recolte=ql[5].toInt()*coef;
-
+    double const coef=1;
     QBrush b;
     b.setStyle(Qt::SolidPattern);
     QColor c;
@@ -806,6 +822,16 @@ void PotaItemDelegate2::paintTempo(QPainter *painter, const QStyleOptionViewItem
     r.setLeft(r.left()+31*coef); r.setWidth(2); painter->fillRect(r,b);
     r.setLeft(r.left()+30*coef); r.setWidth(2); painter->fillRect(r,b);
     r.setLeft(r.left()+31*coef); r.setWidth(2); painter->fillRect(r,b);
+
+    QStringList ql = index.data(Qt::DisplayRole).toString().split(":");
+    if (ql.count()!=6)
+        return;
+    int const attente=ql[0].toInt()*coef;
+    int const semis=ql[1].toInt()*coef;
+    int const semisF=ql[2].toInt()*coef;
+    int const plant=ql[3].toInt()*coef;
+    int const plantF=ql[4].toInt()*coef;
+    int const recolte=ql[5].toInt()*coef;
 
     r.setBottom(option.rect.bottom()-2);
     if (semis>0){
@@ -859,4 +885,34 @@ void PotaItemDelegate2::paintTempo(QPainter *painter, const QStyleOptionViewItem
         r.setRight(option.rect.left()+attente+semis+semisF+plant+plantF+recolte);
         painter->fillRect(r,b);
     }
+}
+
+void PotaItemDelegate2::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const  {
+    QComboBox *comboBox = qobject_cast<QComboBox *>(editor);
+    if (comboBox) {
+        QVariant selectedValue = comboBox->currentData();
+        if (!selectedValue.isValid() || selectedValue.toString().isEmpty()) {
+            model->setData(index, QVariant(), Qt::EditRole); // Définit à NULL
+        } else {
+            model->setData(index, selectedValue, Qt::EditRole);
+        }
+        dynamic_cast<PotaWidget*>(model->parent())->tv->setFocus();
+        return;
+    }
+    QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
+    if (lineEdit) {
+        if (lineEdit->text().isEmpty()) {
+            model->setData(index, QVariant(), Qt::EditRole); // Définit à NULL
+        } else {
+            model->setData(index, lineEdit->text(), Qt::EditRole);
+        }
+        return;
+    }
+    QDateEdit *dateEdit = qobject_cast<QDateEdit *>(editor);
+    if (dateEdit) {
+        model->setData(index, dateEdit->date(), Qt::EditRole);
+        return;
+    }
+
+    QStyledItemDelegate::setModelData(editor, model, index); // Éditeur standard
 }
