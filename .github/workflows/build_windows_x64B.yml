@@ -42,7 +42,7 @@ jobs:
             mkdir build
             cd build
             qmake ..\potaleger.pro "QT += svg"
-            mingw32-make
+            mingw-make
 
 #      - name: Display Compilation Log
 #        if: failure()
