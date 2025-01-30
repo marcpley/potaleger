@@ -20,21 +20,6 @@ jobs:
             arch: 'win64_mingw'
             tools: 'tools_mingw1310'
 
-#      - name: Debug
-#        shell: pwsh
-#        run: |
-#            Get-ChildItem -Path "D:\a\potaleger\Qt"
-#            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1"
-#            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
-#            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-
-#      - name: Add Qt to PATH
-#        shell: pwsh
-#        run: |
-#            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-#            echo "Adding $qtBinDir to PATH"
-#            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
-
       - name: Check MinGW Version
         shell: pwsh
         run: |
@@ -54,16 +39,32 @@ jobs:
             qmake ..\potaleger.pro "QT += svg"
             mingw32-make
 
-#      - name: Display Compilation Log
-#        if: failure()
-#        shell: pwsh
-#        run: |
-#            $logFile = "build\compile.log"
-#            if (Test-Path $logFile) {
-#                Get-Content -Path $logFile
-#            } else {
-#                echo "Log file not found."
-#            }
+      - name: Debug
+        shell: pwsh
+        run: |
+            Get-ChildItem -Path "D:\a\potaleger\Qt"
+            Get-ChildItem -Path "${{ env.DIR }}"
+            Get-ChildItem -Path "${{ env.DIR }}\6.8.1\mingw_64\bin"
+            Get-ChildItem -Path "$GITHUB_WORKSPACE\build"
+
+      - name: Deploy application
+        shell: pwsh
+        run: |
+            $QT_BIN_DIR="${{ env.DIR }}\6.8.1\mingw_64\bin"
+            $BUILD_DIR="$GITHUB_WORKSPACE\build"
+            $APP_EXE="$BUILD_DIR\potaleger.exe"
+
+            echo "Using Qt binaries from $QT_BIN_DIR"
+            echo "Deploying application from $APP_EXE"
+
+            & "$QT_BIN_DIR\windeployqt.exe" --release --compiler-runtime --verbose 0 $APP_EXE
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: potaleger-windows
+          path: |
+            build/
 
       - name: Prepare artifact
         shell: pwsh
