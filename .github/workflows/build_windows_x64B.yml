@@ -21,20 +21,13 @@ jobs:
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path "D:\a\potaleger"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\msvc2022_64\bin"
-
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\iconengines
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforminputcontexts
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platforms
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\platformthemes
-#            Get-ChildItem -Path $env:GITHUB_WORKSPACE\\Qt\\6.8.1\\msvc2019_64\\plugins\\sqldrivers
+            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
+            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
 
       - name: Add Qt to PATH
         shell: pwsh
         run: |
-            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\msvc2022_64\bin"
+            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
             echo "Adding $qtBinDir to PATH"
             [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
 
@@ -49,7 +42,7 @@ jobs:
             mkdir build
             cd build
             qmake ..\potaleger.pro "QT += svg"
-            nmake
+            mingw64-make
 
 #      - name: Display Compilation Log
 #        if: failure()
