@@ -70,6 +70,7 @@ jobs:
         run: |
             mkdir artifact
             mkdir artifact\libs
+            mkdir artifact\platforms
             Copy-Item -Path .\install\potaleger.svg          -Destination .\artifact\
             Copy-Item -Path .\install\readme.md              -Destination .\artifact\
             Copy-Item -Path .\build\release\*.dll            -Destination .\artifact\libs\
