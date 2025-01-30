@@ -17,6 +17,7 @@ jobs:
             dir: '${{ env.DIR }}'
             target: 'desktop'
             arch: 'win64_mingw'
+#            tools: 'tools_mingw'
 
       - name: Debug
         shell: pwsh
@@ -26,21 +27,12 @@ jobs:
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
 
-      - name: Set MinGW in PATH
-        shell: pwsh
-        run: |
-            $mingwBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-            echo "Forcing MinGW from $mingwBinDir"
-
-            # Supprimer toutes les références à MinGW et Strawberry Perl du PATH
-            $newPath = ($env:PATH -split ";" | Where-Object {$_ -notmatch "mingw" -and $_ -notmatch "strawberry"}) -join ";"
-
-            # Ajouter le bon MinGW en premier
-            $env:PATH = "$mingwBinDir;$newPath"
-
-            # Appliquer le changement au runner GitHub
-            echo $env:PATH | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
-
+#      - name: Add Qt to PATH
+#        shell: pwsh
+#        run: |
+#            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+#            echo "Adding $qtBinDir to PATH"
+#            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
 
       - name: Check MinGW Version
         shell: pwsh
