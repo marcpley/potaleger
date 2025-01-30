@@ -29,9 +29,10 @@ jobs:
       - name: Add Qt to PATH
         shell: pwsh
         run: |
-            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-            echo "Adding $qtBinDir to PATH"
-            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
+            $mingwBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+            echo "Forcing MinGW from $mingwBinDir"
+            $env:PATH = "$mingwBinDir;" + ($env:PATH -split ";" | Where-Object {$_ -notmatch "mingw"} -join ";")
+            echo $env:PATH | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
 
       - name: Check MinGW Version
         shell: pwsh
