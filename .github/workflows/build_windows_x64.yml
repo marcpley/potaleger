@@ -64,6 +64,7 @@ jobs:
             echo "Deploying application from $APP_EXE"
 
             & "$QT_BIN_DIR\windeployqt.exe" --release --compiler-runtime --verbose 0 $APP_EXE
+            & "$QT_BIN_DIR\windeployqt.exe" --release --compiler-runtime --verbose 2 --plugin imageformats $APP_EXE
 
       - name: Prepare artifact
         shell: pwsh
@@ -71,10 +72,13 @@ jobs:
             mkdir artifact
             mkdir artifact\libs
             mkdir artifact\platforms
+            Copy-Item -Path .\install\win2019\install.ps1    -Destination .\artifact\
             Copy-Item -Path .\install\potaleger.svg          -Destination .\artifact\
             Copy-Item -Path .\install\readme.md              -Destination .\artifact\
-            Copy-Item -Path .\build\release\*.dll            -Destination .\artifact\libs\
-            Copy-Item -Path D:\a\potaleger\Qt\6.8.1\mingw_64\plugins\platforms\qwindows.dll            -Destination .\artifact\platforms\
+            Copy-Item -Path .\build\release\potaleger.exe    -Destination .\artifact\
+            Copy-Item -Path .\build\release\*.dll            -Destination .\artifact\
+            Copy-Item -Path D:\a\potaleger\Qt\6.8.1\mingw_64\plugins\platforms\qwindows.dll    -Destination .\artifact\platforms\
+            Copy-Item -Path .\build\release\imageformats\*.dll                                 -Destination .\artifact\imageformats\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

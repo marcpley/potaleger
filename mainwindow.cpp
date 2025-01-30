@@ -326,11 +326,17 @@ void MainWindow::CreateNewDB(bool bEmpty)
     QFileInfo FileInfoVerif;
 
     QString sFileName=ui->lDB->text();
-    if (sFileName=="..."){ //First run, no db file.
+    if (sFileName!="..."){ //First run, no db file.
         QDir dir;
-        if (!dir.exists("data"))
-            dir.mkdir("data");
-        sFileName="data/potaleger.sqlite3";
+        // if (!dir.exists("data"))
+        //     dir.mkdir("data");
+// #ifdef Q_OS_WIN
+//         sFileName = "C:\\Users\\NomUtilisateur\\Documents";
+// #else
+//         sFileName = "/home/NomUtilisateur/Documents";
+// #endif
+        sFileName=QStandardPaths::writableLocation(QStandardPaths::HomeLocation)+
+                  QDir::toNativeSeparators("/Documents/potaleger.sqlite3");
     }
 
     sFileName = QFileDialog::getSaveFileName(this, tr("Nom pour la BDD Potaléger %1").arg(sEmpty), sFileName, "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);

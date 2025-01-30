@@ -118,7 +118,7 @@ void MainWindow::dbClose()
 
 bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
 {
-    bool const bForceUpdateViewsAndTriggers=true;
+    bool const bForceUpdateViewsAndTriggers=false;
 
     if (!dbOpen(sFichier,(sNew!=""),false,true))
         return false;
