@@ -1,6 +1,7 @@
 name: Compile for Windows x64 (MinGW)
-on: [push]
-
+on:
+  #[push]
+  workflow_dispatch:
 jobs:
   Build:
     runs-on: windows-2019
