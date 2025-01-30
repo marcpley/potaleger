@@ -4,6 +4,13 @@ jobs:
   Build:
     runs-on: windows-2019
     steps:
+
+      - name: Debug
+        shell: pwsh
+        run: |
+            Get-ChildItem -Path "D:\a\potaleger"
+            Get-ChildItem -Path "D:\a\potaleger\potaleger"
+
       - name: Qt installation dir
         id: qt-installation-dir
         run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
@@ -45,7 +52,7 @@ jobs:
             Get-ChildItem -Path "D:\a\potaleger\Qt"
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
             Get-ChildItem -Path "D:\a\potaleger\Qt"
-            Get-ChildItem -Path "${{ env.DIR }}\build"
+            Get-ChildItem -Path "D:\a\potaleger\potaleger\build"
 
       - name: Deploy application
         shell: pwsh
