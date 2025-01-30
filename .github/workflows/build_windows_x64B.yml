@@ -18,6 +18,12 @@ jobs:
             target: 'desktop'
             arch: 'win64_mingw'
 
+      - name: Check MinGW Version
+        shell: pwsh
+        run: |
+            g++ --version
+            mingw32-make --version
+
       - name: Debug
         shell: pwsh
         run: |
@@ -42,7 +48,7 @@ jobs:
             mkdir build
             cd build
             qmake ..\potaleger.pro "QT += svg"
-            mingw-make
+            mingw32-make
 
 #      - name: Display Compilation Log
 #        if: failure()
