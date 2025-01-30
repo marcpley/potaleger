@@ -26,13 +26,21 @@ jobs:
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
 
-      - name: Add Qt to PATH
+      - name: Set MinGW in PATH
         shell: pwsh
         run: |
             $mingwBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
             echo "Forcing MinGW from $mingwBinDir"
-            $env:PATH = "$mingwBinDir;" + ($env:PATH -split ";" | Where-Object {$_ -notmatch "mingw"} -join ";")
+
+            # Supprimer les anciennes entrées MinGW du PATH
+            $newPath = ($env:PATH -split ";" | Where-Object {$_ -notmatch "mingw"}) -join ";"
+
+            # Ajouter le bon MinGW en premier
+            $env:PATH = "$mingwBinDir;$newPath"
+
+            # Appliquer le changement au runner GitHub
             echo $env:PATH | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+
 
       - name: Check MinGW Version
         shell: pwsh
