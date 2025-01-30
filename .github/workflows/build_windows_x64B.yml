@@ -5,12 +5,6 @@ jobs:
     runs-on: windows-2019
     steps:
 
-      - name: Debug
-        shell: pwsh
-        run: |
-            Get-ChildItem -Path "D:\a\potaleger"
-            Get-ChildItem -Path "D:\a\potaleger\potaleger"
-
       - name: Qt installation dir
         id: qt-installation-dir
         run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
@@ -38,6 +32,12 @@ jobs:
           repository: '${{ github.repository }}'
           ref: 'main'
 
+#      - name: Debug
+#        shell: pwsh
+#        run: |
+#            Get-ChildItem -Path "D:\a\potaleger"
+#            Get-ChildItem -Path "D:\a\potaleger\potaleger"
+
       - name: Build
         shell: pwsh
         run: |
@@ -46,12 +46,12 @@ jobs:
             qmake ..\potaleger.pro "QT += svg"
             mingw32-make
 
-      - name: Debug
-        shell: pwsh
-        run: |
-            #Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\debug"
-            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\release"
+#      - name: Debug
+#        shell: pwsh
+#        run: |
+#            #Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+#            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\debug"
+#            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\release"
 
       - name: Deploy application
         shell: pwsh
@@ -71,7 +71,7 @@ jobs:
             mkdir artifact
             Copy-Item -Path .\install\potaleger.svg          -Destination .\artifact\
             Copy-Item -Path .\install\readme.md              -Destination .\artifact\
-            Copy-Item -Path .\build\*                        -Destination .\artifact\
+            Copy-Item -Path .\build\release\*                -Destination .\artifact\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
