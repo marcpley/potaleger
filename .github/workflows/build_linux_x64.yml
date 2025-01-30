@@ -46,7 +46,7 @@ jobs:
             mkdir artifact/bin/plugins/sqldrivers
             cp ./install/ubuntu2004/install.sh    ./artifact/
             cp ./install/ubuntu2004/potaleger.sh  ./artifact/
-            cp ./install/ubuntu2004/potaleger.svg ./artifact/
+            cp ./install/potaleger.svg       ./artifact/
             cp ./install/readme.md           ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/
             cp ./install/ubuntu2004/qt.conf  ./artifact/bin/

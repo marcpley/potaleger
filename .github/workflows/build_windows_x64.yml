@@ -1,79 +1,82 @@
-name: Compile for Windows x64 (MinGW)
-on:
-  #[push]
-  workflow_dispatch:
+name: Compile for Windows x64 (minGW)
+on: [push]
 jobs:
   Build:
     runs-on: windows-2019
-
     steps:
-      # 1️⃣ Installer Qt avec MinGW
+
+      - name: Qt installation dir
+        id: qt-installation-dir
+        run: echo "DIR=%GITHUB_WORKSPACE%\\.." >> $GITHUB_ENV
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.1.1
         with:
-          version: 6.8.1
-          host: 'windows'
-          target: 'desktop'
-          arch: 'mingw_64'
-          cache: false
+            aqtversion: '==3.1.*'
+            cache: false
+            version: 6.8.1
+            host: 'windows'
+            dir: '${{ env.DIR }}'
+            target: 'desktop'
+            arch: 'win64_mingw'
+            tools: 'tools_mingw1310'
 
-      # 2️⃣ Ajouter Qt au PATH (comme dans ton workflow original)
-      - name: Add Qt to PATH
+      - name: Check MinGW Version
         shell: pwsh
         run: |
-          $qtBinDir = "$env:Qt6_DIR\bin"
-          echo "Adding $qtBinDir to PATH"
-          [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
+            g++ --version
+            mingw32-make --version
 
-      # 3️⃣ Vérifier que qmake est bien trouvé
-      - name: Check qmake
-        shell: pwsh
-        run: |
-          qmake -v
-
-      # 4️⃣ Installer MinGW avec MSYS2
-      - name: Install MinGW
-        uses: msys2/setup-msys2@v2
+      - uses: actions/checkout@v4
         with:
-          msystem: MINGW64
-          install: >-
-            base-devel
-            mingw-w64-x86_64-toolchain
+          repository: '${{ github.repository }}'
+          ref: 'main'
 
-      # 5️⃣ Vérifier que MinGW est bien installé
-      - name: Check MinGW
-        shell: msys2 {0}
-        run: |
-          gcc --version
-          mingw32-make --version
+#      - name: Debug
+#        shell: pwsh
+#        run: |
+#            Get-ChildItem -Path "D:\a\potaleger"
+#            Get-ChildItem -Path "D:\a\potaleger\potaleger"
 
-      # 6️⃣ Cloner le dépôt
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 7️⃣ Compilation avec qmake et mingw32-make
       - name: Build
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          mkdir build
-          cd build
-          qmake ../potaleger.pro "QT += svg"
-          mingw32-make
+            mkdir build
+            cd build
+            qmake ..\potaleger.pro "QT += svg"
+            mingw32-make
 
-      # 8️⃣ Préparation de l'artifact
+#      - name: Debug
+#        shell: pwsh
+#        run: |
+#            #Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+#            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\debug"
+#            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\release"
+
+      - name: Deploy application
+        shell: pwsh
+        run: |
+            $QT_BIN_DIR="D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+            $BUILD_DIR="D:\a\potaleger\potaleger\build\release"
+            $APP_EXE="$BUILD_DIR\potaleger.exe"
+
+            echo "Using Qt binaries from $QT_BIN_DIR"
+            echo "Deploying application from $APP_EXE"
+
+            & "$QT_BIN_DIR\windeployqt.exe" --release --compiler-runtime --verbose 0 $APP_EXE
+
       - name: Prepare artifact
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          mkdir -p artifact/bin
-          cp ./build/potaleger.exe artifact/bin/
-          cp /mingw64/bin/Qt6Core.dll artifact/bin/
-          cp /mingw64/bin/Qt6Gui.dll artifact/bin/
-          cp /mingw64/bin/Qt6Widgets.dll artifact/bin/
-          cp /mingw64/bin/Qt6Svg.dll artifact/bin/
+            mkdir artifact
+            mkdir artifact\libs
+            Copy-Item -Path .\install\potaleger.svg          -Destination .\artifact\
+            Copy-Item -Path .\install\readme.md              -Destination .\artifact\
+            Copy-Item -Path .\build\release\*.dll            -Destination .\artifact\libs\
+            Copy-Item -Path D:\a\potaleger\Qt\6.8.1\mingw_64\plugins\platforms\qwindows.dll            -Destination .\artifact\platforms\
 
-      # 9️⃣ Upload de l'exécutable
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: potaleger0100windows
-          path: artifact
+           name: potaleger0100windows
+           path: artifact
