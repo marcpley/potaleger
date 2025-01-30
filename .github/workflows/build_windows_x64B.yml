@@ -17,7 +17,7 @@ jobs:
             dir: '${{ env.DIR }}'
             target: 'desktop'
             arch: 'win64_mingw'
-#            tools: 'tools_mingw'
+            tools: 'tools_mingw'
 
       - name: Debug
         shell: pwsh
@@ -27,12 +27,12 @@ jobs:
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
             Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
 
-      - name: Add Qt to PATH
-        shell: pwsh
-        run: |
-            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-            echo "Adding $qtBinDir to PATH"
-            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
+#      - name: Add Qt to PATH
+#        shell: pwsh
+#        run: |
+#            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+#            echo "Adding $qtBinDir to PATH"
+#            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
 
       - name: Check MinGW Version
         shell: pwsh
