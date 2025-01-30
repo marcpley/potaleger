@@ -11,21 +11,22 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.1.1
         with:
+            aqtversion: '==3.1.*'
             cache: false
             version: 6.8.1
             host: 'windows'
             dir: '${{ env.DIR }}'
             target: 'desktop'
             arch: 'win64_mingw'
-            tools: 'tools_mingw'
+            tools: 'tools_mingw1310'
 
-      - name: Debug
-        shell: pwsh
-        run: |
-            Get-ChildItem -Path "D:\a\potaleger\Qt"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+#      - name: Debug
+#        shell: pwsh
+#        run: |
+#            Get-ChildItem -Path "D:\a\potaleger\Qt"
+#            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1"
+#            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
+#            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
 
 #      - name: Add Qt to PATH
 #        shell: pwsh
