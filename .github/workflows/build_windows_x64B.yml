@@ -49,16 +49,15 @@ jobs:
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path "D:\a\potaleger\Qt"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-            Get-ChildItem -Path "D:\a\potaleger\Qt"
-            Get-ChildItem -Path "D:\a\potaleger\potaleger\build"
+            #Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
+            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\debug"
+            Get-ChildItem -Path "D:\a\potaleger\potaleger\build\release"
 
       - name: Deploy application
         shell: pwsh
         run: |
             $QT_BIN_DIR="D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
-            $BUILD_DIR="${{ env.DIR }}\build"
+            $BUILD_DIR="D:\a\potaleger\potaleger\build\release"
             $APP_EXE="$BUILD_DIR\potaleger.exe"
 
             echo "Using Qt binaries from $QT_BIN_DIR"
