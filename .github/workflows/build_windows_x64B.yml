@@ -18,27 +18,22 @@ jobs:
             target: 'desktop'
             arch: 'win64_mingw'
 
-      - name: Check MinGW Version
-        shell: pwsh
-        run: |
-            g++ --version
-            mingw32-make --version
-
       - name: Debug
         shell: pwsh
         run: |
-            Get-ChildItem -Path "D:\a\potaleger\Qt\Tools"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\Tools\mingw1120_64"
-            Get-ChildItem -Path "D:\a\potaleger\Qt\Tools\mingw1120_64\bin"
+            Get-ChildItem -Path "D:\a\potaleger\Qt"
+            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1"
+            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64"
+            Get-ChildItem -Path "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
 
       - name: Add Qt to PATH
         shell: pwsh
         run: |
-            $qtBinDir = "D:\a\potaleger\Qt\Tools\mingw1120_64\bin"
+            $qtBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
             echo "Adding $qtBinDir to PATH"
             [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$qtBinDir", [System.EnvironmentVariableTarget]::Process)
 
-      - name: Check MinGW Version 2
+      - name: Check MinGW Version
         shell: pwsh
         run: |
             g++ --version
