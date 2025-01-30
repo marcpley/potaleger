@@ -32,8 +32,8 @@ jobs:
             $mingwBinDir = "D:\a\potaleger\Qt\6.8.1\mingw_64\bin"
             echo "Forcing MinGW from $mingwBinDir"
 
-            # Supprimer les anciennes entrées MinGW du PATH
-            $newPath = ($env:PATH -split ";" | Where-Object {$_ -notmatch "mingw"}) -join ";"
+            # Supprimer toutes les références à MinGW et Strawberry Perl du PATH
+            $newPath = ($env:PATH -split ";" | Where-Object {$_ -notmatch "mingw" -and $_ -notmatch "strawberry"}) -join ";"
 
             # Ajouter le bon MinGW en premier
             $env:PATH = "$mingwBinDir;$newPath"
