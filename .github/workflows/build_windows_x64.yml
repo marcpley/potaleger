@@ -43,7 +43,7 @@ jobs:
         run: |
             mkdir build
             cd build
-            qmake --release ..\potaleger.pro "QT += svg"
+            qmake ..\potaleger.pro "QT += svg"
             mingw32-make
 
       - name: Debug
