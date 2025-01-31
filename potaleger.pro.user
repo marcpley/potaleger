@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 15.0.0, 2025-01-31T14:29:26. -->
+<!-- Written by QtCreator 15.0.0, 2025-01-31T19:41:29. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -79,6 +79,10 @@
     <valuelist type="QVariantList" key="ClangTools.SelectedFiles"/>
     <valuelist type="QVariantList" key="ClangTools.SuppressedDiagnostics"/>
     <value type="bool" key="ClangTools.UseGlobalSettings">true</value>
+   </valuemap>
+   <valuemap type="QVariantMap" key="ClangdSettings">
+    <value type="bool" key="blockIndexing">true</value>
+    <value type="bool" key="useGlobalSettings">true</value>
    </valuemap>
    <valuemap type="QVariantMap" key="CppEditor.QuickFix">
     <value type="bool" key="UseGlobalSettings">true</value>

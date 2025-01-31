@@ -60,6 +60,8 @@ DISTFILES += \
 RESOURCES += \
     images/images.qrc
 
+RC_ICONS = images/potaleger.ico
+
 # librairie sqlean (à la place des fichiers de Pawel ?)
 # win32:CONFIG(release, debug|release): LIBS += -L$$PWD/sqlean.so/release/ -ldefine
 # else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/sqlean.so/debug/ -ldefine

@@ -9,6 +9,7 @@
 #include <QtSql/QSqlError>
 #include "QDebug"
 #include "PotaUtils.h"
+#include <QWindow>
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
