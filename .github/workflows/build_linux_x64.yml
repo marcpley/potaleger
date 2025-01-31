@@ -1,11 +1,12 @@
 name: Compile for Linux x64
 on:
-  #[push]
+  [push]
   workflow_dispatch:
 jobs:
   Build:
     runs-on: ubuntu-20.04
     steps:
+
       - name: Qt installation dir
         id: qt-installation-dir
         run: echo "DIR=$(readlink -f ${{ github.workspace }}/..)" >> $GITHUB_OUTPUT
@@ -22,6 +23,13 @@ jobs:
         with:
           repository: '${{ github.repository }}'
           ref: 'main'
+
+      - name: Debug
+        shell: bash
+        run: |
+            ls -l /home/runner/work/potaleger/
+            ls -l /home/runner/work/potaleger/potaleger/
+            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/
 
       - name: Build
         shell: bash
