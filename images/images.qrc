@@ -19,5 +19,7 @@
         <file>toCommit.svg</file>
         <file>potaleger.svg</file>
         <file>Arrow_BlueDown.svg</file>
+        <file>potaleger.gif</file>
+        <file>potaleger.png</file>
     </qresource>
 </RCC>

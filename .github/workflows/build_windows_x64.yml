@@ -55,8 +55,9 @@ jobs:
             mkdir artifact
             Copy-Item -Path .\build\release\potaleger.exe    -Destination .\artifact\
             & "D:\a\potaleger\Qt\6.8.1\mingw_64\bin\windeployqt.exe" --release --compiler-runtime --verbose 0 .\artifact\potaleger.exe
-            Copy-Item -Path .\install\win2019\install.ps1    -Destination .\artifact\
             Copy-Item -Path .\install\potaleger.svg          -Destination .\artifact\
+            Copy-Item -Path .\install\potaleger.gif          -Destination .\artifact\
+            Copy-Item -Path .\install\potaleger.png          -Destination .\artifact\
             Copy-Item -Path .\install\readme.md              -Destination .\artifact\
 
       - name: Upload artifact
