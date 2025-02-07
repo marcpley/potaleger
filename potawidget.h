@@ -9,6 +9,7 @@
 #include "qevent.h"
 #include "qheaderview.h"
 #include "qlineedit.h"
+#include "qpushbutton.h"
 #include "qspinbox.h"
 #include "qsqlrelationaltablemodel.h"
 #include "qtextedit.h"
@@ -40,7 +41,9 @@ public:
     QSet<int> rowsToRemove;
     QSet<int> modifiedRows;
 
+    int FieldIndex(QString FieldName);
     QString FieldName(int index);
+
     bool SelectShowErr();
     bool SubmitAllShowErr();
     bool RevertAllShowErr();
@@ -180,6 +183,13 @@ public:
         copiedCells.clear();
         QApplication::clipboard()->setText("");
         rowsToRemove.clear();
+    }
+
+    QString RealTableName() {
+        if (tableName().contains("__"))
+            return tableName().first(tableName().indexOf("__"));
+        else
+            return tableName();
     }
 
     bool removeRow(int row, const QModelIndex &parent = QModelIndex()) {
@@ -353,6 +363,14 @@ protected:
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(10).left(3));
             painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(11).left(3));
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(12).left(3));
+            //Year 2
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
+            painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
 
             painter->restore();
         } else
@@ -362,66 +380,23 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 };
 
-class PotaItemDelegate2 : public QStyledItemDelegate {
+class PotaItemDelegate : public QStyledItemDelegate {
     Q_OBJECT
 
 public:
-    explicit PotaItemDelegate2(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
+    explicit PotaItemDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
 
     QColor cTableColor;
     QColor cColColors[50];
     int RowColorCol=-1;
     int TempoCol=-1;
     int FilterCol=-1;
+    QString FindText="";
 
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const    override;
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
     // Création de l'éditeur
-    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
-        const QSqlRelationalTableModel *constModel = qobject_cast<const QSqlRelationalTableModel *>(index.model());
-        if (!constModel) {
-            return QStyledItemDelegate::createEditor(parent, option, index); // Standard editor
-        }
-
-        QSqlRelationalTableModel *model = const_cast<QSqlRelationalTableModel *>(constModel);
-        QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString();
-        QString sDataType=DataType(model->tableName(),sFieldName);
-        if (model->relation(index.column()).isValid()) {
-            //Create QComboBox for relational columns
-            QComboBox *comboBox = new QComboBox(parent);
-            QSqlTableModel *relationModel = model->relationModel(index.column());
-            int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
-
-            // qDebug() << objectName();
-            // qDebug() << parent->objectName();
-            // qDebug() << parent->parent()->objectName();
-
-            comboBox->addItem("", QVariant()); // Option for setting a NULL
-            for (int i = 0; i < relationModel->rowCount(); ++i) {
-                QString value = relationModel->record(i).value(relationIndex).toString();
-                QString displayValue = relationModel->record(i).value(0).toString();
-                if (!relationModel->record(i).value(1).toString().isEmpty())
-                    displayValue+=" | "+relationModel->record(i).value(1).toString();
-                if (!relationModel->record(i).value(2).toString().isEmpty())
-                    displayValue+=" | "+relationModel->record(i).value(2).toString();
-                comboBox->addItem( displayValue,value);
-            }
-            qDebug() << "set combo FK";
-
-            return comboBox;
-        } else if (sDataType=="REAL"){
-            return new QLineEdit(parent);
-        } else if (sDataType.startsWith("BOOL")){
-            return new QLineEdit(parent);
-        } else if (sDataType=="DATE"){
-            QDateEdit *dateEdit = new QDateEdit(parent);
-            dateEdit->setButtonSymbols(QAbstractSpinBox::NoButtons);
-            //dateEdit->setDisplayFormat("yyyy-MM-dd");
-            return dateEdit;
-        }
-        return QStyledItemDelegate::createEditor(parent, option, index); // Standard editor
-
-    }
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override ;
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const override {
         QComboBox *comboBox = qobject_cast<QComboBox *>(editor);
@@ -465,7 +440,7 @@ public:
     void Init(QString TableName);
     PotaTableModel *model;
     QTableView *tv;
-    PotaItemDelegate2 *delegate;
+    PotaItemDelegate *delegate;
     PotaQuery *query;//for specials coded querys.
     QTabWidget *twParent;
     bool isCommittingError=false;
@@ -479,47 +454,77 @@ public:
     QSpinBox *sbInsertRows;
     QToolButton *pbInsertRow;
     QToolButton *pbDeleteRow;
-    QFrame * fFilter;
-    QCheckBox *cbFilter;
-    QLineEdit *leFilter;
-    QLabel *lFilter;
-    QSpinBox *sbFilter;
+
     QLabel *lRowSummary;
-    QHBoxLayout *lf;
+    QHBoxLayout *filterLayout;
+    QHBoxLayout *findLayout;
+    QHBoxLayout *ffLayout;
     QHBoxLayout *ltb;
     QVBoxLayout *lw;
 
+    QFrame * ffFrame;
+
+    QFrame * filterFrame;
+    QLabel *lFilterOn;
+    QComboBox * cbFilterType;
+    QLineEdit *leFilter;
+    QPushButton *pbFilter;
+    QLabel *lFilterResult;
+
+    QFrame * findFrame;
+    QLabel *lFind;
+    QLineEdit *leFind;
+    QPushButton *pbFindFirst;
+    QPushButton *pbFindNext;
+    QPushButton *pbFindPrev;
+
     QLabel *lErr;
     QAction *mEditNotes;
+    //QAction *mFilterFind;
+
+    bool bUserCurrChanged=true;
+    int iTypeText=0;
+    int iTypeTextNbCar=5;
+    int iTypeDate=0;
+    int iTypeReal=0;
 
     void SetVisibleEditNotes(bool bVisible);
 
 private:
     //Filtering
-    int iNCharDate=10;
-    int iNCharText=5;
-    int iNCharReal=1;
+    bool bSetType=false;
     QString sDataNameFilter;
     QString sDataFilter;
     void SetFilterParamsFrom(QString sDataName, QString sData);
+    void SetFilterTypeCombo(QString sDataName);
     int iPositionCol=-1;
     QString sPositionRow="";
     QString sPositionRow2="";
     void PositionSave();
     void PositionRestore();
+    void FindFrom(int row, int column, bool Backward);
+
+public slots:
+    void curChanged(const QModelIndex cur);//, const QModelIndex pre
 
 private slots:
-    void curChanged(const QModelIndex cur, const QModelIndex pre);
-    void dataChanged(const QModelIndex &topLeft,const QModelIndex &bottomRight,const QList<int> &roles);
+    void dataChanged(const QModelIndex &topLeft);//,const QModelIndex &bottomRight,const QList<int> &roles
     void headerRowClicked();//int logicalIndex
     void pbRefreshClick();
     void pbCommitClick();
     void pbRollbackClick();
     void pbInsertRowClick();
     void pbDeleteRowClick();
-    void cbFilterClick(Qt::CheckState state);
-    void sbFilterClick(int i);
+    void cbFilterTypeChanged(int i);
     void leFilterReturnPressed();
+    void leFindReturnPressed();
+    void leFindTextEdited(const QString &text);
+
+public slots:
+    void pbFilterClick(bool checked);
+    void pbFindFirstClick();
+    void pbFindNextClick();
+    void pbFindPrevClick();
 
 };
 

@@ -49,8 +49,8 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY,
                       FG REAL,
                       T_germ TEXT,
                       Levée REAL,
-                      Inventaire REAL,
-                      Date_inv DATE,
+                      -- Inventaire REAL,
+                      -- Date_inv DATE,
                       A_planifier TEXT DEFAULT ('x'),
                       Notes TEXT) WITHOUT ROWID;
 
@@ -107,9 +107,12 @@ CREATE TABLE Rotations_détails (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                                 Fi_planches TEXT,
                                 Notes TEXT);
 
-CREATE TABLE Récoltes (Date DATE DEFAULT (DATE('now')) NOT NULL,
-                       Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE,
-                       Quantité REAL);
+CREATE TABLE Récoltes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                       Date DATE DEFAULT (DATE('now')) NOT NULL,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+                       Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+                       Quantité REAL NOT NULL,
+                       Notes TEXT);
 
 CREATE TABLE Types_planche (Type TEXT PRIMARY KEY,
                             Notes TEXT) WITHOUT ROWID;

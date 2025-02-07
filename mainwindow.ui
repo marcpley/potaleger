@@ -57,7 +57,7 @@
        <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -283,6 +283,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <height>32</height>
               </size>
              </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
             </widget>
            </item>
            <item>
@@ -404,7 +407,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
          <enum>QFrame::Shape::Box</enum>
         </property>
         <property name="wordWrap">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="margin">
          <number>2</number>
@@ -479,8 +482,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
     </property>
     <addaction name="mSelecDB"/>
     <addaction name="mCopyBDD"/>
+    <addaction name="mUpdateSchema"/>
     <addaction name="mCreerBDD"/>
     <addaction name="mCreerBDDVide"/>
+    <addaction name="mAPropos"/>
    </widget>
    <widget class="QMenu" name="mBaseData">
     <property name="title">
@@ -544,9 +549,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="mFermerOnglet"/>
     <addaction name="mFermerOnglets"/>
     <addaction name="mLargeurs"/>
-    <addaction name="mParam"/>
+    <addaction name="mFilterFind"/>
     <addaction name="mEditNotes"/>
-    <addaction name="mAPropos"/>
+    <addaction name="mParam"/>
    </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
@@ -946,6 +951,31 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="text">
     <string>A propos...</string>
+   </property>
+  </action>
+  <action name="mFilterFind">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Filtrer rechercher</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="mUpdateSchema">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="system-reboot"/>
+   </property>
+   <property name="text">
+    <string>Mettre à jour le schéma de BDD</string>
    </property>
   </action>
  </widget>

@@ -28,11 +28,14 @@ float min(float a,float b);
 int min(int a,int b);
 QString RemoveComment(QString sCde, QString sCommentMarker);
 void SetButtonSize(QToolButton *b);
+void SetFontColor(QWidget* widget, QColor color);
+void SetFontWeight(QWidget* widget, QFont::Weight weight);
 void SetColoredText(QLabel *l, QString text, QString type);
 QString str(int i);
 QString str(float i);
 QString str(qsizetype i);
 QString StrFirst(QString s, int i);
+QString StrLast(QString s, int i);
 QString StrReplace(QString s, const QString sTarg, const QString sRepl);
 QString SubString(QString s, int iDeb, int iFin);
 

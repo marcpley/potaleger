@@ -56,11 +56,8 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
         messageLabel2->setOpenExternalLinks(true);
         messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse);
         messageLabel2->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
-        QFont font = messageLabel2->font();
-        font.setWeight(QFont::Light);
-        messageLabel2->setFont(font);
-        font.setWeight(QFont::DemiBold);
-        messageLabel->setFont(font);
+        SetFontWeight(messageLabel2,QFont::Light);
+        SetFontWeight(messageLabel,QFont::DemiBold);
         textLayout->addWidget(messageLabel2);
         layout->addLayout(textLayout);
     }

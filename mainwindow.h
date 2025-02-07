@@ -17,7 +17,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0b19.01";
+QString const Version="1.0b20.01";
 QString const DbVersion="2025-01-20";
 
 class MainWindow : public QMainWindow
@@ -96,6 +96,10 @@ private slots:
 
     void on_mAPropos_triggered();
 
+    void on_mFilterFind_triggered();
+
+    void on_mUpdateSchema_triggered();
+
 private:
     void SetEnabledDataMenuEntries(bool b);
     bool PotaBDDInfo();
@@ -110,7 +114,7 @@ private:
     bool registerTableValuedFunctions();
     QString testCustomFunctions();
     void dbClose();
-    bool PotaDbOpen(QString sFichier, QString sNew);
+    bool PotaDbOpen(QString sFichier, QString sNew, bool bUpdate);
     void PotaDbClose();
     bool OpenPotaTab(QString const sObjName, QString sTableName, QString const sTitre);
     void ClosePotaTab(QWidget *Tab);

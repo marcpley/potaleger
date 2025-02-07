@@ -432,6 +432,41 @@ BEGIN
     DELETE FROM Rotations_détails WHERE ID=OLD.ID;
 END;;
 
+DROP TRIGGER IF EXISTS Récoltes__Saisies_INSERT;;
+CREATE TRIGGER Récoltes__Saisies_INSERT INSTEAD OF INSERT ON Récoltes__Saisies
+BEGIN
+    INSERT INTO Récoltes (ID,
+                          Date,
+                          Espèce,
+                          Culture,
+                          Quantité,
+                          Notes)
+    VALUES (NEW.ID,
+            coalesce(NEW.Date,DATE('now')),
+            NEW.Espèce,
+            NEW.Culture,
+            NEW.Quantité,
+            NEW.Notes);
+END;;
+
+DROP TRIGGER IF EXISTS Récoltes__Saisies_UPDATE;;
+CREATE TRIGGER Récoltes__Saisies_UPDATE INSTEAD OF UPDATE ON Récoltes__Saisies
+BEGIN
+    UPDATE Récoltes SET
+        Date=NEW.Date,
+        Espèce=NEW.Espèce,
+        Culture=NEW.Culture,
+        Quantité=NEW.Quantité,
+        Notes=NEW.Notes
+     WHERE ID=OLD.ID;
+END;;
+
+DROP TRIGGER IF EXISTS Récoltes__Saisies_DELETE;;
+CREATE TRIGGER Récoltes__Saisies_DELETE INSTEAD OF DELETE ON Récoltes__Saisies
+BEGIN
+    DELETE FROM Récoltes WHERE ID=OLD.ID;
+END;;
+
 DROP TRIGGER IF EXISTS Variétés_UPDATE_Nb_graines_g;;
 CREATE TRIGGER Variétés_UPDATE_Nb_graines_g AFTER UPDATE ON Variétés
           WHEN (NEW.Nb_graines_g ISNULL) AND (NEW.Espèce NOTNULL) AND

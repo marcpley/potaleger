@@ -14,6 +14,7 @@
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
     ui->mCopyBDD->setEnabled(b);
+    ui->mUpdateSchema->setEnabled(b);
     ui->mParam->setEnabled(b);
     for (int i = 0; i < ui->mBaseData->actions().count(); i++)
         ui->mBaseData->actions().at(i)->setEnabled(b);
@@ -117,10 +118,8 @@ void MainWindow::dbClose()
     }
 }
 
-bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
+bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 {
-    bool const bForceUpdateViewsAndTriggers=false;
-
     if (!dbOpen(sFichier,(sNew!=""),false,true))
         return false;
 
@@ -135,7 +134,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
             pQuery.next();
             sVerBDD = pQuery.value(0).toString();
         }
-        else if (bForceUpdateViewsAndTriggers)
+        else if (bUpdate)
             sVerBDD = ui->lVerBDDAttendue->text();
         else {
             ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
@@ -157,7 +156,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew)
             return false;
         }
 
-        if (bForceUpdateViewsAndTriggers or
+        if (bUpdate or
             ((sVerBDD != ui->lVerBDDAttendue->text())and
              (OkCancelDialog(tr("Base de données trop ancienne:")+"\n"+
                              ui->lDB->text()+"\n" +
@@ -265,7 +264,7 @@ void MainWindow::RestaureParams()
         else if (choice==2)
             on_mCreerBDDVide_triggered();
     } else
-        PotaDbOpen(settings.value("database_path").toString(),"");
+        PotaDbOpen(settings.value("database_path").toString(),"",false);
 
     if (!settings.value("notes").toString().isEmpty())
         ui->pteNotes->setMarkdown(settings.value("notes").toString());
@@ -277,7 +276,8 @@ void MainWindow::RestaureParams()
             mdFile.open(QFile::ReadOnly);
             ui->pteNotes->setMarkdown(mdFile.readAll());
         } else
-            ui->pteNotes->setPlainText("Notes, format Markdown, ctrl+N pour éditer.");
+            ui->pteNotes->setPlainText(tr("Notes au format Markdown (CTRL+N pour éditer).")+"\n"+
+                                       tr("Ce texte est enregistré sur votre ordinateur (pas dans la BDD)."));
     }
 }
 

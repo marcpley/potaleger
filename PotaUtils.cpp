@@ -4,6 +4,8 @@
 #include "qsqlerror.h"
 #include "qsqlquery.h"
 #include "PotaUtils.h"
+#include <QFont>
+#include "data/Data.h"
 
 bool PotaQuery::ExecShowErr(QString query)
 {
@@ -62,12 +64,20 @@ QVariant PotaQuery::Selec0ShowErr(QString query)
 }
 
 QString DataType(QString TableName, QString FieldName){
+    QString result="";
     QSqlQuery query("PRAGMA table_xinfo("+TableName+")");
     while (query.next()){
-        if (query.value(1).toString()==FieldName)
-            return query.value(2).toString();
+        if (query.value(1).toString()==FieldName){
+            result=query.value(2).toString();
+            break;
+        }
     }
-    return "";
+
+    if (result=="" and//Unknow view field.
+        ViewFieldIsDate(FieldName))
+        return "DATE";
+    else
+        return result;
 }
 
 // QString SQLiteDate() {
@@ -134,7 +144,7 @@ QString RemoveComment(QString sCde, QString sCommentMarker)
 void SetColoredText(QLabel *l, QString text, QString type)
 {
     QString s;
-    if (text.length()>400)
+    if (text.length()>600)
         s=text.first(200)+"...\n..."+text.last(400);
 
     else if (text.startsWith("NOT NULL constraint failed")) {
@@ -170,6 +180,25 @@ void SetButtonSize(QToolButton *b)
     b->setIconSize(QSize(24,24));
 }
 
+void SetFontColor(QWidget* widget, QColor color) {
+    if (widget) {
+        if (color!=QColor()) {
+            QPalette palette = widget->palette();
+            palette.setColor(QPalette::Text, color);
+            widget->setPalette(palette);
+        } else
+            widget->setPalette(QApplication::palette());
+    }
+}
+
+void SetFontWeight(QWidget* widget, QFont::Weight weight) {
+    if (widget) {
+        QFont font = widget->font();
+        font.setWeight(weight);
+        widget->setFont(font);
+    }
+}
+
 QString str(int i)
 {
     QString s;
@@ -198,13 +227,26 @@ QString StrFirst(QString s, int i){
         return s;
 }
 
+QString StrLast(QString s, int i){
+    if (i>0 and i<s.length())
+        return s.last(i);
+    else if (i==0)
+        return "";
+    else
+        return s;
+}
+
 
 QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
-    int index = 0;
-    while ((index = s.indexOf(sTarg, index)) != -1) {
-        s.replace(index, sTarg.length(), sRepl);
-        index += sRepl.length();  // To avoid infinite loop
-    }
+    // int index = 0;
+    // while ((index = s.indexOf(sTarg, index)) != -1) {
+    //     s.replace(index, sTarg.length(), sRepl);
+    //     index += sRepl.length();  // To avoid infinite loop
+    // }
+    // return s;
+
+    while (s.indexOf(sTarg)!= -1)
+        s.replace(s.indexOf(sTarg),sTarg.length(),sRepl);
     return s;
 }
 

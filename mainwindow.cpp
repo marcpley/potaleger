@@ -54,7 +54,7 @@ bool MainWindow::PotaBDDInfo()
 bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, QString const sTitre)
 {
     //Recherche parmis les onglets existants.
-    for (int i = 1; i < ui->tabWidget->count(); i++)
+    for (int i = 0; i < ui->tabWidget->count(); i++)
     {
         if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName )//Widget Onglet Data
         {
@@ -69,6 +69,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->setObjectName("PW"+sObjName);
         w->lErr = ui->lDBErr;
         w->mEditNotes = ui->mEditNotes;
+        //w->mFilterFind = ui->mFilterFind;
         w->Init(sTableName);
 
         if (w->model->SelectShowErr())
@@ -86,7 +87,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->pbInsertRow->setEnabled(true);
                 w->pbDeleteRow->setEnabled(true);
             }
-            w->lFilter->setText(str(w->model->rowCount())+" "+tr("lignes"));
+            w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
             w->delegate->cTableColor=TableColor(sTableName,"");
             for (int i=0; i<w->model->columnCount();i++)
@@ -153,7 +154,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             //filter
             settings.beginGroup("Filter");
-            w->sbFilter->setValue(settings.value(sTableName+"-nCar").toInt());
+            w->iTypeText=settings.value(sTableName+"-FilterTypeText").toInt();
+            w->iTypeDate=settings.value(sTableName+"-FilterTypeDate").toInt();
+            w->iTypeReal=settings.value(sTableName+"-FilterTypeReal").toInt();
             settings.endGroup();
 
             //col width
@@ -212,7 +215,9 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
 
         //Filter
         settings.beginGroup("Filter");
-        settings.setValue(w->model->tableName()+"-nCar",w->sbFilter->value());
+        settings.setValue(w->model->tableName()+"-FilterTypeText",w->iTypeText);
+        settings.setValue(w->model->tableName()+"-FilterTypeDate",w->iTypeDate);
+        settings.setValue(w->model->tableName()+"-FilterTypeReal",w->iTypeReal);
         settings.endGroup();
 
         //ColWidth
@@ -235,18 +240,20 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
 
 void MainWindow::ClosePotaTabs()
 {
-    for (int i = ui->tabWidget->count()-1; i >0 ; i--) {
+    for (int i = ui->tabWidget->count()-1; i >=0 ; i--) {
         ClosePotaTab(ui->tabWidget->widget(i));
     }
+    ui->tabWidget->setCurrentIndex(0);
 }
 
 void MainWindow::on_mSelecDB_triggered()
 {
+    ClosePotaTabs();
     const QString sFileName = QFileDialog::getOpenFileName( this, tr("Base de donnée Potaléger"), ui->lDB->text(), "*.sqlite3");
     if (sFileName != "")
     {
         PotaDbClose();
-        PotaDbOpen(sFileName,"");
+        PotaDbOpen(sFileName,"",false);
     }
 }
 
@@ -262,6 +269,7 @@ void MainWindow::on_mFermerOnglets_triggered()
 
 void MainWindow::on_mCopyBDD_triggered()
 {
+    ClosePotaTabs();
     QFileInfo FileInfo,FileInfoVerif;
     FileInfo.setFile(ui->lDB->text());
     if (!FileInfo.exists())
@@ -306,7 +314,7 @@ void MainWindow::on_mCopyBDD_triggered()
                           sFileNameSave+"\n"+
                           tr("vers le fichier")+"\n"+
                           sFileName,"",QStyle::SP_MessageBoxCritical);
-        PotaDbOpen(sFileNameSave,"");
+        PotaDbOpen(sFileNameSave,"",false);
     }
 }
 
@@ -322,6 +330,7 @@ void MainWindow::on_mCreerBDDVide_triggered()
 
 void MainWindow::CreateNewDB(bool bEmpty)
 {
+    ClosePotaTabs();
     QString sEmpty= iif(bEmpty,tr("vide"),tr("avec données de base")).toString();
     QFileInfo FileInfoVerif;
 
@@ -364,11 +373,11 @@ void MainWindow::CreateNewDB(bool bEmpty)
         FileInfo1.setFileName(ui->lDB->text());
         PotaDbClose();
 
-        if (!PotaDbOpen(sFileName,iif(bEmpty,"New","NewWithBaseData").toString())) {
+        if (!PotaDbOpen(sFileName,iif(bEmpty,"New","NewWithBaseData").toString(),false)) {
             MessageDialog(tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
             dbClose();
-            PotaDbOpen(sFileNameSave,"");
+            PotaDbOpen(sFileNameSave,"",false);
         }
     }
 }
@@ -542,7 +551,10 @@ void MainWindow::on_mCuRecoltesAFaire_triggered()
 
 void MainWindow::on_mCuSaisieRecoltes_triggered()
 {
-    OpenPotaTab("Saisie_recoltes","Saisie_récoltes",tr("Récoltes"));
+    if (OpenPotaTab("Recoltes__Saisies","Récoltes__Saisies",tr("Récoltes"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+    }
 }
 
 void MainWindow::on_mCuATerminer_triggered()
@@ -567,22 +579,27 @@ void MainWindow::on_mAnaEspeces_triggered()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-    for (int i = 1; i < ui->tabWidget->count(); ++i) {
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
-        if (i==ui->tabWidget->currentIndex())
-            w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
-        else
-            w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
+            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
+            if (i==index)//ui->tabWidget->currentIndex()
+                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
+            else
+                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+        }
     }
 
-    bool textEditReadOnly;
-    if (ui->tabWidget->currentIndex()==0)
-        textEditReadOnly=ui->pteNotes->isReadOnly();
-    else
-        textEditReadOnly=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget())->editNotes->isReadOnly();
-    ui->mEditNotes->setChecked(!textEditReadOnly);
+    if (!ui->tabWidget->widget(index)->objectName().startsWith("PW")) {
+        ui->mFilterFind->setEnabled(false);
+        ui->mFilterFind->setChecked(false);
+        ui->mEditNotes->setChecked(!ui->pteNotes->isReadOnly());
+    } else {
+        PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        ui->mFilterFind->setEnabled(true);
+        ui->mFilterFind->setChecked(wc->filterFrame->isVisible());
+        ui->mEditNotes->setChecked(!wc->editNotes->isReadOnly());
+    }
 }
-
 
 void MainWindow::on_mLargeurs_triggered()
 {
@@ -600,11 +617,29 @@ void MainWindow::on_mLargeurs_triggered()
 }
 
 
+void MainWindow::on_mFilterFind_triggered()
+{
+    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        if (w->filterFrame->isVisible()) {
+            ui->mFilterFind->setChecked(false);
+            w->pbFilter->setChecked(false);
+            w->pbFilterClick(false);
+            w->ffFrame->setVisible(false);
+        } else {
+            ui->mFilterFind->setChecked(true);
+            w->ffFrame->setVisible(true);
+            w->curChanged(w->tv->selectionModel()->currentIndex());
+        }
+    }
+}
+
+
 void MainWindow::on_mEditNotes_triggered()
 {
     QTextEdit *textEdit;
     PotaWidget *w=nullptr;
-    if (ui->tabWidget->currentIndex()==0){
+    if (!ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
         textEdit=ui->pteNotes;
     } else {
         w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
@@ -656,14 +691,33 @@ void MainWindow::on_mEditNotes_triggered()
 
 void MainWindow::on_mAPropos_triggered()
 {
-    MessageDialog("Auteur: Marc Pleysier<br>"
-                  "<a href=\"https://www.greli.net\">https://www.greli.net</a><br>"
-                  "Sources: <a href=\"https://github.com/marcpley/potaleger\">https://github.com/marcpley/potaleger</a>",
+    MessageDialog("Auteur: Marc Pleysier ...................................................................<br>"
+                  "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
+                  "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
                   "<b>Crédits</b>:<br>"
-                  "Qt Creator community 6.8.1<br>"
-                  "SQLite 3<br>"
-                  "SQLean<br>"
-                  "SQLiteStudio, thanks Pawel !<br>"
-                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">https://fermelegere.greli.net</a>");
+                  "Qt Creator community 6.8.1 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
+                  "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
+                  "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
+                  "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
+                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a><br>"
+                  "ChatGPT, hé oui...<br>"
+                  "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
+                  QStyle::NStandardPixmap);
+}
+
+
+
+void MainWindow::on_mUpdateSchema_triggered()
+{
+    ClosePotaTabs();
+    if (OkCancelDialog(tr("Mettre à jour le schéma de la BDD ?")+"\n\n"+
+                       ui->lDB->text()+"\n\n"+
+                       tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
+                       tr("Vos données vont être conservées.")+"\n"+
+                       tr("En cas d'échec, votre BDD sera remise dans sont état initial."))){
+        QString sFileName=ui->lDB->text();
+        PotaDbClose();
+        PotaDbOpen(sFileName,"",true);
+    }
 }
 

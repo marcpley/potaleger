@@ -16,6 +16,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     //QSqlDatabase db = QSqlDatabase::database();
     PotaQuery *model = new PotaQuery;
     PotaQuery *model2 = new PotaQuery;
+    PotaQuery *model3 = new PotaQuery;
     model->lErr = ui->lDBErr;
     bool bNew=false;
     bool bResult=true;
@@ -78,46 +79,56 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             while (model->next()) {
                 if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql"))//No sqlite or sqlean tables.
                     sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+model->value("name").toString()+";"
-                                                                                                      "CREATE TABLE Temp_"+model->value("name").toString()+" AS "
-                                                                         "SELECT * FROM "+model->value("name").toString()+";"
-                                                                         "DROP TABLE "+model->value("name").toString()+";";
+                                    "CREATE TABLE Temp_"+model->value("name").toString()+" AS "
+                                           "SELECT * FROM "+model->value("name").toString()+";"
+                                    "DROP TABLE "+model->value("name").toString()+";";
             }
 
             //Create new tables.
             sUpdateSchema += DynDDL(sDDLTables);
 
-            //Import data from old to new tables.
-            QString sFieldsList;
-            model->clear();
-            model->ExecShowErr("PRAGMA table_list;");
-            while (model->next()) {
-                if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql")) {
-                    sFieldsList="";
-                    model2->ExecShowErr("PRAGMA table_xinfo("+model->value("name").toString()+");");
-                    while (model2->next()) {
-                        if (model2->value("hidden").toInt()==0) {
-
-                            sFieldsList +=model2->value("name").toString()+",";
-                        }
-                    }
-                    sFieldsList=sFieldsList.removeLast();
-                    sUpdateSchema +="INSERT INTO "+model->value("name").toString()+" ("+sFieldsList+") " //todo: spécifier les champs si pas le même nom ou ordre.
-                                                                                                             "SELECT "+sFieldsList+" FROM Temp_"+model->value("name").toString()+";";
-                }
-            }
-
-            //DROP Temp tables.
-            model->clear();
-            model->ExecShowErr("PRAGMA table_list;");
-            while (model->next()) {
-                if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql"))
-                    sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+model->value("name").toString()+";";
-            }
-
-            //Update schema.
-            sUpdateSchema += "COMMIT TRANSACTION;";
             bResult = model->ExecMultiShowErr(sUpdateSchema,";");
+            if (bResult) {
+                sUpdateSchema="";
+                //Import data from old to new tables.
+                QString sFieldsList;
+                model->clear();
+                model->ExecShowErr("PRAGMA table_list;");
+                while (model->next()) {
+                    if (model->value("type").toString()=="table" and
+                        !model->value("name").toString().startsWith("Temp_") and
+                        !model->value("name").toString().startsWith("sql")) {
+                        sFieldsList="";
+                        model2->ExecShowErr("PRAGMA table_xinfo("+model->value("name").toString()+");");//New table
+                        while (model2->next()) {
+                            if (model2->value("hidden").toInt()==0) {
+                                model3->ExecShowErr("PRAGMA table_xinfo(Temp_"+model->value("name").toString()+");");//Old table
+                                qDebug() << model->value("name").toString() << " - " << model2->value("name").toString();
+                                while (model3->next()) {
+                                    qDebug() << model3->value("name").toString();
+                                    if (model3->value("name").toString()==model2->value("name").toString())//Fields exists in old and new tables
+                                        sFieldsList +=model2->value("name").toString()+",";
+                                }
+                            }
+                        }
+                        sFieldsList=sFieldsList.removeLast();
+                        sUpdateSchema +="INSERT INTO "+model->value("name").toString()+" ("+sFieldsList+") " //todo: spécifier les champs si pas le même nom.
+                                        "SELECT "+sFieldsList+" FROM Temp_"+model->value("name").toString()+";";
+                    }
+                }
 
+                //DROP Temp tables.
+                model->clear();
+                model->ExecShowErr("PRAGMA table_list;");
+                while (model->next()) {
+                    if (model->value("type").toString()=="table" and !model->value("name").toString().startsWith("sql"))
+                        sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+model->value("name").toString()+";";
+                }
+
+                //Update schema.
+                sUpdateSchema += "COMMIT TRANSACTION;";
+                bResult = model->ExecMultiShowErr(sUpdateSchema,";");
+            }
             sResult.append("Data transfert : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }

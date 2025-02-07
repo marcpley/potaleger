@@ -5,6 +5,7 @@
 #include <QSqlTableModel>
 #include <QtSql/QSqlQueryModel>
 #include <QObject>
+#include "potawidget.h"
 
 int DefColWidth(const QString sTableName,const QString sFieldName) {
     QString sType = DataType(sTableName,sFieldName);
@@ -42,6 +43,29 @@ QString DynDDL(QString sQuery)
     sQuery=StrReplace(sQuery,"#FmtPlanif#","IN('','01-01','01-15','02-01','02-15','03-01','03-15','04-01','04-15','05-01','05-15','06-01','06-15','07-01','07-15','08-01','08-15','09-01','09-15','10-01','10-15','11-01','11-15','12-01','12-15')");
     sQuery=StrReplace(sQuery,"#DbVer#",DbVersion);
     return sQuery;
+}
+
+QString FkFilter(const QString sTableName,const QString sFieldName, const QModelIndex &index){
+    QString filter="";
+    const PotaTableModel *model = qobject_cast<const PotaTableModel *>(index.model());
+    if (model) {
+        if (sTableName=="Cultures") {
+            if (sFieldName=="Variété")
+                filter="Espèce=(SELECT Espèce FROM ITP I WHERE I.IT_plante='"+
+                       index.siblingAtColumn(model->fieldIndex("IT_plante")).data().toString()+
+                       "')";
+            // else if (sFieldName=="IT_plante")
+            //     filter="Espèce IN (SELECT E.Espèce FROM Espèces E WHERE E.A_planifier NOTNULL)";
+        } else if (sTableName=="Récoltes") {
+            if (sFieldName=="Culture")
+                filter="Culture IN (SELECT Culture FROM C_en_place JOIN ITP I USING(IT_plante) WHERE I.Espèce='"+
+                         index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString()+
+                         "')";//index.model()->index(index.row(),index.model()->ind+
+            else if (sFieldName=="Espèce")
+                filter="Espèce IN (SELECT I.Espèce FROM C_en_place JOIN ITP I USING(IT_plante))";
+        }
+    }
+    return filter;
 }
 
 QString GeneratedFielnameForDummyFilter(const QString sTableName) {
@@ -166,7 +190,8 @@ bool ReadOnly(const QString sTableName,const QString sFieldName)
                       sFieldName=="Dose_semis" or
                       sFieldName=="Notes" or
                       sFieldName=="N_espèce");
-
+    } else if (sTableName=="Récoltes__Saisies"){
+        bReadOnly = (sFieldName=="Planche");
     } else if (sTableName=="Rotations"){
         bReadOnly = !(sFieldName=="Nb_Années");
 
@@ -177,7 +202,6 @@ bool ReadOnly(const QString sTableName,const QString sFieldName)
                       sFieldName=="Pc_planches" or
                       sFieldName=="Fi_planches" or
                       sFieldName=="Notes");
-
     } else if (sTableName=="Variétés__inv_et_cde"){
         bReadOnly = !(sFieldName=="Qté_stock" or
                       sFieldName=="Qté_cde" or
@@ -217,37 +241,97 @@ QColor RowColor(QString sValue){
     return c;
 }
 
-QString RowSummary(QString TableName,const QModelIndex &index){
+QString RowSummary(QString TableName, const QSqlRecord &rec){
     int col=0;
-    if (TableName=="Cult_planif")
-        return index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(3).data(Qt::DisplayRole).toString();
-    else if (TableName=="Cultures")
-        return index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(4).data(Qt::DisplayRole).toString();
-    else if (TableName.startsWith("Cultures__"))
-        return index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(2).data(Qt::DisplayRole).toString();
+    QString result="";
+    if (TableName=="Apports")
+        result=rec.value(rec.indexOf("Apport")).toString()+" - "+
+               rec.value(rec.indexOf("Description")).toString()+" - "+
+               iif(!rec.value(rec.indexOf("Poids_m²")).isNull(),
+                   rec.value(rec.indexOf("Poids_m²")).toString()+"kg/m²","").toString();
+    else if (TableName=="Cult_planif")
+        result=rec.value(rec.indexOf("Planche")).toString()+" - "+
+               rec.value(rec.indexOf("IT_plante")).toString()+" - "+
+               iif(rec.value(rec.indexOf("Date_semis")).isNull(),
+                   rec.value(rec.indexOf("Date_Plantation")).toString(),
+                   rec.value(rec.indexOf("Date_semis")).toString()).toString();
+    else if (TableName.startsWith("Cultures"))
+        result=rec.value(rec.indexOf("Culture")).toString()+" - "+
+               rec.value(rec.indexOf("Planche")).toString()+" - "+
+               rec.value(rec.indexOf("IT_plante")).toString()+" - "+
+               rec.value(rec.indexOf("Type")).toString()+" - "+
+               rec.value(rec.indexOf("Etat")).toString()+" - "+
+               iif(rec.value(rec.indexOf("Date_semis")).isNull(),
+                   rec.value(rec.indexOf("Date_Plantation")).toString(),
+                   rec.value(rec.indexOf("Date_semis")).toString()).toString();
+    else if (TableName.startsWith("Familles"))
+        result=rec.value(rec.indexOf("Famille")).toString()+" - "+
+               iif(!rec.value(rec.indexOf("Intervalle")).isNull(),
+                   rec.value(rec.indexOf("Intervalle")).toString()+" "+QObject::tr("ans"),"").toString();
+    else if (TableName.startsWith("Fournisseurs"))
+        result=rec.value(rec.indexOf("Fournisseur")).toString()+" - "+
+               rec.value(rec.indexOf("Site_web")).toString();
+    else if (TableName.startsWith("ITP"))
+        result=rec.value(rec.indexOf("IT_plante")).toString()+" - "+
+               rec.value(rec.indexOf("Type_planche")).toString()+" - "+
+               rec.value(rec.indexOf("Type_culture")).toString();
     else if (TableName=="IT_rotations")
-        col=1;
+        result=rec.value(rec.indexOf("IT_plante")).toString()+" - "+
+               rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
+               rec.value(rec.indexOf("Longueur")).toString()+"m";
     else if (TableName=="IT_rotations_ilots")
-        return index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
-               QObject::tr("ilot ")+index.siblingAtColumn(2).data(Qt::DisplayRole).toString();
+        result=rec.value(rec.indexOf("IT_plante")).toString()+" - "+
+               QObject::tr("ilot ")+rec.value(rec.indexOf("Ilot")).toString()+" - "+
+               rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
+               rec.value(rec.indexOf("Longueur")).toString()+"m";
     else if (TableName=="Params")
-        return index.model()->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString()+" : "+
-               index.siblingAtColumn(0).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(1).data(Qt::DisplayRole).toString();
+        result=rec.value(rec.indexOf("Section")).toString()+" · "+
+                 rec.value(rec.indexOf("Paramètre")).toString()+" : "+
+                 rec.value(rec.indexOf("Valeur")).toString()+" "+
+                 rec.value(rec.indexOf("Unité")).toString();
+    else if (TableName=="Planches")
+        result=rec.value(rec.indexOf("Planche")).toString()+" - "+
+                 rec.value(rec.indexOf("Type")).toString()+" - "+
+                 rec.value(rec.indexOf("Longueur")).toString()+"m x "+
+                 rec.value(rec.indexOf("Largeur")).toString()+"m";
+    else if (TableName=="Récoltes__Saisies")
+        result=rec.value(rec.indexOf("Date")).toString()+" - "+
+                 rec.value(rec.indexOf("Espèce")).toString()+" - "+
+                 rec.value(rec.indexOf("Culture")).toString()+" - "+
+                 iif(!rec.value(rec.indexOf("Quantité")).isNull(),
+                     rec.value(rec.indexOf("Quantité")).toString()+QObject::tr("kg"),"").toString()+" - "+
+                 rec.value(rec.indexOf("Planche")).toString();
+    else if (TableName=="Rotations")
+        result=rec.value(rec.indexOf("Rotation")).toString()+" - "+
+               rec.value(rec.indexOf("Type_planche")).toString()+" - "+
+               iif(!rec.value(rec.indexOf("Nb_années")).isNull(),
+                   rec.value(rec.indexOf("Nb_années")).toString()+" "+QObject::tr("ans"),"").toString();
     else if (TableName=="Rotations_détails__Tempo")
-        return index.siblingAtColumn(1).data(Qt::DisplayRole).toString()+" - "+
-               QObject::tr("année ")+index.siblingAtColumn(2).data(Qt::DisplayRole).toString()+" - "+
-               index.siblingAtColumn(3).data(Qt::DisplayRole).toString();
+        result=rec.value(rec.indexOf("Rotation")).toString()+" - "+
+               QObject::tr("Année ")+rec.value(rec.indexOf("Année")).toString()+" - "+
+               rec.value(rec.indexOf("IT_plante")).toString();
+    else if (TableName=="Successions_par_planche")
+        result=rec.value(rec.indexOf("Planche")).toString()+" : "+
+               rec.value(rec.indexOf("ITP_en_place")).toString()+" ("+
+               rec.value(rec.indexOf("Libre_le")).toString()+") -> "+
+               rec.value(rec.indexOf("ITP_à_venir")).toString()+" ("+
+               rec.value(rec.indexOf("En_place_le")).toString()+")";
     else if (TableName=="Variétés__inv_et_cde")
-        col=2;
+        result=rec.value(rec.indexOf("Variété")).toString()+" - "+
+               iif(!rec.value(rec.indexOf("Qté_nécess")).isNull(),QObject::tr("Nécessaire ")+rec.value(rec.indexOf("Qté_nécess")).toString()+"g - ","").toString()+
+               iif(!rec.value(rec.indexOf("Qté_stock")).isNull(),QObject::tr("Stock ")+rec.value(rec.indexOf("Qté_stock")).toString()+"g - ","").toString()+
+               iif(!rec.value(rec.indexOf("Qté_cde")).isNull(),QObject::tr("Cde ")+rec.value(rec.indexOf("Qté_cde")).toString()+"g - ","").toString()+
+               iif(!rec.value(rec.indexOf("Qté_manquante")).isNull(),QObject::tr("Manquant ")+rec.value(rec.indexOf("Qté_manquante")).toString()+"g","").toString()+" - "+
+               rec.value(rec.indexOf("Fournisseur")).toString();
 
-    return index.model()->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString()+" : "+
-           index.siblingAtColumn(col).data(Qt::DisplayRole).toString();
+    if (result=="")
+        result=rec.value(col).toString();
+
+    result=StrReplace(result,"-  -","-");
+    if (result.last(3)==" - ")
+        result=StrFirst(result,result.length()-3);
+
+    return result;
 }
 
 QColor TableColor(QString sTName,QString sFName)
@@ -402,9 +486,9 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr(  "Momment où la culture sera mise en place sur la planche.\n"
                                    "* indique un chevauchement avec la culture précédente (pas encore récoltée).\n"
                                    "- indique u temps important d'inoccupation de la planche.");
-    } else if (sTableName=="Récoltes"){
+    } else if (sTableName=="Récoltes" or sTableName.startsWith("Récoltes__")){
         if (sFieldName=="Quantité")
-            sToolTip=QObject::tr("En kg.");
+            sToolTip=QObject::tr("Quantité récoltée sur la planche (kg).");
 
     } else if (sTableName=="Types_planche"){
         if (sFieldName=="Type")
@@ -448,8 +532,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr("Température de germination (min-max °C).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
         else if (sFieldName=="Levée")
             sToolTip=QObject::tr("Temps de levée (jours).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
-        else if (sFieldName=="Inventaire")
-            sToolTip=QObject::tr("Quantité de récolte en stock (kg).");
+        // else if (sFieldName=="Inventaire")
+        //     sToolTip=QObject::tr("Quantité de récolte en stock (kg).");
         else if (sFieldName=="A_planifier")
             sToolTip=QObject::tr("Espèce à cultiver l'année prochaine.");
         else if (sFieldName=="Rendement")
@@ -481,8 +565,6 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr("Semence commandée (g).")+"\n"+QObject::tr("A réception, mettre à 0 et ajouter la quantité à la quantité en stock.");
 
         //Views
-        else if (sFieldName=="A_faire_le")
-            sToolTip=QObject::tr("Plus petite date de semis (direct) ou de plantation parmis les cultures à venir.");
         else if (sFieldName=="Année_à_planifier")
             sToolTip=QObject::tr("Paramétrable: 'Année_planif'.");
         else if (sFieldName=="C_à_venir")
@@ -493,6 +575,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
                                     "Ne sont pas incluses les cultures semées sous abris mais non plantées.");
         else if (sFieldName=="C_non_commencées")
             sToolTip=QObject::tr(   "Cultures prévues mais ni semées ni plantées.");
+        else if (sFieldName=="En_place_le")
+            sToolTip=QObject::tr("Plus petite date de semis (direct) ou de plantation parmis les cultures à venir.");
         else if (sFieldName=="Libre_le")
             sToolTip=QObject::tr("Plus grande date de fin de récolte parmis les cultures en place.");
         else if (sFieldName=="Nb_cu_AV")
@@ -581,7 +665,24 @@ QString ToolTipTable(const QString sTableName) {
                                "Ils ne sont pas saisis mais déduits des planches saisies.\n"
                                "Le débuts du nom des planches indique leur ilot (voir le paramètre 'Ilot_nb_car').");
     else if (sTableName=="Variétés__inv_et_cde")
-        sToolTip=QObject::tr(   "Inventaire des semences pour chaque variété de plante.");
+        sToolTip=QObject::tr(  "Inventaire des semences pour chaque variété de plante.");
 
     return sToolTip;
+}
+
+bool ViewFieldIsDate(const QString sFieldName){
+    if (sFieldName=="Libre_le" or
+        sFieldName=="En_place_le" or
+        sFieldName=="Min_semis" or
+        sFieldName=="Max_semis" or
+        sFieldName=="Min_plantation" or
+        sFieldName=="Max_plantation" or
+        sFieldName=="Min_recolte" or
+        sFieldName=="Max_recolte" or
+        sFieldName=="Mise_en_place" or
+        sFieldName=="Date_MEP" or
+        sFieldName=="Date_Ferm")
+        return true;
+    else
+        return false;
 }

@@ -15,13 +15,15 @@ const QColor cTerminee=QColor("#808080");//Gris
 
 int DefColWidth(const QString sTableName,const QString sFieldName);
 QString DynDDL(QString sQuery);
+QString FkFilter(const QString sTableName, const QString sFieldName, const QModelIndex &index);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
 bool ReadOnly(const QString sTableName,const QString sFieldName);
 QColor RowColor(QString sValue);
-QString RowSummary(QString TableName, const QModelIndex &index);
+QString RowSummary(QString TableName, const QSqlRecord &rec);
 QColor TableColor(QString sTName,QString sFName);
 QString ToolTipField(const QString sTableName,const QString sFieldName);
 QString ToolTipTable(const QString sTableName);
+bool ViewFieldIsDate(const QString sFieldName);
 
 #endif // DATA_H
