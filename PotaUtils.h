@@ -2,6 +2,7 @@
 #define POTAUTILS_H
 
 #include "qlabel.h"
+#include "qprogressbar.h"
 #include "qtoolbutton.h"
 #include <QSqlQuery>
 #include <QStandardItemModel>
@@ -15,7 +16,7 @@ public:
 
     QLabel *lErr;
     bool ExecShowErr(QString query);
-    bool ExecMultiShowErr(QString querys, QString spliter);
+    bool ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar);
     QVariant Selec0ShowErr(QString query);
 };
 

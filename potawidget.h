@@ -40,6 +40,7 @@ public:
     QSet<QModelIndex> copiedCells;
     QSet<int> rowsToRemove;
     QSet<int> modifiedRows;
+    QProgressBar* progressBar;
 
     int FieldIndex(QString FieldName);
     QString FieldName(int index);
@@ -132,26 +133,7 @@ public:
         return QSqlRelationalTableModel::setData(index, value, role);
     }
 
-    bool select() override {
-        //return QSqlRelationalTableModel::select();
-        //If use of QSqlRelationalTableModel select(), the generated columns and null FK value rows are not displayed. #FKNull
-        QString sQuery="SELECT * FROM "+tableName();
-
-        if (filter().toStdString()!="") {//Add filter
-            sQuery+=" WHERE "+filter();
-        }
-
-        if (sOrderByClause.toStdString()!="")//Add order by
-            sQuery+=" "+sOrderByClause;
-
-        qInfo() << sQuery;
-
-        setLastError(QSqlError());
-        QSqlRelationalTableModel::select();//Avoids duplicate display of inserted lines
-        setQuery(sQuery);
-
-        return (lastError().type() == QSqlError::NoError);
-    }
+    bool select() override;
 
     void sort(int column,Qt::SortOrder so) override {
 
@@ -204,6 +186,8 @@ public:
         return QSqlRelationalTableModel::removeRow(row, parent);
     }
 
+// private slots:
+//     void selectTimer();
 };
 
 class PotaTableView: public QTableView
@@ -449,6 +433,7 @@ public:
 
     QWidget *toolbar;
     QToolButton *pbRefresh;
+    QToolButton *pbEdit;
     QToolButton *pbCommit;
     QToolButton *pbRollback;
     QSpinBox *sbInsertRows;
@@ -456,6 +441,7 @@ public:
     QToolButton *pbDeleteRow;
 
     QLabel *lRowSummary;
+    QLabel *lSelect;
     QHBoxLayout *filterLayout;
     QHBoxLayout *findLayout;
     QHBoxLayout *ffLayout;
@@ -511,6 +497,7 @@ private slots:
     void dataChanged(const QModelIndex &topLeft);//,const QModelIndex &bottomRight,const QList<int> &roles
     void headerRowClicked();//int logicalIndex
     void pbRefreshClick();
+    void pbEditClick();
     void pbCommitClick();
     void pbRollbackClick();
     void pbInsertRowClick();

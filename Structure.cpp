@@ -26,17 +26,22 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         ui->tbInfoDB->append(tr("Impossible de désactiver les clés étrangères."));
         return false;
     }
+    ui->progressBar->setValue(0);
+    ui->progressBar->setMaximum(0);
+    ui->progressBar->setFormat("%p%");
+    ui->progressBar->setVisible(true);
 
     if (sDBVersion == "New" or sDBVersion == "NewWithBaseData")
     {
         //bNew=true; mettre à false quand debug fait.
-        if (model->ExecMultiShowErr(DynDDL(sDDLTables),";"))
-        {
+        ui->progressBar->setFormat("CREATE TABLES %p%");
+        if (model->ExecMultiShowErr(DynDDL(sDDLTables),";",ui->progressBar)) {
             sResult.append("Create tables : ok (").append(DbVersion).append(")\n");
             if (sDBVersion == "NewWithBaseData") {
-                if (!model->ExecMultiShowErr(sSQLBaseData,";"))
-                {
+                ui->progressBar->setFormat("BASE DATA %p%");
+                if (!model->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar)) {
                     ui->tbInfoDB->append(tr("Echec de la création des données de base")+" ("+ui->lVerBDDAttendue->text()+")");
+                    ui->progressBar->setVisible(false);
                     return false;
                 }
                 sResult.append("Create base data : ok\n");
@@ -44,20 +49,28 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sDBVersion = DbVersion;//"2024-12-30";
         } else {
             ui->tbInfoDB->append(tr("Echec de la création de la BDD vide")+" ("+ui->lVerBDDAttendue->text()+")");
+            ui->progressBar->setVisible(false);
             return false;
         }
     } else {    //Updating an existing db.
         //DROP all views
+        ui->progressBar->setValue(0);
+        ui->progressBar->setMaximum(0);
+        ui->progressBar->setFormat("DROP VIEWS %p%");
         QString sDropViews="";
         model->clear();
         model->ExecShowErr("PRAGMA table_list;");
         while (model->next()) {
-            if (model->value("type").toString()=="view")
+            if (model->value("type").toString()=="view"){
                 sDropViews = sDropViews + "DROP VIEW IF EXISTS \""+model->value("name").toString()+"\";";
+            }
         }
-        model->ExecMultiShowErr(sDropViews,";");
+        model->ExecMultiShowErr(sDropViews,";",ui->progressBar);
 
         //DROP SQLean functions
+        ui->progressBar->setValue(0);
+        ui->progressBar->setMaximum(0);
+        ui->progressBar->setFormat("DROP SQLean functions %p%");
         QSqlDatabase db = QSqlDatabase::database();
         QString sDbFile=db.databaseName();
         dbClose();
@@ -65,13 +78,19 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         dbClose();
         dbOpen(sDbFile,false,false,false);
 
-        if (bResult and(sDBVersion == "2024-12-30")) { //Spécific update shema.
-            bResult = model->ExecMultiShowErr(sDDL20250120,";");
+        if (bResult and(sDBVersion == "2024-12-30")) { //Specific update shema.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = model->ExecMultiShowErr(sDDL20250120,";",ui->progressBar);
             sResult.append(sDBVersion+" -> 2025-01-20 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-01-20";
         }
 
         if (bResult) { //Update schema.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Update shema %p%");
             QString sUpdateSchema="BEGIN TRANSACTION;";
             //Rename old tables.
             model->clear();
@@ -87,9 +106,12 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             //Create new tables.
             sUpdateSchema += DynDDL(sDDLTables);
 
-            bResult = model->ExecMultiShowErr(sUpdateSchema,";");
+            bResult = model->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar);
             if (bResult) {
                 sUpdateSchema="";
+                ui->progressBar->setValue(0);
+                ui->progressBar->setMaximum(0);
+                ui->progressBar->setFormat("Data transfert %p%");
                 //Import data from old to new tables.
                 QString sFieldsList;
                 model->clear();
@@ -127,7 +149,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
                 //Update schema.
                 sUpdateSchema += "COMMIT TRANSACTION;";
-                bResult = model->ExecMultiShowErr(sUpdateSchema,";");
+                bResult = model->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar);
             }
             sResult.append("Data transfert : "+iif(bResult,"ok","Err").toString()+"\n");
         }
@@ -139,24 +161,36 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
         if (bResult){
             //Create scalar functions
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Scalar functions %p%");
             bResult = registerScalarFunctions();
             sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Create views
-            bResult = model->ExecMultiShowErr(DynDDL(sDDLViews),";");
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Views %p%");
+            bResult = model->ExecMultiShowErr(DynDDL(sDDLViews),";",ui->progressBar);
             sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Create table valued functions
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Table valued functions %p%");
             bResult = registerTableValuedFunctions();
             sResult.append("Table valued functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Test functions
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Function test %p%");
             QString sErrFunc = testCustomFunctions();
             bResult = (sErrFunc=="");
             sResult.append("Function test : "+iif(bResult,"ok","Err ("+sErrFunc+")").toString()+"\n");
@@ -164,17 +198,24 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
         if (bResult){
             //Create triggers
-            bResult = model->ExecMultiShowErr(sDDLTriggers,";;");//";" exists in CREATE TRIGGER statments
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Triggers %p%");
+            bResult = model->ExecMultiShowErr(sDDLTriggers,";;",ui->progressBar);//";" exists in CREATE TRIGGER statments
             sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){
             //Update params table
-            bResult = model->ExecMultiShowErr(sDDLTableParams,";");
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Params %p%");
+            bResult = model->ExecMultiShowErr(sDDLTableParams,";",ui->progressBar);
             sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }
 
+    ui->progressBar->setVisible(false);
 
     if (bResult and !model->ExecShowErr("PRAGMA foreign_keys = ON")) {
         ui->tbInfoDB->append(tr("Impossible d'activer les clés étrangères."));

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>862</width>
-    <height>552</height>
+    <width>736</width>
+    <height>477</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
        <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -415,6 +415,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
        </widget>
       </item>
       <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>18</height>
+         </size>
+        </property>
+        <property name="value">
+         <number>40</number>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="lVer">
         <property name="enabled">
          <bool>false</bool>
@@ -472,7 +491,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>862</width>
+     <width>736</width>
      <height>20</height>
     </rect>
    </property>
@@ -965,6 +984,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="shortcut">
     <string>Ctrl+F</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="mUpdateSchema">

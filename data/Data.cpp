@@ -264,10 +264,13 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                iif(rec.value(rec.indexOf("Date_semis")).isNull(),
                    rec.value(rec.indexOf("Date_Plantation")).toString(),
                    rec.value(rec.indexOf("Date_semis")).toString()).toString();
+    else if (TableName.startsWith("Espèces"))
+        result=rec.value(rec.indexOf("Espèce")).toString()+" ("+
+               rec.value(rec.indexOf("Famille")).toString()+")";
     else if (TableName.startsWith("Familles"))
         result=rec.value(rec.indexOf("Famille")).toString()+" - "+
-               iif(!rec.value(rec.indexOf("Intervalle")).isNull(),
-                   rec.value(rec.indexOf("Intervalle")).toString()+" "+QObject::tr("ans"),"").toString();
+                 iif(!rec.value(rec.indexOf("Intervalle")).isNull(),
+                     rec.value(rec.indexOf("Intervalle")).toString()+" "+QObject::tr("ans"),"").toString();
     else if (TableName.startsWith("Fournisseurs"))
         result=rec.value(rec.indexOf("Fournisseur")).toString()+" - "+
                rec.value(rec.indexOf("Site_web")).toString();
@@ -328,7 +331,7 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
         result=rec.value(col).toString();
 
     result=StrReplace(result,"-  -","-");
-    if (result.last(3)==" - ")
+    if (StrLast(result,3)==" - ")
         result=StrFirst(result,result.length()-3);
 
     return result;
@@ -553,7 +556,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName)
             sToolTip=QObject::tr("Année de début de la rotation.")+"\n"+QObject::tr("Cette valeur ne doit pas être changée d'une année sur l'autre tant que la rotation se poursuit.");
         //Rotations_détails
         else if (sFieldName=="Pc_planches")
-            sToolTip=QObject::tr("Pourcentage d'occupation des planches (1 à 100%).")+"\n"+QObject::tr("Plusieurs cultures peuvent partager une planches.");
+            sToolTip=QObject::tr("Pourcentage d'occupation des planches (1 à 100%).")+"\n"+QObject::tr("Plusieurs cultures peuvent partager une planche.");
         else if (sFieldName=="Fi_planches")
             sToolTip=QObject::tr("Filtre de sélection de planches.")+"\n"+QObject::tr("Si filtre = 'AD', seules les planches se terminant par A ou D seront utilisées.");
         //Variétés

@@ -71,6 +71,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->mEditNotes = ui->mEditNotes;
         //w->mFilterFind = ui->mFilterFind;
         w->Init(sTableName);
+        w->model->progressBar=ui->progressBar;
 
         if (w->model->SelectShowErr())
         {
@@ -83,6 +84,11 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "
                                         "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
                                               "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
+                QPalette palette = w->sbInsertRows->palette();
+                palette.setColor(QPalette::Text, Qt::white);
+                palette.setColor(QPalette::Base, QColor(234,117,0,110));
+                palette.setColor(QPalette::Button, QColor(234,117,0,110));
+                w->sbInsertRows->setPalette(palette);
                 w->sbInsertRows->setEnabled(true);
                 w->pbInsertRow->setEnabled(true);
                 w->pbDeleteRow->setEnabled(true);
@@ -90,8 +96,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
             w->delegate->cTableColor=TableColor(sTableName,"");
-            for (int i=0; i<w->model->columnCount();i++)
-            {
+            for (int i=0; i<w->model->columnCount();i++)             {
                 //Table color.
                 w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
                 if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Etat"){
@@ -108,9 +113,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
                 //Read only columns
-                if (ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
-                    w->model->nonEditableColumns.insert(i);
-                }
+                //if (ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
+                w->model->nonEditableColumns.insert(i);
+                //}
             }
 
             //Colored tab title
@@ -191,20 +196,15 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
 void MainWindow::ClosePotaTab(QWidget *Tab)
 {
-    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW"))
-    {
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+    if (Tab->objectName().startsWith("PW")) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(Tab);
 
-        if (w->pbCommit->isEnabled())
-        {
+        if (w->pbCommit->isEnabled()) {
             if (YesNoDialog(w->lTabTitle->text()+"\n\n"+
-                               tr("Valider les modifications avant de fermer ?")))
-            {
+                               tr("Valider les modifications avant de fermer ?"))) {
                 if (!w->model->SubmitAllShowErr())
                     return;
-            }
-            else
-            {
+            } else {
                 if (!w->model->RevertAllShowErr())
                     return;
             }
@@ -222,14 +222,12 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
 
         //ColWidth
         settings.beginGroup("ColWidth");
-            for (int i=0; i<w->model->columnCount();i++)
-            {
+            for (int i=0; i<w->model->columnCount();i++) {
                 settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->tv->columnWidth(i));
             }
         settings.endGroup();
 
-        if (ui->tabWidget->count()<3)//Fermeture du dernier onglet data ouvert.
-        {
+        if (ui->tabWidget->count()<3) {//Fermeture du dernier onglet data ouvert.
             ui->mFermerOnglets->setEnabled(false);
             ui->mFermerOnglet->setEnabled(false);
             ui->mLargeurs->setEnabled(false);
@@ -590,13 +588,13 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     }
 
     if (!ui->tabWidget->widget(index)->objectName().startsWith("PW")) {
-        ui->mFilterFind->setEnabled(false);
-        ui->mFilterFind->setChecked(false);
+        // ui->mFilterFind->setEnabled(false);
+        // ui->mFilterFind->setChecked(false);
         ui->mEditNotes->setChecked(!ui->pteNotes->isReadOnly());
     } else {
         PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        ui->mFilterFind->setEnabled(true);
-        ui->mFilterFind->setChecked(wc->filterFrame->isVisible());
+        // ui->mFilterFind->setEnabled(true);
+        // ui->mFilterFind->setChecked(wc->filterFrame->isVisible());
         ui->mEditNotes->setChecked(!wc->editNotes->isReadOnly());
     }
 }
@@ -616,24 +614,23 @@ void MainWindow::on_mLargeurs_triggered()
     }
 }
 
-
 void MainWindow::on_mFilterFind_triggered()
 {
-    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")) {
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        if (w->filterFrame->isVisible()) {
-            ui->mFilterFind->setChecked(false);
-            w->pbFilter->setChecked(false);
-            w->pbFilterClick(false);
-            w->ffFrame->setVisible(false);
-        } else {
-            ui->mFilterFind->setChecked(true);
-            w->ffFrame->setVisible(true);
-            w->curChanged(w->tv->selectionModel()->currentIndex());
-        }
-    }
+    return;
+    // if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")) {
+    //     PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+    //     if (w->filterFrame->isVisible()) {
+    //         ui->mFilterFind->setChecked(false);
+    //         w->pbFilter->setChecked(false);
+    //         w->pbFilterClick(false);
+    //         w->ffFrame->setVisible(false);
+    //     } else {
+    //         ui->mFilterFind->setChecked(true);
+    //         w->ffFrame->setVisible(true);
+    //         w->curChanged(w->tv->selectionModel()->currentIndex());
+    //     }
+    // }
 }
-
 
 void MainWindow::on_mEditNotes_triggered()
 {
@@ -688,7 +685,6 @@ void MainWindow::on_mEditNotes_triggered()
 
 }
 
-
 void MainWindow::on_mAPropos_triggered()
 {
     MessageDialog("Auteur: Marc Pleysier ...................................................................<br>"
@@ -705,8 +701,6 @@ void MainWindow::on_mAPropos_triggered()
                   QStyle::NStandardPixmap);
 }
 
-
-
 void MainWindow::on_mUpdateSchema_triggered()
 {
     ClosePotaTabs();
@@ -720,4 +714,5 @@ void MainWindow::on_mUpdateSchema_triggered()
         PotaDbOpen(sFileName,"",true);
     }
 }
+
 

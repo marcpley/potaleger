@@ -243,6 +243,8 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 
 void MainWindow::RestaureParams()
 {
+    ui->progressBar->setVisible(false);
+
     QSettings settings("greli.net", "Potaléger");
     settings.beginGroup("MainWindow");
     const auto geometry = settings.value("geometry").toByteArray();

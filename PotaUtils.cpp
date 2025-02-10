@@ -21,7 +21,7 @@ bool PotaQuery::ExecShowErr(QString query)
     return true;
 }
 
-bool PotaQuery::ExecMultiShowErr(QString querys, QString spliter)
+bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar)
 {
     QStringList QueryList = querys.split(spliter);
     QString s;
@@ -31,6 +31,10 @@ bool PotaQuery::ExecMultiShowErr(QString querys, QString spliter)
     else
         s=str(QueryList.count())+" statements";
     SetColoredText(lErr,s,"Info");
+    if (progressBar) {
+        progressBar->setValue(0);
+        progressBar->setMaximum(QueryList.count());
+    }
     for (int i=0;i<QueryList.count();i++)
     {
         if (QueryList[i].trimmed().isEmpty())
@@ -38,6 +42,7 @@ bool PotaQuery::ExecMultiShowErr(QString querys, QString spliter)
         QString sQuery=RemoveComment(QueryList[i].trimmed(),"--");
         clear();
         ExecShowErr(sQuery);
+        if (progressBar) progressBar->setValue(progressBar->value()+1);
         if (lastError().type() != QSqlError::NoError)
         {
             if (lErr!=nullptr)

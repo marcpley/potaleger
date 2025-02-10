@@ -10,7 +10,7 @@
   </clipPath>
  </defs>
  <defs class="TextShapeIndex">
-  <g ooo:slide="id1" ooo:id-list="id3 id4"/>
+  <g ooo:slide="id1" ooo:id-list="id3 id4 id5 id6 id7 id8 id9 id10"/>
  </defs>
  <defs class="EmbeddedBulletChars">
   <g id="bullet-char-template-57356" transform="scale(0.00048828125,-0.00048828125)">
@@ -61,18 +61,84 @@
         <g>
          <defs>
           <linearGradient id="gradient1" x1="317" y1="-183" x2="1684" y2="2184" gradientUnits="userSpaceOnUse">
-           <stop offset="0" style="stop-color:rgb(225,97,115)"/>
-           <stop offset="1" style="stop-color:rgb(167,7,75)"/>
+           <stop offset="0" style="stop-color:rgb(221,221,221)"/>
+           <stop offset="1" style="stop-color:rgb(128,128,128)"/>
           </linearGradient>
          </defs>
          <path style="fill:url(#gradient1)" d="M 222,0 L 222,0 208,0 193,2 179,4 165,8 151,12 137,17 124,23 111,30 99,37 87,46 76,55 65,65 55,76 46,87 37,99 30,111 23,124 17,137 12,151 8,165 4,179 2,193 0,208 0,222 0,1778 0,1779 0,1793 2,1808 4,1822 8,1836 12,1850 17,1864 23,1877 30,1890 37,1902 46,1914 55,1925 65,1936 76,1946 87,1955 99,1964 111,1971 124,1978 137,1984 151,1989 165,1993 179,1997 193,1999 208,2001 222,2001 1778,2001 1779,2001 1793,2001 1808,1999 1822,1997 1836,1993 1850,1989 1864,1984 1877,1978 1890,1971 1902,1964 1914,1955 1925,1946 1936,1936 1946,1925 1955,1914 1964,1902 1971,1890 1978,1877 1984,1864 1989,1850 1993,1836 1997,1822 1999,1808 2001,1793 2001,1779 2001,222 2001,222 2001,222 2001,208 1999,193 1997,179 1993,165 1989,151 1984,137 1978,124 1971,111 1964,99 1955,87 1946,76 1936,65 1925,55 1914,46 1902,37 1890,30 1877,23 1864,17 1850,12 1836,8 1822,4 1808,2 1793,0 1779,0 222,0 Z"/>
         </g>
        </g>
       </g>
-      <g class="com.sun.star.drawing.CustomShape">
-       <g id="id4">
-        <rect class="BoundingBox" stroke="none" fill="none" x="400" y="868" width="1201" height="269"/>
-        <path fill="rgb(238,238,238)" stroke="none" d="M 1000,1136 L 400,1136 400,868 1600,868 1600,1136 1000,1136 Z"/>
+      <g class="Group">
+       <g class="com.sun.star.drawing.CustomShape">
+        <g id="id4">
+         <rect class="BoundingBox" stroke="none" fill="none" x="1360" y="175" width="467" height="467"/>
+         <g>
+          <defs>
+           <linearGradient id="gradient2" x1="1385" y1="200" x2="1801" y2="616" gradientUnits="userSpaceOnUse">
+            <stop offset="0" style="stop-color:rgb(255,109,109)"/>
+            <stop offset="1" style="stop-color:rgb(167,7,75)"/>
+           </linearGradient>
+          </defs>
+          <path style="fill:url(#gradient2)" d="M 1709,524 L 1617,616 1385,384 1569,200 1801,432 1709,524 Z"/>
+         </g>
+         <path fill="none" stroke="rgb(134,17,65)" stroke-width="50" stroke-linejoin="round" d="M 1709,524 L 1617,616 1385,384 1569,200 1801,432 1709,524 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.CustomShape">
+        <g id="id5">
+         <rect class="BoundingBox" stroke="none" fill="none" x="388" y="543" width="1069" height="1069"/>
+         <path fill="rgb(255,255,166)" stroke="none" d="M 1037,1193 L 644,1585 413,1354 1200,568 1431,800 1037,1193 Z"/>
+         <path fill="none" stroke="rgb(123,61,0)" stroke-width="50" stroke-linejoin="round" d="M 1037,1193 L 644,1585 413,1354 1200,568 1431,800 1037,1193 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id6">
+         <rect class="BoundingBox" stroke="none" fill="none" x="556" y="695" width="886" height="886"/>
+         <path fill="none" stroke="rgb(255,151,47)" stroke-width="100" stroke-linejoin="round" d="M 606,1530 L 1391,745"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.LineShape">
+        <g id="id7">
+         <rect class="BoundingBox" stroke="none" fill="none" x="500" y="633" width="886" height="886"/>
+         <path fill="none" stroke="rgb(255,182,108)" stroke-width="100" stroke-linejoin="round" d="M 550,1468 L 1335,683"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.PolyPolygonShape">
+        <g id="id8">
+         <rect class="BoundingBox" stroke="none" fill="none" x="196" y="1329" width="476" height="475"/>
+         <g>
+          <defs>
+           <linearGradient id="gradient3" x1="222" y1="1354" x2="646" y2="1778" gradientUnits="userSpaceOnUse">
+            <stop offset="0" style="stop-color:rgb(255,255,215)"/>
+            <stop offset="1" style="stop-color:rgb(255,182,108)"/>
+           </linearGradient>
+          </defs>
+          <path style="fill:url(#gradient3)" d="M 414,1354 L 607,1546 646,1585 222,1778 414,1354 Z"/>
+         </g>
+         <path fill="none" stroke="rgb(123,61,0)" stroke-width="50" stroke-linejoin="round" d="M 414,1354 L 607,1546 646,1585 222,1778 414,1354 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.PolyPolygonShape">
+        <g id="id9">
+         <rect class="BoundingBox" stroke="none" fill="none" x="259" y="1553" width="192" height="192"/>
+         <path fill="rgb(0,0,0)" stroke="none" d="M 346,1553 L 433,1640 450,1657 259,1744 346,1553 Z"/>
+        </g>
+       </g>
+       <g class="com.sun.star.drawing.CustomShape">
+        <g id="id10">
+         <rect class="BoundingBox" stroke="none" fill="none" x="1174" y="358" width="465" height="468"/>
+         <g>
+          <defs>
+           <linearGradient id="gradient4" x1="1198" y1="385" x2="1612" y2="799" gradientUnits="userSpaceOnUse">
+            <stop offset="0" style="stop-color:rgb(221,221,221)"/>
+            <stop offset="1" style="stop-color:rgb(128,128,128)"/>
+           </linearGradient>
+          </defs>
+          <path style="fill:url(#gradient4)" d="M 1520,707 L 1428,800 1199,569 1383,384 1612,615 1520,707 Z"/>
+         </g>
+         <path fill="none" stroke="rgb(51,51,51)" stroke-width="50" stroke-linejoin="round" d="M 1520,707 L 1428,800 1199,569 1383,384 1612,615 1520,707 Z"/>
+        </g>
        </g>
       </g>
      </g>

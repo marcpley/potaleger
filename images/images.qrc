@@ -22,5 +22,7 @@
         <file>potaleger.gif</file>
         <file>potaleger.png</file>
         <file>potaleger.ico</file>
+        <file>edit.svg</file>
+        <file>editOn.svg</file>
     </qresource>
 </RCC>
