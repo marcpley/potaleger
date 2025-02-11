@@ -51,10 +51,18 @@ jobs:
       - name: Deploy Qt dependencies
         shell: bash
         run: |
-            macdeployqt artifact/Potaleger.app -dmg
+            macdeployqt artifact/Potaleger.app -dmg -verbose=3
+
+      - name: Debug App Bundle
+        run: |
+          ls -R artifact/Potaleger.app
+
+      - name: Check linked libraries
+        run: |
+          otool -L artifact/Potaleger.app/Contents/MacOS/potaleger
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
            name: potaleger0100macos
-           path: artifact/Potaleger.dmg
+           path: artifact
