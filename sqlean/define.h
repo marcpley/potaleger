@@ -16,6 +16,8 @@ int define_eval_init(sqlite3* db);
 int define_manage_init(sqlite3* db);
 int define_module_init(sqlite3* db);
 
+int define_save_function(sqlite3* db, const char* name, const char* type, const char* body);
+
 
 #ifdef __cplusplus
 }
