@@ -55,15 +55,25 @@ jobs:
       - name: Deploy Qt dependencies
         shell: bash
         run: |
-            macdeployqt Potaleger.app -dmg -verbose=3
-
-      - name: Debug App Bundle
-        run: |
-          ls -R Potaleger.app
+            macdeployqt Potaleger.app -verbose=2
 
       - name: Check linked libraries
         run: |
           otool -L Potaleger.app/Contents/MacOS/potaleger
+
+      - name: Install create-dmg
+        run: npm install -g create-dmg
+
+      - name: Create DMG
+        shell: bash
+        run: |
+            create-dmg \
+              --dmg-title="Potaleger" \
+              --overwrite \
+              --dmg-format=UDBZ \
+              --quit-apps \
+              Potaleger.app \
+              .
 
       - name: Move DMG to separate folder for upload
         shell: bash
