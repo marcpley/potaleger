@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
             cd artifact
-            macdeployqt Potaleger.app -verbose=2
+            macdeployqt Potaleger.app -dmg -verbose=2
 
 #      - name: Check linked libraries
 #        run: |
