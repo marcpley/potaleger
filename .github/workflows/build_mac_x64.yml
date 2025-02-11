@@ -35,54 +35,48 @@ jobs:
         run: |
             mkdir build
             cd build
-            qmake ../potaleger.pro "QT += svg"
+            qmake -config release ../potaleger.pro
             make -j $(sysctl -n hw.logicalcpu)
             ls -l
 
       - name: Prepare artifact
         shell: bash
         run: |
-            mkdir -p Potaleger.app/Contents/MacOS
-            mkdir -p Potaleger.app/Contents/Frameworks
-            mkdir -p Potaleger.app/Contents/Resources
-            cp build/potaleger.app/Contents/MacOS/potaleger Potaleger.app/Contents/MacOS/
-            cp install/potaleger.svg Potaleger.app/Contents/Resources/
-            cp install/macos13/potaleger.icns Potaleger.app/Contents/Resources/
-            cp install/macos13/Info.plist Potaleger.app/Contents/
-            cp install/readme.md Potaleger.app/Contents/MacOS/
-            rm -rf Potaleger
+            mkdir -p artifact/Potaleger.app/Contents/MacOS
+            mkdir -p artifact/Potaleger.app/Contents/Frameworks
+            mkdir -p artifact/Potaleger.app/Contents/Resources
+            cp build/potaleger.app/Contents/MacOS/potaleger artifact/Potaleger.app/Contents/MacOS/
+            cp install/potaleger.svg artifact/Potaleger.app/Contents/Resources/
+            cp install/macos13/potaleger.icns artifact/Potaleger.app/Contents/Resources/
+            cp install/macos13/Info.plist artifact/Potaleger.app/Contents/
+            cp install/readme.md artifact/Potaleger.app/Contents/MacOS/
 
       - name: Deploy Qt dependencies
         shell: bash
         run: |
+            cd artifact
             macdeployqt Potaleger.app -verbose=2
 
-      - name: Check linked libraries
-        run: |
-          otool -L Potaleger.app/Contents/MacOS/potaleger
+#      - name: Check linked libraries
+#        run: |
+#          otool -L Potaleger.app/Contents/MacOS/potaleger
 
-      - name: Install create-dmg
-        run: npm install -g create-dmg
+#      - name: Install create-dmg
+#        run: npm install -g create-dmg
 
-      - name: Create DMG
-        shell: bash
-        run: |
-            create-dmg \
-              --dmg-title="Potaleger" \
-              --overwrite \
-              --dmg-format=UDBZ \
-              --quit-apps \
-              Potaleger.app \
-              .
-
-      - name: Move DMG to separate folder for upload
-        shell: bash
-        run: |
-            mkdir upload
-            mv Potaleger.dmg upload/
+#      - name: Create DMG
+#        shell: bash
+#        run: |
+#            create-dmg \
+#              --dmg-title="Potaleger" \
+#              --overwrite \
+#              --dmg-format=UDBZ \
+#              --quit-apps \
+#              Potaleger.app \
+#              .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
            name: potaleger0100macos
-           path: upload/*.dmg
+           path: artifact
