@@ -3,7 +3,7 @@ on: [push]
   # workflow_dispatch:
 jobs:
   Build:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
 
       - name: Qt installation dir
