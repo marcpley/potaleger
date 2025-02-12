@@ -1,6 +1,6 @@
 name: Compile for Linux x64
-on: #[push]
-  workflow_dispatch:
+on: [push]
+  # workflow_dispatch:
 jobs:
   Build:
     runs-on: ubuntu-20.04
@@ -35,7 +35,7 @@ jobs:
         run: |
             mkdir build
             cd build
-            qmake ../potaleger.pro "QT += svg"
+            qmake -config release ../potaleger.pro
             make -j 4
             ls -l
 

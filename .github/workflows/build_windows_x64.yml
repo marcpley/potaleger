@@ -1,6 +1,6 @@
 name: Compile for Windows x64 (minGW)
-on: #[push]
-  workflow_dispatch:
+on: [push]
+  # workflow_dispatch:
 jobs:
   Build:
     runs-on: windows-2019
@@ -45,7 +45,7 @@ jobs:
         run: |
             mkdir build
             cd build
-            qmake ..\potaleger.pro "QT += svg"
+            qmake -config release ..\potaleger.pro
             mingw32-make
             Get-ChildItem
 

@@ -79,4 +79,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
            name: potaleger0100macos
-           path: artifact
+           path: artifact/*.dmg
