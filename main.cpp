@@ -1,3 +1,4 @@
+#include "data/Data.h"
 #include "mainwindow.h"
 #include "qdir.h"
 #include "qsqldriver.h"
@@ -10,6 +11,9 @@
 #include "QDebug"
 #include "PotaUtils.h"
 #include <QWindow>
+#include <QLocale>
+//#include "qtimer.h"
+#include "SQL/FunctionsSQLite.h"
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
@@ -32,17 +36,6 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
         ui->mAnalyses->actions().at(i)->setEnabled(b);
 }
 
-void MainWindow::PotaDbClose()
-{
-    ClosePotaTabs();
-    SetEnabledDataMenuEntries(false);
-
-    dbClose();
-    ui->tbInfoDB->clear();
-    ui->lDB->clear();
-    ui->lDBErr->clear();
-}
-
 bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn)
 {
     qInfo() << "SQLite version:" << sqlite3_libversion();
@@ -58,8 +51,24 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
         }
     }
 
-    QSqlDatabase db = QSqlDatabase::database();
+    //QSqlDatabase db = QSqlDatabase::database();
     db.setDatabaseName(sFichier);
+
+    // qDebug() << "Transactions: " << db.driver()->hasFeature(QSqlDriver::Transactions);
+    // qDebug() << "QuerySize: " << db.driver()->hasFeature(QSqlDriver::QuerySize);
+    // qDebug() << "BLOB: " << db.driver()->hasFeature(QSqlDriver::BLOB);
+    // qDebug() << "Unicode: " << db.driver()->hasFeature(QSqlDriver::Unicode);
+    // qDebug() << "PreparedQueries: " << db.driver()->hasFeature(QSqlDriver::PreparedQueries);
+    // qDebug() << "NamedPlaceholders: " << db.driver()->hasFeature(QSqlDriver::NamedPlaceholders);
+    // qDebug() << "PositionalPlaceholders: " << db.driver()->hasFeature(QSqlDriver::PositionalPlaceholders);
+    // qDebug() << "LastInsertId: " << db.driver()->hasFeature(QSqlDriver::LastInsertId);
+    // qDebug() << "BatchOperations: " << db.driver()->hasFeature(QSqlDriver::BatchOperations);
+    // qDebug() << "SimpleLocking: " << db.driver()->hasFeature(QSqlDriver::SimpleLocking);
+    // qDebug() << "LowPrecisionNumbers: " << db.driver()->hasFeature(QSqlDriver::LowPrecisionNumbers);
+    // qDebug() << "EventNotifications: " << db.driver()->hasFeature(QSqlDriver::EventNotifications);
+    // qDebug() << "FinishQuery: " << db.driver()->hasFeature(QSqlDriver::FinishQuery);
+    // qDebug() << "MultipleResultSets: " << db.driver()->hasFeature(QSqlDriver::MultipleResultSets);
+    // qDebug() << "CancelQuery: " << db.driver()->hasFeature(QSqlDriver::CancelQuery);
 
     if (!db.open()) {
         dbClose();
@@ -68,7 +77,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
         return false;
     }
 
-    QSqlQuery query;
+    PotaQuery query(db);
     if (!query.exec("PRAGMA journal_mode = DELETE;") or
         !query.exec("PRAGMA locking_mode = NORMAL;") or
         !query.exec("PRAGMA quick_check;") or
@@ -76,8 +85,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
         dbClose();
         SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite"), "Err");
         return false;
-    } else
-        qInfo() << "SQLite quick_check:" << query.value(0).toString();
+    }
 
     if (SetFkOn and !query.exec("PRAGMA foreign_keys = ON")) {
         dbClose();
@@ -91,7 +99,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
             SetColoredText(ui->lDBErr, tr("Impossible d'effacer les fonctions %1.").arg("SQLean"), "Err");
             return false;
         }
-        if (!initSQLean()) {
+        if (!initSQLean(&db)) {
             dbClose();
             SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLean"), "Err");
             return false;
@@ -104,14 +112,15 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
         //     return false;
         // }
     }
+
     return true;
 }
 
 void MainWindow::dbClose()
 {
-    QSqlDatabase db = QSqlDatabase::database();
+    //QSqlDatabase db = QSqlDatabase::database();
     if (db.isOpen()){
-        QSqlQuery q1;
+        PotaQuery q1(db);
         q1.exec("SELECT define_free();");
 
         db.close();
@@ -123,7 +132,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     if (!dbOpen(sFichier,(sNew!=""),false,true))
         return false;
 
-    PotaQuery pQuery;
+    PotaQuery pQuery(db);
     pQuery.lErr = ui->lDBErr;
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
@@ -141,7 +150,6 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             dbClose();
             return false;
         }
-
 
         if (sVerBDD < "2024-12-30") {
             ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
@@ -237,14 +245,26 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         return false;
     }
 
+    dbSuspend(&db, true,ui->lDBErr);
+
     SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
+
     return true;
+}
+
+void MainWindow::PotaDbClose()
+{
+    ClosePotaTabs();
+    SetEnabledDataMenuEntries(false);
+
+    dbClose();
+    ui->tbInfoDB->clear();
+    ui->lDB->clear();
+    ui->lDBErr->clear();
 }
 
 void MainWindow::RestaureParams()
 {
-    ui->progressBar->setVisible(false);
-
     QSettings settings("greli.net", "Potaléger");
     settings.beginGroup("MainWindow");
     const auto geometry = settings.value("geometry").toByteArray();
@@ -281,6 +301,11 @@ void MainWindow::RestaureParams()
             ui->pteNotes->setPlainText(tr("Notes au format Markdown (CTRL+N pour éditer).")+"\n"+
                                        tr("Ce texte est enregistré sur votre ordinateur (pas dans la BDD)."));
     }
+
+    PathExport=settings.value("PathExport").toString();
+    PathImport=settings.value("PathImport").toString();
+    TypeImport=settings.value("TypeImport").toInt();
+
 }
 
 void MainWindow::SauvParams()
@@ -299,10 +324,75 @@ void MainWindow::SauvParams()
         settings.setValue("notes", ui->pteNotes->toMarkdown().trimmed());
     else
         settings.setValue("notes", ui->pteNotes->toPlainText().trimmed());
+
+    settings.setValue("PathExport",PathExport);
+    settings.setValue("PathImport",PathImport);
+    settings.setValue("TypeImport",TypeImport);
 }
 
-void MainWindow::ShowEvent(QShowEvent *)
-{
+void MainWindow::SetUi(){
+
+    //QLocale customLocale(QLocale::French, QLocale::France);
+    //customLocale.setNumberOptions(QLocale::RejectGroupSeparator);
+    //customLocale.setNumberOptions(QLocale::OmitGroupSeparator);
+    //QLocale::setDefault(customLocale);
+    //std::setlocale(LC_NUMERIC, "C");
+
+    ui->progressBar->setVisible(false);
+    ui->progressBar->setMinimumSize(200,ui->progressBar->height());
+    ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
+
+    ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
+    ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));
+    ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
+    ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
+    ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
+    ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
+    ui->mITPTempo->setIcon(QIcon(TablePixmap("ITP__Tempo","T")));
+
+    ui->mRotations->setIcon(QIcon(TablePixmap("Rotations","T")));
+    ui->mDetailsRotations->setIcon(QIcon(TablePixmap("Rotations_détails__Tempo","T")));
+    ui->mRotationManquants->setIcon(QIcon(TablePixmap("IT_rotations_manquants","")));
+    ui->mPlanches->setIcon(QIcon(TablePixmap("Planches","T")));
+    ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
+    ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
+
+    ui->mCulturesParIlots->setIcon(QIcon(TablePixmap("IT_rotations_ilots","")));
+    ui->mCulturesParplante->setIcon(QIcon(TablePixmap("IT_rotations","")));
+    ui->mCulturesParPlanche->setIcon(QIcon(TablePixmap("Cult_planif","")));
+    ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
+
+    ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
+    ui->mCuSemisAFaire->setIcon(QIcon(TablePixmap("Cultures__Semis_à_faire","")));
+    ui->mCuPlantationsAFaire->setIcon(QIcon(TablePixmap("Cultures__Plantations_à_faire","")));
+    ui->mCuRecoltesAFaire->setIcon(QIcon(TablePixmap("Cultures__Récoltes_à_faire","")));
+    ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
+    ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
+    ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
+
+    ui->mAnaITP->setIcon(QIcon(TablePixmap("ITP__analyse","")));
+    ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
+    ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
+
+}
+
+void MainWindow::showIfDdOpen() {
+    // if(db.isOpen()){
+    //     if(ui->lVerBDDAttendue->text().last(1)=="!")
+    //         SetColoredText(ui->lVerBDDAttendue,"Locked","Err");
+    //     else
+    //         SetColoredText(ui->lVerBDDAttendue,"Locked!","Err");
+    // } else {
+    //     SetColoredText(ui->lVerBDDAttendue,DbVersion,"");
+    // }
+}
+
+void MainWindow::showEvent(QShowEvent *){
+    SetUi();
+    RestaureParams();
+    // QTimer *dbTimer = new QTimer(this);
+    // connect(dbTimer, &QTimer::timeout, this, &MainWindow::showIfDdOpen);
+    // dbTimer->start(1000);
 }
 
 void MainWindow::closeEvent(QCloseEvent *)
@@ -314,11 +404,9 @@ void MainWindow::closeEvent(QCloseEvent *)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    //a.addLibraryPath("/libs_potaleger");
     MainWindow w;
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-
-    w.RestaureParams();
+    //w.db = NEW;
+    //w.db.addDatabase("QSQLITE");
 
     w.show();
     return a.exec();

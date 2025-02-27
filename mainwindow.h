@@ -17,7 +17,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0b21.04";
+QString const Version="1.0b23.01";
 QString const DbVersion="2025-01-20";
 
 class MainWindow : public QMainWindow
@@ -26,13 +26,22 @@ class MainWindow : public QMainWindow
 
 protected:
     void closeEvent(QCloseEvent *event) override;
-    void ShowEvent(QShowEvent *event) ;
+    void showEvent(QShowEvent *event) override;
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     Ui::MainWindow *ui;
+
+    //global variables.
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    QString PathExport="";
+    QString PathImport="";
+    int TypeImport=0;
+
     void RestaureParams();
     void SauvParams();
+    void SetUi();
+    void showIfDdOpen();
 
 private slots:
     void on_mSelecDB_triggered();
@@ -47,7 +56,6 @@ private slots:
     void on_mVarietes_triggered();
     void on_mApports_triggered();
     void on_mFournisseurs_triggered();
-    void on_mITP_triggered();
     void on_mRotations_triggered();
     void on_mDetailsRotations_triggered();
     void on_mPlanches_triggered();
@@ -80,7 +88,7 @@ private slots:
 
     void on_mAnaITP_triggered();
 
-    void on_mAnaEspeces_triggered();
+    void on_mAnaCultures_triggered();
 
     void on_mITPTempo_triggered();
 
@@ -100,6 +108,12 @@ private slots:
 
     void on_mUpdateSchema_triggered();
 
+    void on_mExporter_triggered();
+
+    void on_mImporter_triggered();
+
+    void on_mIncDatesCultures_triggered();
+
 private:
     void SetEnabledDataMenuEntries(bool b);
     bool PotaBDDInfo();
@@ -109,10 +123,6 @@ private:
     int RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
     bool YesNoDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
     bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn);
-    bool initSQLean();
-    bool registerScalarFunctions();
-    bool registerTableValuedFunctions();
-    QString testCustomFunctions();
     void dbClose();
     bool PotaDbOpen(QString sFichier, QString sNew, bool bUpdate);
     void PotaDbClose();

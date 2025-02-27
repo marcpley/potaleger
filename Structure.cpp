@@ -10,13 +10,13 @@
 #include "SQL/UpdateTableParams.sql"
 #include "PotaUtils.h"
 #include "data/Data.h"
+#include "SQL/FunctionsSQLite.h"
 
 bool MainWindow::UpdateDBShema(QString sDBVersion)
 {
-    //QSqlDatabase db = QSqlDatabase::database();
-    PotaQuery *model = new PotaQuery;
-    PotaQuery *model2 = new PotaQuery;
-    PotaQuery *model3 = new PotaQuery;
+    PotaQuery *model = new PotaQuery(db);
+    PotaQuery *model2 = new PotaQuery(db);
+    PotaQuery *model3 = new PotaQuery(db);
     model->lErr = ui->lDBErr;
     bool bNew=false;
     bool bResult=true;
@@ -39,7 +39,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append("Create tables : ok (").append(DbVersion).append(")\n");
             if (sDBVersion == "NewWithBaseData") {
                 ui->progressBar->setFormat("BASE DATA %p%");
-                if (!model->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar)) {
+                if (!model->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar,true)) {
                     ui->tbInfoDB->append(tr("Echec de la création des données de base")+" ("+ui->lVerBDDAttendue->text()+")");
                     ui->progressBar->setVisible(false);
                     return false;
@@ -71,7 +71,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         ui->progressBar->setValue(0);
         ui->progressBar->setMaximum(0);
         ui->progressBar->setFormat("DROP SQLean functions %p%");
-        QSqlDatabase db = QSqlDatabase::database();
+        //QSqlDatabase db = QSqlDatabase::database();
         QString sDbFile=db.databaseName();
         dbClose();
         dbOpen(sDbFile,false,true,false);
@@ -164,7 +164,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Scalar functions %p%");
-            bResult = registerScalarFunctions();
+            bResult = registerScalarFunctions(&db);
             sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -182,7 +182,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Table valued functions %p%");
-            bResult = registerTableValuedFunctions();
+            bResult = registerTableValuedFunctions(&db);
             sResult.append("Table valued functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -191,7 +191,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Function test %p%");
-            QString sErrFunc = testCustomFunctions();
+            QString sErrFunc = testCustomFunctions(&db);
             bResult = (sErrFunc=="");
             sResult.append("Function test : "+iif(bResult,"ok","Err ("+sErrFunc+")").toString()+"\n");
         }

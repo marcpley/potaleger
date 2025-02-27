@@ -5,24 +5,34 @@
 #include "qabstractitemmodel.h"
 #include "qcolor.h"
 
-const QColor cCulture=QColor("#00ff00");//Vert
+const QColor cBase=QColor("#a17dc2");//Violet gris
+const QColor cEspece=QColor("#002bff");//Bleu
+const QColor cFamille=QColor("#0085c4");//Bleu gris
+const QColor cITP=QColor("#ff0000");//Rouge
+const QColor cPlanche=QColor("#ff8100");//Orange
+const QColor cRotation=QColor("#ce9462");//Orange gris
+const QColor cVariete=QColor("#b7b202");//Jaune
+const QColor cParam=QColor("#7f7f7f");//Gris
+
+const QColor cCulture=QColor("#00ff00");
 const QColor cPrevue=QColor();
 const QColor cSousAbris=QColor("#ff6000");//Rouge
 const QColor cEnPlace=QColor("#76c801");//Vert
 const QColor cATerminer=QColor("#007aff");//Bleu
 const QColor cTerminee=QColor("#808080");//Gris
 
-
-int DefColWidth(const QString sTableName,const QString sFieldName);
+bool AcceptReturns(const QString sFieldName);
+int DefColWidth(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 QString DynDDL(QString sQuery);
 QString FkFilter(const QString sTableName, const QString sFieldName, const QModelIndex &index);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
-bool ReadOnly(const QString sTableName,const QString sFieldName);
+bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);
 QColor RowColor(QString sValue);
 QString RowSummary(QString TableName, const QSqlRecord &rec);
 QColor TableColor(QString sTName,QString sFName);
-QString ToolTipField(const QString sTableName,const QString sFieldName);
+QPixmap TablePixmap(QString sTName, QString text);
+QString ToolTipField(const QString sTableName, const QString sFieldName, const QString sDataType);
 QString ToolTipTable(const QString sTableName);
 bool ViewFieldIsDate(const QString sFieldName);
 

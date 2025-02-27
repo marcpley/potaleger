@@ -8,7 +8,6 @@
 #include <QSqlRelationalTableModel>
 #include <QSqlRelationalDelegate>
 #include "potawidget.h"
-#include <QSqlQuery>
 #include <QSettings>
 #include "PotaUtils.h"
 #include <QToolButton>
@@ -20,8 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     qInfo() << "Potaléger" << Version;
     qInfo() << "Expected database version:" << DbVersion;
+
     ui->setupUi(this);
-    ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
 
     ui->lVer->setText(Version);
     ui->lVerBDDAttendue->setText(DbVersion);
@@ -34,14 +33,18 @@ MainWindow::~MainWindow()
 
 bool MainWindow::PotaBDDInfo()
 {
-    PotaQuery pQuery;
+    PotaQuery pQuery(db);
     pQuery.lErr = ui->lDBErr;
+    setWindowTitle("Potaléger");
     if (pQuery.ExecShowErr("SELECT * FROM Info_Potaléger"))
     {
         ui->tbInfoDB->clear();
-        while (pQuery.next())
+        while (pQuery.next()) {
             ui->tbInfoDB->append(pQuery.value(1).toString()+": "+
                                  pQuery.value(2).toString());
+            if (pQuery.value(1).toString()=="Utilisateur")
+                setWindowTitle("Potaléger"+iif(pQuery.value(2).isNull(),""," - "+pQuery.value(2).toString()).toString());
+        }
         return true;
     }
     else
@@ -67,21 +70,27 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         //Create tab
         PotaWidget *w = new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
-        w->lErr = ui->lDBErr;
-        w->mEditNotes = ui->mEditNotes;
+        w->lErr=ui->lDBErr;
+        w->mEditNotes=ui->mEditNotes;
         //w->mFilterFind = ui->mFilterFind;
-        w->Init(sTableName);
+        w->model->db=&db;
         w->model->progressBar=ui->progressBar;
+        w->model->label=ui->lDBErr;
+        //w->query->lErr=ui->lDBErr;
+        //w->query->db
 
-        if (w->model->SelectShowErr())
-        {
+        dbSuspend(&db, false,ui->lDBErr);
+        w->Init(sTableName);
+
+        if (w->model->SelectShowErr()) {
             ui->tabWidget->addTab(w,sTitre);
             ui->tabWidget->setCurrentWidget(w);
 
-            if (w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
+            PotaQuery query(db);
+            if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
                                         "WHERE (tbl_name='"+sTableName+"')AND"
                                               "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
-                w->query->Selec0ShowErr("SELECT count() FROM sqlite_schema "
+                query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
                                         "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
                                               "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
                 QPalette palette = w->sbInsertRows->palette();
@@ -99,23 +108,27 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             for (int i=0; i<w->model->columnCount();i++)             {
                 //Table color.
                 w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
-                if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Etat"){
+
+                if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Etat")
                     w->delegate->RowColorCol=i;
-                }
+                else  if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Paramètre")
+                    w->delegate->RowColorCol=i;
+
                 if (w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="TEMPO"){
                     w->delegate->TempoCol=i;
                     dynamic_cast<PotaHeaderView*>(w->tv->horizontalHeader())->TempoCol=i;
                 }
 
                 //Tooltip
-                QString sTT=ToolTipField(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                QString sTT=ToolTipField(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->model->dataTypes[i]);
                 if (sTT!="")
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
-                //Read only columns
-                //if (ReadOnly(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())) {
+                //All columns read only for start
                 w->model->nonEditableColumns.insert(i);
-                //}
+
+                if (DataType(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())=="DATE")
+                    w->model->dateColumns.insert(i);
             }
 
             //Colored tab title
@@ -170,7 +183,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             {
                 int iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
                 if (iWidth<=0 or iWidth>500)
-                    iWidth=DefColWidth(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                    iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
                 if (iWidth<=0 or iWidth>500)
                     w->tv->resizeColumnToContents(i);
                 else
@@ -181,16 +194,20 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             ui->mFermerOnglets->setEnabled(true);
             ui->mFermerOnglet->setEnabled(true);
             ui->mLargeurs->setEnabled(true);
-
-            SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
+            ui->mImporter->setEnabled(w->pbInsertRow->isEnabled());
+            ui->mExporter->setEnabled(true);
+            ui->mImporter->setIcon(QIcon(TablePixmap(w->model->tableName(),">>  ")));
+            ui->mExporter->setIcon(QIcon(TablePixmap(w->model->tableName(),"  >>")));
 
             w->tv->setFocus();
-
+            dbSuspend(&db, true,ui->lDBErr);
+            SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
             return true;
         }
         else
             w->deleteLater();//Echec de la création de l'onglet.
     }
+    dbSuspend(&db, true,ui->lDBErr);
     return false;
 };
 
@@ -231,6 +248,8 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
             ui->mFermerOnglets->setEnabled(false);
             ui->mFermerOnglet->setEnabled(false);
             ui->mLargeurs->setEnabled(false);
+            ui->mImporter->setEnabled(false);
+            ui->mExporter->setEnabled(false);
         }
         Tab->deleteLater();
     }
@@ -244,25 +263,65 @@ void MainWindow::ClosePotaTabs()
     ui->tabWidget->setCurrentIndex(0);
 }
 
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+    //Set to bolt title of new tab, unbolt others.
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
+            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
+            if (i==index)//ui->tabWidget->currentIndex()
+                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
+            else
+                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+        }
+    }
+
+    if (!ui->tabWidget->widget(index)->objectName().startsWith("PW")) {
+        // ui->mFilterFind->setEnabled(false);
+        // ui->mFilterFind->setChecked(false);
+        ui->mEditNotes->setChecked(!ui->pteNotes->isReadOnly());
+        ui->mImporter->setEnabled(false);
+        ui->mExporter->setEnabled(false);
+        SetColoredText(ui->lDBErr,"","");
+    } else {
+        PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        // ui->mFilterFind->setEnabled(true);
+        // ui->mFilterFind->setChecked(wc->filterFrame->isVisible());
+
+        //ui->mEditNotes->setEnabled(wc->pbEdit->isChecked());
+        ui->mEditNotes->setChecked(!wc->editNotes->isReadOnly());
+        ui->mImporter->setEnabled(wc->pbInsertRow->isEnabled());
+        ui->mExporter->setEnabled(true);
+        ui->mImporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),">>  ")));
+        ui->mExporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),"  >>")));
+    }
+
+}
+
+//File menu
+
 void MainWindow::on_mSelecDB_triggered()
 {
     ClosePotaTabs();
     const QString sFileName = QFileDialog::getOpenFileName( this, tr("Base de donnée Potaléger"), ui->lDB->text(), "*.sqlite3");
-    if (sFileName != "")
-    {
+    if (sFileName != "") {
         PotaDbClose();
         PotaDbOpen(sFileName,"",false);
     }
 }
 
-void MainWindow::on_mFermerOnglet_triggered()
-{
-    ClosePotaTab(ui->tabWidget->currentWidget());
-}
-
-void MainWindow::on_mFermerOnglets_triggered()
+void MainWindow::on_mUpdateSchema_triggered()
 {
     ClosePotaTabs();
+    if (OkCancelDialog(tr("Mettre à jour le schéma de la BDD ?")+"\n\n"+
+                       ui->lDB->text()+"\n\n"+
+                       tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
+                       tr("Vos données vont être conservées.")+"\n"+
+                       tr("En cas d'échec, votre BDD sera remise dans sont état initial."))){
+        QString sFileName=ui->lDB->text();
+        PotaDbClose();
+        PotaDbOpen(sFileName,"",true);
+    }
 }
 
 void MainWindow::on_mCopyBDD_triggered()
@@ -270,13 +329,13 @@ void MainWindow::on_mCopyBDD_triggered()
     ClosePotaTabs();
     QFileInfo FileInfo,FileInfoVerif;
     FileInfo.setFile(ui->lDB->text());
-    if (!FileInfo.exists())
-    {
+    if (!FileInfo.exists()) {
         MessageDialog(tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),"",QStyle::SP_MessageBoxCritical);
         return;
     }
 
     const QString sFileName = QFileDialog::getSaveFileName(this, tr("Copie de la base de donnée Potaléger"), ui->lDB->text(), "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
+    if (sFileName.isEmpty()) return;
     FileInfoVerif.setFile(sFileName);
     if (!FileInfoVerif.exists() or
         OkCancelDialog(tr("Le fichier existe déjà")+"\n"+
@@ -284,11 +343,9 @@ void MainWindow::on_mCopyBDD_triggered()
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par")+"\n"+
                        ui->lDB->text()+"\n"+
-                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",QStyle::SP_MessageBoxWarning))
-    {
+                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",QStyle::SP_MessageBoxWarning)) {
         QFile FileInfo1,FileInfo2,FileInfo3;
-        if (FileInfoVerif.exists())
-        {
+        if (FileInfoVerif.exists()) {
             FileInfo2.setFileName(sFileName);
             if (!FileInfo2.moveToTrash())
             {
@@ -300,8 +357,7 @@ void MainWindow::on_mCopyBDD_triggered()
         QString sFileNameSave=ui->lDB->text();
         FileInfo1.setFileName(ui->lDB->text());
         PotaDbClose();
-        if (FileInfo1.copy(sFileName))
-        {   //fail to keep original date file. todo
+        if (FileInfo1.copy(sFileName)) {   //fail to keep original date file. todo
             //FileInfo3.setFileName(sFileName);
             //qDebug() << FileInfo.lastModified();
             //qDebug() << sFileName;
@@ -380,223 +436,32 @@ void MainWindow::CreateNewDB(bool bEmpty)
     }
 }
 
-void MainWindow::on_mParam_triggered()
+void MainWindow::on_mAPropos_triggered()
 {
-    // //OuvrirOnglet("sqlean_define","sqlean_define","test");
-    // OuvrirOnglet("test","Rotations_détails","test");
-    // return;
-
-    if (OpenPotaTab("Param","Params",tr("Paramètres"))) {
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        w->sbInsertRows->setVisible(false);
-        w->pbInsertRow->setEnabled(false);
-        w->pbInsertRow->setVisible(false);
-        w->pbDeleteRow->setEnabled(false);
-        w->pbDeleteRow->setVisible(false);
-    }
+    MessageDialog("Auteur: Marc Pleysier ...................................................................<br>"
+                  "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
+                  "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
+                  "<b>Crédits</b>:<br>"
+                  "Qt Creator community 6.8.1 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
+                  "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
+                  "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
+                  "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
+                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a><br>"
+                  "ChatGPT, hé oui...<br>"
+                  "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
+                  QStyle::NStandardPixmap);
 }
 
-void MainWindow::on_mFamilles_triggered()
+//edit menu
+
+void MainWindow::on_mFermerOnglet_triggered()
 {
-    OpenPotaTab("Familles","Familles",tr("Familles"));
+    ClosePotaTab(ui->tabWidget->currentWidget());
 }
 
-void MainWindow::on_mEspeces_triggered()
+void MainWindow::on_mFermerOnglets_triggered()
 {
-    OpenPotaTab("Especes","Espèces",tr("Espèces"));
-}
-
-void MainWindow::on_mVarietes_triggered()
-{
-    OpenPotaTab("Varietes","Variétés",tr("Variétés"));
-}
-
-void MainWindow::on_mApports_triggered()
-{
-    OpenPotaTab("Apports","Apports",tr("Apports"));
-}
-
-void MainWindow::on_mFournisseurs_triggered()
-{
-    OpenPotaTab("Fournisseurs","Fournisseurs",tr("Fournisseurs"));
-}
-
-void MainWindow::on_mTypes_de_planche_triggered()
-{
-    OpenPotaTab("TypesPlanche","Types_planche",tr("Types planche"));
-}
-
-void MainWindow::on_mITP_triggered()
-{
-    OpenPotaTab("Itp","ITP",tr("ITP"));
-}
-
-void MainWindow::on_mITPTempo_triggered()
-{
-    OpenPotaTab("ITP_tempo","ITP__Tempo",tr("ITP"));
-}
-
-void MainWindow::on_mRotations_triggered()
-{
-    OpenPotaTab("Rotations","Rotations",tr("Rotations"));
-}
-
-void MainWindow::on_mDetailsRotations_triggered()
-{
-    if (OpenPotaTab("Rotations_Tempo","Rotations_détails__Tempo",tr("Rot. (détails)"))) {
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
-    }
-}
-
-void MainWindow::on_mRotationManquants_triggered()
-{
-    OpenPotaTab("IT_rotations_manquants","IT_rotations_manquants",tr("Espèces manquantes"));
-}
-
-void MainWindow::on_mPlanches_triggered()
-{
-    OpenPotaTab("Planches","Planches",tr("Planches"));
-}
-
-void MainWindow::on_mIlots_triggered()
-{
-    OpenPotaTab("Planches_Ilots","Planches_Ilots",tr("Ilots"));
-}
-
-void MainWindow::on_mSuccessionParPlanche_triggered()
-{
-    OpenPotaTab("SuccPlanches","Successions_par_planche",tr("Succ. planches"));
-}
-
-void MainWindow::on_mCulturesParIlots_triggered()
-{
-    OpenPotaTab("IT_rotations_ilots","IT_rotations_ilots",tr("Cult.prévues ilots"));
-}
-
-void MainWindow::on_mCulturesParplante_triggered()
-{
-    OpenPotaTab("IT_rotations","IT_rotations",tr("Plantes prévues"));
-}
-
-void MainWindow::on_mCulturesParPlanche_triggered()
-{
-    OpenPotaTab("Cult_planif","Cult_planif",tr("Cult.prévues"));
-}
-
-void MainWindow::on_mCreerCultures_triggered()
-{
-    PotaQuery pQuery;
-    pQuery.lErr = ui->lDBErr;
-    int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif").toInt();
-    if (NbCultPlanif==0)
-    {
-        MessageDialog(tr("Aucune culture à planifier:")+"\n\n"+
-                          tr("- Créez des rotations")+"\n"+
-                          tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
-        return;
-    }
-
-    int NbCultAVenir=pQuery.Selec0ShowErr("SELECT count() FROM C_non_commencées").toInt();
-    if (OkCancelDialog(tr("Créer les prochaines cultures en fonction des rotations?")+"\n\n"+
-                       tr("%1 cultures vont être créées").arg(NbCultPlanif)+"\n"+
-                       tr("Il y a déjà %1 cultures ni semées ni plantées.").arg(NbCultAVenir)+"\n"+
-                       tr("Id de la dernière culture:")+" "+str(NbCultAVenir),QStyle::SP_MessageBoxQuestion))
-    {
-        int IdCult1=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
-        if (pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement) "
-                               "SELECT IT_plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement "
-                               "FROM Cult_planif"))
-        {
-            int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
-            int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
-            if (IdCult3>IdCult2 and IdCult2>IdCult1)
-                MessageDialog(tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
-                                  tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3),"",QStyle::SP_MessageBoxInformation);
-            else
-                MessageDialog(tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
-        }
-        else
-            MessageDialog(tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
-
-    }
-}
-
-void MainWindow::on_mSemences_triggered()
-{
-    OpenPotaTab("Varietes_inv_et_cde","Variétés__inv_et_cde",tr("Inv. et cde semence"));
-}
-
-void MainWindow::on_mCuNonTer_triggered()
-{
-    OpenPotaTab("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"));
-}
-
-void MainWindow::on_mCuSemisAFaire_triggered()
-{
-    OpenPotaTab("Cultures_Semis_a_faire","Cultures__Semis_à_faire",tr("A semer"));
-}
-
-void MainWindow::on_mCuPlantationsAFaire_triggered()
-{
-    OpenPotaTab("Cultures_Plantations_a_faire","Cultures__Plantations_à_faire",tr("A planter"));
-}
-
-void MainWindow::on_mCuRecoltesAFaire_triggered()
-{
-    OpenPotaTab("Cultures_Recoltes_a_faire","Cultures__Récoltes_à_faire",tr("A récolter"));
-}
-
-void MainWindow::on_mCuSaisieRecoltes_triggered()
-{
-    if (OpenPotaTab("Recoltes__Saisies","Récoltes__Saisies",tr("Récoltes"))) {
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
-    }
-}
-
-void MainWindow::on_mCuATerminer_triggered()
-{
-    OpenPotaTab("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"));
-}
-
-void MainWindow::on_mCuToutes_triggered()
-{
-    OpenPotaTab("Cultures","Cultures",tr("Cultures"));
-}
-
-void MainWindow::on_mAnaITP_triggered()
-{
-    OpenPotaTab("ITP_analyse","ITP__analyse",tr("Analyse IT"));
-}
-
-void MainWindow::on_mAnaEspeces_triggered()
-{
-    OpenPotaTab("Cultures_Tempo_Espece","Cultures__Tempo_Espèce",tr("Analyse espèces"));
-}
-
-void MainWindow::on_tabWidget_currentChanged(int index)
-{
-    for (int i = 0; i < ui->tabWidget->count(); ++i) {
-        if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
-            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
-            if (i==index)//ui->tabWidget->currentIndex()
-                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
-            else
-                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
-        }
-    }
-
-    if (!ui->tabWidget->widget(index)->objectName().startsWith("PW")) {
-        // ui->mFilterFind->setEnabled(false);
-        // ui->mFilterFind->setChecked(false);
-        ui->mEditNotes->setChecked(!ui->pteNotes->isReadOnly());
-    } else {
-        PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        // ui->mFilterFind->setEnabled(true);
-        // ui->mFilterFind->setChecked(wc->filterFrame->isVisible());
-        ui->mEditNotes->setChecked(!wc->editNotes->isReadOnly());
-    }
+    ClosePotaTabs();
 }
 
 void MainWindow::on_mLargeurs_triggered()
@@ -605,7 +470,7 @@ void MainWindow::on_mLargeurs_triggered()
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         for (int i=0; i<w->model->columnCount();i++)
         {
-            int iWidth=DefColWidth(w->model->tableName(),w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+            int iWidth=DefColWidth(&db, w->model->tableName(),w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
             if (iWidth<=0 or iWidth>500)
                 w->tv->resizeColumnToContents(i);
             else
@@ -640,10 +505,15 @@ void MainWindow::on_mEditNotes_triggered()
         textEdit=ui->pteNotes;
     } else {
         w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        if (!w->pbEdit->isChecked()) {
+            ui->mEditNotes->setChecked(false);
+            return;
+        }
+
         textEdit=w->editNotes;
         QString FieldName = w->model->headerData(w->tv->currentIndex().column(),Qt::Horizontal,Qt::DisplayRole).toString();
         if (!textEdit->isVisible())
-            w->SetVisibleEditNotes(FieldName=="Notes" or FieldName.startsWith("N_"));
+            w->SetVisibleEditNotes(AcceptReturns(FieldName));
     }
 
     if (textEdit->isVisible()) {
@@ -685,34 +555,566 @@ void MainWindow::on_mEditNotes_triggered()
 
 }
 
-void MainWindow::on_mAPropos_triggered()
+void MainWindow::on_mParam_triggered()
 {
-    MessageDialog("Auteur: Marc Pleysier ...................................................................<br>"
-                  "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
-                  "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
-                  "<b>Crédits</b>:<br>"
-                  "Qt Creator community 6.8.1 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
-                  "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
-                  "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
-                  "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
-                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a><br>"
-                  "ChatGPT, hé oui...<br>"
-                  "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
-                  QStyle::NStandardPixmap);
+    // //OuvrirOnglet("sqlean_define","sqlean_define","test");
+    // OuvrirOnglet("test","Rotations_détails","test");
+    // return;
+
+    if (OpenPotaTab("Param","Params",tr("Paramètres"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->sbInsertRows->setVisible(false);
+        w->pbInsertRow->setEnabled(false);
+        w->pbInsertRow->setVisible(false);
+        w->pbDeleteRow->setEnabled(false);
+        w->pbDeleteRow->setVisible(false);
+    }
 }
 
-void MainWindow::on_mUpdateSchema_triggered()
+void MainWindow::on_mImporter_triggered()
 {
-    ClosePotaTabs();
-    if (OkCancelDialog(tr("Mettre à jour le schéma de la BDD ?")+"\n\n"+
-                       ui->lDB->text()+"\n\n"+
-                       tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
-                       tr("Vos données vont être conservées.")+"\n"+
-                       tr("En cas d'échec, votre BDD sera remise dans sont état initial."))){
-        QString sFileName=ui->lDB->text();
-        PotaDbClose();
-        PotaDbOpen(sFileName,"",true);
+    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+
+        if (w->pbCommit->isEnabled()) {
+            if (YesNoDialog(w->lTabTitle->text()+"\n\n"+
+                            tr("Valider les modifications en cours ?"))) {
+                if (!w->model->SubmitAllShowErr())
+                    return;
+            } else {
+                if (!w->model->RevertAllShowErr())
+                    return;
+            }
+        }
+
+        if (PathImport.isEmpty())
+            PathImport=PathExport;
+
+        QString sFileName = QFileDialog::getOpenFileName(this, tr("Importer des données"),
+                                                         PathImport+w->lTabTitle->text(), "*.csv");
+
+        //Check filename.
+        if (sFileName.isEmpty()) return;
+
+        QFileInfo FileInfoVerif;
+        FileInfoVerif.setFile(sFileName);
+        PathImport=FileInfoVerif.absolutePath()+QDir::separator();
+
+        QFile FileImport(sFileName);
+        if (!FileImport.open(QIODevice::ReadOnly)) {
+            MessageDialog(tr("Impossible d'ouvrir le fichier")+"\n"+
+                              sFileName,"",QStyle::SP_MessageBoxCritical);
+            return;
+        }
+
+        QString data,info,info2,primaryField;
+        QStringList lines,linesToImport,fieldNames,dataTypes,valuesToImport;
+        QList<int> fieldindexes;
+        data.append(FileImport.readAll().toStdString());
+        lines=data.split("\n");
+        primaryField=PrimaryKeyFieldName(&db, w->model->RealTableName());
+
+        //Header check
+        fieldNames=lines[0].split(";");
+        int nbColImport=fieldNames.count();
+        int primaryFieldImport=-1;
+        info="";
+        for (int col = 0; col < nbColImport; ++col) {
+            fieldindexes.append(w->model->FieldIndex(fieldNames[col]));
+            if (fieldindexes[col]==-1 or//Column don't exists in the table.
+                w->model->nonEditableColumns.contains(fieldindexes[col])) {//Column is readonly.
+                dataTypes.append("");
+                fieldindexes[col]=-1;
+            } else {
+                dataTypes.append(DataType(&db, w->model->tableName(),fieldNames[col]));
+                info+=iif(info.isEmpty(),"",", ").toString()+fieldNames[col]+" ("+dataTypes[col]+")";
+            }
+            if(fieldNames[col]==primaryField)
+                primaryFieldImport=col;
+        }
+
+        int choice=-1;
+        if (info.isEmpty()) {
+            MessageDialog(QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
+                              .arg(FileInfoVerif.fileName())
+                              .arg(w->lTabTitle->text()),"",QStyle::SP_MessageBoxWarning);
+            return;
+        } else if (primaryFieldImport==-1) {
+            MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(primaryField).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            return;
+        } else if (lines.count()<2) {
+            MessageDialog(QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            return;
+        } else {
+            //Concat lines for each records.
+            parseCSV(data,"\n",linesToImport);
+            linesToImport.removeFirst();//Remove header
+            info2="";
+            for (int i=0;i<4;i++){
+                if (i<linesToImport.count())
+                    info2+="<br>"+
+                             StrFirst(linesToImport[i],60)+iif(linesToImport[i].length()>60,"...","").toString();
+            }
+            if(linesToImport.count()>4)
+                info2+="<br>...";
+
+            choice = RadiobuttonDialog(w->lTabTitle->text()+"<br><br>"+
+                                           "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
+                                           sFileName+"<br><br>"+
+                                           "<b>"+tr("Les champs suivants vont être importés:")+"</b><br>"+info+"<br><br>"+
+                                           "<b>"+tr("%1 lignes à importer:").arg(linesToImport.count()-1)+"</b>"+info2+"<br>"+
+                                           tr("<u>Fusionner</u>: les lignes déjà présentes seront mises à jour, les autres seront créées.")+"<br>"+
+                                           tr("<u>Mettre à jour</u>: seules les lignes de la sélection seront mises à jour, aucune nouvelle ligne ne sera créée.")+"<br>"+
+                                           tr("<u>Supprimer</u>: les lignes de la sélection seront supprimées si elles ne sont pas utilisées ailleurs)."),
+                                       {tr("Fusionner, priorité aux données importées"),                               //0
+                                        tr("Fusionner, priorité aux données déjà présentes"),                          //1
+                                        tr("Mettre à jour, priorité aux données importées"),                           //2
+                                        tr("Mettre à jour, priorité aux données déjà présentes"),                      //3
+                                        tr("Ajouter les lignes absentes, ne pas modifier les lignes déjà présentes"),  //4
+                                        tr("Supprimer puis importer, priorité aux données importées"),                 //5
+                                        tr("Supprimer puis importer, priorité aux données déjà présentes")},TypeImport);//6
+            if (choice==-1) return;
+
+            TypeImport=choice;
+        }
+
+        dbSuspend(&db, false,ui->lDBErr);
+
+        //Backup the table.
+        //dbOpen(ui->lDB->text(),false,false,true);//Enable the DROP TABLE.
+        PotaQuery pQuery(db);
+        pQuery.lErr=ui->lDBErr;
+        //pQuery.ExecMultiShowErr("DROP TABLE IF EXISTS temp.Temp_"+w->model->tableName()+";"+
+        //                         "CREATE TEMP TABLE Temp_"+w->model->tableName()+" AS SELECT * FROM "+w->model->tableName(),";",nullptr);
+        QString prefix="Temp"+QDateTime::currentDateTime().toString("hhmmss");
+        pQuery.ExecShowErr("CREATE TEMP TABLE "+prefix+w->model->tableName()+" AS SELECT * FROM "+w->model->tableName());
+
+        int nbDeletedRows=0;
+        int nbCreatedRows=0;
+        int nbModifiedRows=0;
+        int nbErrors=0;
+        if (choice==5 or choice==6) {//Delete selected lines
+            if(w->model->rowCount()>1 and
+                !OkCancelDialog(tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning)) {
+                dbSuspend(&db, true,ui->lDBErr);
+                return;
+            }
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(w->model->rowCount());
+            ui->progressBar->setFormat("Delete %p%");
+            ui->progressBar->setVisible(true);
+            for (int i=w->model->rowCount()-1;i>=0;i--) {
+                ui->progressBar->setValue(ui->progressBar->value()+1);
+                if(w->model->removeRow(i) and w->model->submitAll())
+                    nbDeletedRows++;
+                else {
+                    qInfo() << "Import (delete) "+w->model->data(w->model->index(i,primaryFieldImport)).toString()+" : "+w->model->lastError().text();
+                    w->model->revertAll();
+                    nbErrors++;
+                }
+            }
+        }
+
+        w->model->copiedCells.clear();
+        w->model->commitedCells.clear();
+
+        //Remove filter
+        if (choice!=2 and choice!=3 and w->pbFilter->isChecked()) {
+            w->pbFilterClick(false);
+            w->pbFilter->setChecked(false);
+        }
+        //Edit mode
+        if (!w->pbEdit->isChecked()) {
+            w->pbEdit->setChecked(true);
+            w->pbEditClick();
+        }
+
+
+        //Import
+
+        ui->progressBar->setValue(0);
+        ui->progressBar->setMaximum(linesToImport.count());
+        ui->progressBar->setFormat(FileInfoVerif.fileName()+" %p%");
+        ui->progressBar->setVisible(true);
+
+        bool bModified;
+
+        for(int i=0;i<linesToImport.count();i++) {
+            ui->progressBar->setValue(i);
+            if (!linesToImport[i].isEmpty()) {
+                parseCSV(linesToImport[i],";",valuesToImport);
+
+                if(valuesToImport.count()>primaryFieldImport and !valuesToImport[primaryFieldImport].isEmpty()){
+                    //Search existing record
+                    int recordToUpdate=-1;
+                    for (int i=0;i<w->model->rowCount();i++) {
+                        if (w->model->data(w->model->index(i,0)).toString()==valuesToImport[primaryFieldImport]){
+                            recordToUpdate=i;
+                            break;
+                        }
+                    }
+                    if(recordToUpdate>-1){
+                        if(choice!=4){
+                            //Update existing record.
+                            bModified=false;
+                            for (int col = 0; col < valuesToImport.count(); col++) {
+                                if (fieldindexes[col]>-1){//Col exists in table.
+                                    if (choice==0 or choice==2 or choice==5 or//Priority to imported data
+                                        w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()=="") {
+                                        if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()!=valuesToImport[col]){
+                                            w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
+                                            bModified=true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (bModified) {
+                                if(w->model->submitAll()) {
+                                    nbModifiedRows++;
+                                } else {
+                                    qInfo() << "Import (update) "+valuesToImport[primaryFieldImport]+" : "+w->model->lastError().text();
+                                    w->model->revertAll();
+                                    nbErrors++;
+                                }
+                            }
+                        }
+                    } else {
+                        if(choice!=2 and choice!=3){
+                            //Create new record.
+                            int row=w->model->rowCount();
+                            if (w->model->insertRow(row)){
+                                for (int col = 0; col < valuesToImport.count(); col++) {
+                                    if (fieldindexes[col]>-1)//Col exists in table.
+                                        w->model->setData(w->model->index(row,fieldindexes[col]),valuesToImport[col]);
+                                }
+                                if (w->model->submitAll()) {
+                                    nbCreatedRows++;
+                                } else {
+                                    qInfo() << "Import (create) "+valuesToImport[primaryFieldImport]+" : "+w->model->lastError().text();
+                                    w->model->revertAll();
+                                    nbErrors++;
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        w->model->SubmitAllShowErr();//To deactivate commit and rollback buttons.
+
+        //Show modified cells
+        w->model->commitedCells.clear();
+        ui->progressBar->setValue(0);
+        ui->progressBar->setMaximum(w->model->rowCount());
+        ui->progressBar->setFormat("Show modified cells %p%");
+        ui->progressBar->setVisible(true);
+
+        for (int i=0;i<w->model->rowCount();i++) {
+            ui->progressBar->setValue(i);
+            for (int j=0;j<w->model->columnCount();j++) {
+                if (w->model->data(w->model->index(i,j),Qt::EditRole).toString()!=
+                    pQuery.Selec0ShowErr("SELECT "+w->model->FieldName(j)+" "+
+                                         "FROM temp."+prefix+w->model->tableName()+" "+
+                                         "WHERE "+w->model->FieldName(0)+"='"+StrReplace(w->model->data(w->model->index(i,0)).toString(),"'","''")+"'").toString())
+                    w->model->commitedCells.insert(w->model->index(i,j));
+                //qDebug() << w->model->data(w->model->index(i,j)).toString();
+            }
+        }
+
+        //pQuery.ExecShowErr("DROP TABLE IF EXISTS temp.Temp_"+w->model->tableName());
+        ui->progressBar->setVisible(false);
+        dbSuspend(&db, true,ui->lDBErr);
+
+        MessageDialog(QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
+                      QObject::tr("%1 lignes créées").arg(nbCreatedRows)+"\n"+
+                      QObject::tr("%1 lignes modifiées").arg(nbModifiedRows));
     }
+}
+
+void MainWindow::on_mExporter_triggered()
+{
+    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+
+        QString sFileName = QFileDialog::getSaveFileName(this, tr("Exporter les données dans un fichier %1").arg("CSV"),
+                                                         PathExport+w->lTabTitle->text(), "*.csv",
+                                                         nullptr,QFileDialog::DontConfirmOverwrite);
+        //Check filename.
+        if (sFileName.isEmpty()) return;
+        if (StrLast(sFileName,4)!=".csv")
+            sFileName+=".csv";
+
+        QFileInfo FileInfoVerif;
+        FileInfoVerif.setFile(sFileName);
+        if (!FileInfoVerif.exists() or
+            OkCancelDialog(tr("Le fichier existe déjà")+"\n"+
+                               sFileName+"\n"+
+                               FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
+                               tr("Remplacer ?"),QStyle::SP_MessageBoxWarning)) {
+            QFile FileInfo2;
+            if (FileInfoVerif.exists()) {
+                FileInfo2.setFileName(sFileName);
+                if (!FileInfo2.moveToTrash()) {
+                    MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                                      sFileName,"",QStyle::SP_MessageBoxCritical);
+                    return;
+                }
+            }
+
+            PathExport=FileInfoVerif.absolutePath()+QDir::separator();
+
+            //Export
+            QFile FileExport(sFileName);
+            if (!FileExport.open(QIODevice::WriteOnly)) {// | QIODevice::Text
+                MessageDialog(tr("Impossible de créer le fichier")+"\n"+
+                                  sFileName,"",QStyle::SP_MessageBoxCritical);
+                return;
+            }
+
+            QByteArray data;
+            QStringList dataTypes;
+
+            //Header export
+            for (int col = 0; col < w->model->columnCount(); ++col) {
+                if (col > 0)
+                    data.append(";");
+                data.append(w->model->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString().toUtf8());
+                dataTypes.append(DataType(&db, w->model->tableName(),w->model->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString()));
+            }
+            data.append("\n");
+            int row=0;
+            int exportedRow=0;
+            int totalRow=w->model->rowCount();
+            if (FileExport.write(data)!=-1) {
+                data.clear();
+
+                ui->progressBar->setValue(0);
+                ui->progressBar->setMaximum(totalRow);
+                ui->progressBar->setFormat(w->lTabTitle->text()+" %p%");
+                ui->progressBar->setVisible(true);
+
+                //Data export
+                for (row = 0; row < w->model->rowCount(); ++row) {
+                    for (int col = 0; col < w->model->columnCount(); ++col) {
+                        if (col > 0) data.append(";");
+                        if (dataTypes[col]=="REAL")
+                            data.append(EscapeCSV(StrReplace(w->model->data(w->model->index(row, col)).toString(),".",",")).toUtf8());//todo param decimal separator
+                        else
+                            data.append(EscapeCSV(w->model->data(w->model->index(row, col)).toString()).toUtf8());
+                    }
+                    data.append("\n");
+                    if (FileExport.write(data)!=-1)
+                        exportedRow+=1;
+                    data.clear();
+                    ui->progressBar->setValue(row);
+                }
+
+                FileExport.close();
+                ui->progressBar->setVisible(false);
+            }
+
+            if (exportedRow==totalRow) {
+                MessageDialog(tr("%1 lignes exportées vers le fichier").arg(str(totalRow))+"\n"+
+                                  sFileName,"",QStyle::SP_MessageBoxInformation);
+            } else
+                MessageDialog(tr("%1 sur %2 lignes exportées vers le fichier").arg(str(exportedRow)).arg(str(totalRow))+"\n"+
+                                  sFileName,"",QStyle::SP_MessageBoxWarning);
+        }
+    }
+}
+
+//Base data menu
+
+void MainWindow::on_mFamilles_triggered()
+{
+    OpenPotaTab("Familles","Familles",tr("Familles"));
+}
+
+void MainWindow::on_mEspeces_triggered()
+{
+    OpenPotaTab("Especes","Espèces",tr("Espèces"));
+}
+
+void MainWindow::on_mVarietes_triggered()
+{
+    OpenPotaTab("Varietes","Variétés",tr("Variétés"));
+}
+
+void MainWindow::on_mApports_triggered()
+{
+    OpenPotaTab("Apports","Apports",tr("Apports"));
+}
+
+void MainWindow::on_mFournisseurs_triggered()
+{
+    OpenPotaTab("Fournisseurs","Fournisseurs",tr("Fournisseurs"));
+}
+
+void MainWindow::on_mTypes_de_planche_triggered()
+{
+    OpenPotaTab("TypesPlanche","Types_planche",tr("Types planche"));
+}
+
+void MainWindow::on_mITPTempo_triggered()
+{
+    OpenPotaTab("ITP_tempo","ITP__Tempo",tr("ITP"));
+}
+
+//Menu Assolement
+
+void MainWindow::on_mRotations_triggered()
+{
+    OpenPotaTab("Rotations","Rotations",tr("Rotations"));
+}
+
+void MainWindow::on_mDetailsRotations_triggered()
+{
+    if (OpenPotaTab("Rotations_Tempo","Rotations_détails__Tempo",tr("Rot. (détails)"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+    }
+}
+
+void MainWindow::on_mRotationManquants_triggered()
+{
+    OpenPotaTab("IT_rotations_manquants","IT_rotations_manquants",tr("Espèces manquantes"));
+}
+
+void MainWindow::on_mPlanches_triggered()
+{
+    OpenPotaTab("Planches","Planches",tr("Planches"));
+}
+
+void MainWindow::on_mSuccessionParPlanche_triggered()
+{
+    OpenPotaTab("SuccPlanches","Successions_par_planche",tr("Succ. planches"));
+}
+
+void MainWindow::on_mIlots_triggered()
+{
+    OpenPotaTab("Planches_Ilots","Planches_Ilots",tr("Ilots"));
+}
+
+//Menu Planification
+
+void MainWindow::on_mCulturesParplante_triggered()
+{
+    OpenPotaTab("IT_rotations","IT_rotations",tr("Plantes prévues"));
+}
+
+void MainWindow::on_mCulturesParIlots_triggered()
+{
+    OpenPotaTab("IT_rotations_ilots","IT_rotations_ilots",tr("Cult.prévues ilots"));
+}
+
+void MainWindow::on_mCulturesParPlanche_triggered()
+{
+    OpenPotaTab("Cult_planif","Cult_planif",tr("Cult.prévues"));
+}
+
+void MainWindow::on_mCreerCultures_triggered()
+{
+    PotaQuery pQuery(db);
+    pQuery.lErr=ui->lDBErr;
+    int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif").toInt();
+    if (NbCultPlanif==0)
+    {
+        MessageDialog(tr("Aucune culture à planifier:")+"\n\n"+
+                          tr("- Créez des rotations")+"\n"+
+                          tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
+        return;
+    }
+
+    int NbCultAVenir=pQuery.Selec0ShowErr("SELECT count() FROM C_non_commencées").toInt();
+    if (OkCancelDialog(tr("Créer les prochaines cultures en fonction des rotations?")+"\n\n"+
+                       tr("%1 cultures vont être créées").arg(NbCultPlanif)+"\n"+
+                       tr("Il y a déjà %1 cultures ni semées ni plantées.").arg(NbCultAVenir)+"\n"+
+                       tr("Id de la dernière culture:")+" "+str(NbCultAVenir),QStyle::SP_MessageBoxQuestion))
+    {
+        int IdCult1=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
+        if (pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement) "
+                               "SELECT IT_plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement "
+                               "FROM Cult_planif"))
+        {
+            int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
+            int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
+            if (IdCult3>IdCult2 and IdCult2>IdCult1)
+                MessageDialog(tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
+                                  tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3),"",QStyle::SP_MessageBoxInformation);
+            else
+                MessageDialog(tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
+        }
+        else
+            MessageDialog(tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
+
+    }
+}
+
+void MainWindow::on_mSemences_triggered()
+{
+    OpenPotaTab("Varietes_inv_et_cde","Variétés__inv_et_cde",tr("Inv. et cde semence"));
+}
+
+//Menu Cultures
+
+void MainWindow::on_mCuNonTer_triggered()
+{
+    OpenPotaTab("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"));
+}
+
+void MainWindow::on_mCuSemisAFaire_triggered()
+{
+    OpenPotaTab("Cultures_Semis_a_faire","Cultures__Semis_à_faire",tr("A semer"));
+}
+
+void MainWindow::on_mCuPlantationsAFaire_triggered()
+{
+    OpenPotaTab("Cultures_Plantations_a_faire","Cultures__Plantations_à_faire",tr("A planter"));
+}
+
+void MainWindow::on_mCuRecoltesAFaire_triggered()
+{
+    OpenPotaTab("Cultures_Recoltes_a_faire","Cultures__Récoltes_à_faire",tr("A récolter"));
+}
+
+void MainWindow::on_mCuSaisieRecoltes_triggered()
+{
+    if (OpenPotaTab("Recoltes__Saisies","Récoltes__Saisies",tr("Récoltes"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+        //Go to last row.
+        w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+    }
+}
+
+void MainWindow::on_mCuATerminer_triggered()
+{
+    OpenPotaTab("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"));
+}
+
+void MainWindow::on_mCuToutes_triggered()
+{
+    OpenPotaTab("Cultures","Cultures",tr("Cultures"));
+}
+
+//Menu Analyses
+
+void MainWindow::on_mAnaITP_triggered()
+{
+    OpenPotaTab("ITP_analyse","ITP__analyse",tr("Analyse IT"));
+}
+
+void MainWindow::on_mAnaCultures_triggered()
+{
+    OpenPotaTab("Cultures_Tempo_Espece","Cultures__Tempo",tr("Analyse cultures"));
+}
+
+void MainWindow::on_mIncDatesCultures_triggered()
+{
+    OpenPotaTab("Cultures_inc_dates","Cultures__inc_dates",tr("Inc. dates cultures"));
 }
 
 

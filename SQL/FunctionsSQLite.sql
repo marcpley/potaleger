@@ -11,6 +11,14 @@ iif(strftime(''%Y'',:D_min)||''-''||:Déb_période<:D_min,
     strftime(''%Y'',:D_min)||''-''||:Déb_période)
 )#");
 
+QString sItpCompleteDFPeriode = QStringLiteral(R"#(
+-- :dPeriode (MM)
+iif((length(:dPeriode)<>5)AND(round(:dPeriode) BETWEEN 1 AND 12),
+    format(''%02d-01'',round(:dPeriode)),
+    :dPeriode)
+-- out : début ou fin de période valide (MM-DD).
+)#");
+
 QString sItpTempoNJPeriode = QStringLiteral(R"#(
 -- :dDeb1,:dFin1,:dDeb2 nb de jour depuis le début de l'année.
 iif(:dDeb1 <= :dFin1, --Période 1 sur 1 année
@@ -52,13 +60,13 @@ iif(:date NOT NULL,strftime(''%j'',''2000-''||:date),0)
 QString sItpTempo = QStringLiteral(R"#(
 -- :Type : type_culture
 -- :dXxx nb de jour depuis le début de l'année.
-iif(:Type=''Semis sous abris'',(:dSem-1) ||'':''|| -- Attente
-                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant) ||'':''|| -- Durée semis
-                               ItpTempoNJInterPe(:dSem,:fSem,:dPlant) ||'':''|| -- Semis fait attente plantation
-                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''|| -- Durée plantation
-                               ItpTempoNJInterPe(:dPlant,:fPlant,:dRec) ||'':''|| -- Plantation faite attente récolte
+iif(:Type=''Semis sous abris'',(:dSem-1)||'':''|| -- Attente
+                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant)||'':''|| -- Durée semis
+                               ItpTempoNJInterPe(:dSem,:fSem,:dPlant)||'':''|| -- Semis fait attente plantation
+                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec)||'':''|| -- Durée plantation
+                               ItpTempoNJInterPe(:dPlant,:fPlant,:dRec)||'':''|| -- Plantation faite attente récolte
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec), -- Durée récolte
-iif(:Type=''Semis direct''    ,(:dSem-1) ||'':''|| -- Attente
+iif(:Type=''Semis direct''    ,(:dSem-1)||'':''|| -- Attente
                                ItpTempoNJPeriode(:dSem,:fSem,:dRec) ||'':''||
                                '':''||
                                '':''||
@@ -133,6 +141,35 @@ iif(:Type=''Sans récolte'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01''
 -- out : 15:15:15:15:15:15
 )#");
 
+QString sZeroSiErrPlusDe5mois = QStringLiteral(R"#(
+iif(:err BETWEEN 0 AND 150, :err,0)
+)#");
+
+QString sCulIncDate = QStringLiteral(R"#(
+-- :c : date de la culture (YYYY-MM-DD)
+-- :i : début ou fin de période de l'IT_plante (MM-DD)
+-- :test : 'D' ou 'F'
+-- :tol : nb de jour de tolérance de sortie de la période.
+iif((:c NOTNULL)AND(:i NOTNULL),
+    iif(:test=''D'',ZeroSiErrPlusDe5mois(julianday(DATE(substr(:c,1,5)||:i,-max(:tol,0)||'' days''))-julianday(:c)),
+                    ZeroSiErrPlusDe5mois(julianday(:c)-julianday(DATE(substr(:c,1,5)||:i,max(:tol,0)||'' days'')))),
+0)
+-- out : nb de jour de sortie de la période+tolérance.
+)#");
+
+QString sCulIncDates = QStringLiteral(R"#(
+-- :cXxx : dates de la culture (YYYY-MM-DD)
+-- :iDXxx et iFXxx : débuts et fins de période de l'IT_plante (MM-DD)
+iif(CulIncDate(:cSem,:iDSem,''D'',    (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_semis''))>0,     ''Semis trop tôt'',
+iif(CulIncDate(:cSem,:iFSem,''F'',    (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_semis''))>0,     ''Semis trop tard'',
+iif(CulIncDate(:cPlant,:iDPlant,''D'',(SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_plantation''))>0,''Plant. trop tôt'',
+iif(CulIncDate(:cPlant,:iFPlant,''F'',(SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_plantation''))>0,''Plant. trop tard'',
+iif(CulIncDate(:cDRec,:iDRec,''D'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_récolte''))>0,   ''Récolte trop tôt'',
+iif(CulIncDate(:cFRec,:iFRec,''F'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_récolte''))>0,   ''Récolte trop tard'',
+NULL))))))
+-- out : Texte qui dit où est l'incohérence.
+)#");
+
 QString sRotDecalDateMeP = QStringLiteral(R"#(
 -- :DateMeP date (YYYY-MM-DD)
 iif(substr(:DateMeP,6,2)=''01'',DATE(:DateMeP,''-5 month''),
@@ -201,7 +238,6 @@ SELECT RF.Famille || ' année ' || format('%i',RF.Année) result
                                                                                                    RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
 )#");
 
-
 QString sItpPlus15jours = QStringLiteral(R"#(
 iif(:dPeriode ISNULL,NULL,
 iif(substr(:dPeriode,4,2)=''01'',substr(:dPeriode,1,3)||''15'', -- xx-01 > xx-15
@@ -213,3 +249,21 @@ iif(substr(:dPeriode,1,2)=''12'',''01-01'', -- 12-15 > 01-01
 ))))))
 )#");
 
+
+QString sItpPlusN = QStringLiteral(R"#(
+-- :dPeriode (MM-DD)
+iif(:dPeriode ISNULL,NULL,
+    substr(DATE(''2000-''||:dPeriode,:N),6,5))
+)#");
+
+QString sRepartir_Recolte_sur = QStringLiteral(R"#(
+SELECT C.Culture,I.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
+FROM Cultures C JOIN ITP I USING(IT_plante)
+WHERE (:Repartir NOTNULL)AND
+      (C.Début_récolte <= DATE('now'))AND
+      (C.Fin_récolte >= DATE('now','-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days'))AND
+      ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
+      ((:Repartir='*')OR
+       (C.Planche LIKE :Repartir||'%'))
+
+)#");

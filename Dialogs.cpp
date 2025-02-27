@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QButtonGroup>
 #include <QLabel>
+#include <QLEInteger>
 
 void MainWindow::MessageDialog(const QString &message, const QString &message2, QStyle::StandardPixmap iconType)
 {
@@ -74,7 +75,10 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
         dialog.accept();
     });
 
-    dialog.setFixedSize(dialog.sizeHint());//User can't resize the window.
+    int w,h;
+    w=fmax(dialog.sizeHint().width(),250);
+    h=fmax(dialog.sizeHint().height(),150);
+    dialog.setFixedSize(w,h);//User can't resize the window.
 
     dialog.exec();
 }
@@ -134,7 +138,10 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
         dialog.reject();
     });
 
-    dialog.setFixedSize(dialog.sizeHint());//User can't resize the window.
+    int w,h;
+    w=fmax(dialog.sizeHint().width(),250);
+    h=fmax(dialog.sizeHint().height(),150);
+    dialog.setFixedSize(w,h);//User can't resize the window.
 
     dialog.exec();
 
@@ -201,7 +208,10 @@ int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &opt
         dialog.reject();
     });
 
-    dialog.setFixedSize(dialog.sizeHint());//User can't resize the window.
+    int w,h;
+    w=fmax(dialog.sizeHint().width(),250);
+    h=fmax(dialog.sizeHint().height(),150);
+    dialog.setFixedSize(w,h);//User can't resize the window.
 
     dialog.exec();
 
@@ -263,7 +273,10 @@ bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap icon
         dialog.reject();
     });
 
-    dialog.setFixedSize(dialog.sizeHint());//User can't resize the window.
+    int w,h;
+    w=fmax(dialog.sizeHint().width(),250);
+    h=fmax(dialog.sizeHint().height(),150);
+    dialog.setFixedSize(w,h);//User can't resize the window.
 
     dialog.exec();
 

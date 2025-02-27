@@ -33,6 +33,7 @@ SOURCES += \
 
 HEADERS += \
     PotaUtils.h \
+    SQL/FunctionsSQLite.h \
     data/Data.h \
     mainwindow.h \
     potawidget.h \

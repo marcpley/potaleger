@@ -57,7 +57,7 @@
        <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -230,29 +230,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <number>0</number>
            </property>
            <item>
-            <widget class="QToolButton" name="toolButton">
-             <property name="maximumSize">
-              <size>
-               <width>32</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>...</string>
-             </property>
-             <property name="icon">
-              <iconset resource="images/images.qrc">
-               <normaloff>:/images/reload.svg</normaloff>:/images/reload.svg</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>32</width>
-               <height>32</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QToolButton" name="toolButton_2">
              <property name="text">
               <string>...</string>
@@ -263,43 +240,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="maximumSize">
-              <size>
-               <width>32</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset resource="images/images.qrc">
-               <normaloff>:/images/reload.svg</normaloff>:/images/reload.svg</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>32</width>
-               <height>32</height>
-              </size>
-             </property>
-             <property name="checkable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QSpinBox" name="spinBox"/>
-           </item>
-           <item>
-            <widget class="QFrame" name="frame">
-             <property name="frameShape">
-              <enum>QFrame::Shape::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Shadow::Raised</enum>
-             </property>
-            </widget>
            </item>
            <item>
             <widget class="QLineEdit" name="lineEdit">
@@ -336,45 +277,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <item>
             <widget class="QComboBox" name="comboBox"/>
            </item>
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>741</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
           </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDateEdit" name="dateEdit">
-          <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="font">
-           <font>
-            <fontweight>Thin</fontweight>
-           </font>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Shape::NoFrame</enum>
-          </property>
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-          <property name="indent">
-           <number>10</number>
-          </property>
          </widget>
         </item>
         <item>
@@ -559,7 +462,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <string>Analyses</string>
     </property>
     <addaction name="mAnaITP"/>
-    <addaction name="mAnaEspeces"/>
+    <addaction name="mAnaCultures"/>
+    <addaction name="mIncDatesCultures"/>
    </widget>
    <widget class="QMenu" name="mEdition">
     <property name="title">
@@ -571,6 +475,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="mFilterFind"/>
     <addaction name="mEditNotes"/>
     <addaction name="mParam"/>
+    <addaction name="mImporter"/>
+    <addaction name="mExporter"/>
    </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
@@ -705,6 +611,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset theme="system-run"/>
+   </property>
    <property name="text">
     <string>Créer les cultures</string>
    </property>
@@ -740,10 +649,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="enabled">
     <bool>false</bool>
    </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/cultures_a_semer.svg</normaloff>:/images/cultures_a_semer.svg</iconset>
-   </property>
    <property name="text">
     <string>Semis à faire</string>
    </property>
@@ -751,10 +656,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="mCuPlantationsAFaire">
    <property name="enabled">
     <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/cultures_a_planter.svg</normaloff>:/images/cultures_a_planter.svg</iconset>
    </property>
    <property name="text">
     <string>Plantations à faire</string>
@@ -764,10 +665,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="enabled">
     <bool>false</bool>
    </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/cultures_a_recolter.svg</normaloff>:/images/cultures_a_recolter.svg</iconset>
-   </property>
    <property name="text">
     <string>Récoltes à faire</string>
    </property>
@@ -775,10 +672,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="mCuSaisieRecoltes">
    <property name="enabled">
     <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/saisie_recolte.svg</normaloff>:/images/saisie_recolte.svg</iconset>
    </property>
    <property name="text">
     <string>Saisie des récoltes</string>
@@ -788,10 +681,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <property name="enabled">
     <bool>false</bool>
    </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/cultures_a_ter.svg</normaloff>:/images/cultures_a_ter.svg</iconset>
-   </property>
    <property name="text">
     <string>A terminer</string>
    </property>
@@ -799,10 +688,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="mCuToutes">
    <property name="enabled">
     <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/cultures_toutes.svg</normaloff>:/images/cultures_toutes.svg</iconset>
    </property>
    <property name="text">
     <string>Toutes les cultures</string>
@@ -816,21 +701,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>Itinéraires techniques</string>
    </property>
   </action>
-  <action name="mAnaEspeces">
+  <action name="mAnaCultures">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Espèces</string>
+    <string>Cultures</string>
    </property>
   </action>
   <action name="mCuNonTer">
    <property name="enabled">
     <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="images/images.qrc">
-     <normaloff>:/images/cultures_non_ter.svg</normaloff>:/images/cultures_non_ter.svg</iconset>
    </property>
    <property name="text">
     <string>Toutes les cultures non terminées</string>
@@ -998,6 +879,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="text">
     <string>Mettre à jour le schéma de BDD</string>
+   </property>
+  </action>
+  <action name="mImporter">
+   <property name="text">
+    <string>Importer des données</string>
+   </property>
+  </action>
+  <action name="mExporter">
+   <property name="text">
+    <string>Exporter les données</string>
+   </property>
+  </action>
+  <action name="mIncDatesCultures">
+   <property name="text">
+    <string>Incohérences dates cultures</string>
    </property>
   </action>
  </widget>

@@ -2,18 +2,21 @@
 #include "qcolor.h"
 #include "qlabel.h"
 #include "qsqlerror.h"
-#include "qsqlquery.h"
 #include "PotaUtils.h"
 #include <QFont>
 #include "data/Data.h"
+#include "SQL/FunctionsSQLite.h"
 
 bool PotaQuery::ExecShowErr(QString query)
 {
+    dbSuspend(&m_db, false,lErr);
     clear();
+
     exec(query);
-    if (lastError().type() != QSqlError::NoError)
-    {
-        if (lErr!=nullptr)
+    if (lastError().type() != QSqlError::NoError) {
+        qWarning() << query;
+        qWarning() << lastError().text();
+        if (lErr)
             SetColoredText(lErr,lastError().text(),"Err");
         return false;
 
@@ -21,7 +24,7 @@ bool PotaQuery::ExecShowErr(QString query)
     return true;
 }
 
-bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar)
+bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar,bool keepReturns)
 {
     QStringList QueryList = querys.split(spliter);
     QString s;
@@ -30,24 +33,25 @@ bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QP
         s=s.first(s.length()-11)+"+"+str(QueryList.count())+" statements";
     else
         s=str(QueryList.count())+" statements";
-    SetColoredText(lErr,s,"Info");
+    if (lErr)
+        SetColoredText(lErr,s,"Info");
     if (progressBar) {
         progressBar->setValue(0);
         progressBar->setMaximum(QueryList.count());
     }
-    for (int i=0;i<QueryList.count();i++)
-    {
+    for (int i=0;i<QueryList.count();i++) {
         if (QueryList[i].trimmed().isEmpty())
             continue;
-        QString sQuery=RemoveComment(QueryList[i].trimmed(),"--");
+        QString sQuery=RemoveComment(QueryList[i].trimmed(),"--",keepReturns);
         clear();
         ExecShowErr(sQuery);
         if (progressBar) progressBar->setValue(progressBar->value()+1);
-        if (lastError().type() != QSqlError::NoError)
-        {
-            if (lErr!=nullptr)
-                SetColoredText(lErr,QueryList[i].trimmed()+"\n"+lastError().text()+"\n"+
-                                    DBInfo(),"Err");
+        if (lastError().type() != QSqlError::NoError) {
+            qWarning() << sQuery;
+            qWarning() << lastError().text();
+            if (lErr)
+                SetColoredText(lErr,QueryList[i].trimmed()+"\n"+lastError().text(),//+"\n"+DBInfo(db),
+                               "Err");
             return false;
 
         }
@@ -57,20 +61,20 @@ bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QP
 
 QVariant PotaQuery::Selec0ShowErr(QString query)
 {
-    clear();
     QVariant vNull;
-    if (ExecShowErr(query))
-    {
+    if (ExecShowErr(query)) {
         next();
+        //qDebug() << query+"->"+value(0).toString();
         return value(0);
     }
     else
         return vNull;
 }
 
-QString DataType(QString TableName, QString FieldName){
+QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
     QString result="";
-    QSqlQuery query("PRAGMA table_xinfo("+TableName+")");
+    PotaQuery query(*db);
+    query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
     while (query.next()){
         if (query.value(1).toString()==FieldName){
             result=query.value(2).toString();
@@ -89,16 +93,25 @@ QString DataType(QString TableName, QString FieldName){
 //     return QDate::currentDate().toString("yyyy-MM-dd");
 // }
 
-QString DBInfo()
-{
-    QSqlDatabase db = QSqlDatabase::database();
-    QString sResult;
-    sResult=db.databaseName()+" - "+db.driverName()+" - "+db.connectOptions()+" : ";
-    sResult.append(iif(db.isValid(),"VALID DRIVER, ","").toString());
-    sResult.append(iif(db.isOpen(),"DB IS OPEN, ","").toString());
-    sResult.append(iif(db.isOpenError(),"OPENERROR, ","").toString());
-    sResult.truncate(sResult.length()-2);
-    return sResult;
+// QString DBInfo(QSqlDatabase *db)
+// {
+//     //QSqlDatabase db = QSqlDatabase::database();
+//     QString sResult;
+//     sResult=db->databaseName()+" - "+db->driverName()+" - "+db->connectOptions()+" : ";
+//     sResult.append(iif(db->isValid(),"VALID DRIVER, ","").toString());
+//     //sResult.append(iif(db.isOpen(),"DB IS OPEN, ","").toString()); isOpen always return true
+//     sResult.append(iif(db->isOpenError(),"OPENERROR, ","").toString());
+//     sResult.truncate(sResult.length()-2);
+//     return sResult;
+// }
+
+QString EscapeCSV(QString s) {
+    //s=StrReplace(s,"\r","");
+    //s=StrReplace(s,"\n","\\n");
+    s=StrReplace(s,"\"","\"\"");
+    if (s.contains("\n") or s.contains(";") or s.contains("\""))
+        s="\""+s+"\"";
+    return s;
 }
 
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2)
@@ -128,7 +141,39 @@ int min(int a,int b) {
         return a;
 }
 
-QString RemoveComment(QString sCde, QString sCommentMarker)
+void parseCSV(QString entry, QString sep, QStringList &list) {
+    QStringList values;
+    QString parsedValue;
+    values=entry.split(sep);
+
+    list.clear();
+    parsedValue=values[0];
+    for(int i=0;i<values.count();i++) {
+        if(parsedValue.count("\"") % 2 == 0) {//Even number of ".
+            if (StrFirst(parsedValue,1)=="\"" and StrLast(parsedValue,1)=="\"")
+                parsedValue=SubString(parsedValue,1,parsedValue.length()-2);
+            list.append(parsedValue);
+            //qDebug() << parsedValue;
+            if(i==values.count()-1) break;
+            parsedValue=values[i+1];
+        } else {
+            if(i==values.count()-1) break;
+            parsedValue+=sep+values[i+1];
+        }
+    }
+}
+
+QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName)  {
+    PotaQuery query(*db);
+    query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
+    while (query.next()){
+        if (query.value(5).toInt()==1)
+            return query.value(1).toString();
+    }
+    return "";
+}
+
+QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns)
 {
     QStringList LinesList = sCde.split("\n");
     QString s;
@@ -139,9 +184,9 @@ QString RemoveComment(QString sCde, QString sCommentMarker)
         s = LinesList[i];
         index = s.indexOf(sCommentMarker);
         if (index!=-1)
-            sResult += s.first(index).trimmed()+iif(s.first(index).trimmed().isEmpty(),""," ").toString();
+            sResult += iif(i>0 and keepReturns,"\n","").toString()+s.first(index).trimmed()+iif(s.first(index).trimmed().isEmpty(),""," ").toString();
         else
-            sResult += s.trimmed()+iif(s.trimmed().isEmpty(),""," ").toString();
+            sResult += iif(i>0 and keepReturns,"\n","").toString()+s.trimmed()+iif(s.trimmed().isEmpty(),""," ").toString();
     }
     return sResult;
 }
@@ -161,7 +206,9 @@ void SetColoredText(QLabel *l, QString text, QString type)
     } else if (text.startsWith("CHECK constraint failed: ")) {
         s=StrReplace(text,"CHECK constraint failed: ","");
         s=StrReplace(s," Unable to fetch row","");
-        s="Valeur incorrecte pour "+s;
+        s=QObject::tr("Valeur incorrecte pour %1").arg(s);
+    } else if (text=="FOREIGN KEY constraint failed Unable to fetch row") {
+        s=QObject::tr("Suppression impossible, la donnée est utilisée ailleurs");
     } else
         s=text;
 
@@ -175,7 +222,7 @@ void SetColoredText(QLabel *l, QString text, QString type)
     else if (type=="Info")
         p.setColor(QPalette::WindowText, QColor("#9e5000"));
     else
-        p.setColor(QPalette::WindowText, "white");
+        p.setColor(QPalette::WindowText, QApplication::palette().color(QPalette::ColorGroup::Disabled,QPalette::WindowText));//"white"
     l->setPalette(p);
 }
 
@@ -241,17 +288,15 @@ QString StrLast(QString s, int i){
         return s;
 }
 
-
 QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
-    // int index = 0;
-    // while ((index = s.indexOf(sTarg, index)) != -1) {
-    //     s.replace(index, sTarg.length(), sRepl);
-    //     index += sRepl.length();  // To avoid infinite loop
-    // }
-    // return s;
-
-    while (s.indexOf(sTarg)!= -1)
-        s.replace(s.indexOf(sTarg),sTarg.length(),sRepl);
+    int index = 0;
+    int index2 = 0;
+    if (sTarg.isEmpty())
+        return s;
+    while ((index = s.indexOf(sTarg, index2)) != -1) {
+        s.replace(index, sTarg.length(), sRepl);
+        index2 = index+sRepl.length();  // To avoid infinite loop
+    }
     return s;
 }
 
@@ -265,4 +310,40 @@ QString SubString(QString s, int iDeb, int iFin) {
         result+=s[i];
 
     return result;
+}
+
+bool dbSuspend(QSqlDatabase *db, bool bSuspend, QLabel *ldbs) {
+    //QSqlDatabase db = QSqlDatabase::database();
+    if(bSuspend) {
+        if (db->isOpen()){
+            PotaQuery q1(*db);
+            q1.exec("SELECT define_free();");
+            db->close();
+            if (ldbs)
+                SetColoredText(ldbs,"Released database","Ok");
+            qDebug() << "dbSuspend ON";
+        }
+        return true;
+    } else {
+        if (!db->isOpen()){
+            if (db->open()){
+                qDebug() << "dbSuspend OFF";
+                if(initSQLean(db)){
+                    if (ldbs)
+                        SetColoredText(ldbs,"Database exclusive access...","Err");
+                    return true;
+                } else {
+                    db->close();
+                    qDebug() << "dbSuspend ON (Err SQLean)";
+                    return false;
+                }
+            } else {
+                qDebug() << "dbSuspend ON (Err open)";
+                return false;
+            }
+        } else {
+            return true;
+        }
+
+    }
 }

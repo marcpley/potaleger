@@ -1,13 +1,5 @@
 <RCC>
     <qresource prefix="/images">
-        <file>cultures.svg</file>
-        <file>cultures_a_planter.svg</file>
-        <file>cultures_a_recolter.svg</file>
-        <file>cultures_a_semer.svg</file>
-        <file>saisie_recolte.svg</file>
-        <file>cultures_non_ter.svg</file>
-        <file>cultures_a_ter.svg</file>
-        <file>cultures_toutes.svg</file>
         <file>Arrow_GreenDown.svg</file>
         <file>Arrow_RedUp.svg</file>
         <file>delete_row.svg</file>
@@ -15,12 +7,9 @@
         <file>commit.svg</file>
         <file>reload.svg</file>
         <file>insert_row.svg</file>
-        <file>yellowbullet.svg</file>
         <file>toCommit.svg</file>
         <file>potaleger.svg</file>
         <file>Arrow_BlueDown.svg</file>
-        <file>potaleger.gif</file>
-        <file>potaleger.png</file>
         <file>potaleger.ico</file>
         <file>edit.svg</file>
         <file>editOn.svg</file>

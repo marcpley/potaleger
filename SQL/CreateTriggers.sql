@@ -133,7 +133,7 @@ END;;
 
 DROP TRIGGER IF EXISTS Cultures_UPDATE_Espacement;;
 CREATE TRIGGER Cultures_UPDATE_Espacement AFTER UPDATE ON Cultures
-          WHEN (NEW.Espacement ISNULL) AND (NEW.IT_plante NOTNULL)
+          WHEN (NEW.Espacement ISNULL OR NEW.Espacement='?') AND (NEW.IT_plante NOTNULL)
 BEGIN
     UPDATE Cultures
        SET Espacement=coalesce( (SELECT Espacement
@@ -144,7 +144,7 @@ END;;
 
 DROP TRIGGER IF EXISTS Cultures_UPDATE_Longueur;;
 CREATE TRIGGER Cultures_UPDATE_Longueur AFTER UPDATE ON Cultures
-          WHEN (NEW.Longueur ISNULL) AND (NEW.Planche NOTNULL)
+          WHEN (NEW.Longueur ISNULL OR NEW.Longueur='?') AND (NEW.Planche NOTNULL)
 BEGIN
     UPDATE Cultures
        SET Longueur=coalesce( (SELECT Longueur
@@ -155,7 +155,7 @@ END;;
 
 DROP TRIGGER IF EXISTS Cultures_UPDATE_Nb_rangs;;
 CREATE TRIGGER Cultures_UPDATE_Nb_rangs AFTER UPDATE ON Cultures
-          WHEN (NEW.Nb_rangs ISNULL) AND (NEW.IT_plante NOTNULL)
+          WHEN (NEW.Nb_rangs ISNULL OR NEW.Nb_rangs='?') AND (NEW.IT_plante NOTNULL)
 BEGIN
     UPDATE Cultures
        SET Nb_rangs=coalesce( (SELECT Nb_rangs
@@ -309,9 +309,9 @@ CREATE TRIGGER ITP_UPDATE_FinsPériodes AFTER UPDATE ON ITP
                (NEW.Déb_récolte NOTNULL AND NEW.Fin_récolte ISNULL)
 BEGIN
     UPDATE ITP SET
-        Fin_semis=coalesce(Fin_semis,ItpPlus15jours(Déb_semis)),
-        Fin_plantation=coalesce(Fin_plantation,ItpPlus15jours(Déb_plantation)),
-        Fin_récolte=coalesce(Fin_récolte,ItpPlus15jours(Déb_récolte))
+        Fin_semis=coalesce(Fin_semis,ItpPlusN(Déb_semis,'1 months')),
+        Fin_plantation=coalesce(Fin_plantation,ItpPlusN(Déb_plantation,'1 months')),
+        Fin_récolte=coalesce(Fin_récolte,ItpPlusN(Déb_récolte,'1 months'))
         WHERE IT_plante=NEW.IT_plante;
 END;;
 
@@ -335,12 +335,12 @@ BEGIN
     VALUES (NEW.IT_plante,
             NEW.Espèce,
             NEW.Type_planche,
-            NEW.Déb_semis,
-            NEW.Fin_semis,
-            NEW.Déb_plantation,
-            NEW.Fin_plantation,
-            NEW.Déb_récolte,
-            NEW.Fin_récolte,
+            ItpCompleteDFPeriode(NEW.Déb_semis),
+            ItpCompleteDFPeriode(NEW.Fin_semis),
+            ItpCompleteDFPeriode(NEW.Déb_plantation),
+            ItpCompleteDFPeriode(NEW.Fin_plantation),
+            ItpCompleteDFPeriode(NEW.Déb_récolte),
+            ItpCompleteDFPeriode(NEW.Fin_récolte),
             NEW.Nb_rangs,
             NEW.Espacement,
             NEW.Nb_graines_trou,
@@ -355,12 +355,12 @@ BEGIN
         IT_plante=NEW.IT_plante,
         Espèce=NEW.Espèce,
         Type_planche=NEW.Type_planche,
-        Déb_semis=NEW.Déb_semis,
-        Fin_semis=NEW.Fin_semis,
-        Déb_plantation=NEW.Déb_plantation,
-        Fin_plantation=NEW.Fin_plantation,
-        Déb_récolte=NEW.Déb_récolte,
-        Fin_récolte=NEW.Fin_récolte,
+        Déb_semis=ItpCompleteDFPeriode(NEW.Déb_semis),
+        Fin_semis=ItpCompleteDFPeriode(NEW.Fin_semis),
+        Déb_plantation=ItpCompleteDFPeriode(NEW.Déb_plantation),
+        Fin_plantation=ItpCompleteDFPeriode(NEW.Fin_plantation),
+        Déb_récolte=ItpCompleteDFPeriode(NEW.Déb_récolte),
+        Fin_récolte=ItpCompleteDFPeriode(NEW.Fin_récolte),
         Nb_rangs=NEW.Nb_rangs,
         Espacement=NEW.Espacement,
         Nb_graines_trou=NEW.Nb_graines_trou,
@@ -391,7 +391,7 @@ BEGIN
         SET Nb_années=(SELECT max(Année)
                          FROM Rotations_détails
                         WHERE Rotation=OLD.Rotation)
-      WHERE Rotation=OLD.Rotation;
+      WHERE (NEW.Rotation!=OLD.Rotation)AND(Rotation=OLD.Rotation);
 END;;
 
 DROP TRIGGER IF EXISTS Rotations_détails__Tempo_INSERT;;
@@ -435,30 +435,59 @@ END;;
 DROP TRIGGER IF EXISTS Récoltes__Saisies_INSERT;;
 CREATE TRIGGER Récoltes__Saisies_INSERT INSTEAD OF INSERT ON Récoltes__Saisies
 BEGIN
-    INSERT INTO Récoltes (ID,
-                          Date,
+    --Saisie d'un récolte pour une culture unique0
+    INSERT INTO Récoltes (Date,
                           Espèce,
                           Culture,
                           Quantité,
                           Notes)
-    VALUES (NEW.ID,
-            coalesce(NEW.Date,DATE('now')),
+    SELECT coalesce(NEW.Date,min(Début_récolte,DATE('now'))),
+          NEW.Espèce,
+          C.Culture,
+          NEW.Quantité,
+          NEW.Notes
+    FROM Cultures C
+    WHERE (NEW.Répartir ISNULL)AND
+          (C.Culture=NEW.Culture);
+    --Répartition de la quantité récoltée.
+    INSERT INTO Récoltes (Date,
+                          Espèce,
+                          Culture,
+                          Quantité,
+                          Notes)
+    SELECT coalesce(NEW.Date,min(Début_récolte,DATE('now'))),
             NEW.Espèce,
-            NEW.Culture,
-            NEW.Quantité,
-            NEW.Notes);
+            C.Culture,
+            round(NEW.Quantité/(SELECT sum(Longueur) FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce))*C.Longueur,3),
+            NEW.Notes
+     FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce) C;
 END;;
 
 DROP TRIGGER IF EXISTS Récoltes__Saisies_UPDATE;;
 CREATE TRIGGER Récoltes__Saisies_UPDATE INSTEAD OF UPDATE ON Récoltes__Saisies
 BEGIN
+    --Mise à jour de la ligne récolte si pas de répartition.
     UPDATE Récoltes SET
-        Date=NEW.Date,
+        Date=coalesce(NEW.Date,(SELECT min(Début_récolte,DATE('now')) FROM Cultures WHERE Culture=NEW.Culture),DATE('now')),
         Espèce=NEW.Espèce,
         Culture=NEW.Culture,
         Quantité=NEW.Quantité,
         Notes=NEW.Notes
-     WHERE ID=OLD.ID;
+     WHERE (ID=OLD.ID)AND(NEW.Répartir ISNULL);
+     --Suppression de la ligne de récolte si répartition.
+     DELETE FROM Récoltes WHERE (ID=OLD.ID)AND(NEW.Répartir NOTNULL);
+     --Répartition de la quantité récoltée.
+     INSERT INTO Récoltes (Date,
+                           Espèce,
+                           Culture,
+                           Quantité,
+                           Notes)
+     SELECT coalesce(NEW.Date,min(Début_récolte,DATE('now'))),
+             NEW.Espèce,
+             C.Culture,
+             round(NEW.Quantité/(SELECT sum(Longueur) FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce))*C.Longueur,3),
+             NEW.Notes
+      FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce) C;
 END;;
 
 DROP TRIGGER IF EXISTS Récoltes__Saisies_DELETE;;
@@ -467,9 +496,73 @@ BEGIN
     DELETE FROM Récoltes WHERE ID=OLD.ID;
 END;;
 
+DROP TRIGGER IF EXISTS "Récoltes_INSERT";;
+CREATE TRIGGER "Récoltes_INSERT" AFTER INSERT ON Récoltes
+BEGIN
+     UPDATE Cultures
+       SET Début_récolte=(SELECT min(Date)
+                          FROM Récoltes
+                          WHERE Culture=NEW.Culture),
+           Fin_récolte=max((SELECT max(Date)
+                            FROM Récoltes
+                            WHERE Culture=NEW.Culture),
+                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+     WHERE Culture=NEW.Culture;
+END;;
+
+DROP TRIGGER IF EXISTS "Récoltes_UPDATE";;
+CREATE TRIGGER "Récoltes_UPDATE" AFTER UPDATE ON Récoltes
+BEGIN
+     UPDATE Cultures
+       SET Début_récolte=(SELECT min(Date)
+                          FROM Récoltes
+                          WHERE Culture=NEW.Culture),
+           Fin_récolte=max((SELECT max(Date)
+                            FROM Récoltes
+                            WHERE Culture=NEW.Culture),
+                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+     WHERE Culture=NEW.Culture;
+     UPDATE Cultures
+       SET Début_récolte=(SELECT min(Date)
+                          FROM Récoltes
+                          WHERE Culture=OLD.Culture),
+           Fin_récolte=max((SELECT max(Date)
+                            FROM Récoltes
+                            WHERE Culture=OLD.Culture),
+                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+     WHERE (NEW.Culture!=OLD.Culture)AND(Culture=OLD.Culture);
+END;;
+
+DROP TRIGGER IF EXISTS "Récoltes_DELETE";;
+CREATE TRIGGER "Récoltes_DELETE" AFTER DELETE ON Récoltes
+BEGIN
+    DELETE FROM Params WHERE Paramètre LIKE 'temp_%';
+    INSERT INTO Params (Paramètre, Valeur)
+    VALUES ('temp_ITP', (SELECT IT_Plante FROM Cultures WHERE Culture=OLD.Culture));
+
+     UPDATE Cultures
+     SET Début_récolte=CASE WHEN (SELECT count() FROM Récoltes WHERE Culture=OLD.Culture)>0
+                            THEN (SELECT min(Date) FROM Récoltes WHERE Culture=OLD.Culture)
+                            ELSE PlanifCultureCalcDate(coalesce(Date_plantation,Date_semis),
+                                                       (SELECT ITP.Déb_récolte FROM ITP
+                                                        WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
+                            END
+     WHERE Culture=OLD.Culture;
+     UPDATE Cultures
+     SET Fin_récolte=CASE WHEN (SELECT count() FROM Récoltes WHERE Culture=OLD.Culture)>0
+                          THEN max((SELECT max(Date) FROM Récoltes WHERE Culture=OLD.Culture),
+                                   CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+                          ELSE PlanifCultureCalcDate(coalesce(Début_récolte,Date_plantation,Date_semis),
+                                                     (SELECT ITP.Fin_récolte FROM ITP
+                                                      WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
+                          END
+     WHERE Culture=OLD.Culture;
+     DELETE FROM Params WHERE Paramètre LIKE 'temp_%';
+END;;
+
 DROP TRIGGER IF EXISTS Variétés_UPDATE_Nb_graines_g;;
 CREATE TRIGGER Variétés_UPDATE_Nb_graines_g AFTER UPDATE ON Variétés
-          WHEN (NEW.Nb_graines_g ISNULL) AND (NEW.Espèce NOTNULL) AND
+          WHEN (NEW.Nb_graines_g ISNULL OR NEW.Nb_graines_g='?') AND (NEW.Espèce NOTNULL) AND
                (SELECT Nb_graines_g NOTNULL
                   FROM Espèces E
                  WHERE E.Espèce=NEW.Espèce)

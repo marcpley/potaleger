@@ -5,7 +5,7 @@ QString sDDLTables = QStringLiteral(R"#(
 CREATE TABLE Apports (Apport TEXT PRIMARY KEY,
                       Description TEXT,
                       Poids_m² REAL,
-                      Notes) WITHOUT ROWID;
+                      Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
@@ -18,6 +18,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                                           WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis direct'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte'
                                           WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                       Saison TEXT AS (substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)),
                        Etat TEXT AS (CASE WHEN Terminée NOTNULL THEN 'Terminée' --gris
                                           WHEN Récolte_faite NOTNULL THEN 'A terminer' --bleu
                                           WHEN Plantation_faite NOTNULL THEN 'En place' --vert
@@ -25,7 +26,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                                                                                                    'Sous abris') --rouge
                                           ELSE 'Prévue'
                                           END),
-                       D_planif TEXT,-- Pour pouvir mettre une année simple quand on veut forcer un recalcul de planif.
+                       D_planif TEXT,-- Format TEXT pour pouvior mettre une année simple quand on veut forcer un recalcul de planif.
                        Date_semis DATE,
                        Semis_fait TEXT,
                        Date_plantation DATE,

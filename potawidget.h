@@ -32,15 +32,18 @@ public:
     PotaTableModel() {}
     // explicit PotaTableModel(QObject *parent = nullptr)
     //     : QSqlRelationalTableModel(parent) {}
+    QSqlDatabase *db;
     QString sOrderByClause="";
     QSet<QString> generatedColumns;
-    QSet<int> nonEditableColumns;
+    QStringList dataTypes;
+    QSet<int> nonEditableColumns,dateColumns;
     QSet<QModelIndex> modifiedCells;
     QSet<QModelIndex> commitedCells;
     QSet<QModelIndex> copiedCells;
-    QSet<int> rowsToRemove;
-    QSet<int> modifiedRows;
+    QSet<int> rowsToRemove,rowsToInsert;
+    //QSet<int> modifiedRows;
     QProgressBar* progressBar;
+    QLabel* label=nullptr;
 
     int FieldIndex(QString FieldName);
     QString FieldName(int index);
@@ -79,31 +82,38 @@ public:
     }
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override {
-        if (role == Qt::DisplayRole && rowsToRemove.contains(index.row())) {
-            return QVariant(); //Don't show text for rows to delete.
-        }
+        // if (role == Qt::DisplayRole && rowsToRemove.contains(index.row()))
+        //     return QVariant(); //Don't show text for rows to delete.
         if (role == Qt::FontRole && nonEditableColumns.contains(index.column())) {
             QFont font;
             font.setItalic(true);
             return font;
         }
         if (role == Qt::DisplayRole) {
-            QString columnName = headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
-            if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) {
-                QSqlQuery query;
-                QString primaryKey = headerData(0, Qt::Horizontal, Qt::DisplayRole).toString(); //First column must be primaryKey !
-                QVariant primaryKeyValue = record(index.row()).value(primaryKey);
+            // Because model->select() is overriden, the code below isn't necessary.
+            // QString columnName = headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
+            // if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) {
+            //     PotaQuery query;
+            //     QString primaryKey=PrimaryKeyFieldName(RealTableName());
+            //     QVariant primaryKeyValue = record(index.row()).value(primaryKey);
 
-                // Construire une requête pour lire directement la colonne générée
-                query.prepare(QString("SELECT %1 FROM %2 WHERE %3 = :key")
-                                  .arg(columnName)
-                                  .arg(tableName())
-                                  .arg(primaryKey));
-                query.bindValue(":key", primaryKeyValue);
+            //     // Construire une requête pour lire directement la colonne générée
+            //     query.prepare(QString("SELECT %1 FROM %2 WHERE %3 = :key")
+            //                       .arg(columnName)
+            //                       .arg(tableName())
+            //                       .arg(primaryKey));
+            //     query.bindValue(":key", primaryKeyValue);
 
-                if (query.exec() && query.next()) {
-                    return query.value(0).toString();//+"(q)";
-                }
+            //     if (query.exec() && query.next()) {
+            //         return query.value(0).toString()+"(q)";
+            //     }
+            // }
+
+            // #DateFormat
+            if (dateColumns.contains(index.column())) {
+            //QVariant value = data(index, Qt::EditRole);
+            //if (value.typeId() == QMetaType::QDate){
+                return data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy");
             }
         }
         return QSqlRelationalTableModel::data(index, role);
@@ -111,9 +121,10 @@ public:
 
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override {
         if (role == Qt::EditRole) {
-            if (QSqlRelationalTableModel::data(index, role).toString() != value.toString()) {
+            if (QSqlRelationalTableModel::data(index, role).toString() != value.toString() and
+                !nonEditableColumns.contains(index.column())) {
                 modifiedCells.insert(index);
-                modifiedRows.insert(index.row());
+                //modifiedRows.insert(index.row());
                 if (copiedCells.contains(index))
                     copiedCells.clear();
             }
@@ -128,6 +139,15 @@ public:
                     return true;
                 }
             }
+            // #DateFormat
+            if (dateColumns.contains(index.column())) {
+                QString dateString = value.toString();
+                QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
+                if (date.isValid()) {
+                    return QSqlRelationalTableModel::setData(index, date, role);
+                }
+            }
+
         }
 
         return QSqlRelationalTableModel::setData(index, value, role);
@@ -154,6 +174,7 @@ public:
             commitedCells.unite(modifiedCells);
             modifiedCells.clear();
             rowsToRemove.clear();
+            rowsToInsert.clear();
             return true;
         }
         return false;
@@ -165,9 +186,10 @@ public:
         copiedCells.clear();
         QApplication::clipboard()->setText("");
         rowsToRemove.clear();
+        rowsToInsert.clear();
     }
 
-    QString RealTableName() {
+    QString RealTableName() const {
         if (tableName().contains("__"))
             return tableName().first(tableName().indexOf("__"));
         else
@@ -175,14 +197,8 @@ public:
     }
 
     bool removeRow(int row, const QModelIndex &parent = QModelIndex()) {
-        if (!rowsToRemove.contains(row)) {
+        if (!rowsToRemove.contains(row) and !rowsToInsert.contains(row))
             rowsToRemove.insert(row);
-
-            // Effacer le contenu des cellules de la ligne avant de marquer pour suppression
-            for (int col = 0; col < columnCount(); ++col) {
-                setData(index(row, col), QVariant(), Qt::EditRole);
-            }
-        }
         return QSqlRelationalTableModel::removeRow(row, parent);
     }
 
@@ -233,7 +249,7 @@ private:
         for (const QModelIndex &index : selectedIndexes) {
             int row = index.row() - minRow;
             int col = index.column() - minCol;
-            clipboardGrid[row][col] = model()->data(index, Qt::DisplayRole).toString();
+            clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","sdff+54rg");
             dynamic_cast<PotaTableModel*>(model())->copiedCells.insert(index);
         }
 
@@ -277,10 +293,14 @@ private:
             clipboardData.append(row.split('\t'));
         }
         int clipboardRowCount = clipboardData.size();
-        int clipboardColCount = clipboardData.first().size();
+        int clipboardColCount;
 
         int SelectedCount=selectionModel->selectedIndexes().count();
         QModelIndex index;
+        PotaTableModel *m = dynamic_cast<PotaTableModel*>(model());
+        QStringList formats = {"yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "yy-MM-dd", "MM-dd-yyyy"};
+        QDate date;
+        bool noCentury=false;
         //Loop on selected cells for pasting
         for (int iSel=0;iSel<SelectedCount;iSel++)
         {
@@ -288,15 +308,38 @@ private:
             //Loop on clipboard rows.
             for (int iCB=0;iCB<clipboardRowCount;iCB++)
             {
+                clipboardColCount = clipboardData[iCB].size();
                 //Loop on clipboard columns.
                 for (int jCB=0;jCB<clipboardColCount;jCB++)
                 {
                     index=selectedIndexes.value(iSel).sibling(selectedIndexes.value(iSel).row()+iCB,
                                                               selectedIndexes.value(iSel).column()+jCB);
+                    //qDebug() << "clipboardData[iCB][jCB] : "+clipboardData[iCB][jCB];
                     if (index.isValid() and
-                        (clipboardData[iCB][jCB] != "erbg-Ds45") and
-                        !dynamic_cast<PotaTableModel*>(model())->nonEditableColumns.contains(index.column()))
-                        model()->setData(index,clipboardData[iCB][jCB], Qt::EditRole);
+                        (clipboardData[iCB][jCB] != "erbg-Ds45") and (!clipboardData[iCB][jCB].isEmpty()) and
+                        !m->nonEditableColumns.contains(index.column())) {
+                        if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="DATE") {
+                            for (const QString &format : formats) {
+                                date = QDate::fromString(clipboardData[iCB][jCB], format);
+                                if (date.isValid()) {
+                                    noCentury=(format.contains("yy") and !format.contains("yyyy"));
+                                    break;
+                                }
+                            }
+                            if (!date.isValid())
+                                m->setData(index,clipboardData[iCB][jCB], Qt::EditRole);//Try raw paste
+                            else {//Paste the formated date
+                                if (noCentury)
+                                    m->setData(index,date.toString("20yy-MM-dd"), Qt::EditRole);
+                                else
+                                    m->setData(index,date.toString("yyyy-MM-dd"), Qt::EditRole);
+                            }
+                        } else {
+                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::EditRole);
+                            // if (!m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::EditRole))
+                            //     m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::DisplayRole);
+                        }
+                    }
                 }
             }
         }
@@ -399,8 +442,13 @@ public:
         if (dateEdit) {
             if (index.data().isNull())
                 dateEdit->setDate(QDate::currentDate());
-            else
-                dateEdit->setDate(index.data().toDate());
+            else {
+                // #DateFormat
+                QString dateString = index.data().toString();
+                QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
+                //if (date.isValid()) {
+                dateEdit->setDate(date);//index.data().toDate()
+            }
             return;
         }
 
@@ -425,7 +473,7 @@ public:
     PotaTableModel *model;
     QTableView *tv;
     PotaItemDelegate *delegate;
-    PotaQuery *query;//for specials coded querys.
+    //PotaQuery *query;//for specials coded querys.
     QTabWidget *twParent;
     bool isCommittingError=false;
     QLabel *lTabTitle;
@@ -479,10 +527,9 @@ public:
 private:
     //Filtering
     bool bSetType=false;
-    QString sDataNameFilter;
-    QString sDataFilter;
-    void SetFilterParamsFrom(QString sDataName, QString sData);
-    void SetFilterTypeCombo(QString sDataName);
+    QString sFieldNameFilter,sDataTypeFilter,sDataFilter;
+    void SetFilterParamsFrom(QString sFieldName, QString sDataType, QString sData);
+    void SetFilterTypeCombo(QString sDataType);
     int iPositionCol=-1;
     QString sPositionRow="";
     QString sPositionRow2="";
@@ -497,7 +544,6 @@ private slots:
     void dataChanged(const QModelIndex &topLeft);//,const QModelIndex &bottomRight,const QList<int> &roles
     void headerRowClicked();//int logicalIndex
     void pbRefreshClick();
-    void pbEditClick();
     void pbCommitClick();
     void pbRollbackClick();
     void pbInsertRowClick();
@@ -508,6 +554,7 @@ private slots:
     void leFindTextEdited(const QString &text);
 
 public slots:
+    void pbEditClick();
     void pbFilterClick(bool checked);
     void pbFindFirstClick();
     void pbFindNextClick();
