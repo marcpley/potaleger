@@ -78,8 +78,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->model->label=ui->lDBErr;
         //w->query->lErr=ui->lDBErr;
         //w->query->db
+        //w->userDataEditing=&userDataEditing;
 
-        dbSuspend(&db, false,ui->lDBErr);
+       //dbSuspend(&db,false,userDataEditing,ui->lDBErr);
         w->Init(sTableName);
 
         if (w->model->SelectShowErr()) {
@@ -200,14 +201,15 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             ui->mExporter->setIcon(QIcon(TablePixmap(w->model->tableName(),"  >>")));
 
             w->tv->setFocus();
-            dbSuspend(&db, true,ui->lDBErr);
+           //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
             SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
             return true;
         }
-        else
+        else {
             w->deleteLater();//Echec de la création de l'onglet.
+           //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
+        }
     }
-    dbSuspend(&db, true,ui->lDBErr);
     return false;
 };
 
@@ -585,6 +587,8 @@ void MainWindow::on_mImporter_triggered()
                 if (!w->model->RevertAllShowErr())
                     return;
             }
+        } else if (!w->pbEdit->isChecked()){
+            w->pbEditClick();
         }
 
         if (PathImport.isEmpty())
@@ -678,7 +682,7 @@ void MainWindow::on_mImporter_triggered()
             TypeImport=choice;
         }
 
-        dbSuspend(&db, false,ui->lDBErr);
+       //dbSuspend(&db,false,userDataEditing,ui->lDBErr);
 
         //Backup the table.
         //dbOpen(ui->lDB->text(),false,false,true);//Enable the DROP TABLE.
@@ -696,7 +700,7 @@ void MainWindow::on_mImporter_triggered()
         if (choice==5 or choice==6) {//Delete selected lines
             if(w->model->rowCount()>1 and
                 !OkCancelDialog(tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning)) {
-                dbSuspend(&db, true,ui->lDBErr);
+               //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
                 return;
             }
             ui->progressBar->setValue(0);
@@ -826,7 +830,7 @@ void MainWindow::on_mImporter_triggered()
 
         //pQuery.ExecShowErr("DROP TABLE IF EXISTS temp.Temp_"+w->model->tableName());
         ui->progressBar->setVisible(false);
-        dbSuspend(&db, true,ui->lDBErr);
+       //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
         MessageDialog(QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
                       QObject::tr("%1 lignes créées").arg(nbCreatedRows)+"\n"+
@@ -1098,6 +1102,27 @@ void MainWindow::on_mCuATerminer_triggered()
 void MainWindow::on_mCuToutes_triggered()
 {
     OpenPotaTab("Cultures","Cultures",tr("Cultures"));
+}
+
+//Menu Stock
+void MainWindow::on_mDestinations_triggered()
+{
+    OpenPotaTab("Destinations__conso","Destinations__conso",tr("Destinations"));
+}
+
+void MainWindow::on_mEsSaisieSorties_triggered()
+{
+    if (OpenPotaTab( "Consommations__Saisies","Consommations__Saisies",tr("Consommations"))) {
+            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+            w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+            //Go to last row.
+            w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+        }
+}
+
+void MainWindow::on_mInventaire_triggered()
+{
+    OpenPotaTab( "Especes__inventaire","Espèces__inventaire",tr("Inventaire"));
 }
 
 //Menu Analyses

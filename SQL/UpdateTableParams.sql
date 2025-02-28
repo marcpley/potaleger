@@ -20,6 +20,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Cultures', 'C_retard_saisie_récolte', 'Nombre de jours après la date de fin de récolte (Fin_récolte) pendant lequel il est possible de saisir les récoltes', '30', 'jours'),
             ('Cultures', 'C_horizon_terminer', 'Voir les cultures à terminer sur une période de', '90', 'jours'),
             ('Cultures', 'C_modif_N_culture', 'Permettre de modifier les n° de cultures', 'Non', 'Oui/Non'),
+            ('Consommations', 'Conso_historique', 'Voir les consommations anciennes de', '90', 'jours'),
             ('Analyses', 'Tolérance_A_semis', 'Date de semis incohérente si elle est avant la période prévue, avance de plus de', '30', 'jours'),
             ('Analyses', 'Tolérance_R_semis', 'Date de semis incohérente si elle est après la période prévue, retard de plus de', '30', 'jours'),
             ('Analyses', 'Tolérance_A_plantation', 'Date de plantation incohérente si elle est avant la période prévue, avance de plus de', '30', 'jours'),

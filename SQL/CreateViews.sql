@@ -58,6 +58,52 @@ CREATE VIEW Info_Potaléger AS -- Rendre traductible
                                    FROM Cultures
                                   WHERE Terminée ISNULL);
 
+CREATE VIEW Consommations__Saisies AS SELECT
+       Co.ID,
+       Co.Date,
+       Co.Espèce,
+       Co.Quantité,
+       Co.Prix,
+       Co.Destination,
+       E.Inventaire
+       +CAST((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=Co.Espèce)AND(Re.Date BETWEEN E.Date_inv AND Co.Date))AS REAL)
+       -CAST((SELECT sum(Quantité) FROM Consommations Co2 WHERE (Co2.Espèce=Co.Espèce)AND(Co2.Date BETWEEN E.Date_inv AND Co.Date))AS REAL) Stock,
+       (SELECT sum(Quantité) FROM Consommations Co3 WHERE (Co3.Espèce=Co.Espèce)AND
+                                                               (Co3.Destination=Co.Destination)AND
+                                                               (Co3.Date BETWEEN D.Date_RAZ AND Co.Date)) Sorties,
+       Co.Notes
+FROM Consommations Co
+JOIN Espèces E USING(Espèce)
+LEFT JOIN Destinations D USING(Destination)
+WHERE Co.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='Conso_historique')||' days')
+ORDER BY Co.Date,E.Espèce,D.Destination;
+
+CREATE VIEW Destinations__conso AS SELECT
+    D.Destination,
+    D.Adresse,
+    D.Site_web,
+    D.Date_RAZ,
+    (SELECT sum(Quantité) FROM Consommations Co WHERE (Co.Destination=D.Destination)AND(Co.Date >= D.Date_RAZ)) Consommation,
+    (SELECT sum(Quantité*Prix) FROM Consommations Co WHERE (Co.Destination=D.Destination)AND(Co.Date >= D.Date_RAZ)) Valeur,
+    D.Active,
+    D.Notes
+FROM Destinations D;
+
+CREATE VIEW Espèces__inventaire AS SELECT
+    E.Espèce,
+    E.Date_inv,
+    E.Inventaire,
+    E.Prix_kg,
+    E.Inventaire
+    +CAST((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL)
+    -CAST((SELECT sum(Quantité) FROM Consommations Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL) Stock,
+    (E.Inventaire
+     +CAST((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL)
+     -CAST((SELECT sum(Quantité) FROM Consommations Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL))*E.Prix_kg Valeur,
+    Notes
+FROM Espèces E
+WHERE E.Conservation NOT NULL;
+
 CREATE VIEW Variétés__inv_et_cde AS SELECT E.Famille,
        V.Espèce,
        V.Variété,
@@ -132,16 +178,6 @@ CREATE VIEW ITP__Tempo AS SELECT I.IT_plante,
 FROM ITP I
 LEFT JOIN Espèces E USING(Espèce);
 --ORDER BY coalesce(I.Déb_semis,I.Déb_plantation,I.Type_culture);
-
--- CREATE VIEW Espèces__Stock_récoltes AS SELECT
---     E.Espèce,
---     E.Inventaire,
---     E.Date_inv,
---     E.Inventaire+(SELECT sum(R.Quantité)
---                   FROM Récoltes R LEFT JOIN Cultures C USING(Culture)
---                                   LEFT JOIN ITP I USING(IT_plante)
---                   WHERE I.Espèce=E.Espèce) Stock_récolte
--- FROM Espèces E WHERE E.Inventaire NOTNULL;
 
 CREATE VIEW Rotations_détails__Tempo AS SELECT
        R.ID,

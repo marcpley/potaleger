@@ -377,7 +377,7 @@ void PotaWidget::curChanged(const QModelIndex cur)//, const QModelIndex pre
         } else {
             SetVisibleEditNotes(false);
         }
-        dbSuspend(model->db,true,model->label);//Normaly not necessary but could correct a case where suspend is wrongly OFF.
+        //dbSuspend(model->db,true,pbEdit->isChecked(),model->label);//Normaly not necessary but could correct a case where suspend is wrongly OFF.
     }
 }
 
@@ -592,7 +592,9 @@ void PotaWidget::pbEditClick(){
         }
     }
 
-    dbSuspend(model->db,true,model->label);
+    //*userDataEditing=true;
+   //dbSuspend(model->db,false,true,model->label);
+    pbRefreshClick();
     tv->setFocus();//This force columns redraw
     //pbEdit->setFocus();
 }
@@ -855,7 +857,7 @@ bool PotaTableModel::select()  {
     //return QSqlRelationalTableModel::select();
     //If use of QSqlRelationalTableModel select(), the generated columns and null FK value rows are not displayed. #FKNull
 
-    dbSuspend(db, false,label);
+    //dbSuspend(db,false,true,label);
 
     progressBar->setValue(0);
     progressBar->setMaximum(0);
@@ -905,7 +907,7 @@ bool PotaTableModel::select()  {
     // timer->deleteLater();
     progressBar->setVisible(false);
     bool result=(lastError().type() == QSqlError::NoError);
-    dbSuspend(db, true,label);
+    //dbSuspend(db,true,!wasSuspended,label);
     return result;
 }
 
@@ -954,7 +956,7 @@ bool PotaTableModel::SubmitAllShowErr() {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
     int i = rowCount();
     setLastError(QSqlError());
-    dbSuspend(db, false,label);
+    //dbSuspend(db,false,true,label);
     submitAll();
     if (lastError().type() == QSqlError::NoError) {
         SetColoredText(pw->lErr,tableName()+": "+tr("modifications enregistrées."),"Ok");
@@ -970,13 +972,13 @@ bool PotaTableModel::SubmitAllShowErr() {
             commitedCells.clear();
             copiedCells.clear();
         }
-        dbSuspend(db, true,label);
+        //dbSuspend(db,true,true,label);
         return true;
     } else {
         SetColoredText(pw->lErr,lastError().text(),"Err");
         qDebug() <<  lastError().text();
         pw->isCommittingError=true;
-        dbSuspend(db, true,label);
+        //dbSuspend(db,true,true,label);
         return false;
     }
 }
@@ -984,7 +986,7 @@ bool PotaTableModel::SubmitAllShowErr() {
 bool PotaTableModel::RevertAllShowErr() {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
     setLastError(QSqlError());
-    dbSuspend(db, false,label);
+    //dbSuspend(db,false,true,label);
     revertAll();
     if (lastError().type() == QSqlError::NoError) {
         SetColoredText(pw->lErr,tableName()+": "+tr("modifications abandonnées."),"Info");
@@ -994,12 +996,12 @@ bool PotaTableModel::RevertAllShowErr() {
         pw->pbFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
         //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().replace("color: red;", ""));
-        dbSuspend(db, true,label);
+        //dbSuspend(db,true,true,label);
         return true;
     } else {
         SetColoredText(pw->lErr,lastError().text(),"Err");
         pw->isCommittingError=true;
-        dbSuspend(db, true,label);
+        //dbSuspend(db,true,true,label);
         return false;
     }
 }
@@ -1164,7 +1166,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
             c=cTableColor;
         c.setAlpha(30);
     }
-    if (c.isValid()) {
+    if (!pw->model->rowsToInsert.contains(index.row()) and c.isValid()) {
         b.setColor(c);
         painter->fillRect(option.rect,b);
     }
@@ -1366,8 +1368,11 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
 
         QString filter=FkFilter(model->RealTableName(),sFieldName,index);
-        if (filter!="")
+        if (filter!="") {
+            //dbSuspend(model->db,false,true,model->label);
             model->relationModel(index.column())->setFilter(filter);
+            //dbSuspend(model->db,true,true,model->label);
+        }
         comboBox->addItem("", QVariant()); // Option for setting a NULL
         for (int i = 0; i < relationModel->rowCount(); ++i) {
             QString value = relationModel->record(i).value(relationIndex).toString();
@@ -1379,7 +1384,7 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             displayValue=RowSummary(relationModel->tableName(),relationModel->record(i));
             comboBox->addItem( displayValue,value);
         }
-        qDebug() << "set combo FK";
+
 
         return comboBox;
     } else if (sDataType=="REAL"){
@@ -1390,6 +1395,7 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         QDateEdit *dateEdit = new QDateEdit(parent);
         dateEdit->setButtonSymbols(QAbstractSpinBox::NoButtons);
         //dateEdit->setDisplayFormat("yyyy-MM-dd");
+        dateEdit->setDate(QDate::currentDate());
         return dateEdit;
     }
     return QStyledItemDelegate::createEditor(parent, option, index); // Standard editor

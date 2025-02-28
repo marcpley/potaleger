@@ -47,6 +47,6 @@ QString StrFirst(QString s, int i);
 QString StrLast(QString s, int i);
 QString StrReplace(QString s, const QString sTarg, const QString sRepl);
 QString SubString(QString s, int iDeb, int iFin);
-bool dbSuspend(QSqlDatabase *db, bool bSuspend, QLabel *ldbs);
+//bool dbSuspend(QSqlDatabase *db, bool bSuspend, bool bEditing, QLabel *ldbs);
 
 #endif // POTAUTILS_H

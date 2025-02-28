@@ -32,6 +32,9 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
     for (int i = 0; i < ui->mCultures->actions().count(); i++)
         ui->mCultures->actions().at(i)->setEnabled(b);
 
+    for (int i = 0; i < ui->mStock->actions().count(); i++)
+        ui->mStock->actions().at(i)->setEnabled(b);
+
     for (int i = 0; i < ui->mAnalyses->actions().count(); i++)
         ui->mAnalyses->actions().at(i)->setEnabled(b);
 }
@@ -78,7 +81,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
     }
 
     PotaQuery query(db);
-    if (!query.exec("PRAGMA journal_mode = DELETE;") or
+    if (!query.exec("PRAGMA journal_mode = WAL;") or //query.exec("PRAGMA journal_mode=DELETE;");
         !query.exec("PRAGMA locking_mode = NORMAL;") or
         !query.exec("PRAGMA quick_check;") or
         !query.next()) {
@@ -129,6 +132,8 @@ void MainWindow::dbClose()
 
 bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 {
+    //userDataEditing=false;
+
     if (!dbOpen(sFichier,(sNew!=""),false,true))
         return false;
 
@@ -245,7 +250,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         return false;
     }
 
-    dbSuspend(&db, true,ui->lDBErr);
+   //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
     SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
 
@@ -258,6 +263,7 @@ void MainWindow::PotaDbClose()
     SetEnabledDataMenuEntries(false);
 
     dbClose();
+    //userDataEditing=false;
     ui->tbInfoDB->clear();
     ui->lDB->clear();
     ui->lDBErr->clear();
@@ -370,9 +376,14 @@ void MainWindow::SetUi(){
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
     ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
 
+    ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
+    ui->mEsSaisieSorties->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
+    ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
+
     ui->mAnaITP->setIcon(QIcon(TablePixmap("ITP__analyse","")));
     ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
     ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
+    ui->mAnaDestinations->setIcon(QIcon(TablePixmap("Destinations__conso","")));
 
 }
 

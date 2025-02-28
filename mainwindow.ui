@@ -478,12 +478,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="mImporter"/>
     <addaction name="mExporter"/>
    </widget>
+   <widget class="QMenu" name="mStock">
+    <property name="title">
+     <string>Stock</string>
+    </property>
+    <addaction name="mDestinations"/>
+    <addaction name="mEsSaisieSorties"/>
+    <addaction name="mInventaire"/>
+   </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
    <addaction name="mBaseData"/>
    <addaction name="mAssolement"/>
    <addaction name="mPlanif"/>
    <addaction name="mCultures"/>
+   <addaction name="mStock"/>
    <addaction name="mAnalyses"/>
   </widget>
   <action name="mSelecDB">
@@ -892,8 +901,43 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
   </action>
   <action name="mIncDatesCultures">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Incohérences dates cultures</string>
+   </property>
+  </action>
+  <action name="mDestinations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Destinations</string>
+   </property>
+  </action>
+  <action name="mEsSaisieSorties">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Saisie des sorties</string>
+   </property>
+  </action>
+  <action name="mInventaire">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Inventaire</string>
+   </property>
+  </action>
+  <action name="mAnaDestinations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Destinations</string>
    </property>
   </action>
  </widget>

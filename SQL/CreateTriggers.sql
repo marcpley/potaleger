@@ -1,6 +1,43 @@
 QString sDDLTriggers = QStringLiteral(R"#(
 -- BEGIN TRANSACTION;;
 
+DROP TRIGGER IF EXISTS Consommations__Saisies_INSERT;;
+CREATE TRIGGER Consommations__Saisies_INSERT INSTEAD OF INSERT ON Consommations__Saisies
+BEGIN
+    INSERT INTO Consommations (Date,
+                               Espèce,
+                               Quantité,
+                               Prix,
+                               Destination,
+                               Notes)
+    VALUES (coalesce(NEW.Date,DATE('now')),
+            NEW.Espèce,
+            NEW.Quantité,
+            coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)),
+            NEW.Destination,
+            NEW.Notes);
+END;;
+
+DROP TRIGGER IF EXISTS Consommations__Saisies_UPDATE;;
+CREATE TRIGGER Consommations__Saisies_UPDATE INSTEAD OF UPDATE ON Consommations__Saisies
+BEGIN
+    UPDATE Consommations SET
+        Date=coalesce(NEW.Date,DATE('now')),
+        Espèce=NEW.Espèce,
+        Quantité=NEW.Quantité,
+        Prix=coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)),
+        Destination=NEW.Destination,
+        Notes=NEW.Notes
+     WHERE ID=OLD.ID;
+END;;
+
+DROP TRIGGER IF EXISTS Consommations__Saisies_DELETE;;
+CREATE TRIGGER Consommations__Saisies_DELETE INSTEAD OF DELETE ON Consommations__Saisies
+BEGIN
+    DELETE FROM Consommations WHERE ID=OLD.ID;
+END;;
+
+
 DROP TRIGGER IF EXISTS Cultures_INSERT_Planifier;;
 CREATE TRIGGER Cultures_INSERT_Planifier AFTER INSERT ON Cultures
           WHEN (NEW.Terminée ISNULL) AND
@@ -302,6 +339,56 @@ BEGIN
      WHERE Culture=NEW.Culture;
 END;;
 
+DROP TRIGGER IF EXISTS Destinations__conso_INSERT;;
+CREATE TRIGGER Destinations__conso_INSERT INSTEAD OF INSERT ON Destinations__conso
+BEGIN
+    INSERT INTO Destinations (
+        Destination,
+        Adresse,
+        Site_web,
+        Date_RAZ,
+        Active,
+        Notes)
+    VALUES (
+        NEW.Destination,
+        NEW.Adresse,
+        NEW.Site_web,
+        NEW.Date_RAZ,
+        NEW.Active,
+        NEW.Notes);
+END;;
+
+DROP TRIGGER IF EXISTS Destinations__conso_UPDATE;;
+CREATE TRIGGER Destinations__conso_UPDATE INSTEAD OF UPDATE ON Destinations__conso
+BEGIN
+    UPDATE Destinations SET
+        Destination=NEW.Destination,
+        Adresse=NEW.Adresse,
+        Site_web=NEW.Site_web,
+        Date_RAZ=NEW.Date_RAZ,
+        Active=NEW.Active,
+        Notes=NEW.Notes
+    WHERE Destination=NEW.Destination;
+END;;
+
+DROP TRIGGER IF EXISTS Destinations__conso_DELETE;;
+CREATE TRIGGER Destinations__conso_DELETE INSTEAD OF DELETE ON Destinations__conso
+BEGIN
+    DELETE FROM Destinations
+    WHERE Destination=OLD.Destination;
+END;;
+
+DROP TRIGGER IF EXISTS Espèces__inventaire_UPDATE;;
+CREATE TRIGGER Espèces__inventaire_UPDATE INSTEAD OF UPDATE ON Espèces__inventaire
+BEGIN
+    UPDATE Espèces SET
+        Date_inv=NEW.Date_inv,
+        Inventaire=NEW.Inventaire,
+        Prix_kg=NEW.Prix_kg,
+        Notes=NEW.Notes
+     WHERE Espèce=NEW.Espèce;
+END;;
+
 DROP TRIGGER IF EXISTS ITP_UPDATE_FinsPériodes;;
 CREATE TRIGGER ITP_UPDATE_FinsPériodes AFTER UPDATE ON ITP
           WHEN (NEW.Déb_semis NOTNULL AND NEW.Fin_semis ISNULL) OR
@@ -377,6 +464,16 @@ DROP TRIGGER IF EXISTS ITP__Tempo_DELETE;;
 CREATE TRIGGER ITP__Tempo_DELETE INSTEAD OF DELETE ON ITP__Tempo
 BEGIN
     DELETE FROM ITP WHERE IT_plante=OLD.IT_plante;
+END;;
+
+DROP TRIGGER IF EXISTS "Rotations_détails_INSERT";;
+CREATE TRIGGER "Rotations_détails_INSERT" AFTER INSERT ON Rotations_détails
+BEGIN
+     UPDATE Rotations
+       SET Nb_années=(SELECT max(Année)
+                        FROM Rotations_détails
+                       WHERE Rotation=NEW.Rotation)
+     WHERE Rotation=NEW.Rotation;
 END;;
 
 DROP TRIGGER IF EXISTS "Rotations_détails_UPDATE";;
@@ -558,6 +655,20 @@ BEGIN
                           END
      WHERE Culture=OLD.Culture;
      DELETE FROM Params WHERE Paramètre LIKE 'temp_%';
+END;;
+
+DROP TRIGGER IF EXISTS Variétés_INSERT_Nb_graines_g;;
+CREATE TRIGGER Variétés_INSERT_Nb_graines_g AFTER INSERT ON Variétés
+          WHEN (NEW.Nb_graines_g ISNULL OR NEW.Nb_graines_g='?') AND (NEW.Espèce NOTNULL) AND
+               (SELECT Nb_graines_g NOTNULL
+                  FROM Espèces E
+                 WHERE E.Espèce=NEW.Espèce)
+BEGIN
+    UPDATE Variétés
+       SET Nb_graines_g=coalesce( (SELECT Nb_graines_g
+                                     FROM Espèces E
+                                    WHERE E.Espèce=NEW.Espèce), 0)
+     WHERE Variété=NEW.Variété;
 END;;
 
 DROP TRIGGER IF EXISTS Variétés_UPDATE_Nb_graines_g;;

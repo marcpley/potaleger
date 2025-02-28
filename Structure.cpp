@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQueryModel>
-#include "SQL/UpdateStru2024-12-30_2025-01-20.sql"
+#include "SQL/UpdateStru.sql"
 #include "SQL/CreateTables.sql"
 #include "SQL/CreateViews.sql"
 #include "SQL/CreateBaseData.sql"
@@ -22,6 +22,11 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     bool bResult=true;
     QString sResult="";
 
+    if (!model->ExecShowErr("PRAGMA locking_mode = EXCLUSIVE;")) {
+        ui->tbInfoDB->append(tr("Impossible d'obtenir un accès exclusif à la BDD."));
+        model->ExecShowErr("PRAGMA locking_mode = NORMAL;");
+        return false;
+    }
     if (!model->ExecShowErr("PRAGMA foreign_keys = OFF")) {
         ui->tbInfoDB->append(tr("Impossible de désactiver les clés étrangères."));
         return false;
@@ -78,7 +83,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         dbClose();
         dbOpen(sDbFile,false,false,false);
 
-        if (bResult and(sDBVersion == "2024-12-30")) { //Specific update shema.
+        if (bResult and(sDBVersion == "2024-12-30")) { //Useless specific update shema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
@@ -86,7 +91,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-01-20 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-01-20";
         }
-
+        if (bResult and(sDBVersion == "2025-01-20")) { //Adding tables: Destinations, Consommations.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = model->ExecMultiShowErr(sDDL20250227,";",ui->progressBar);
+            sResult.append(sDBVersion+" -> 2025-02-27 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-02-27";
+        }
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
@@ -221,7 +233,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         ui->tbInfoDB->append(tr("Impossible d'activer les clés étrangères."));
         return false;
     }
-
+    if (bResult and !model->ExecShowErr("PRAGMA locking_mode = NORMAL;")) {//No test yet
+        ui->tbInfoDB->append(tr("Impossible d'annuler l'accès exclusif."));
+        return false;
+    }
     if (bResult)
     {
         if (sDBVersion == ui->lVerBDDAttendue->text())

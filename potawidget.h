@@ -516,6 +516,7 @@ public:
     QAction *mEditNotes;
     //QAction *mFilterFind;
 
+    //bool *userDataEditing;
     bool bUserCurrChanged=true;
     int iTypeText=0;
     int iTypeTextNbCar=5;

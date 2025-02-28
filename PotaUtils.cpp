@@ -9,7 +9,7 @@
 
 bool PotaQuery::ExecShowErr(QString query)
 {
-    dbSuspend(&m_db, false,lErr);
+   //dbSuspend(&m_db,false,true,lErr);
     clear();
 
     exec(query);
@@ -312,38 +312,51 @@ QString SubString(QString s, int iDeb, int iFin) {
     return result;
 }
 
-bool dbSuspend(QSqlDatabase *db, bool bSuspend, QLabel *ldbs) {
-    //QSqlDatabase db = QSqlDatabase::database();
-    if(bSuspend) {
-        if (db->isOpen()){
-            PotaQuery q1(*db);
-            q1.exec("SELECT define_free();");
-            db->close();
-            if (ldbs)
-                SetColoredText(ldbs,"Released database","Ok");
-            qDebug() << "dbSuspend ON";
-        }
-        return true;
-    } else {
-        if (!db->isOpen()){
-            if (db->open()){
-                qDebug() << "dbSuspend OFF";
-                if(initSQLean(db)){
-                    if (ldbs)
-                        SetColoredText(ldbs,"Database exclusive access...","Err");
-                    return true;
-                } else {
-                    db->close();
-                    qDebug() << "dbSuspend ON (Err SQLean)";
-                    return false;
-                }
-            } else {
-                qDebug() << "dbSuspend ON (Err open)";
-                return false;
-            }
-        } else {
-            return true;
-        }
+//booldbSuspend(QSqlDatabase *db, bool bSuspend, bool bEditing, QLabel *ldbs) {
+    //return true;
+    // //QSqlDatabase db = QSqlDatabase::database();
+    // if(bSuspend) {
+    //     if (dbIsOpen and !bEditing){//db->isOpen() and
+    //         // PotaQuery q1(*db);
+    //         // q1.exec("SELECT define_free();");
+    //         db->close();
+    //         if (ldbs)
+    //             SetColoredText(ldbs,"Database released","Ok");
+    //         if (db->isOpen())
+    //             qDebug() << "db open (fail to close)";
+    //         else
+    //             qDebug() << "db closed";
+    //         dbIsOpen=db->isOpen();
+    //     }
+    //     dbIsOpen=false;
+    //     return true;
+    // } else {
+    //     if (!dbIsOpen){
+    //         if (db->open()){
+    //             if(initSQLean(db)){
+    //                 if (ldbs)
+    //                     SetColoredText(ldbs,"Database exclusive access...","Err");
+    //                 qDebug() << "db open";
+    //                 dbIsOpen=true;
+    //                 return true;
+    //             } else {
+    //                 db->close();
+    //                 qDebug() << "db open (Err SQLean)";
+    //                 dbIsOpen=true;
+    //                 return false;
+    //             }
+    //         } else {
+    //             if (db->isOpen())
+    //                 qDebug() << "db open";
+    //             else
+    //                 qDebug() << "db close (fail to open)";
+    //             dbIsOpen=db->isOpen();
+    //             return false;
+    //         }
+    //     } else {
+    //     //     qDebug() << "dbSuspend already OFF";
+    //          return true;
+    //     }
 
-    }
-}
+    // }
+//}

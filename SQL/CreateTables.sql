@@ -7,6 +7,14 @@ CREATE TABLE Apports (Apport TEXT PRIMARY KEY,
                       Poids_m² REAL,
                       Notes TEXT) WITHOUT ROWID;
 
+CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                       Date DATE DEFAULT (DATE('now')) NOT NULL,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+                       Quantité REAL NOT NULL,
+                       Prix REAL,
+                       Destination TEXT REFERENCES Destinations (Destination) ON DELETE SET NULL ON UPDATE CASCADE,
+                       Notes TEXT);
+
 CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
                        Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE,
@@ -28,17 +36,24 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                                           END),
                        D_planif TEXT,-- Format TEXT pour pouvior mettre une année simple quand on veut forcer un recalcul de planif.
                        Date_semis DATE,
-                       Semis_fait TEXT,
+                       Semis_fait BOOL,
                        Date_plantation DATE,
-                       Plantation_faite TEXT,
+                       Plantation_faite BOOL,
                        Début_récolte DATE,
                        Fin_récolte DATE,
-                       Récolte_faite TEXT,
-                       Terminée TEXT,
+                       Récolte_faite BOOL,
+                       Terminée BOOL,
                        Longueur REAL,
                        Nb_rangs REAL,
                        Espacement REAL,
                        Notes TEXT);
+
+CREATE TABLE Destinations (Destination TEXT PRIMARY KEY,
+                           Adresse TEXT,
+                           Site_web TEXT,
+                           Date_RAZ DATE,
+                           Active BOOL DEFAULT ('x'),
+                           Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY,
                       Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE,
@@ -50,9 +65,11 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY,
                       FG REAL,
                       T_germ TEXT,
                       Levée REAL,
-                      -- Inventaire REAL,
-                      -- Date_inv DATE,
-                      A_planifier TEXT DEFAULT ('x'),
+                      Date_inv DATE,
+                      Inventaire REAL,
+                      Prix_kg REAL,
+                      Conservation BOOL,
+                      A_planifier BOOL DEFAULT ('x'),
                       Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Familles (Famille TEXT PRIMARY KEY,
