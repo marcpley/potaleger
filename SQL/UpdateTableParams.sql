@@ -6,9 +6,10 @@ CREATE TABLE Temp_Params AS SELECT * FROM Params;
 
 DROP TABLE Params;
 
-CREATE TABLE Params (Section TEXT, Paramètre TEXT, Description TEXT, Valeur TEXT, Unité TEXT);
+CREATE TABLE Params (Section TEXT, Paramètre TEXT PRIMARY KEY, Description TEXT, Valeur TEXT, Unité TEXT);
 INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
     VALUES  ('Général', 'Utilisateur', 'Personne, entreprise ou organisation utilisant cette BDD Potaléger', NULL, NULL),
+            ('Général', 'Montrer_modifs', 'Montrer les données modifiées depuis le passage en mode édition (plus lent)', 'Oui', 'Oui/Non'),
             ('Données de base', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production. nEx: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
             ('Planification', 'Année_culture', 'Année en cours de culture', '2024', NULL), --todo
             ('Planification', 'Année_planif', 'Année à planifier', '2025', NULL),

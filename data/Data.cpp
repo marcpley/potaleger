@@ -60,13 +60,13 @@ QString FkFilter(const QString sTableName,const QString sFieldName, const QModel
         if (sTableName=="Cultures") {
             if (sFieldName=="Variété")
                 filter="Espèce=(SELECT Espèce FROM ITP I WHERE I.IT_plante='"+
-                       index.siblingAtColumn(model->fieldIndex("IT_plante")).data().toString()+
+                       StrReplace(index.siblingAtColumn(model->fieldIndex("IT_plante")).data().toString(),"'","''")+
                        "')";
             // else if (sFieldName=="IT_plante")
             //     filter="Espèce IN (SELECT E.Espèce FROM Espèces E WHERE E.A_planifier NOTNULL)";
         } else if (sTableName=="Récoltes") {
             if (sFieldName=="Culture")
-                filter="Culture IN (SELECT Culture FROM Repartir_Recolte_sur('*','"+index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString()+"'))";
+                filter="Culture IN (SELECT Culture FROM Repartir_Recolte_sur('*','"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"'))";
             else if (sFieldName=="Espèce")
                 filter="Espèce IN (SELECT Espèce FROM Repartir_Recolte_sur('*',NULL))";
             qDebug() << "FkFilter: " << filter;
@@ -144,6 +144,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Date_plantation" or
                       sFieldName=="Plantation_faite" or
                       sFieldName=="Début_récolte" or
+                      sFieldName=="Récolte_com" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
                       sFieldName=="Terminée" or
@@ -181,6 +182,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Date_plantation" or
                       sFieldName=="Plantation_faite" or
                       sFieldName=="Début_récolte" or
+                      sFieldName=="Récolte_com" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
                       sFieldName=="Terminée" or
@@ -189,6 +191,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
         bReadOnly = !(sFieldName=="Date_semis" or
                       sFieldName=="Date_plantation" or
                       sFieldName=="Début_récolte" or
+                      sFieldName=="Récolte_com" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
                       sFieldName=="Terminée" or
@@ -261,6 +264,8 @@ QColor RowColor(QString sValue){
         c=cSousAbris;
     else if (sValue=="En place")
         c=cEnPlace;
+    else if (sValue=="Récolte")
+        c=cRecolte;
     else if (sValue=="A terminer")
         c=cATerminer;
     else if (sValue=="Terminée")
@@ -534,7 +539,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Automatique, en fonction des date de semis, plantation et récolte.");
         else if (sFieldName=="Etat")
             sToolTip=QObject::tr("Automatique, en fonction des semis, plantation et récolte faites ou pas.\n"
-                                   "Donne la couleur de la ligne dans les tableaux de données.");
+                                 "Donne la couleur de la ligne dans les tableaux de données.");
         else if (sFieldName=="Nb_rangs")
             sToolTip=QObject::tr("Nombre de rangs cultivés sur la planche.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         else if (sFieldName=="Longueur")
@@ -654,6 +659,9 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                  "(pas de remise à zéro tous les ans).");
         else if (sFieldName=="D_planif")
             sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte.");
+        else if (sFieldName=="Récolte_com")
+            sToolTip=QObject::tr("Récolte commencée.")+"\n"+
+                     QObject::tr("Va être mis à jour lors de la saisie des récoltes.");
         else if (sFieldName=="Terminée")
             sToolTip=QObject::tr("La planche est fermée, disponible pour la culture suivante.\nSaisissez 'NS' (non significative) si la culture ne doit pas être prise en compte dans les analyses.");
         //Destinations

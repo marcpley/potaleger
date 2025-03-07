@@ -31,10 +31,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         ui->tbInfoDB->append(tr("Impossible de désactiver les clés étrangères."));
         return false;
     }
-    ui->progressBar->setValue(0);
-    ui->progressBar->setMaximum(0);
-    ui->progressBar->setFormat("%p%");
-    ui->progressBar->setVisible(true);
+    AppBusy(true,ui->progressBar,0,"%p%");
 
     if (sDBVersion == "New" or sDBVersion == "NewWithBaseData")
     {
@@ -46,7 +43,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 ui->progressBar->setFormat("BASE DATA %p%");
                 if (!model->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar,true)) {
                     ui->tbInfoDB->append(tr("Echec de la création des données de base")+" ("+ui->lVerBDDAttendue->text()+")");
-                    ui->progressBar->setVisible(false);
+                    AppBusy(false,ui->progressBar);
                     return false;
                 }
                 sResult.append("Create base data : ok\n");
@@ -54,7 +51,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sDBVersion = DbVersion;//"2024-12-30";
         } else {
             ui->tbInfoDB->append(tr("Echec de la création de la BDD vide")+" ("+ui->lVerBDDAttendue->text()+")");
-            ui->progressBar->setVisible(false);
+            AppBusy(false,ui->progressBar);
             return false;
         }
     } else {    //Updating an existing db.
@@ -83,6 +80,15 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         dbClose();
         dbOpen(sDbFile,false,false,false);
 
+        if (bResult){
+            //Create scalar functions
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Scalar functions %p%");
+            bResult = registerScalarFunctions(&db);
+            sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+
         if (bResult and(sDBVersion == "2024-12-30")) { //Useless specific update shema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
@@ -98,6 +104,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             bResult = model->ExecMultiShowErr(sDDL20250227,";",ui->progressBar);
             sResult.append(sDBVersion+" -> 2025-02-27 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-02-27";
+        }
+        if (bResult and(sDBVersion == "2025-02-27")) { //Adding field: Culture.Récolte_comm.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = model->ExecMultiShowErr(sDDL20250305,";",ui->progressBar);
+            sResult.append(sDBVersion+" -> 2025-03-05 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-03-05";
         }
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);
@@ -171,14 +185,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         //if (sResult=="")
         //    sResult.append("Version : "+sDBVersion+"\n");
 
-        if (bResult){
-            //Create scalar functions
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Scalar functions %p%");
-            bResult = registerScalarFunctions(&db);
-            sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
-        }
+        // if (bResult){
+        //     //Create scalar functions
+        //     ui->progressBar->setValue(0);
+        //     ui->progressBar->setMaximum(0);
+        //     ui->progressBar->setFormat("Scalar functions %p%");
+        //     bResult = registerScalarFunctions(&db);
+        //     sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
+        // }
 
         if (bResult){
             //Create views
@@ -227,7 +241,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         }
     }
 
-    ui->progressBar->setVisible(false);
+    AppBusy(false,ui->progressBar);
 
     if (bResult and !model->ExecShowErr("PRAGMA foreign_keys = ON")) {
         ui->tbInfoDB->append(tr("Impossible d'activer les clés étrangères."));

@@ -109,31 +109,27 @@ iif(:Type=''Semis sous abris'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-0
                                ''2:''|| -- Durée plantation
                                (CulTempoNJPeriode(:dPlant,:dRec)-2) ||'':''|| -- Plantation faite attente récolte
                                CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
-
 iif(:Type=''Semis direct'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
                            ''2:''|| -- Durée semis
                            ''0:''|| -- Semis fait attente récolte
                            ''0:''||
-                           CulTempoNJPeriode(:dSem,:dRec)-2 ||'':''|| -- Semis fait attente récolte
+                           (CulTempoNJPeriode(:dSem,:dRec)-2) ||'':''|| -- Semis fait attente récolte
                            CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
-
 iif(:Type=''Plant'',CulTempoNJPeriode(strftime(''%Y'',:dPlant)||''-01-01'',:dPlant)||'':''|| -- Attente
                     ''0:''|| -- Durée semis
                     ''0:''||
                     ''2:''|| -- Durée plantation
-                    CulTempoNJPeriode(:dPlant,:dRec)-2 ||'':''|| -- Plantation faite attente récolte
+                    (CulTempoNJPeriode(:dPlant,:dRec)-2) ||'':''|| -- Plantation faite attente récolte
                     CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
-
 iif(:Type=''Engrais vert'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
                            ''2:''|| -- Durée semis
                            ''0:''||
                            ''0:''|| -- Durée plantation
-                           CulTempoNJPeriode(:dSem,coalesce(:fRec,strftime(''%Y'',:dSem)||''-12-31''))-2 ||'':''|| -- Plantation faite attente récolte
+                           (CulTempoNJPeriode(:dSem,coalesce(:fRec,strftime(''%Y'',:dSem)||''-12-31''))-2) ||'':''|| -- Plantation faite attente récolte
                            ''0'', -- Durée récolte
-
 iif(:Type=''Sans récolte'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
                            ''2:''|| -- Durée semis
-                           CulTempoNJPeriode(:dSem,:dPlant)-2 ||'':''|| -- Semis fait attente plantation
+                           (CulTempoNJPeriode(:dSem,:dPlant)-2) ||'':''|| -- Semis fait attente plantation
                            ''2:''|| -- Durée plantation
                            CulTempoNJPeriode(:dPlant,:dRec)-2 ||'':''|| -- Plantation faite attente récolte
                            ''0'', NULL -- Durée récolte

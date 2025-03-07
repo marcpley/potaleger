@@ -44,6 +44,7 @@ public:
     //QSet<int> modifiedRows;
     QProgressBar* progressBar;
     QLabel* label=nullptr;
+    QString tempTableName;
 
     int FieldIndex(QString FieldName);
     QString FieldName(int index);
@@ -126,7 +127,7 @@ public:
                 modifiedCells.insert(index);
                 //modifiedRows.insert(index.row());
                 if (copiedCells.contains(index))
-                    copiedCells.clear();
+                    copiedCells.clear();//The cell must be shown as modified.
             }
             if (relation(index.column()).isValid()) {
                 //Column with FK. #FKnull
@@ -171,8 +172,6 @@ public:
 
     bool submitAll()  {
         if (QSqlRelationalTableModel::submitAll()) {
-            commitedCells.unite(modifiedCells);
-            modifiedCells.clear();
             rowsToRemove.clear();
             rowsToInsert.clear();
             return true;
@@ -182,8 +181,6 @@ public:
 
     void revertAll()  {
         QSqlRelationalTableModel::revertAll();
-        modifiedCells.clear(); // Vider les cellules modifiées après un rollback
-        copiedCells.clear();
         QApplication::clipboard()->setText("");
         rowsToRemove.clear();
         rowsToInsert.clear();
@@ -478,6 +475,7 @@ public:
     bool isCommittingError=false;
     QLabel *lTabTitle;
     QTextEdit *editNotes;
+    QTextEdit *editSelInfo;
 
     QWidget *toolbar;
     QToolButton *pbRefresh;
@@ -524,22 +522,24 @@ public:
     int iTypeReal=0;
 
     void SetVisibleEditNotes(bool bVisible);
+    void PositionSave();
+    void PositionRestore();
 
 private:
     //Filtering
     bool bSetType=false;
     QString sFieldNameFilter,sDataTypeFilter,sDataFilter;
-    void SetFilterParamsFrom(QString sFieldName, QString sDataType, QString sData);
+    void SetLeFilterWith(QString sFieldName, QString sDataType, QString sData);
     void SetFilterTypeCombo(QString sDataType);
     int iPositionCol=-1;
     QString sPositionRow="";
     QString sPositionRow2="";
-    void PositionSave();
-    void PositionRestore();
     void FindFrom(int row, int column, bool Backward);
 
 public slots:
     void curChanged(const QModelIndex cur);//, const QModelIndex pre
+    void selChanged();
+    void showSelInfo();
 
 private slots:
     void dataChanged(const QModelIndex &topLeft);//,const QModelIndex &bottomRight,const QList<int> &roles

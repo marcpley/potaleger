@@ -17,8 +17,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC1";
-QString const DbVersion="2025-02-27";
+QString const Version="1.0RC2";
+QString const DbVersion="2025-03-05";
 
 class MainWindow : public QMainWindow
 {
@@ -138,8 +138,8 @@ private:
     void ClosePotaTab(QWidget *Tab);
     void ClosePotaTabs();
     void CreateNewDB(bool bEmpty);
-    static void sommeFunc(sqlite3_context *context, int argc, sqlite3_value **argv);
-    void define_manage_init2(sqlite3 *db_handle);
-    static void logCallback(void *pArg, int iErrCode, const char *zMsg);
+    // static void sommeFunc(sqlite3_context *context, int argc, sqlite3_value **argv);
+    // void define_manage_init2(sqlite3 *db_handle);
+    // static void logCallback(void *pArg, int iErrCode, const char *zMsg);
 };
 #endif // MAINWINDOW_H

@@ -71,6 +71,23 @@ QVariant PotaQuery::Selec0ShowErr(QString query)
         return vNull;
 }
 
+void AppBusy(bool busy,QProgressBar *pb,int max,QString text) {
+    if (busy) {
+        if(pb) {
+            pb->setValue(0);
+            pb->setMaximum(max);
+            pb->setFormat(text);
+            pb->setVisible(true);
+        }
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    } else {
+        if(pb) {
+            pb->setVisible(false);
+        }
+        QApplication::restoreOverrideCursor();
+    }
+}
+
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
     QString result="";
     PotaQuery query(*db);

@@ -38,11 +38,11 @@ bool registerScalarFunctions(QSqlDatabase *db) {
     //return true;
     PotaQuery q1(*db);
 
-    if (!q1.exec("SELECT define('SumTest', '? + ?')")){
-        qCritical() << "Failed to register function 'Somme': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
+    // if (!q1.exec("SELECT define('SumTest', '? + ?')")){
+    //     qCritical() << "Failed to register function 'Somme': "<< q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return false;
+    // }
 
     q1.clear();
     if (!q1.exec("SELECT define('PlanifCultureCalcDate','"+RemoveComment(sPlanifCultureCalcDate,"--")+"')")){
@@ -180,14 +180,14 @@ bool registerTableValuedFunctions(QSqlDatabase *db) {
 QString testCustomFunctions(QSqlDatabase *db) {
     //return "";
 
-    PotaQuery q1(*db);
-    if (!q1.exec("SELECT SumTest(1,2)") or !q1.next() or q1.value(0).toInt()!=3){
-        qCritical() << "Function failed: SumTest(1,2) = " << q1.value(0).toInt();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "SumTest";
-    }
-    qInfo() << "Function ok : SumTest(1,2) = " << q1.value(0).toInt();
+     PotaQuery q1(*db);
+    // if (!q1.exec("SELECT SumTest(1,2)") or !q1.next() or q1.value(0).toInt()!=3){
+    //     qCritical() << "Function failed: SumTest(1,2) = " << q1.value(0).toInt();
+    //     qCritical() << q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return "SumTest";
+    // }
+    // qInfo() << "Function ok : SumTest(1,2) = " << q1.value(0).toInt();
 
     q1.clear();
     if (!q1.exec("SELECT PlanifCultureCalcDate('2025-02-01','01-01')") or !q1.next() or q1.value(0).toString()!="2026-01-01"){

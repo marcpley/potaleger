@@ -215,6 +215,7 @@ BEGIN
                             Date_Plantation,
                             Plantation_faite,
                             Début_récolte,
+                            Récolte_com,
                             Fin_récolte,
                             Récolte_faite,
                             Terminée,
@@ -233,6 +234,7 @@ BEGIN
             NEW.Date_Plantation,
             NEW.Plantation_faite,
             NEW.Début_récolte,
+            NEW.Récolte_com,
             NEW.Fin_récolte,
             NEW.Récolte_faite,
             NEW.Terminée,
@@ -257,6 +259,7 @@ BEGIN
         Date_Plantation=NEW.Date_Plantation,
         Plantation_faite=NEW.Plantation_faite,
         Début_récolte=NEW.Début_récolte,
+        Récolte_com=NEW.Récolte_com,
         Fin_récolte=NEW.Fin_récolte,
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
@@ -318,6 +321,7 @@ BEGIN
         Date_Plantation=NEW.Date_Plantation,
         Plantation_faite=NEW.Plantation_faite,
         Début_récolte=NEW.Début_récolte,
+        Récolte_com=NEW.Récolte_com,
         Fin_récolte=NEW.Fin_récolte,
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
@@ -332,6 +336,7 @@ BEGIN
         Date_semis=NEW.Date_semis,
         Date_Plantation=NEW.Date_Plantation,
         Début_récolte=NEW.Début_récolte,
+        Récolte_com=NEW.Récolte_com,
         Fin_récolte=NEW.Fin_récolte,
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
@@ -600,6 +605,11 @@ BEGIN
        SET Début_récolte=(SELECT min(Date)
                           FROM Récoltes
                           WHERE Culture=NEW.Culture),
+           Récolte_com=(CASE WHEN (SELECT count(*)
+                                   FROM Récoltes
+                                   WHERE Culture=NEW.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                   ELSE NULL
+                                   END),
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=NEW.Culture),
@@ -614,6 +624,11 @@ BEGIN
        SET Début_récolte=(SELECT min(Date)
                           FROM Récoltes
                           WHERE Culture=NEW.Culture),
+           Récolte_com=(CASE WHEN (SELECT count(*)
+                                   FROM Récoltes
+                                   WHERE Culture=NEW.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                   ELSE NULL
+                                   END),
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=NEW.Culture),
@@ -623,6 +638,11 @@ BEGIN
        SET Début_récolte=(SELECT min(Date)
                           FROM Récoltes
                           WHERE Culture=OLD.Culture),
+           Récolte_com=(CASE WHEN (SELECT count(*)
+                                   FROM Récoltes
+                                   WHERE Culture=OLD.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                   ELSE NULL
+                                   END),
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=OLD.Culture),
@@ -643,7 +663,12 @@ BEGIN
                             ELSE PlanifCultureCalcDate(coalesce(Date_plantation,Date_semis),
                                                        (SELECT ITP.Déb_récolte FROM ITP
                                                         WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
-                            END
+                            END,
+         Récolte_com=(CASE WHEN (SELECT count(*)
+                                 FROM Récoltes
+                                 WHERE Culture=OLD.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                 ELSE NULL
+                                 END)
      WHERE Culture=OLD.Culture;
      UPDATE Cultures
      SET Fin_récolte=CASE WHEN (SELECT count() FROM Récoltes WHERE Culture=OLD.Culture)>0

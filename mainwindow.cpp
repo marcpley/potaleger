@@ -102,6 +102,10 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->sbInsertRows->setEnabled(true);
                 w->pbInsertRow->setEnabled(true);
                 w->pbDeleteRow->setEnabled(true);
+            } else if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
+                                           "WHERE (tbl_name='"+sTableName+"')AND"    //View without trigger instead of.
+                                                 "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0) {
+                w->pbEdit->setVisible(false);
             }
             w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
@@ -690,8 +694,8 @@ void MainWindow::on_mImporter_triggered()
         pQuery.lErr=ui->lDBErr;
         //pQuery.ExecMultiShowErr("DROP TABLE IF EXISTS temp.Temp_"+w->model->tableName()+";"+
         //                         "CREATE TEMP TABLE Temp_"+w->model->tableName()+" AS SELECT * FROM "+w->model->tableName(),";",nullptr);
-        QString prefix="Temp"+QDateTime::currentDateTime().toString("hhmmss");
-        pQuery.ExecShowErr("CREATE TEMP TABLE "+prefix+w->model->tableName()+" AS SELECT * FROM "+w->model->tableName());
+        //QString tempTableName="Temp"+QDateTime::currentDateTime().toString("hhmmss")+w->model->tableName();
+        //pQuery.ExecShowErr("CREATE TEMP TABLE "+tempTableName+" AS SELECT * FROM "+w->model->tableName());
 
         int nbDeletedRows=0;
         int nbCreatedRows=0;
@@ -703,10 +707,7 @@ void MainWindow::on_mImporter_triggered()
                //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
                 return;
             }
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(w->model->rowCount());
-            ui->progressBar->setFormat("Delete %p%");
-            ui->progressBar->setVisible(true);
+            AppBusy(true,ui->progressBar,w->model->rowCount(),"Delete %p%");
             for (int i=w->model->rowCount()-1;i>=0;i--) {
                 ui->progressBar->setValue(ui->progressBar->value()+1);
                 if(w->model->removeRow(i) and w->model->submitAll())
@@ -717,10 +718,8 @@ void MainWindow::on_mImporter_triggered()
                     nbErrors++;
                 }
             }
+            AppBusy(false,ui->progressBar);
         }
-
-        w->model->copiedCells.clear();
-        w->model->commitedCells.clear();
 
         //Remove filter
         if (choice!=2 and choice!=3 and w->pbFilter->isChecked()) {
@@ -736,11 +735,7 @@ void MainWindow::on_mImporter_triggered()
 
         //Import
 
-        ui->progressBar->setValue(0);
-        ui->progressBar->setMaximum(linesToImport.count());
-        ui->progressBar->setFormat(FileInfoVerif.fileName()+" %p%");
-        ui->progressBar->setVisible(true);
-
+        AppBusy(true,ui->progressBar,linesToImport.count(),FileInfoVerif.fileName()+" %p%");
         bool bModified;
 
         for(int i=0;i<linesToImport.count();i++) {
@@ -806,35 +801,16 @@ void MainWindow::on_mImporter_triggered()
                 }
             }
         }
+        AppBusy(false,ui->progressBar);
 
         w->model->SubmitAllShowErr();//To deactivate commit and rollback buttons.
 
-        //Show modified cells
-        w->model->commitedCells.clear();
-        ui->progressBar->setValue(0);
-        ui->progressBar->setMaximum(w->model->rowCount());
-        ui->progressBar->setFormat("Show modified cells %p%");
-        ui->progressBar->setVisible(true);
-
-        for (int i=0;i<w->model->rowCount();i++) {
-            ui->progressBar->setValue(i);
-            for (int j=0;j<w->model->columnCount();j++) {
-                if (w->model->data(w->model->index(i,j),Qt::EditRole).toString()!=
-                    pQuery.Selec0ShowErr("SELECT "+w->model->FieldName(j)+" "+
-                                         "FROM temp."+prefix+w->model->tableName()+" "+
-                                         "WHERE "+w->model->FieldName(0)+"='"+StrReplace(w->model->data(w->model->index(i,0)).toString(),"'","''")+"'").toString())
-                    w->model->commitedCells.insert(w->model->index(i,j));
-                //qDebug() << w->model->data(w->model->index(i,j)).toString();
-            }
-        }
-
-        //pQuery.ExecShowErr("DROP TABLE IF EXISTS temp.Temp_"+w->model->tableName());
-        ui->progressBar->setVisible(false);
-       //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
+        //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
         MessageDialog(QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
                       QObject::tr("%1 lignes créées").arg(nbCreatedRows)+"\n"+
-                      QObject::tr("%1 lignes modifiées").arg(nbModifiedRows));
+                      QObject::tr("%1 lignes modifiées").arg(nbModifiedRows)+"\n"+
+                      QObject::tr("%1 erreurs").arg(nbErrors));
     }
 }
 
@@ -895,10 +871,7 @@ void MainWindow::on_mExporter_triggered()
             if (FileExport.write(data)!=-1) {
                 data.clear();
 
-                ui->progressBar->setValue(0);
-                ui->progressBar->setMaximum(totalRow);
-                ui->progressBar->setFormat(w->lTabTitle->text()+" %p%");
-                ui->progressBar->setVisible(true);
+                AppBusy(true,ui->progressBar,totalRow,w->lTabTitle->text()+" %p%");
 
                 //Data export
                 for (row = 0; row < w->model->rowCount(); ++row) {
@@ -917,7 +890,7 @@ void MainWindow::on_mExporter_triggered()
                 }
 
                 FileExport.close();
-                ui->progressBar->setVisible(false);
+                AppBusy(false,ui->progressBar);
             }
 
             if (exportedRow==totalRow) {

@@ -25,6 +25,7 @@ private:
     QSqlDatabase& m_db;
 };
 
+void AppBusy(bool busy, QProgressBar *pb=nullptr, int max=0, QString text="%p%");
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName);
 //QString SQLiteDate();
 //QString DBInfo(QSqlDatabase *db);
