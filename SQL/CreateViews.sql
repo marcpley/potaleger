@@ -7,56 +7,10 @@ QString sDDLViews = QStringLiteral(R"#(
 --     (Test('08-15','04-15')),
 --     (Test('12-15','04-15'));
 
-CREATE VIEW Info_Potaléger AS -- Rendre traductible
+CREATE VIEW Info_Potaléger AS
     SELECT 1 N,
            'Version de la BDD' Info,
-           '#DbVer#' Valeur
-    UNION
-    SELECT 2,
-           'Utilisateur',
-           (SELECT Valeur
-              FROM Params
-             WHERE Paramètre='Utilisateur')
-    UNION
-    SELECT 3,
-           'Variétés',
-           (SELECT count() ||' dont '
-              FROM Variétés) || (SELECT count() ||' en culture actuellement et '
-                                   FROM (SELECT DISTINCT Variété
-                                           FROM C_en_place
-                                          ORDER BY Variété) ) || (SELECT count() ||' en culture planifiée.'
-                                                                    FROM (SELECT DISTINCT Variété
-                                                                            FROM C_à_venir
-                                                                           ORDER BY Variété) )
-    UNION
-    SELECT 4,
-           'Itinéraires techniques',
-           (SELECT count() ||' dont '
-              FROM ITP) || (SELECT count() ||' en culture actuellement et '
-                              FROM (SELECT DISTINCT IT_plante
-                                      FROM C_en_place
-                                     ORDER BY IT_plante) ) || (SELECT count() ||' en culture planifiée.'
-                                                                 FROM (SELECT DISTINCT IT_plante
-                                                                         FROM C_à_venir
-                                                                        ORDER BY IT_plante) )
-    UNION
-    SELECT 5,
-           'Planches',
-           (SELECT count() ||' dont '
-              FROM Planches) || (SELECT count() ||' en culture actuellement et '
-                                   FROM (SELECT DISTINCT Planche
-                                           FROM C_en_place
-                                          ORDER BY Planche) ) || (SELECT count() ||' en culture planifiée.'
-                                                                    FROM (SELECT DISTINCT Planche
-                                                                            FROM C_à_venir
-                                                                           ORDER BY Planche) )
-    UNION
-    SELECT 6,
-           'Cultures',
-           (SELECT count() ||' dont '
-              FROM Cultures) || (SELECT count() ||' non terminées.'
-                                   FROM Cultures
-                                  WHERE Terminée ISNULL);
+           '#DbVer#' Valeur;
 
 CREATE VIEW Consommations__Saisies AS SELECT
        Co.ID,
@@ -66,8 +20,8 @@ CREATE VIEW Consommations__Saisies AS SELECT
        Co.Prix,
        Co.Destination,
        E.Inventaire
-       +CAST((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=Co.Espèce)AND(Re.Date BETWEEN E.Date_inv AND Co.Date))AS REAL)
-       -CAST((SELECT sum(Quantité) FROM Consommations Co2 WHERE (Co2.Espèce=Co.Espèce)AND(Co2.Date BETWEEN E.Date_inv AND Co.Date))AS REAL) Stock,
+       +CAST(coalesce((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=Co.Espèce)AND(Re.Date BETWEEN E.Date_inv AND Co.Date)),0)AS REAL)
+       -CAST(coalesce((SELECT sum(Quantité) FROM Consommations Co2 WHERE (Co2.Espèce=Co.Espèce)AND(Co2.Date BETWEEN E.Date_inv AND Co.Date)),0)AS REAL) Stock,
        (SELECT sum(Quantité) FROM Consommations Co3 WHERE (Co3.Espèce=Co.Espèce)AND
                                                                (Co3.Destination=Co.Destination)AND
                                                                (Co3.Date BETWEEN D.Date_RAZ AND Co.Date)) Sorties,
@@ -95,11 +49,11 @@ CREATE VIEW Espèces__inventaire AS SELECT
     E.Inventaire,
     E.Prix_kg,
     E.Inventaire
-    +CAST((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL)
-    -CAST((SELECT sum(Quantité) FROM Consommations Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL) Stock,
+    +CAST(coalesce((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv)),0)AS REAL)
+    -CAST(coalesce((SELECT sum(Quantité) FROM Consommations Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv)),0)AS REAL) Stock,
     (E.Inventaire
-     +CAST((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL)
-     -CAST((SELECT sum(Quantité) FROM Consommations Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv))AS REAL))*E.Prix_kg Valeur,
+     +CAST(coalesce((SELECT sum(Quantité) FROM Récoltes Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv)),0)AS REAL)
+     -CAST(coalesce((SELECT sum(Quantité) FROM Consommations Re WHERE (Re.Espèce=E.Espèce)AND(Re.Date >= E.Date_inv)),0)AS REAL))*E.Prix_kg Valeur,
     Notes
 FROM Espèces E
 WHERE E.Conservation NOT NULL;
@@ -186,37 +140,76 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
        R.IT_plante,
        R.Pc_planches,
        R.Fi_planches,
-       RI.Mise_en_place || CASE
-              -- Vérif que la culture n'est pas mise en place trop tôt par rapport à la culture antérieure dans la rotation.
-              WHEN RI.Date_MEP < -- Mise en place au plus tôt de la culture courante
-                   coalesce(
-                   (SELECT Date_Ferm FROM R_ITP -- comparaison avec la fermeture au plus tôt de la culture antérieure (si la courante n'est pas la 1ère de la rotation)
-                    WHERE (Rotation=R.Rotation)AND(Rotation||Date_MEP < R.Rotation || RI.Date_MEP)
-                    ORDER BY Ind DESC
-                    LIMIT 1),
-                   (SELECT DATE(Date_Ferm,'-'||RI.Nb_années||' years') FROM R_ITP -- comparaison avec la fermeture au plus tôt de la dernière culture de la rotation
-                    WHERE (Rotation=R.Rotation)
-                    ORDER BY Ind DESC
-                    LIMIT 1)
-                   )
+       -- RI.Mise_en_place || (CASE
+       --        WHEN -- Vérif que la culture n'est pas mise en place trop tôt par rapport à la culture antérieure dans la rotation.
+       --             (RI.Date_MEP < -- Mise en place au plus tôt de la culture courante
+       --              coalesce(
+       --              (SELECT Date_Ferm FROM R_ITP -- comparaison avec la fermeture au plus tôt de la culture antérieure (si la courante n'est pas la 1ère de la rotation)
+       --               WHERE (Rotation=R.Rotation)AND(Rotation||Date_MEP < R.Rotation || RI.Date_MEP)
+       --               ORDER BY Ind DESC
+       --               LIMIT 1),
+       --              (SELECT DATE(Date_Ferm,'-'||RI.Nb_années||' years') FROM R_ITP -- comparaison avec la fermeture au plus tôt de la dernière culture de la rotation
+       --               WHERE (Rotation=R.Rotation)
+       --               ORDER BY Ind DESC
+       --               LIMIT 1)
+       --              ))AND
+       --             -- et total d'occupation des planches en conflit supérieur à 100.
+       --             (RI.Pc_planches +
+       --              coalesce(
+       --              (SELECT Pc_planches FROM R_ITP -- culture antérieure (si la courante n'est pas la 1ère de la rotation)
+       --               WHERE (Rotation=R.Rotation)AND(Rotation||Date_MEP < R.Rotation || RI.Date_MEP)
+       --               ORDER BY Ind DESC
+       --               LIMIT 1),
+       --              (SELECT Pc_planches FROM R_ITP -- dernière culture de la rotation
+       --               WHERE (Rotation=R.Rotation)
+       --               ORDER BY Ind DESC
+       --               LIMIT 1)
+       --              )>100)
+       --        THEN '*'
+       --        -- Vérif que la culture n'est pas mise en place trop tard par rapport à la culture antérieure dans la rotation.
+       --        WHEN RotDecalDateMeP(RI.Date_MEP) > -- Mise en place au plus tôt de la culture courante
+       --             coalesce(
+       --             (SELECT Date_Ferm FROM R_ITP -- comparaison avec la fermeture au plus tôt de la culture antérieure (si la courante n'est pas la 1ère de la rotation)
+       --              WHERE (Rotation=R.Rotation)AND(Rotation||Date_MEP < R.Rotation || RI.Date_MEP)
+       --              ORDER BY Ind DESC
+       --              LIMIT 1),
+       --             (SELECT DATE(Date_Ferm,'-'||RI.Nb_années||' years') FROM R_ITP -- comparaison avec la fermeture au plus tôt de la dernière culture de la rotation
+       --              WHERE (Rotation=R.Rotation)
+       --              ORDER BY Ind DESC
+       --              LIMIT 1)
+       --             )
+       --        THEN '-'
+       --        ELSE ''
+       --        END) Mise_en_place,
+       RI.Mise_en_place || (CASE
+              WHEN -- Vérif que la culture n'est pas mise en place trop tôt par rapport à la culture antérieure dans la rotation.
+                   (RI.Date_MEP < -- Mise en place au plus tôt de la culture courante
+                    coalesce((SELECT Date_Ferm FROM R_ITP_CAnt(R.Rotation,RI.Date_MEP)), -- comparaison avec la fermeture au plus tôt de la culture antérieure (si la courante n'est pas la 1ère de la rotation)
+                             (SELECT Date_Ferm FROM R_ITP_CDer(RI.Nb_années,R.Rotation)))) -- comparaison avec la fermeture au plus tôt de la dernière culture de la rotation
+                    AND
+                   -- et total d'occupation des planches en conflit supérieur à 100.
+                   (RI.Pc_planches +
+                    coalesce((SELECT Pc_planches FROM R_ITP_CAnt(R.Rotation,RI.Date_MEP)),
+                             (SELECT Pc_planches FROM R_ITP_CDer(RI.Nb_années,R.Rotation))
+                    )>100)
+                    AND
+                    -- et filtre de planches identique ou nuls.
+                    (RI.Fi_planches ISNULL OR
+                     (((SELECT count(*) FROM R_ITP_CAnt(R.Rotation,RI.Date_MEP))>0)AND
+                      (SELECT Fi_planches FROM R_ITP_CAnt(R.Rotation,RI.Date_MEP)) ISNULL) OR
+                     (SELECT Fi_planches FROM R_ITP_CDer(RI.Nb_années,R.Rotation)) ISNULL OR
+                     (RI.Fi_planches =
+                      coalesce((SELECT Fi_planches FROM R_ITP_CAnt(R.Rotation,RI.Date_MEP)),
+                               (SELECT Fi_planches FROM R_ITP_CDer(RI.Nb_années,R.Rotation)))))
               THEN '*'
               -- Vérif que la culture n'est pas mise en place trop tard par rapport à la culture antérieure dans la rotation.
               WHEN RotDecalDateMeP(RI.Date_MEP) > -- Mise en place au plus tôt de la culture courante
                    coalesce(
-                   (SELECT Date_Ferm FROM R_ITP -- comparaison avec la fermeture au plus tôt de la culture antérieure (si la courante n'est pas la 1ère de la rotation)
-                    WHERE (Rotation=R.Rotation)AND(Rotation||Date_MEP < R.Rotation || RI.Date_MEP)
-                    ORDER BY Ind DESC
-                    LIMIT 1),
-                   (SELECT DATE(Date_Ferm,'-'||RI.Nb_années||' years') FROM R_ITP -- comparaison avec la fermeture au plus tôt de la dernière culture de la rotation
-                    WHERE (Rotation=R.Rotation)
-                    ORDER BY Ind DESC
-                    LIMIT 1)
-                   )
+                   (SELECT Date_Ferm FROM R_ITP_CAnt(R.Rotation,RI.Date_MEP)), -- comparaison avec la fermeture au plus tôt de la culture antérieure (si la courante n'est pas la 1ère de la rotation)
+                   (SELECT Date_Ferm FROM R_ITP_CDer(RI.Nb_années,R.Rotation))) -- comparaison avec la fermeture au plus tôt de la dernière culture de la rotation
               THEN '-'
               ELSE ''
-              END Mise_en_place,
-       -- RI.Déb_récolte,
-       -- RI.Fin_récolte,
+              END) Mise_en_place,
        RotTempo(RI.Type_culture, ItpTempoNJ(RI.Déb_semis), ItpTempoNJ(RI.Fin_semis), ItpTempoNJ(RI.Déb_plantation), ItpTempoNJ(RI.Fin_plantation), ItpTempoNJ(RI.Déb_récolte), ItpTempoNJ(RI.Fin_récolte) ) TEMPO,
        RI.A_planifier,
        CASE WHEN (RI.Type_planche NOTNULL) AND
@@ -225,23 +218,35 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
                                      WHERE Rotation=R.Rotation) ) THEN RI.Type_planche END Conflit_type_planche,
        CASE WHEN R.IT_plante NOTNULL
             -- Recherche de familles trop proches dans une rotation.
-            THEN (SELECT group_concat(result,x'0a') FROM RF_trop_proches(R.ID)) || x'0a'
+            THEN (SELECT group_concat(result,x'0a') FROM RF_trop_proches(R.Rotation,R.Année,(SELECT Famille FROM R_famille F WHERE F.ID=R.ID))) || x'0a0a'
             END ||
-       'Familles possibles : ' || (SELECT group_concat(Famille,', ') FROM (
-                                    SELECT DISTINCT F.Famille
-                                    FROM Rotations_détails RD
-                                         LEFT JOIN Rotations R USING(Rotation)
-                                         LEFT JOIN ITP I USING(IT_Plante)
-                                         LEFT JOIN Espèces E USING(Espèce)
-                                         LEFT JOIN Familles F USING(Famille)
-                                    WHERE (RD.Rotation=(SELECT Rotation FROM R_famille WHERE ID=R.ID))AND -- ITP dans la même rotation
-                                          (RD.Année<>(SELECT Année FROM R_famille WHERE ID=R.ID))AND -- ITP des autres années de la rotation
-                                          NOT ((SELECT Année FROM R_famille WHERE ID=R.ID) BETWEEN RD.Année-F.Intervalle+1 AND RD.Année+F.Intervalle-1)AND -- pas en conflit lors du 1er cycle
-                                          NOT ((SELECT Année FROM R_famille WHERE ID=R.ID) BETWEEN RD.Année-F.Intervalle+1+R.Nb_années AND RD.Année+F.Intervalle-1+R.Nb_années)
-                                    UNION
-                                    SELECT F.Famille FROM F_actives F
-                                    WHERE NOT(F.Famille IN(SELECT Famille FROM R_famille WHERE Rotation=(SELECT Rotation FROM R_famille WHERE ID=R.ID)))
-                                    )) Conflit_famille,
+       -- 'Familles possibles : ' || (SELECT group_concat(Famille,', ') FROM (
+       --                              SELECT DISTINCT F.Famille
+       --                              FROM Rotations_détails RD
+       --                                   LEFT JOIN Rotations R USING(Rotation)
+       --                                   LEFT JOIN ITP I USING(IT_Plante)
+       --                                   LEFT JOIN Espèces E USING(Espèce)
+       --                                   LEFT JOIN Familles F USING(Famille)
+       --                              WHERE (RD.Rotation=(SELECT Rotation FROM R_famille WHERE ID=R.ID))AND -- ITP dans la même rotation
+       --                                    (RD.Année<>(SELECT Année FROM R_famille WHERE ID=R.ID))AND -- ITP des autres années de la rotation
+       --                                    NOT ((SELECT Année FROM R_famille WHERE ID=R.ID) BETWEEN RD.Année-F.Intervalle+1 AND RD.Année+F.Intervalle-1)AND -- pas en conflit lors du 1er cycle
+       --                                    NOT ((SELECT Année FROM R_famille WHERE ID=R.ID) BETWEEN RD.Année-F.Intervalle+1+R.Nb_années AND RD.Année+F.Intervalle-1+R.Nb_années)
+       --                              UNION
+       --                              SELECT F.Famille FROM F_actives F
+       --                              WHERE NOT(F.Famille IN(SELECT Famille FROM R_famille WHERE Rotation=(SELECT Rotation FROM R_famille WHERE ID=R.ID)))
+       --                              )) Conflit_famille,
+       'Familles possibles : ' || coalesce((SELECT group_concat(Famille,', ') FROM (
+                                     SELECT DISTINCT RF.Famille
+                                     FROM R_famille RF
+                                     WHERE (RF.Rotation=R.Rotation)AND -- ITP dans la même rotation
+                                           (RF.Année<>R.Année)AND -- ITP des autres années de la rotation
+                                           NOT (R.Année BETWEEN RF.Année-RF.Intervalle+1 AND RF.Année+RF.Intervalle-1)AND -- pas en conflit lors du 1er cycle
+                                           NOT (R.Année BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND RF.Année+RF.Intervalle-1+RF.Nb_années)
+                                     UNION
+                                     SELECT F.Famille FROM F_actives F
+                                     WHERE NOT(F.Famille IN(SELECT Famille FROM R_famille F2 WHERE F2.Rotation=R.Rotation))
+                                     )),
+                                     'aucune') Conflit_famille,
        RI.Famille,
        RI.Intervalle,
        R.Notes
@@ -815,7 +820,7 @@ CREATE VIEW R_famille AS
            LEFT JOIN Familles F USING(Famille);
 
 CREATE VIEW R_ITP AS
-    SELECT R.Rotation||format('%i', 2000+R.Année) ||'-'||coalesce(I.Déb_plantation, I.Déb_semis) ||format('%i', 2000+R.Année+iif(coalesce(I.Déb_plantation, I.Déb_semis) >coalesce(I.Déb_récolte, I.Fin_récolte), 1, 0) ) ||'-'||coalesce(I.Déb_récolte, I.Fin_récolte, '12-31') Ind,-- coalesce(R.Fi_planches,'')||
+    SELECT R.Rotation||format('%i', 2000+R.Année) ||'-'||coalesce(I.Déb_plantation, I.Déb_semis,'12-31') ||format('%i', 2000+R.Année+iif(coalesce(I.Déb_plantation, I.Déb_semis) >coalesce(I.Déb_récolte, I.Fin_récolte), 1, 0) ) ||'-'||coalesce(I.Déb_récolte, I.Fin_récolte, '12-31') Ind,-- coalesce(R.Fi_planches,'')||
            R.ID,
            R.Rotation,
            RO.Nb_années,

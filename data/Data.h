@@ -25,9 +25,10 @@ const QColor cTerminee=QColor("#808080");//Gris
 bool AcceptReturns(const QString sFieldName);
 int DefColWidth(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 QString DynDDL(QString sQuery);
-QString FkFilter(const QString sTableName, const QString sFieldName, const QModelIndex &index);
+QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QModelIndex &index, bool countFk=false);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
+QString NoData(const QString sTableName);
 bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);
 QColor RowColor(QString sValue);
 QString RowSummary(QString TableName, const QSqlRecord &rec);

@@ -282,7 +282,7 @@ void PotaWidget::Init(QString TableName)
 
         if (localColumnIndex>-1){
             model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
-            model->relationModel(localColumnIndex)->setFilter(FkFilter(model->RealTableName(),localColumn,model->index(0,0)));
+            model->relationModel(localColumnIndex)->setFilter(FkFilter(model->db,model->RealTableName(),localColumn,model->index(0,0)));
         }
     }
 
@@ -500,7 +500,8 @@ void PotaWidget::PositionRestore() {
             break;
         }
     }
-    //tv->setFocus();
+    lRowSummary->setText(RowSummary(model->tableName(),model->record(tv->currentIndex().row())));
+    lSelect->setText("");
 }
 
 void PotaWidget::SetLeFilterWith(QString sFieldName, QString sDataType, QString sData){
@@ -1270,7 +1271,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     if (index.column()==TempoCol)
          paintTempo(painter,option,index);
     else {
-        if(!index.data(Qt::DisplayRole).toDate().isNull() and index.data(Qt::DisplayRole).toDate()>QDate::currentDate()){
+        if(!index.data(Qt::EditRole).toDate().isNull() and index.data(Qt::EditRole).toDate()>QDate::currentDate()){//todo
             //Write red date in future
             QStyleOptionViewItem opt = option;
             if (isDarkTheme())
@@ -1283,13 +1284,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         }
     }
 
-    if (pw->model && pw->model->copiedCells.contains(index)) {
-        cCopied=QColor("#00ab00");//green
-        painter->save();
-        painter->setPen(cCopied);
-        painter->drawRect(option.rect.x(), option.rect.y(), option.rect.width()-1, option.rect.height()-1);
-        painter->restore();
-    }
+
     if (pw->model && pw->model->rowsToRemove.contains(index.row())) {
         //Rows to remove.
         painter->save();
@@ -1311,7 +1306,14 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         painter->drawRect(option.rect.x(), option.rect.y(), option.rect.width()-1, option.rect.height()-1);
         painter->restore();
     }
-}
+
+    if (pw->model && pw->model->copiedCells.contains(index)) {
+        cCopied=QColor("#00ab00");//green
+        painter->save();
+        painter->setPen(cCopied);
+        painter->drawRect(option.rect.x(), option.rect.y(), option.rect.width()-1, option.rect.height()-1);
+        painter->restore();
+    }}
 
 void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
 
@@ -1327,8 +1329,15 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
     b.setColor(c);
     r.setBottom(option.rect.bottom());
     r.setTop(option.rect.top());
+    int nbJ=0;
     for(int i=1;i<24;i++){
-        left=option.rect.left()+round(i*30.42*coef);
+        if(QSet<int>{1,3,5,7,8,10,12,13,15,17,19,20,22,24}.contains(i))
+            nbJ+=31;
+        else if (QSet<int>{2,14}.contains(i))
+            nbJ+=28;
+        else
+            nbJ+=30;
+        left=option.rect.left()+round(nbJ*coef);
         if(left+2>=option.rect.right())
             break;
         r.setLeft(left);
@@ -1355,7 +1364,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         b.setColor(c);
         r.setTop(r.bottom()-4);
         r.setLeft(option.rect.left()+attente);
-        r.setRight(option.rect.left()+attente+semis);
+        r.setRight(option.rect.left()+attente+fmax(semis,4));
         painter->fillRect(r,b);
     }
     if (semisF>0){
@@ -1376,7 +1385,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         b.setColor(c);
         r.setTop(r.bottom()-10);
         r.setLeft(option.rect.left()+attente+semis+semisF);
-        r.setRight(option.rect.left()+attente+semis+semisF+plant);
+        r.setRight(option.rect.left()+attente+semis+semisF+fmax(plant,4));
         painter->fillRect(r,b);
     }
     if (plantF>0){
@@ -1397,7 +1406,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         r.setTop(r.bottom()-12);
         r.setBottom(r.bottom()-6);
         r.setLeft(option.rect.left()+attente+semis+semisF+plant+plantF);
-        r.setRight(option.rect.left()+attente+semis+semisF+plant+plantF+recolte);
+        r.setRight(option.rect.left()+attente+semis+semisF+plant+plantF+fmax(recolte,4));
         painter->fillRect(r,b);
     }
 }
@@ -1417,7 +1426,7 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         QSqlTableModel *relationModel = model->relationModel(index.column());
         int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
 
-        QString filter=FkFilter(model->RealTableName(),sFieldName,index);
+        QString filter=FkFilter(model->db,model->RealTableName(),sFieldName,index);
         if (filter!="") {
             //dbSuspend(model->db,false,true,model->label);
             model->relationModel(index.column())->setFilter(filter);

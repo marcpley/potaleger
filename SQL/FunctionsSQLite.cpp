@@ -162,6 +162,22 @@ bool registerTableValuedFunctions(QSqlDatabase *db) {
         return false;
     }
 
+    q1.exec("DROP TABLE IF EXISTS R_ITP_CAnt");
+    q1.clear();
+    if (!q1.exec("CREATE VIRTUAL TABLE R_ITP_CAnt USING define(("+RemoveComment(sR_ITP_CAnt,"--")+"))")){
+        qCritical() << "Failed to register function 'R_ITP_CAnt': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    q1.exec("DROP TABLE IF EXISTS R_ITP_CDer");
+    q1.clear();
+    if (!q1.exec("CREATE VIRTUAL TABLE R_ITP_CDer USING define(("+RemoveComment(sR_ITP_CDer,"--")+"))")){
+        qCritical() << "Failed to register function 'R_ITP_CDer': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
     q1.exec("DROP TABLE IF EXISTS Repartir_Recolte_sur");
     q1.clear();
     if (!q1.exec("CREATE VIRTUAL TABLE Repartir_Recolte_sur USING define(("+RemoveComment(sRepartir_Recolte_sur,"--")+"))")){
@@ -314,6 +330,24 @@ QString testCustomFunctions(QSqlDatabase *db) {
         return "RF_trop_proches";
     }
     qInfo() << "Function ok : RF_trop_proches('xxx')";
+
+    q1.clear();
+    if (!q1.exec("SELECT * FROM R_ITP_CAnt('xxx','2001-01-01')")){
+        qCritical() << "Function failed: R_ITP_CAnt('xxx','2001-01-01')";
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "R_ITP_CAnt";
+    }
+    qInfo() << "Function ok : R_ITP_CAnt('xxx','2001-01-01')";
+
+    q1.clear();
+    if (!q1.exec("SELECT * FROM R_ITP_CDer(3,'xxx')")){
+        qCritical() << "Function failed: R_ITP_CDer(3,'xxx')";
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "R_ITP_CDer";
+    }
+    qInfo() << "Function ok : R_ITP_CDer(3,'xxx')";
 
     q1.clear();
     if (!q1.exec("SELECT ItpPlusN('02-15','1 months')") or !q1.next() or q1.value(0).toString()!="03-15"){

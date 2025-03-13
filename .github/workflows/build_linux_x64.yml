@@ -55,6 +55,7 @@ jobs:
             cp ./install/ubuntu2004/potaleger.sh  ./artifact/
             cp ./install/potaleger.svg       ./artifact/
             cp ./install/readme.md           ./artifact/bin/
+            cp ./install/infotab1.png        ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/
             cp ./install/ubuntu2004/qt.conf  ./artifact/bin/
             cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libicu*.so.73         ./artifact/libs/

@@ -17,7 +17,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC2";
+QString const Version="1.0RC3";
 QString const DbVersion="2025-03-05";
 
 class MainWindow : public QMainWindow
@@ -124,7 +124,7 @@ private slots:
 
 private:
     void SetEnabledDataMenuEntries(bool b);
-    bool PotaBDDInfo();
+    // bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
     void MessageDialog(const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
     bool OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);

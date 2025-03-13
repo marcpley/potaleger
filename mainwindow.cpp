@@ -31,42 +31,42 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-bool MainWindow::PotaBDDInfo()
-{
-    PotaQuery pQuery(db);
-    pQuery.lErr = ui->lDBErr;
-    setWindowTitle("Potaléger");
-    if (pQuery.ExecShowErr("SELECT * FROM Info_Potaléger"))
-    {
-        ui->tbInfoDB->clear();
-        while (pQuery.next()) {
-            ui->tbInfoDB->append(pQuery.value(1).toString()+": "+
-                                 pQuery.value(2).toString());
-            if (pQuery.value(1).toString()=="Utilisateur")
-                setWindowTitle("Potaléger"+iif(pQuery.value(2).isNull(),""," - "+pQuery.value(2).toString()).toString());
-        }
-        return true;
-    }
-    else
-    {
-        ui->tbInfoDB->append(tr("Impossible de lire la vue 'Info_Potaléger'."));
-        return false;
-    }
-}
+// bool MainWindow::PotaBDDInfo()
+// {
+//     PotaQuery pQuery(db);
+//     pQuery.lErr = ui->lDBErr;
+//     setWindowTitle("Potaléger");
+//     if (pQuery.ExecShowErr("SELECT * FROM Info_Potaléger"))
+//     {
+//         ui->tbInfoDB->clear();
+//         while (pQuery.next()) {
+//             ui->tbInfoDB->append(pQuery.value(1).toString()+": "+
+//                                  pQuery.value(2).toString());
+//             if (pQuery.value(1).toString()=="Utilisateur")
+//                 setWindowTitle("Potaléger"+iif(pQuery.value(2).isNull(),""," - "+pQuery.value(2).toString()).toString());
+//         }
+//         return true;
+//     }
+//     else
+//     {
+//         ui->tbInfoDB->append(tr("Impossible de lire la vue 'Info_Potaléger'."));
+//         return false;
+//     }
+// }
 
 bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, QString const sTitre)
 {
     //Recherche parmis les onglets existants.
-    for (int i = 0; i < ui->tabWidget->count(); i++)
-    {
-        if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName )//Widget Onglet Data
-        {
+    for (int i = 0; i < ui->tabWidget->count(); i++) {
+        if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName ) {//Widget Onglet Data
             ui->tabWidget->setCurrentIndex(i);
+            PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+            if (!wc->pbCommit->isEnabled())
+                wc->pbRefreshClick();
             break;
         }
     }
-    if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName)
-    {
+    if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName) {
         //Create tab
         PotaWidget *w = new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
@@ -84,16 +84,14 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->Init(sTableName);
 
         if (w->model->SelectShowErr()) {
-            ui->tabWidget->addTab(w,sTitre);
-            ui->tabWidget->setCurrentWidget(w);
-
+            bool bEdit=false;
             PotaQuery query(db);
             if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
-                                        "WHERE (tbl_name='"+sTableName+"')AND"
-                                              "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
-                query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
+                                    "WHERE (tbl_name='"+sTableName+"')AND"
+                                                   "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
+                    query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
                                         "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
-                                              "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
+                                                       "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
                 QPalette palette = w->sbInsertRows->palette();
                 palette.setColor(QPalette::Text, Qt::white);
                 palette.setColor(QPalette::Base, QColor(234,117,0,110));
@@ -102,11 +100,25 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->sbInsertRows->setEnabled(true);
                 w->pbInsertRow->setEnabled(true);
                 w->pbDeleteRow->setEnabled(true);
+                bEdit=true;
             } else if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
                                            "WHERE (tbl_name='"+sTableName+"')AND"    //View without trigger instead of.
-                                                 "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0) {
+                                                          "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0) {
                 w->pbEdit->setVisible(false);
             }
+
+            if(w->model->rowCount()==0) {
+                if (bEdit and(FkFilter(&db,w->model->RealTableName(),"",w->model->index(0,0),true)!="NoFk")){
+                    w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName()));
+                } else {
+                    MessageDialog(sTitre,NoData(w->model->RealTableName()),QStyle::SP_MessageBoxInformation);
+                    w->deleteLater();
+                }
+            }
+
+            ui->tabWidget->addTab(w,sTitre);
+            ui->tabWidget->setCurrentWidget(w);
+
             w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
             w->delegate->cTableColor=TableColor(sTableName,"");
@@ -170,7 +182,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             //                                        "margin-top: 2px;"
             //                                        "}");
 
-            ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(sTableName));
+            ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(w->model->RealTableName()));
 
             //Tab user settings
             QSettings settings("greli.net", "Potaléger");
@@ -207,6 +219,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             w->tv->setFocus();
            //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
             SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
+
             return true;
         }
         else {
@@ -250,6 +263,11 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
             }
         settings.endGroup();
 
+        if (w->model->tableName()=="Params") {
+            PotaQuery pQuery(db);
+            setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
+        }
+
         if (ui->tabWidget->count()<3) {//Fermeture du dernier onglet data ouvert.
             ui->mFermerOnglets->setEnabled(false);
             ui->mFermerOnglet->setEnabled(false);
@@ -288,7 +306,6 @@ void MainWindow::on_tabWidget_currentChanged(int index)
         ui->mEditNotes->setChecked(!ui->pteNotes->isReadOnly());
         ui->mImporter->setEnabled(false);
         ui->mExporter->setEnabled(false);
-        SetColoredText(ui->lDBErr,"","");
     } else {
         PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         // ui->mFilterFind->setEnabled(true);
@@ -301,7 +318,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
         ui->mImporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),">>  ")));
         ui->mExporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),"  >>")));
     }
-
+    SetColoredText(ui->lDBErr,"","");
 }
 
 //File menu
@@ -395,7 +412,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
     QFileInfo FileInfoVerif;
 
     QString sFileName=ui->lDB->text();
-    if (sFileName!="..."){ //First run, no db file.
+    if (sFileName=="..."){ //First run, no db file.
         QDir dir;
         // if (!dir.exists("data"))
         //     dir.mkdir("data");
@@ -405,7 +422,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
 //         sFileName = "/home/NomUtilisateur/Documents";
 // #endif
         sFileName=QStandardPaths::writableLocation(QStandardPaths::HomeLocation)+
-                  QDir::toNativeSeparators("/Documents/potaleger.sqlite3");
+                  QDir::toNativeSeparators("/Documents/Potaleger.sqlite3");
     }
 
     sFileName = QFileDialog::getSaveFileName(this, tr("Nom pour la BDD Potaléger %1").arg(sEmpty), sFileName, "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
@@ -997,25 +1014,52 @@ void MainWindow::on_mCreerCultures_triggered()
     PotaQuery pQuery(db);
     pQuery.lErr=ui->lDBErr;
     int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif").toInt();
-    if (NbCultPlanif==0)
-    {
+    if (NbCultPlanif==0) {
         MessageDialog(tr("Aucune culture à planifier:")+"\n\n"+
                           tr("- Créez des rotations")+"\n"+
                           tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
         return;
     }
 
+    int NbCultPlanifRetard=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)<DATE('now')").toInt();
     int NbCultAVenir=pQuery.Selec0ShowErr("SELECT count() FROM C_non_commencées").toInt();
-    if (OkCancelDialog(tr("Créer les prochaines cultures en fonction des rotations?")+"\n\n"+
-                       tr("%1 cultures vont être créées").arg(NbCultPlanif)+"\n"+
-                       tr("Il y a déjà %1 cultures ni semées ni plantées.").arg(NbCultAVenir)+"\n"+
-                       tr("Id de la dernière culture:")+" "+str(NbCultAVenir),QStyle::SP_MessageBoxQuestion))
-    {
+    QStyle::StandardPixmap icon;
+    QString CultAVenir;
+    if(NbCultAVenir>0) {
+        icon=QStyle::SP_MessageBoxWarning;
+        CultAVenir="\n\n"+tr("IL Y A DÉJÀ %1 CULTURES NI SEMÉES NI PLANTÉES.").arg(NbCultAVenir)+"\n"+
+                   iif(NbCultAVenir>NbCultPlanif*0.9,tr("Peut-être avez-vous déjà généré les prochaines cultures."),"").toString();
+    } else {
+        icon=QStyle::SP_MessageBoxQuestion;
+        CultAVenir="";
+    }
+    if (OkCancelDialog(tr("Créer les cultures de la saison %1 ?").arg(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_planif'").toString())+"\n\n"+ //todo
+                       tr("%1 cultures vont être créées en fonction des rotations").arg(NbCultPlanif)+"\n"+
+                       tr("Id de la dernière culture:")+" "+str(NbCultAVenir)+
+                       CultAVenir,
+                       icon)) {
+        int choice=2;
+        if (NbCultPlanifRetard>0){
+            choice = RadiobuttonDialog(tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanif).arg(NbCultPlanifRetard),
+                                           {tr("Ne pas créer ces cultures en retard"),
+                                            tr("Créer aussi ces cultures en retard")},
+                                            iif(NbCultPlanifRetard<NbCultPlanif/10,1,0).toInt(),
+                                            QStyle::SP_MessageBoxWarning);
+            if (choice<0)
+                return;
+        }
         int IdCult1=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
-        if (pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement) "
-                               "SELECT IT_plante,Variété,Fournisseur,Planche,Longueur,Nb_rangs,Espacement "
-                               "FROM Cult_planif"))
-        {
+        bool result;
+
+        if (choice==0)
+            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
+                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur FROM Params WHERE Paramètre='Année_planif'),Longueur,Nb_rangs,Espacement "
+                                       "FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')");
+        else
+            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
+                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur FROM Params WHERE Paramètre='Année_planif'),Longueur,Nb_rangs,Espacement "
+                                       "FROM Cult_planif");
+        if (result) {
             int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
             int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
             if (IdCult3>IdCult2 and IdCult2>IdCult1)

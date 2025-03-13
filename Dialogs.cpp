@@ -18,7 +18,10 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
     // msgBox.setIcon(Icon);
     // msgBox.exec();
     QDialog dialog(this);
-    dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    if (!windowTitle().contains(" - "))
+        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    else
+        dialog.setWindowTitle(windowTitle());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
@@ -94,7 +97,10 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
     // return (msgBox.exec() == QMessageBox::Ok);
 
     QDialog dialog(this);
-    dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    if (!windowTitle().contains(" - "))
+        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    else
+        dialog.setWindowTitle(windowTitle());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
@@ -150,7 +156,10 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
 
 int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType) {
     QDialog dialog(this);
-    dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    if (!windowTitle().contains(" - "))
+        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    else
+        dialog.setWindowTitle(windowTitle());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
@@ -229,7 +238,10 @@ bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap icon
     // return (msgBox.exec() == QMessageBox::Yes);
 
     QDialog dialog(this);
-    dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    if (!windowTitle().contains(" - "))
+        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
+    else
+        dialog.setWindowTitle(windowTitle());
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();

@@ -267,7 +267,7 @@ BEGIN
         Nb_rangs=NEW.Nb_rangs,
         Espacement=NEW.Espacement,
         Notes=NEW.Notes
-    WHERE Culture=NEW.Culture;
+    WHERE Culture=OLD.Culture;
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__non_terminées_DELETE;;
@@ -290,7 +290,7 @@ BEGIN
         Nb_rangs=NEW.Nb_rangs,
         Espacement=NEW.Espacement,
         Notes=NEW.Notes
-    WHERE Culture=NEW.Culture;
+    WHERE Culture=OLD.Culture;
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__Plantations_à_faire_UPDATE;;
@@ -309,7 +309,7 @@ BEGIN
         Nb_rangs=NEW.Nb_rangs,
         Espacement=NEW.Espacement,
         Notes=NEW.Notes
-    WHERE Culture=NEW.Culture;
+    WHERE Culture=OLD.Culture;
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__Récoltes_à_faire_UPDATE;;
@@ -326,7 +326,7 @@ BEGIN
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
         Notes=NEW.Notes
-    WHERE Culture=NEW.Culture;
+    WHERE Culture=OLD.Culture;
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__à_terminer_UPDATE;;
@@ -341,7 +341,7 @@ BEGIN
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
         Notes=NEW.Notes
-     WHERE Culture=NEW.Culture;
+     WHERE Culture=OLD.Culture;
 END;;
 
 DROP TRIGGER IF EXISTS Destinations__conso_INSERT;;
@@ -373,7 +373,7 @@ BEGIN
         Date_RAZ=NEW.Date_RAZ,
         Active=NEW.Active,
         Notes=NEW.Notes
-    WHERE Destination=NEW.Destination;
+    WHERE Destination=OLD.Destination;
 END;;
 
 DROP TRIGGER IF EXISTS Destinations__conso_DELETE;;
@@ -391,7 +391,7 @@ BEGIN
         Inventaire=NEW.Inventaire,
         Prix_kg=NEW.Prix_kg,
         Notes=NEW.Notes
-     WHERE Espèce=NEW.Espèce;
+     WHERE Espèce=OLD.Espèce;
 END;;
 
 DROP TRIGGER IF EXISTS ITP_UPDATE_FinsPériodes;;
@@ -404,7 +404,7 @@ BEGIN
         Fin_semis=coalesce(Fin_semis,ItpPlusN(Déb_semis,'1 months')),
         Fin_plantation=coalesce(Fin_plantation,ItpPlusN(Déb_plantation,'1 months')),
         Fin_récolte=coalesce(Fin_récolte,ItpPlusN(Déb_récolte,'1 months'))
-        WHERE IT_plante=NEW.IT_plante;
+        WHERE IT_plante=OLD.IT_plante;
 END;;
 
 DROP TRIGGER IF EXISTS ITP__Tempo_INSERT;;
@@ -508,9 +508,9 @@ BEGIN
                                    Notes)
     VALUES (NEW.ID,
             NEW.Rotation,
-            NEW.Année,
+            coalesce(NEW.Année,1),
             NEW.IT_plante,
-            NEW.Pc_planches,
+            coalesce(NEW.Pc_planches,100),
             NEW.Fi_planches,
             NEW.Notes);
 END;;
@@ -522,7 +522,7 @@ BEGIN
         Rotation=NEW.Rotation,
         Année=NEW.Année,
         IT_plante=NEW.IT_plante,
-        Pc_planches=NEW.Pc_planches,
+        Pc_planches=coalesce(NEW.Pc_planches,100),
         Fi_planches=NEW.Fi_planches,
         Notes=NEW.Notes
      WHERE ID=OLD.ID;
@@ -719,12 +719,12 @@ BEGIN
         Fournisseur=NEW.Fournisseur,
         Nb_graines_g=NEW.Nb_graines_g,
         Notes=NEW.Notes
-     WHERE Variété=NEW.Variété;
+     WHERE Variété=OLD.Variété;
 
      UPDATE Espèces SET
          FG=NEW.FG,
         Notes=NEW.N_espèce
-     WHERE Espèce=NEW.Espèce;
+     WHERE (Espèce=NEW.Espèce)AND(NEW.Espèce=OLD.Espèce);
 
      UPDATE Familles SET
         Notes=NEW.N_famille

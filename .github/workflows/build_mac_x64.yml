@@ -50,6 +50,7 @@ jobs:
             cp install/macos13/potaleger.icns artifact/Potaleger.app/Contents/Resources/
             cp install/macos13/Info.plist artifact/Potaleger.app/Contents/
             cp install/readme.md artifact/Potaleger.app/Contents/MacOS/
+            cp install/infotab1.png artifact/Potaleger.app/Contents/MacOS/
 
       - name: Deploy Qt dependencies
         shell: bash

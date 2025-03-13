@@ -59,6 +59,7 @@ jobs:
             Copy-Item -Path .\install\potaleger.gif          -Destination .\artifact\
             Copy-Item -Path .\install\win2019\potaleger.ico  -Destination .\artifact\
             Copy-Item -Path .\install\readme.md              -Destination .\artifact\
+            Copy-Item -Path .\install\infotab1.png           -Destination .\artifact\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

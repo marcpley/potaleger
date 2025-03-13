@@ -92,7 +92,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
 
     if (SetFkOn and !query.exec("PRAGMA foreign_keys = ON")) {
         dbClose();
-        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser les clés étrangères."), "Err");
+        SetColoredText(ui->lDBErr, "Foreign keys : Err", "Err");
         return false;
     }
 
@@ -151,20 +151,27 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         else if (bUpdate)
             sVerBDD = ui->lVerBDDAttendue->text();
         else {
-            ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
+            MessageDialog(tr("Cette BDD n'est pas une BDD Potaléger."),
+                          sFichier,QStyle::SP_MessageBoxCritical);
+            //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
             return false;
         }
 
         if (sVerBDD < "2024-12-30") {
-            ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
+            MessageDialog(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD,
+                          sFichier,QStyle::SP_MessageBoxCritical);
+            //ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
             dbClose();
             return false;
         }
 
         if (sVerBDD > ui->lVerBDDAttendue->text()) {
-            ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
-            ui->tbInfoDB->append("-> "+tr("Utilisez une version plus récente de Potaléger."));
+            MessageDialog(tr("La version de cette BDD est trop récente: ")+sVerBDD+"\n\n"+
+                          tr("Utilisez une version plus récente de Potaléger."),
+                          sFichier,QStyle::SP_MessageBoxCritical);
+            // ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
+            // ui->tbInfoDB->append("-> "+tr("Utilisez une version plus récente de Potaléger."));
             dbClose();
             return false;
         }
@@ -229,7 +236,9 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         }
 
         if (sVerBDD != ui->lVerBDDAttendue->text()) {
-            ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
+            MessageDialog(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
+                          sFichier,QStyle::SP_MessageBoxCritical);
+            // ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
             dbClose();
             return false;
         }
@@ -239,16 +248,11 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         return false;
     }
 
-    //Afficher infos
-    if (PotaBDDInfo()) {
-        //Activer les menus
-        SetEnabledDataMenuEntries(true);
-        ui->lDBErr->clear();
-    }
-    else {   //Ce cas ne devrait pas arriver, le SELECT précédent à validé l'existence de la vue Info_Potaléger.
-        dbClose();
-        return false;
-    }
+    setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
+
+    //Activer les menus
+    SetEnabledDataMenuEntries(true);
+    ui->lDBErr->clear();
 
    //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
@@ -264,7 +268,7 @@ void MainWindow::PotaDbClose()
 
     dbClose();
     //userDataEditing=false;
-    ui->tbInfoDB->clear();
+    //ui->tbInfoDB->clear();
     ui->lDB->clear();
     ui->lDBErr->clear();
 }
@@ -299,13 +303,27 @@ void MainWindow::RestaureParams()
     else {
         QFile mdFile;
         mdFile.setFileName(QApplication::applicationDirPath()+"/readme.md");
-        qDebug() << QApplication::applicationDirPath()+"/readme.md";
         if (mdFile.exists()) {
+            qDebug() << mdFile.fileName();
             mdFile.open(QFile::ReadOnly);
             ui->pteNotes->setMarkdown(mdFile.readAll());
         } else
             ui->pteNotes->setPlainText(tr("Notes au format Markdown (CTRL+N pour éditer).")+"\n"+
                                        tr("Ce texte est enregistré sur votre ordinateur (pas dans la BDD)."));
+    }
+
+
+    QFile imgFile(QApplication::applicationDirPath()+"/infotab1.png");
+    if (imgFile.exists()) {
+        qDebug() << imgFile.fileName();
+        //Image on first tab.
+        QGraphicsScene *scene = new QGraphicsScene(this);
+        QPixmap pixmap(imgFile.fileName());
+        scene->addPixmap(pixmap);
+        ui->graphicsView->setScene(scene);
+        //ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+    } else {
+        ui->graphicsView->setVisible(false);
     }
 
     PathExport=settings.value("PathExport").toString();
@@ -347,6 +365,7 @@ void MainWindow::SetUi(){
     ui->progressBar->setVisible(false);
     ui->progressBar->setMinimumSize(200,ui->progressBar->height());
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
+    ui->Info->setLayout(ui->verticalLayout);
 
     ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
     ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));

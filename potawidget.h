@@ -536,15 +536,9 @@ private:
     QString sPositionRow2="";
     void FindFrom(int row, int column, bool Backward);
 
-public slots:
-    void curChanged(const QModelIndex cur);//, const QModelIndex pre
-    void selChanged();
-    void showSelInfo();
-
 private slots:
     void dataChanged(const QModelIndex &topLeft);//,const QModelIndex &bottomRight,const QList<int> &roles
     void headerRowClicked();//int logicalIndex
-    void pbRefreshClick();
     void pbCommitClick();
     void pbRollbackClick();
     void pbInsertRowClick();
@@ -555,6 +549,10 @@ private slots:
     void leFindTextEdited(const QString &text);
 
 public slots:
+    void curChanged(const QModelIndex cur);//, const QModelIndex pre
+    void selChanged();
+    void showSelInfo();
+    void pbRefreshClick();
     void pbEditClick();
     void pbFilterClick(bool checked);
     void pbFindFirstClick();

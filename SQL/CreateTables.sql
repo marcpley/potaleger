@@ -8,7 +8,7 @@ CREATE TABLE Apports (Apport TEXT PRIMARY KEY,
                       Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                       Date DATE DEFAULT (DATE('now')) NOT NULL,
+                       Date DATE NOT NULL, -- DEFAULT (DATE('now'))
                        Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Quantité REAL NOT NULL,
                        Prix REAL,
@@ -75,7 +75,7 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY,
                       Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Familles (Famille TEXT PRIMARY KEY,
-                       Intervalle REAL DEFAULT (1),
+                       Intervalle REAL DEFAULT (4),
                        Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY,
@@ -120,15 +120,15 @@ CREATE TABLE Rotations (Rotation TEXT PRIMARY KEY,
 
 CREATE TABLE Rotations_détails (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                                 Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE,
-                                Année INTEGER DEFAULT (1),
+                                Année INTEGER DEFAULT (1) NOT NULL ON CONFLICT REPLACE,
                                 IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
-                                Pc_planches REAL DEFAULT (100) NOT NULL,
+                                Pc_planches REAL DEFAULT (100) NOT NULL ON CONFLICT REPLACE,
                                 -- Nb_planches INTEGER,
                                 Fi_planches TEXT,
                                 Notes TEXT);
 
 CREATE TABLE Récoltes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                       Date DATE DEFAULT (DATE('now')) NOT NULL,
+                       Date DATE NOT NULL, -- DEFAULT (DATE('now'))
                        Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Quantité REAL NOT NULL,

@@ -222,16 +222,44 @@ iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
 -- out : 15:15:15:15:15:15
 )#");
 
+QString sRF_trop_proches2 = QStringLiteral(R"#(
+-- SELECT RF.Famille || ' année ' || format('%i',RF.Année) result
+--                                          FROM R_famille RF
+--                                         WHERE (RF.Rotation=(SELECT Rotation FROM R_famille WHERE ID=:ID))AND --ITP de la rotation
+--                                               (RF.Année<>(SELECT Année FROM R_famille WHERE ID=:ID))AND -- que les ITP des autres années de la rotation
+--                                               (RF.Famille=(SELECT Famille FROM R_famille WHERE ID=:ID))AND -- que les ITP de la même famille
+--                                               (((SELECT Année FROM R_famille WHERE ID=:ID) BETWEEN RF.Année-RF.Intervalle+1 AND
+--                                                                                                    RF.Année+RF.Intervalle-1)OR -- en conflit lors du 1er cycle
+--                                                ((SELECT Année FROM R_famille WHERE ID=:ID) BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND
+--                                                                                                    RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
+)#");
+
 QString sRF_trop_proches = QStringLiteral(R"#(
 SELECT RF.Famille || ' année ' || format('%i',RF.Année) result
                                          FROM R_famille RF
-                                        WHERE (RF.Rotation=(SELECT Rotation FROM R_famille WHERE ID=:ID))AND --ITP de la rotation
-                                              (RF.Année<>(SELECT Année FROM R_famille WHERE ID=:ID))AND -- que les ITP des autres années de la rotation
-                                              (RF.Famille=(SELECT Famille FROM R_famille WHERE ID=:ID))AND -- que les ITP de la même famille
-                                              (((SELECT Année FROM R_famille WHERE ID=:ID) BETWEEN RF.Année-RF.Intervalle+1 AND
-                                                                                                   RF.Année+RF.Intervalle-1)OR -- en conflit lors du 1er cycle
-                                               ((SELECT Année FROM R_famille WHERE ID=:ID) BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND
-                                                                                                   RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
+                                        WHERE (RF.Rotation=:Rot)AND --ITP de la rotation
+                                              (RF.Année<>:Ann)AND -- que les ITP des autres années de la rotation
+                                              (RF.Famille=:Fam)AND -- que les ITP de la même famille
+                                              ((:Ann BETWEEN RF.Année-RF.Intervalle+1 AND
+                                                             RF.Année+RF.Intervalle-1)OR -- en conflit lors du 1er cycle
+                                               (:Ann BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND
+                                                             RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
+)#");
+
+QString sR_ITP_CAnt = QStringLiteral(R"#(
+-- culture antérieure dans la rotation (si la courante n'est pas la 1ère de la rotation)
+SELECT Date_Ferm,Pc_planches,Fi_planches FROM R_ITP
+WHERE (Rotation=:Rot)AND(Rotation||Date_MEP < :Rot || :DateMEP)
+ORDER BY Ind DESC
+LIMIT 1
+)#");
+
+QString sR_ITP_CDer = QStringLiteral(R"#(
+-- dernière culture de la rotation
+SELECT DATE(Date_Ferm,'-'||:NbAnn||' years') Date_Ferm,Pc_planches,Fi_planches FROM R_ITP
+WHERE (Rotation=:Rot)
+ORDER BY Ind DESC
+LIMIT 1
 )#");
 
 QString sItpPlus15jours = QStringLiteral(R"#(
@@ -256,7 +284,7 @@ QString sRepartir_Recolte_sur = QStringLiteral(R"#(
 SELECT C.Culture,I.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
 FROM Cultures C JOIN ITP I USING(IT_plante)
 WHERE (:Repartir NOTNULL)AND
-      (C.Début_récolte <= DATE('now'))AND
+      (C.Début_récolte <= DATE('now','+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days'))AND
       (C.Fin_récolte >= DATE('now','-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days'))AND
       ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
       ((:Repartir='*')OR
