@@ -312,7 +312,11 @@ QColor RowColor(QString sValue){
         c=cEspece;
     else
         return QColor();
-    c.setAlpha(60);
+    if (isDarkTheme())
+        c.setAlpha(60);
+    else
+        c.setAlpha(80);
+
     return c;
 }
 

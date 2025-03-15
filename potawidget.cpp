@@ -1235,7 +1235,10 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         c=cColColors[index.column()];
         if (!c.isValid() and index.column()!=TempoCol)
             c=cTableColor;
-        c.setAlpha(30);
+        if (isDarkTheme())
+            c.setAlpha(30);
+        else
+            c.setAlpha(60);
     }
     if (!pw->model->rowsToInsert.contains(index.row()) and c.isValid()) {
         b.setColor(c);

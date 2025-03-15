@@ -1160,3 +1160,64 @@ void MainWindow::on_mIncDatesCultures_triggered()
 }
 
 
+
+void MainWindow::on_cbTheme_currentIndexChanged(int index)
+{
+    QPalette palette = QApplication::palette();
+    palette.setColor(QPalette::ToolTipBase ,QColor( "#ffffdc" ));
+    palette.setColor(QPalette::ToolTipText ,QColor( "#000000" ));
+    palette.setColor(QPalette::BrightText ,QColor( "#ffffff" ));
+    palette.setColor(QPalette::Highlight ,QColor( "#0c75de" ));
+    palette.setColor(QPalette::Active , QPalette::HighlightedText ,QColor( "#ffffff" ));
+    palette.setColor(QPalette::Inactive , QPalette::HighlightedText ,QColor( "#ffffff" ));
+    if (index==1) { //Dark
+        palette.setColor(QPalette::Window ,QColor( "#3d3d3d" ));
+        palette.setColor(QPalette::Base ,QColor( "#3d3d3d" ));
+        palette.setColor(QPalette::Button ,QColor( "#3d3d3d" ));
+        palette.setColor(QPalette::AlternateBase ,QColor( "#393939" )); //Unused ?
+        palette.setColor(QPalette::Light ,QColor( "#4c4c4c" ));
+        palette.setColor(QPalette::Midlight ,QColor( "#454545" ));
+        palette.setColor(QPalette::Dark ,QColor( "#363636" ));
+        palette.setColor(QPalette::Mid ,QColor( "#454545" )); //Unused ?
+        palette.setColor(QPalette::Shadow ,QColor( "#030303" )); //Unused ?
+        //  QPalette::Active
+        palette.setColor( QPalette::Active , QPalette::WindowText ,QColor( "#dadada" ));
+        palette.setColor( QPalette::Active , QPalette::Text ,QColor( "#dadada" ));
+        palette.setColor( QPalette::Active , QPalette::ButtonText ,QColor( "#dadada" ));
+        //  QPalette::Inactive
+        palette.setColor( QPalette::Inactive , QPalette::WindowText ,QColor( "#ffffff" ));
+        palette.setColor( QPalette::Inactive , QPalette::Text ,QColor( "#dadada" ));
+        palette.setColor( QPalette::Inactive , QPalette::ButtonText ,QColor( "#dadada" ));
+        //  QPalette::Disabled
+        palette.setColor( QPalette::Disabled , QPalette::WindowText ,QColor( "#8b8b8b" ));
+        palette.setColor( QPalette::Disabled , QPalette::Text ,QColor( "#8b8b8b" ));
+        palette.setColor( QPalette::Disabled , QPalette::ButtonText ,QColor( "#8b8b8b" ));
+        palette.setColor( QPalette::Disabled , QPalette::HighlightedText ,QColor( "#dadada" ));
+    } else {
+        palette.setColor(QPalette::Window ,QColor( "#fbfbfb" ));
+        palette.setColor(QPalette::Base ,QColor( "#fbfbfb" ));
+        palette.setColor(QPalette::Button ,QColor( "#dbdbdb" ));
+        palette.setColor(QPalette::AlternateBase ,QColor( "#ebebeb" )); //Unused ?
+        palette.setColor(QPalette::Light ,QColor( "#ffffff" ));
+        palette.setColor(QPalette::Midlight ,QColor( "#dcdcdc" ));
+        palette.setColor(QPalette::Dark ,QColor( "#bcbcbc" ));
+        palette.setColor(QPalette::Mid ,QColor( "#ffffff" )); //Unused ?
+        palette.setColor(QPalette::Shadow ,QColor( "#0d0d0d" )); //Unused ?
+        //  QPalette::Active
+        palette.setColor( QPalette::Active , QPalette::WindowText ,QColor( "#303030" ));
+        palette.setColor( QPalette::Active , QPalette::Text ,QColor( "#303030" ));
+        palette.setColor( QPalette::Active , QPalette::ButtonText ,QColor( "#303030" ));
+        //  QPalette::Inactive
+        palette.setColor( QPalette::Inactive , QPalette::WindowText ,QColor( "#000000" ));
+        palette.setColor( QPalette::Inactive , QPalette::Text ,QColor( "#303030" ));
+        palette.setColor( QPalette::Inactive , QPalette::ButtonText ,QColor( "#303030" ));
+        //  QPalette::Disabled
+        palette.setColor( QPalette::Disabled , QPalette::WindowText ,QColor( "#959595" ));
+        palette.setColor( QPalette::Disabled , QPalette::Text ,QColor( "#959595" ));
+        palette.setColor( QPalette::Disabled , QPalette::ButtonText ,QColor( "#959595" ));
+        palette.setColor( QPalette::Disabled , QPalette::HighlightedText ,QColor( "#303030" ));
+    }
+    QApplication::setPalette(palette);
+
+}
+

@@ -8,7 +8,6 @@
 #include <QMessageBox>
 #include <QtSvg>
 #include "sqlite/sqlite3.h"
-//#include "sqlean/sqlite3.h"
 #include <QStyle>
 
 QT_BEGIN_NAMESPACE
@@ -17,7 +16,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC3";
+QString const Version="1.0RC4";
 QString const DbVersion="2025-03-05";
 
 class MainWindow : public QMainWindow
@@ -121,6 +120,8 @@ private slots:
     void on_mInventaire_triggered();
 
     void on_mEsSaisieSorties_triggered();
+
+    void on_cbTheme_currentIndexChanged(int index);
 
 private:
     void SetEnabledDataMenuEntries(bool b);

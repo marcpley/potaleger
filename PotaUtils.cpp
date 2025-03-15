@@ -144,6 +144,7 @@ bool isDarkTheme() {
     return backgroundColor.lightness() < 128;
 }
 
+
 float min(float a,float b) {
     if (a>b)
         return b;

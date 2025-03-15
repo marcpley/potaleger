@@ -284,6 +284,12 @@ void MainWindow::RestaureParams()
         restoreGeometry(geometry);
     settings.endGroup();
 
+    if (settings.value("theme").toString()=="dark")
+        ui->cbTheme->setCurrentIndex(1);
+    else
+        ui->cbTheme->setCurrentIndex(0);
+
+
     if (settings.value("database_path").toString().isEmpty()) {
         int choice = RadiobuttonDialog(tr("Potaléger stoque ses données dans un fichier unique à l'emplacement de votre choix."),
                                        {tr("Sélectionner une base de données existante"),
@@ -338,6 +344,12 @@ void MainWindow::SauvParams()
     settings.beginGroup("MainWindow");
     settings.setValue("geometry", saveGeometry());
     settings.endGroup();
+
+    if (ui->cbTheme->currentIndex()==1)
+        settings.setValue("theme","dark");
+    else
+        settings.setValue("theme","");
+
     if (!ui->lDB->text().isEmpty()) {
         QFile file(ui->lDB->text());
         if (file.exists())
@@ -366,6 +378,9 @@ void MainWindow::SetUi(){
     ui->progressBar->setMinimumSize(200,ui->progressBar->height());
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
     ui->Info->setLayout(ui->verticalLayout);
+
+    ui->cbTheme->addItem(tr("clair"));
+    ui->cbTheme->addItem(tr("sombre"));
 
     ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
     ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));
@@ -404,6 +419,26 @@ void MainWindow::SetUi(){
     ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
     ui->mAnaDestinations->setIcon(QIcon(TablePixmap("Destinations__conso","")));
 
+    if (false) {
+        QPalette palette = QApplication::palette();
+
+        QList<QPalette::ColorRole> roles = {
+            QPalette::Window, QPalette::WindowText, QPalette::Base, QPalette::AlternateBase,
+            QPalette::ToolTipBase, QPalette::ToolTipText, QPalette::Text, QPalette::Button,
+            QPalette::ButtonText, QPalette::BrightText, QPalette::Light, QPalette::Midlight,
+            QPalette::Dark, QPalette::Mid, QPalette::Shadow, QPalette::Highlight, QPalette::HighlightedText
+        };
+
+        QList<QPalette::ColorGroup> groups = {QPalette::Active,QPalette::Inactive,QPalette::Disabled};
+
+        for (auto group : groups) {
+            qDebug() << "        // " << group;
+            for (auto role : roles) {
+                QColor color = palette.color(group, role);
+                qDebug() << "        palette.setColor(" << group << "," << role << ",QColor(" << color.name() << "));";
+            }
+        }
+    }
 }
 
 void MainWindow::showIfDdOpen() {
