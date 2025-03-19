@@ -181,15 +181,16 @@ void parseCSV(QString entry, QString sep, QStringList &list) {
     }
 }
 
-QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName)  {
-    PotaQuery query(*db);
-    query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
-    while (query.next()){
-        if (query.value(5).toInt()==1)
-            return query.value(1).toString();
-    }
-    return "";
-}
+// QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName)  {
+//     PotaQuery query(*db);
+//     query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
+//     while (query.next()){
+//         if (query.value(5).toInt()==1)
+//             return query.value(1).toString();
+//     }
+//     //PK not found
+//     return "";
+// }
 
 QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns)
 {

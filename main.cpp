@@ -403,9 +403,11 @@ void MainWindow::SetUi(){
     ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
 
     ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
-    ui->mCuSemisAFaire->setIcon(QIcon(TablePixmap("Cultures__Semis_à_faire","")));
-    ui->mCuPlantationsAFaire->setIcon(QIcon(TablePixmap("Cultures__Plantations_à_faire","")));
-    ui->mCuRecoltesAFaire->setIcon(QIcon(TablePixmap("Cultures__Récoltes_à_faire","")));
+    ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
+    ui->mCuASemerSA->setIcon(QIcon(TablePixmap("Cultures__à_semer_SA","")));
+    ui->mCuASemerD->setIcon(QIcon(TablePixmap("Cultures__à_semer_D","")));
+    ui->mCuAPlanter->setIcon(QIcon(TablePixmap("Cultures__à_planter","")));
+    ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
     ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
     ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
@@ -453,8 +455,6 @@ void MainWindow::showIfDdOpen() {
 }
 
 void MainWindow::showEvent(QShowEvent *){
-    SetUi();
-    RestaureParams();
     // QTimer *dbTimer = new QTimer(this);
     // connect(dbTimer, &QTimer::timeout, this, &MainWindow::showIfDdOpen);
     // dbTimer->start(1000);
@@ -472,6 +472,8 @@ int main(int argc, char *argv[])
     MainWindow w;
     //w.db = NEW;
     //w.db.addDatabase("QSQLITE");
+    w.SetUi();
+    w.RestaureParams();
 
     w.show();
     return a.exec();

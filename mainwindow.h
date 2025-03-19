@@ -16,7 +16,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC4";
+QString const Version="1.0RC5";
 QString const DbVersion="2025-03-05";
 
 class MainWindow : public QMainWindow
@@ -75,11 +75,11 @@ private slots:
 
     void on_mCuNonTer_triggered();
 
-    void on_mCuSemisAFaire_triggered();
+    void on_mCuASemerD_triggered();
 
-    void on_mCuPlantationsAFaire_triggered();
+    void on_mCuAPlanter_triggered();
 
-    void on_mCuRecoltesAFaire_triggered();
+    void on_mCuARecolter_triggered();
 
     void on_mCuSaisieRecoltes_triggered();
 
@@ -122,6 +122,10 @@ private slots:
     void on_mEsSaisieSorties_triggered();
 
     void on_cbTheme_currentIndexChanged(int index);
+
+    void on_mCuASemerSA_triggered();
+
+    void on_mCuASemer_triggered();
 
 private:
     void SetEnabledDataMenuEntries(bool b);

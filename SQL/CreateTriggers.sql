@@ -28,13 +28,13 @@ BEGIN
         Prix=coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)),
         Destination=NEW.Destination,
         Notes=NEW.Notes
-     WHERE ID=OLD.ID;
+     WHERE Consommations.ID=OLD.ID;
 END;;
 
 DROP TRIGGER IF EXISTS Consommations__Saisies_DELETE;;
 CREATE TRIGGER Consommations__Saisies_DELETE INSTEAD OF DELETE ON Consommations__Saisies
 BEGIN
-    DELETE FROM Consommations WHERE ID=OLD.ID;
+    DELETE FROM Consommations WHERE Consommations.ID=OLD.ID;
 END;;
 
 
@@ -276,8 +276,8 @@ BEGIN
     DELETE FROM Cultures WHERE Culture=OLD.Culture;
 END;;
 
-DROP TRIGGER IF EXISTS Cultures__Semis_à_faire_UPDATE;;
-CREATE TRIGGER Cultures__Semis_à_faire_UPDATE INSTEAD OF UPDATE ON Cultures__Semis_à_faire
+DROP TRIGGER IF EXISTS Cultures__à_semer_UPDATE;;
+CREATE TRIGGER Cultures__à_semer_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer
 BEGIN
     UPDATE Cultures SET
         Planche=NEW.Planche,
@@ -293,8 +293,40 @@ BEGIN
     WHERE Culture=OLD.Culture;
 END;;
 
-DROP TRIGGER IF EXISTS Cultures__Plantations_à_faire_UPDATE;;
-CREATE TRIGGER Cultures__Plantations_à_faire_UPDATE INSTEAD OF UPDATE ON Cultures__Plantations_à_faire
+DROP TRIGGER IF EXISTS Cultures__à_semer_SA_UPDATE;;
+CREATE TRIGGER Cultures__à_semer_SA_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer_SA
+BEGIN
+    -- Mise à jour semis sur toutes les cultures groupées.
+    UPDATE Cultures SET
+        Date_semis=NEW.Date_semis,
+        Semis_fait=NEW.Semis_fait
+    WHERE instr(OLD.Cultures,Cultures.Culture||' ')>0;
+    -- Mise à jour des notes uniquement sur les cultures qui avaient la même notes avant édition.
+    UPDATE Cultures SET
+        Notes=NEW.Notes
+    WHERE (instr(OLD.Cultures,Cultures.Culture||' ')>0)AND
+          (coalesce(Notes,'wdrsgvge')=coalesce(OLD.Notes,'wdrsgvge'));
+END;;
+
+DROP TRIGGER IF EXISTS Cultures__à_semer_D_UPDATE;;
+CREATE TRIGGER Cultures__à_semer_D_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer_D
+BEGIN
+    UPDATE Cultures SET
+        Planche=NEW.Planche,
+        Variété=NEW.Variété,
+        Fournisseur=NEW.Fournisseur,
+        D_planif=NEW.D_planif,
+        Date_semis=NEW.Date_semis,
+        Semis_fait=NEW.Semis_fait,
+        Longueur=NEW.Longueur,
+        Nb_rangs=NEW.Nb_rangs,
+        Espacement=NEW.Espacement,
+        Notes=NEW.Notes
+    WHERE Culture=OLD.Culture;
+END;;
+
+DROP TRIGGER IF EXISTS Cultures__à_planter_UPDATE;;
+CREATE TRIGGER Cultures__à_planter_UPDATE INSTEAD OF UPDATE ON Cultures__à_planter
 BEGIN
     UPDATE Cultures SET
         Planche=NEW.Planche,
@@ -312,8 +344,8 @@ BEGIN
     WHERE Culture=OLD.Culture;
 END;;
 
-DROP TRIGGER IF EXISTS Cultures__Récoltes_à_faire_UPDATE;;
-CREATE TRIGGER Cultures__Récoltes_à_faire_UPDATE INSTEAD OF UPDATE ON Cultures__Récoltes_à_faire
+DROP TRIGGER IF EXISTS Cultures__à_récolter_UPDATE;;
+CREATE TRIGGER Cultures__à_récolter_UPDATE INSTEAD OF UPDATE ON Cultures__à_récolter
 BEGIN
     UPDATE Cultures SET
         Date_semis=NEW.Date_semis,
@@ -537,6 +569,7 @@ END;;
 DROP TRIGGER IF EXISTS Récoltes__Saisies_INSERT;;
 CREATE TRIGGER Récoltes__Saisies_INSERT INSTEAD OF INSERT ON Récoltes__Saisies
 BEGIN
+    SELECT RAISE(ABORT,'NOT NULL constraint failed Récoltes.Culture/Répartir unable to fetch row') WHERE (NEW.Culture ISNULL)AND(NEW.Répartir ISNULL);
     --Saisie d'un récolte pour une culture unique0
     INSERT INTO Récoltes (Date,
                           Espèce,
@@ -560,9 +593,9 @@ BEGIN
     SELECT coalesce(NEW.Date,min(Début_récolte,DATE('now'))),
             NEW.Espèce,
             C.Culture,
-            round(NEW.Quantité/(SELECT sum(Longueur) FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce))*C.Longueur,3),
+            round(NEW.Quantité/(SELECT sum(Longueur) FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Longueur,3),
             NEW.Notes
-     FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce) C;
+     FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce,NEW.Date) C;
 END;;
 
 DROP TRIGGER IF EXISTS Récoltes__Saisies_UPDATE;;
@@ -587,9 +620,9 @@ BEGIN
      SELECT coalesce(NEW.Date,min(Début_récolte,DATE('now'))),
              NEW.Espèce,
              C.Culture,
-             round(NEW.Quantité/(SELECT sum(Longueur) FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce))*C.Longueur,3),
+             round(NEW.Quantité/(SELECT sum(Longueur) FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Longueur,3),
              NEW.Notes
-      FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce) C;
+      FROM Repartir_Recolte_sur(NEW.Répartir,NEW.Espèce,NEW.Date) C;
 END;;
 
 DROP TRIGGER IF EXISTS Récoltes__Saisies_DELETE;;
@@ -613,7 +646,7 @@ BEGIN
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=NEW.Culture),
-                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
      WHERE Culture=NEW.Culture;
 END;;
 

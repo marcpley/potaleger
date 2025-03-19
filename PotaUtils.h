@@ -35,7 +35,7 @@ bool isDarkTheme();
 float min(float a,float b);
 int min(int a,int b);
 void parseCSV(QString entry, QString sep, QStringList &list);
-QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName);
+//QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName);
 QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns=false);
 void SetButtonSize(QToolButton *b);
 void SetFontColor(QWidget* widget, QColor color);

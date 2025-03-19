@@ -25,6 +25,7 @@ const QColor cTerminee=QColor("#808080");//Gris
 bool AcceptReturns(const QString sFieldName);
 int DefColWidth(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 QString DynDDL(QString sQuery);
+bool FieldIsMoney(const QString sFieldName);
 QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QModelIndex &index, bool countFk=false);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
 int NaturalSortCol(const QString sTableName);

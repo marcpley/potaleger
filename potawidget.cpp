@@ -190,6 +190,10 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     editNotes->setParent(tv);
     editNotes->setVisible(false);
     editNotes->setReadOnly(true);
+    QPalette palette = editNotes->palette();
+    palette.setColor(QPalette::Base, QApplication::palette().color(QPalette::ToolTipBase));
+    palette.setColor(QPalette::Text, QApplication::palette().color(QPalette::ToolTipText));
+    editNotes->setPalette(palette);
 
     editSelInfo = new QTextEdit();
     editSelInfo->setParent(this);
@@ -272,6 +276,16 @@ void PotaWidget::Init(QString TableName)
 
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 
+    //Primary Key
+    query.ExecShowErr("PRAGMA table_xinfo("+model->RealTableName()+")");
+    while (query.next()){
+        if (query.value(5).toInt()==1) {
+            model->sPrimaryKey=query.value(1).toString();
+            qDebug() << "sPrimaryKey : "+model->sPrimaryKey;
+            break;
+        }
+    }
+
     //FK
     query.ExecShowErr("PRAGMA foreign_key_list("+model->RealTableName()+");");
     while (query.next()) {
@@ -310,6 +324,10 @@ void PotaWidget::curChanged(const QModelIndex cur)//, const QModelIndex pre
     if (bUserCurrChanged){
         tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
 
+        pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+
         if (cur.row()>-1)
             lRowSummary->setText(RowSummary(model->tableName(),model->record(cur.row())));
         else
@@ -341,17 +359,20 @@ void PotaWidget::curChanged(const QModelIndex cur)//, const QModelIndex pre
         if (AcceptReturns(FieldName)){
             QString text = model->data(cur,Qt::DisplayRole).toString();
             if (text.contains("\n")){
-                SetVisibleEditNotes(true);
+                SetVisibleEditNotes(true,model->nonEditableColumns.contains(cur.column()));
             } else {
-                QVariant fontVariant = tv->model()->data(cur, Qt::FontRole);
-                QFont font = fontVariant.isValid() ? fontVariant.value<QFont>() : tv->font();
-                QFontMetrics fontMetrics(font);
-                QString elidedText = fontMetrics.elidedText(text, Qt::ElideRight, tv->columnWidth(cur.column())-7);
+                // QVariant fontVariant = tv->model()->data(cur, Qt::FontRole);
+                // QFont font = fontVariant.isValid() ? fontVariant.value<QFont>() : tv->font();
+                // QFontMetrics fontMetrics(font);
+                // QString elidedText = fontMetrics.elidedText(text, Qt::ElideRight, tv->columnWidth(cur.column())+65);
+                // SetVisibleEditNotes(elidedText != text,model->nonEditableColumns.contains(cur.column()));
 
-                SetVisibleEditNotes(elidedText != text);
+                QFontMetrics fm(editNotes->font());
+
+                SetVisibleEditNotes(fm.horizontalAdvance(text)>tv->columnWidth(cur.column())-3,model->nonEditableColumns.contains(cur.column()));
             }
         } else {
-            SetVisibleEditNotes(false);
+            SetVisibleEditNotes(false,false);
         }
         //dbSuspend(model->db,true,pbEdit->isChecked(),model->label);//Normaly not necessary but could correct a case where suspend is wrongly OFF.
 
@@ -437,7 +458,7 @@ void PotaWidget::showSelInfo() {
     editSelInfo->setVisible(true);
 }
 
-void PotaWidget::SetVisibleEditNotes(bool bVisible){
+void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
     if (bVisible){
         int x = tv->columnViewportPosition(tv->currentIndex().column())+5;
         int y = tv->rowViewportPosition(tv->currentIndex().row())+
@@ -445,8 +466,6 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible){
                 tv->rowHeight(tv->currentIndex().row());
         int EditNotesWidth = 400;
         int EditNotesHeight = 200;
-        x=min(x,tv->width()-EditNotesWidth-20);
-        editNotes->setGeometry(x,y,EditNotesWidth,EditNotesHeight);
 
         if (editNotes->isReadOnly()) {
             editNotes->setMarkdown(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
@@ -454,6 +473,28 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible){
             editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
 
         }
+
+        if (autoSize) {
+            //editNotes->document()->setTextWidth(QWIDGETSIZE_MAX);
+            QFontMetrics fm(editNotes->font());
+            int maxWidth = 0;
+            int returns=0;
+            QStringList lines = editNotes->toPlainText().split('\n');
+
+            for (const QString &line : lines) {
+                int lineWidth = fm.horizontalAdvance(line);
+                if (lineWidth > EditNotesWidth)
+                    returns+=floor(lineWidth/EditNotesWidth);
+                if (lineWidth > maxWidth)
+                    maxWidth = lineWidth;
+            }
+            // editNotes->setFixedSize(min(maxWidth+50,400),
+            //                         min(lines.count()*22+5,200));
+            EditNotesWidth = min(maxWidth+50,400);
+            EditNotesHeight = min((lines.count()+returns)*22+5,200);
+        }
+        x=min(x,tv->width()-EditNotesWidth-20);
+        editNotes->setGeometry(x,y,EditNotesWidth,EditNotesHeight);
 
         editNotes->setVisible(true);
     } else {
@@ -480,6 +521,7 @@ void PotaWidget::PositionSave() {
 
 void PotaWidget::PositionRestore() {
     int iStart=iif(tv->isColumnHidden(0),1,0).toInt();
+    int row2=-1;
     for (int row=0;row<model->rowCount();row++) {
         if (sPositionRow==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
                           model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
@@ -487,18 +529,20 @@ void PotaWidget::PositionRestore() {
             //Normal row retreived.
             //tv->selectionModel()->setCurrentIndex(model->index(row,iPositionCol),QItemSelectionModel::Current);
             tv->setCurrentIndex(model->index(row,iPositionCol));
+            row2=-1;
             qDebug() << "PositionRestore: normal";
             break;
         }
         if (sPositionRow2==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
                            model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
                            model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
-            //Normal row probably not in the the new row set.
-            //tv->selectionModel()->setCurrentIndex(model->index(row,iPositionCol),QItemSelectionModel::Current);
-            tv->setCurrentIndex(model->index(row,iPositionCol));
-            qDebug() << "PositionRestore: alternative";
-            break;
+            row2=row;
         }
+    }
+    if (row2>-1) {
+        //Normal row not in the the new row set.
+        tv->setCurrentIndex(model->index(row2,iPositionCol));
+        qDebug() << "PositionRestore: alternative";
     }
     lRowSummary->setText(RowSummary(model->tableName(),model->record(tv->currentIndex().row())));
     lSelect->setText("");
@@ -668,6 +712,9 @@ void PotaWidget::pbCommitClick()
     PositionSave();
     if (model->SubmitAllShowErr())
         PositionRestore();
+    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
     bUserCurrChanged=true;
 }
 
@@ -676,21 +723,28 @@ void PotaWidget::pbRollbackClick()
     bUserCurrChanged=false;
     PositionSave();
     if (model->RevertAllShowErr()){
-        model->modifiedCells.clear();
+        //model->modifiedCells.clear();
         PositionRestore();
     }
+    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
     bUserCurrChanged=true;
 }
 
 void PotaWidget::pbInsertRowClick()
 {
     model->InsertRowShowErr();
+    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+
     tv->setFocus();
 }
 
 void PotaWidget::pbDeleteRowClick()
 {
     model->DeleteRowShowErr();
+    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     tv->setFocus();
 }
 
@@ -921,7 +975,7 @@ bool PotaTableModel::select()  {
     //dbSuspend(db,false,true,label);
 
     AppBusy(true,progressBar,0,tableName()+" %p%");
-    modifiedCells.clear();
+    //modifiedCells.clear();
     commitedCells.clear();
     copiedCells.clear();
 
@@ -972,8 +1026,9 @@ bool PotaTableModel::select()  {
 
     if (!tempTableName.isEmpty()){
         //Show modified cells
+        //qDebug() << "culture ligne 1" << query.Selec0ShowErr("SELECT Culture FROM temp."+tempTableName+" WHERE Culture=1700");
         AppBusy(true,progressBar,rowCount(),"Show modified cells %p%");
-        QString sPrimaryKey=PrimaryKeyFieldName(db,RealTableName());
+        //QString sPrimaryKey=PrimaryKeyFieldName(db,RealTableName());
         int jPrimaryKey=FieldIndex(sPrimaryKey);
         query.prepare("SELECT * "
                       "FROM temp."+tempTableName+" "+
@@ -983,8 +1038,12 @@ bool PotaTableModel::select()  {
             query.bindValue(":pk",StrReplace(data(index(i,jPrimaryKey)).toString(),"'","''"));
             query.exec();
             query.next();
-            //qDebug() << query.executedQuery();
+            //if (i==0)
+            //    qDebug() << query.executedQuery() << data(index(i,jPrimaryKey)).toString();
+            //break;
             for (int j=0;j<columnCount();j++) {
+                //if (i+j==0)
+                //    qDebug() << data(index(i,j),Qt::EditRole).toString() << query.value(j).toString();
                 if (data(index(i,j),Qt::EditRole).toString()!=query.value(j).toString())
                     // query.Selec0ShowErr("SELECT "+FieldName(j)+" "+
                     //                      "FROM temp."+tempTableName+" "+
@@ -1216,21 +1275,15 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     QColor c,cFiltered,cCopied,cModified,cModifiedError;
     QItemSelectionModel *selection = pw->tv->selectionModel();
 
-    // if (pw->model && pw->model->rowsToRemove.contains(index.row())) {
-    //     //Not painting the rows to remove.
-    //     //QStyleOptionViewItem opt = option;
-    //     //opt.backgroundBrush = QBrush(QColor(220, 220, 220));
-    //     //return;
-    // } else {//Row data color
-        if (!index.data(Qt::EditRole).isNull() and
-            (index.data(Qt::EditRole) == "")) {
-            //Hightlight not null empty value. They are not normal, it causes SQL failure.
-            c=Qt::red;
-            c.setAlpha(150);
-        } else if (RowColorCol>-1) {
-            c=RowColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString());
-        }
-    //}
+
+    if (!index.data(Qt::EditRole).isNull() and
+        (index.data(Qt::EditRole) == "")) {
+        //Hightlight not null empty value. They are not normal, it causes SQL failure.
+        c=Qt::red;
+        c.setAlpha(150);
+    } else if (RowColorCol>-1) {
+        c=RowColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString());
+    }
     if (!c.isValid()) {//Table color.
         c=cColColors[index.column()];
         if (!c.isValid() and index.column()!=TempoCol)
@@ -1278,9 +1331,9 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
             //Write red date in future
             QStyleOptionViewItem opt = option;
             if (isDarkTheme())
-                opt.palette.setColor(QPalette::Text, QColor("#ffadad"));//white red
+                opt.palette.setColor(QPalette::Text, QColor("#ffadad"));//light red
             else
-                opt.palette.setColor(QPalette::Text, QColor("#4b0000"));//black red
+                opt.palette.setColor(QPalette::Text, QColor("#b70000"));//dark red
             QStyledItemDelegate::paint(painter, opt, index);
         } else {
             QStyledItemDelegate::paint(painter, option, index);
@@ -1294,7 +1347,8 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         painter->setPen(QColor("#ff0000"));//red
         painter->drawRect(option.rect.x(), option.rect.y()+option.rect.height()/2, option.rect.width()-1, 1);
         painter->restore();
-    } else if (pw->model && pw->model->modifiedCells.contains(index)) {
+    //} else if (pw->model && pw->model->modifiedCells.contains(index)) {
+    } else if (pw->model->isDirty(index)) {
         cModified=QColor("#0086ff");//blue
         cModifiedError=QColor("#ff0000");//red
         painter->save();

@@ -284,9 +284,11 @@ QString sRepartir_Recolte_sur = QStringLiteral(R"#(
 SELECT C.Culture,I.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
 FROM Cultures C JOIN ITP I USING(IT_plante)
 WHERE (:Repartir NOTNULL)AND
-      (C.Début_récolte <= DATE('now','+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days'))AND
-      (C.Fin_récolte >= DATE('now','-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days'))AND
+      -- (C.Début_récolte <= DATE('now','+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days'))AND
+      -- (C.Fin_récolte >= DATE('now','-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days'))AND
       ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
+      (DATE(C.Début_récolte,'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days') <= coalesce(:Date,DATE('now')))AND
+      (DATE(C.Fin_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days') >= coalesce(:Date,DATE('now')))AND
       ((:Repartir='*')OR
        (C.Planche LIKE :Repartir||'%'))
 

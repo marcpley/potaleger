@@ -99,7 +99,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->sbInsertRows->setPalette(palette);
                 w->sbInsertRows->setEnabled(true);
                 w->pbInsertRow->setEnabled(true);
+                w->bAllowInsert=true;
                 w->pbDeleteRow->setEnabled(true);
+                w->bAllowDelete=true;
                 bEdit=true;
             } else if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
                                            "WHERE (tbl_name='"+sTableName+"')AND"    //View without trigger instead of.
@@ -111,7 +113,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 if (bEdit and(FkFilter(&db,w->model->RealTableName(),"",w->model->index(0,0),true)!="NoFk")){
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName()));
                 } else {
-                    MessageDialog(sTitre,NoData(w->model->RealTableName()),QStyle::SP_MessageBoxInformation);
+                    MessageDialog(sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
                     w->deleteLater();
                 }
             }
@@ -146,6 +148,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
                 if (DataType(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())=="DATE")
                     w->model->dateColumns.insert(i);
+                else if (sTableName!="Params" and
+                         FieldIsMoney(w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()))
+                    w->model->moneyColumns.insert(i);
             }
 
             //Colored tab title
@@ -182,7 +187,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             //                                        "margin-top: 2px;"
             //                                        "}");
 
-            ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(w->model->RealTableName()));
+            ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(w->model->tableName()));
 
             //Tab user settings
             QSettings settings("greli.net", "Potaléger");
@@ -524,11 +529,12 @@ void MainWindow::on_mEditNotes_triggered()
 {
     QTextEdit *textEdit;
     PotaWidget *w=nullptr;
-    if (!ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
+    if (!ui->tabWidget->currentWidget()->objectName().startsWith("PW")){ //1rst tab
         textEdit=ui->pteNotes;
-    } else {
+    } else { //Data tab
         w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        if (!w->pbEdit->isChecked()) {
+        if (!w->pbEdit->isChecked() or //tab not in edit mode : notes can't be modified
+            w->model->nonEditableColumns.contains(w->tv->currentIndex().column())) { //Readonly column
             ui->mEditNotes->setChecked(false);
             return;
         }
@@ -536,13 +542,13 @@ void MainWindow::on_mEditNotes_triggered()
         textEdit=w->editNotes;
         QString FieldName = w->model->headerData(w->tv->currentIndex().column(),Qt::Horizontal,Qt::DisplayRole).toString();
         if (!textEdit->isVisible())
-            w->SetVisibleEditNotes(AcceptReturns(FieldName));
+            w->SetVisibleEditNotes(AcceptReturns(FieldName),false);
     }
 
     if (textEdit->isVisible()) {
         // qDebug() << "toMarkdown: " << textEdit->toMarkdown();
         // qDebug() << "toPlainText: " << textEdit->toPlainText();
-        if (textEdit->isReadOnly()) {
+        if (textEdit->isReadOnly()) { //Go to notes edit mode
             ui->mEditNotes->setChecked(true);
             textEdit->setReadOnly(false);
             textEdit->setPlainText(textEdit->toMarkdown().trimmed());
@@ -550,7 +556,7 @@ void MainWindow::on_mEditNotes_triggered()
             textEdit->setLineWidth(4);
             textEdit->setFrameShape(QFrame::Panel);
             textEdit->setFocus();
-        } else {
+        } else { //Save data and return to notes read mode
             ui->mEditNotes->setChecked(false);
             textEdit->setReadOnly(true);
             QString save = textEdit->toPlainText().trimmed();
@@ -589,8 +595,10 @@ void MainWindow::on_mParam_triggered()
         w->sbInsertRows->setVisible(false);
         w->pbInsertRow->setEnabled(false);
         w->pbInsertRow->setVisible(false);
+        w->bAllowInsert=false;
         w->pbDeleteRow->setEnabled(false);
         w->pbDeleteRow->setVisible(false);
+        w->bAllowDelete=false;
     }
 }
 
@@ -632,12 +640,11 @@ void MainWindow::on_mImporter_triggered()
             return;
         }
 
-        QString data,info,info2,primaryField;
+        QString data,info,info2;
         QStringList lines,linesToImport,fieldNames,dataTypes,valuesToImport;
         QList<int> fieldindexes;
         data.append(FileImport.readAll().toStdString());
         lines=data.split("\n");
-        primaryField=PrimaryKeyFieldName(&db, w->model->RealTableName());
 
         //Header check
         fieldNames=lines[0].split(";");
@@ -654,7 +661,7 @@ void MainWindow::on_mImporter_triggered()
                 dataTypes.append(DataType(&db, w->model->tableName(),fieldNames[col]));
                 info+=iif(info.isEmpty(),"",", ").toString()+fieldNames[col]+" ("+dataTypes[col]+")";
             }
-            if(fieldNames[col]==primaryField)
+            if(fieldNames[col]==w->model->sPrimaryKey)
                 primaryFieldImport=col;
         }
 
@@ -665,7 +672,7 @@ void MainWindow::on_mImporter_triggered()
                               .arg(w->lTabTitle->text()),"",QStyle::SP_MessageBoxWarning);
             return;
         } else if (primaryFieldImport==-1) {
-            MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(primaryField).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
             return;
         } else if (lines.count()<2) {
             MessageDialog(QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
@@ -996,7 +1003,7 @@ void MainWindow::on_mIlots_triggered()
 
 void MainWindow::on_mCulturesParplante_triggered()
 {
-    OpenPotaTab("IT_rotations","IT_rotations",tr("Plantes prévues"));
+    OpenPotaTab("IT_rotations","IT_rotations",tr("Cult.prévues espèces"));
 }
 
 void MainWindow::on_mCulturesParIlots_triggered()
@@ -1086,19 +1093,32 @@ void MainWindow::on_mCuNonTer_triggered()
     OpenPotaTab("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"));
 }
 
-void MainWindow::on_mCuSemisAFaire_triggered()
+void MainWindow::on_mCuASemer_triggered()
 {
-    OpenPotaTab("Cultures_Semis_a_faire","Cultures__Semis_à_faire",tr("A semer"));
+    OpenPotaTab("Cultures_a_semer","Cultures__à_semer",tr("A semer"));
 }
 
-void MainWindow::on_mCuPlantationsAFaire_triggered()
+void MainWindow::on_mCuASemerSA_triggered()
 {
-    OpenPotaTab("Cultures_Plantations_a_faire","Cultures__Plantations_à_faire",tr("A planter"));
+    if (OpenPotaTab("Cultures_a_semer_SA","Cultures__à_semer_SA",tr("A semer (SA)"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//Culture, necessary in the view for sow commited celles.
+    }
 }
 
-void MainWindow::on_mCuRecoltesAFaire_triggered()
+void MainWindow::on_mCuASemerD_triggered()
 {
-    OpenPotaTab("Cultures_Recoltes_a_faire","Cultures__Récoltes_à_faire",tr("A récolter"));
+    OpenPotaTab("Cultures_a_semer_D","Cultures__à_semer_D",tr("A semer (D)"));
+}
+
+void MainWindow::on_mCuAPlanter_triggered()
+{
+    OpenPotaTab("Cultures_a_planter","Cultures__à_planter",tr("A planter"));
+}
+
+void MainWindow::on_mCuARecolter_triggered()
+{
+    OpenPotaTab("Cultures_a_recolter","Cultures__à_récolter",tr("A récolter"));
 }
 
 void MainWindow::on_mCuSaisieRecoltes_triggered()
@@ -1159,12 +1179,10 @@ void MainWindow::on_mIncDatesCultures_triggered()
     OpenPotaTab("Cultures_inc_dates","Cultures__inc_dates",tr("Inc. dates cultures"));
 }
 
-
-
 void MainWindow::on_cbTheme_currentIndexChanged(int index)
 {
     QPalette palette = QApplication::palette();
-    palette.setColor(QPalette::ToolTipBase ,QColor( "#ffffdc" ));
+    palette.setColor(QPalette::ToolTipBase ,QColor( "#d7c367" )); //ffffdc
     palette.setColor(QPalette::ToolTipText ,QColor( "#000000" ));
     palette.setColor(QPalette::BrightText ,QColor( "#ffffff" ));
     palette.setColor(QPalette::Highlight ,QColor( "#0c75de" ));
@@ -1220,4 +1238,5 @@ void MainWindow::on_cbTheme_currentIndexChanged(int index)
     QApplication::setPalette(palette);
 
 }
+
 

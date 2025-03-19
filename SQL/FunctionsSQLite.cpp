@@ -359,13 +359,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : ItpPlusN('02-15','1 months') = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT * FROM Repartir_Recolte_sur('xxx','xxx')")){
-        qCritical() << "Function failed: Repartir_Recolte_sur('xxx','xxx')";
+    if (!q1.exec("SELECT * FROM Repartir_Recolte_sur('xxx','xxx','2000-01-01')")){
+        qCritical() << "Function failed: Repartir_Recolte_sur('xxx','xxx','2000-01-01')";
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "Repartir_Recolte_sur";
     }
-    qInfo() << "Function ok : Repartir_Recolte_sur('xxx','xxx')";
+    qInfo() << "Function ok : Repartir_Recolte_sur('xxx','xxx','2000-01-01')";
 
     qInfo() << "Functions tested.";
     return "";

@@ -75,7 +75,7 @@
        <attribute name="title">
         <string>Info</string>
        </attribute>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>4</x>
@@ -461,9 +461,9 @@
     </property>
     <addaction name="mFamilles"/>
     <addaction name="mEspeces"/>
+    <addaction name="mFournisseurs"/>
     <addaction name="mVarietes"/>
     <addaction name="mApports"/>
-    <addaction name="mFournisseurs"/>
     <addaction name="mTypes_de_planche"/>
     <addaction name="mITP"/>
     <addaction name="mITPTempo"/>
@@ -495,9 +495,11 @@
     </property>
     <addaction name="mCuNonTer"/>
     <addaction name="separator"/>
-    <addaction name="mCuSemisAFaire"/>
-    <addaction name="mCuPlantationsAFaire"/>
-    <addaction name="mCuRecoltesAFaire"/>
+    <addaction name="mCuASemer"/>
+    <addaction name="mCuASemerSA"/>
+    <addaction name="mCuASemerD"/>
+    <addaction name="mCuAPlanter"/>
+    <addaction name="mCuARecolter"/>
     <addaction name="mCuSaisieRecoltes"/>
     <addaction name="mCuATerminer"/>
     <addaction name="separator"/>
@@ -651,7 +653,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Cultures prévues par plante</string>
+    <string>Cultures prévues par espèce</string>
    </property>
   </action>
   <action name="mCulturesParPlanche">
@@ -700,28 +702,28 @@
     <string>Variétés</string>
    </property>
   </action>
-  <action name="mCuSemisAFaire">
+  <action name="mCuASemerD">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Semis à faire</string>
+    <string>A semer (direct)</string>
    </property>
   </action>
-  <action name="mCuPlantationsAFaire">
+  <action name="mCuAPlanter">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Plantations à faire</string>
+    <string>A planter</string>
    </property>
   </action>
-  <action name="mCuRecoltesAFaire">
+  <action name="mCuARecolter">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Récoltes à faire</string>
+    <string>A récolter</string>
    </property>
   </action>
   <action name="mCuSaisieRecoltes">
@@ -984,6 +986,22 @@
    </property>
    <property name="text">
     <string>Destinations</string>
+   </property>
+  </action>
+  <action name="mCuASemerSA">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>A semer (sous abris)</string>
+   </property>
+  </action>
+  <action name="mCuASemer">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>A semer (toutes)</string>
    </property>
   </action>
  </widget>

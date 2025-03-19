@@ -33,11 +33,12 @@ public:
     // explicit PotaTableModel(QObject *parent = nullptr)
     //     : QSqlRelationalTableModel(parent) {}
     QSqlDatabase *db;
+    QString sPrimaryKey;
     QString sOrderByClause="";
     QSet<QString> generatedColumns;
     QStringList dataTypes;
-    QSet<int> nonEditableColumns,dateColumns;
-    QSet<QModelIndex> modifiedCells;
+    QSet<int> nonEditableColumns,dateColumns,moneyColumns;
+    //QSet<QModelIndex> modifiedCells;
     QSet<QModelIndex> commitedCells;
     QSet<QModelIndex> copiedCells;
     QSet<int> rowsToRemove,rowsToInsert;
@@ -110,11 +111,16 @@ public:
             //     }
             // }
 
-            // #DateFormat
-            if (dateColumns.contains(index.column())) {
-            //QVariant value = data(index, Qt::EditRole);
-            //if (value.typeId() == QMetaType::QDate){
+
+            if (dateColumns.contains(index.column())) {// #DateFormat
                 return data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy");
+            } else if (!data(index,Qt::EditRole).isNull() and moneyColumns.contains(index.column())) {
+                return QString::number(data(index,Qt::EditRole).toFloat(),'f', 2);
+            }
+        }
+        if (role == Qt::TextAlignmentRole) {
+            if (moneyColumns.contains(index.column())) {
+                return Qt::AlignRight;
             }
         }
         return QSqlRelationalTableModel::data(index, role);
@@ -124,10 +130,10 @@ public:
         if (role == Qt::EditRole) {
             if (QSqlRelationalTableModel::data(index, role).toString() != value.toString() and
                 !nonEditableColumns.contains(index.column())) {
-                modifiedCells.insert(index);
+                //modifiedCells.insert(index);
                 //modifiedRows.insert(index.row());
                 if (copiedCells.contains(index))
-                    copiedCells.clear();//The cell must be shown as modified.
+                    copiedCells.clear();//The cell must be shown as modified before copied.
             }
             if (relation(index.column()).isValid()) {
                 //Column with FK. #FKnull
@@ -485,6 +491,8 @@ public:
     QSpinBox *sbInsertRows;
     QToolButton *pbInsertRow;
     QToolButton *pbDeleteRow;
+    bool bAllowInsert=false;
+    bool bAllowDelete=false;
 
     QLabel *lRowSummary;
     QLabel *lSelect;
@@ -521,7 +529,7 @@ public:
     int iTypeDate=0;
     int iTypeReal=0;
 
-    void SetVisibleEditNotes(bool bVisible);
+    void SetVisibleEditNotes(bool bVisible, bool autoSize);
     void PositionSave();
     void PositionRestore();
 
