@@ -14,6 +14,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Planification', 'Année_culture', 'Saison en cours de culture', '2024', NULL), --todo
             ('Planification', 'Année_planif', 'Saison à planifier', '2025', NULL),
             ('Planification', 'Planifier_planches', 'Début du nom des planches à planifier (vide pour toutes)', NULL, NULL),
+            ('Planification', 'Planifier_retard', 'Si l''opération précédente (semis, plantation) est déjà faite et est en retard, avant de passer à l''année suivante, accepter de reporter l''opération suivante de maximum', '15', 'jours'),
             ('Cultures', 'C_horizon_semis', 'Voir les cultures à semer sur une période de', '90', 'jours'),
             ('Cultures', 'C_horizon_plantation', 'Voir les cultures à planter sur une période de', '90', 'jours'),
             ('Cultures', 'C_horizon_récolte', 'Voir les cultures à récolter sur une période de', '90', 'jours'),

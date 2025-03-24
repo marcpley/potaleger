@@ -35,7 +35,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                                                                                                    'Sous abris') --rouge
                                           ELSE 'Prévue'
                                           END),
-                       D_planif TEXT,-- Format TEXT pour pouvior mettre une année simple quand on veut forcer un recalcul de planif.
+                       D_planif TEXT,-- Format TEXT pour pouvoir mettre une année simple quand on veut forcer un recalcul de planif.
                        Date_semis DATE,
                        Semis_fait BOOL,
                        Date_plantation DATE,

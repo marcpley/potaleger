@@ -22,7 +22,7 @@ bool AcceptReturns(const QString sFieldName) {
 int DefColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
     QString sType = DataType(db, sTableName,sFieldName);
     if (sType=="DATE")
-        return 100;
+        return 80;
     else if (sType.startsWith("BOOL"))
         return 50;
     else if (sType.startsWith("INT"))
@@ -42,6 +42,8 @@ int DefColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldN
         return 40;
     else if (sFieldName=="TEMPO")
         return 400;
+    else if (sFieldName.startsWith("TEMPO_"))
+        return 367;
     else if (sFieldName=="Type_culture")
         return 100;
     else if (sFieldName=="Type_planche")
@@ -139,7 +141,7 @@ int NaturalSortCol(const QString sTableName){
         return 9;//Début_récolte
     else if (sTableName=="Cultures__à_terminer")
         return 8;//Fin_récolte
-    else if (sTableName=="Cultures__Tempo")
+    else if (sTableName=="Cultures__analyse")
         return 1;//ITP
     else if (sTableName=="IT_rotations_manquants")
         return 1;//ITP
@@ -154,7 +156,7 @@ QString NoData(const QString sTableName){
              sTableName=="IT_rotations_ilots" or
              sTableName=="Cult_planif")
         return QObject::tr("Saisissez au moins une rotation de cultures (menu Assolement) pour que la planification puisse générer des cultures.");
-    else if (sTableName=="Cultures__Tempo")
+    else if (sTableName=="Cultures__analyse")
         return QObject::tr("Il n'y a aucune cultures terminées et significatives (champ 'Terminée' différent de 'NS') pour le moment.");
     else if (sTableName=="ITP__Tempo")
         return QObject::tr("Vous devez d'abort saisir au moins une espèce de plante (menu 'Espèces') avant de saisir des itinéraires techniques.");
@@ -313,36 +315,52 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
     return bReadOnly;
 }
 
-QColor RowColor(QString sValue){
+QColor RowColor(QString sValue, QString sTableName){
 
     QColor c;
-
-    //Cultures
-    if (sValue=="Prévue")
-        c=cPrevue;
-    else if (sValue=="Sous abris")
-        c=cSousAbris;
-    else if (sValue=="En place")
-        c=cEnPlace;
-    else if (sValue=="Récolte")
-        c=cRecolte;
-    else if (sValue=="A terminer")
-        c=cATerminer;
-    else if (sValue=="Terminée")
-        c=cTerminee;
-    //Params
-    else if (sValue.startsWith("Ilot"))
-        c=cPlanche;
-    else if (sValue.startsWith("C_"))
-        c=cEnPlace;
-    else if (sValue.startsWith("Conso_"))
-        c=cEspece;
-    else
-        return QColor();
+    int alpha;
     if (isDarkTheme())
-        c.setAlpha(60);
+        alpha=60;
     else
-        c.setAlpha(80);
+        alpha=80;
+
+    if (sTableName=="Cultures__Tempo") {
+        if (isDarkTheme())
+            alpha=40;
+        else
+            alpha=60;
+        if (sValue.toInt() % 2 == 0)//Pair
+            c=cPlanche;
+        else
+            return QColor();
+    } else if (sTableName.startsWith("Cultures")) {
+        if (sValue=="Prévue")
+            c=cPrevue;
+        else if (sValue=="Sous abris")
+            c=cSousAbris;
+        else if (sValue=="En place")
+            c=cEnPlace;
+        else if (sValue=="Récolte")
+            c=cRecolte;
+        else if (sValue=="A terminer")
+            c=cATerminer;
+        else if (sValue=="Terminée")
+            c=cTerminee;
+        else
+            return QColor();
+    } else if (sTableName=="Params") {
+        if (sValue.startsWith("Ilot"))
+            c=cPlanche;
+        else if (sValue.startsWith("C_"))
+            c=cEnPlace;
+        else if (sValue.startsWith("Conso_"))
+            c=cEspece;
+        else
+            return QColor();
+    } else
+        return QColor();
+
+    c.setAlpha(alpha);
 
     return c;
 }
@@ -382,6 +400,11 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                rec.value(rec.indexOf("Type")).toString()+" - "+
                rec.value(rec.indexOf("Etat")).toString()+" - "+
                "Semis "+rec.value(rec.indexOf("Date_semis")).toString();
+    else if (TableName=="Cultures__Tempo")
+        result=rec.value(rec.indexOf("Planche")).toString()+" - "+
+                 rec.value(rec.indexOf("Culture")).toString()+" - "+
+                 rec.value(rec.indexOf("Variété_ou_It_plante")).toString()+" - "+
+                 rec.value(rec.indexOf("Saison")).toString();
     else if (TableName.startsWith("Cultures"))
         result=rec.value(rec.indexOf("Culture")).toString()+" - "+
                rec.value(rec.indexOf("Planche")).toString()+" - "+
@@ -525,7 +548,7 @@ QColor TableColor(QString sTName,QString sFName)
     else if ((sFName=="Valeur" and sTName.toUpper().startsWith("PARAMS")) or
              sFName=="Année_à_planifier")
         return cParam;
-    else if (sFName=="TEMPO")
+    else if (sFName.startsWith("TEMPO"))
         return QColor();//Drawed column
 
     //Color by table name.
@@ -733,6 +756,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Quantité totale récoltée (kg).");
         else if (sFieldName=="Rotation")
             sToolTip=QObject::tr("Ensemble de cultures qui se succèdent sur un ensemble de planches.");
+        else if (sFieldName=="Variété_ou_It_plante")
+            sToolTip=QObject::tr("Variété, à défaut l'itinéraire technique.");
         //Apports
         else if (sFieldName=="Apport")
             sToolTip=QObject::tr("Amendement nécessaire avant culture.");
@@ -743,7 +768,10 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Numéro unique de la culture\n"
                                  "(pas de remise à zéro tous les ans).");
         else if (sFieldName=="D_planif")
-            sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte.");
+            sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte (planification).\n"
+                                 "La planification des cultures est faite en fonction de l'ITP, les dates de la cultures sont calées sur le début de période de l'ITP.\n"
+                                 "Effacer 'D_planif' et valider pour replanifier les opérations non déjà faites.\n"
+                                 "Pour planifier la culture sur une saison particulière, saisissez dans 'D_planif' l'année sur 4 chiffres (2025).");
         else if (sFieldName=="Récolte_com")
             sToolTip=QObject::tr("Récolte commencée.")+"\n"+
                      QObject::tr("Va être mis à jour lors de la saisie des récoltes.");
@@ -860,8 +888,11 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip+=iif(sToolTip=="","","\n\n").toString()+
                       QObject::tr("Format : %1").arg(sDataType);
     }
-    return sFieldName+" ("+QObject::tr("table ")+sTableName+")\n"+
-           sToolTip;
+    if (sFieldName.startsWith("TEMPO"))
+        return "";
+    else
+        return sFieldName+" ("+QObject::tr("table ")+sTableName+")\n\n"+
+               sToolTip;
 }
 
 QString ToolTipTable(const QString sTableName) {
@@ -956,8 +987,10 @@ QString ToolTipTable(const QString sTableName) {
     else if (sTableName=="Cultures__inc_dates")
         sToolTip=QObject::tr(  "Cultures non terminées ou terminées significatives (champ 'Terminée' différent de 'NS')\n"
                                "dont une date (semis, plantation, début récolte, fin récolte) est trop éloignée de la période prévue sur l'ITP (paramètre 'Tolérance_...').");
+    else if (sTableName=="Cultures__analyse")
+        sToolTip=QObject::tr(  "Cultures récoltées, terminées et significatives (champ 'Terminée' différent de 'NS').");
     else if (sTableName=="Cultures__Tempo")
-        sToolTip=QObject::tr(  "Cultures terminées et significatives (champ 'Terminée' différent de 'NS').");
+        sToolTip=QObject::tr(  "Cultures semées ou plantées dans la période.");
     else if (sTableName=="Espèces__inventaire")
         sToolTip=QObject::tr(  "Inventaire des légumes produits/consommés pour chaque espèce dont le champ 'Conservation' est non vide.");
     else if (sTableName=="ITP__analyse")

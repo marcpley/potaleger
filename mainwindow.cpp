@@ -75,7 +75,6 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         //w->mFilterFind = ui->mFilterFind;
         w->model->db=&db;
         w->model->progressBar=ui->progressBar;
-        w->model->label=ui->lDBErr;
         //w->query->lErr=ui->lDBErr;
         //w->query->db
         //w->userDataEditing=&userDataEditing;
@@ -115,13 +114,14 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 } else {
                     MessageDialog(sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
                     w->deleteLater();
+                    return false;
                 }
             }
 
             ui->tabWidget->addTab(w,sTitre);
             ui->tabWidget->setCurrentWidget(w);
 
-            w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
+            //w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
             w->delegate->cTableColor=TableColor(sTableName,"");
             for (int i=0; i<w->model->columnCount();i++)             {
@@ -130,13 +130,10 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
                 if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Etat")
                     w->delegate->RowColorCol=i;
-                else  if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Paramètre")
+                else if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="num_planche")
                     w->delegate->RowColorCol=i;
-
-                if (w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="TEMPO"){
-                    w->delegate->TempoCol=i;
-                    dynamic_cast<PotaHeaderView*>(w->tv->horizontalHeader())->TempoCol=i;
-                }
+                else if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Paramètre")
+                    w->delegate->RowColorCol=i;
 
                 //Tooltip
                 QString sTT=ToolTipField(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->model->dataTypes[i]);
@@ -152,6 +149,8 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                          FieldIsMoney(w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()))
                     w->model->moneyColumns.insert(i);
             }
+
+            w->RefreshHorizontalHeader();
 
             //Colored tab title
             ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
@@ -201,11 +200,15 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             //col width
             settings.beginGroup("ColWidth");
-            for (int i=0; i<w->model->columnCount();i++)
-            {
-                int iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
-                if (iWidth<=0 or iWidth>500)
+            for (int i=0; i<w->model->columnCount();i++) {
+                int iWidth;
+                if (!w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO_")){
+                    iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
+                    if (iWidth<=0 or iWidth>500)
+                        iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                } else {
                     iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                }
                 if (iWidth<=0 or iWidth>500)
                     w->tv->resizeColumnToContents(i);
                 else
@@ -264,7 +267,8 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         //ColWidth
         settings.beginGroup("ColWidth");
             for (int i=0; i<w->model->columnCount();i++) {
-                settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->tv->columnWidth(i));
+                if (!w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO_"))
+                    settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->tv->columnWidth(i));
             }
         settings.endGroup();
 
@@ -375,7 +379,7 @@ void MainWindow::on_mCopyBDD_triggered()
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists()) {
             FileInfo2.setFileName(sFileName);
-            if (!FileInfo2.moveToTrash())
+            if (!FileInfo2.remove())
             {
                 MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
@@ -444,7 +448,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
         if (FileInfoVerif.exists())
         {
             FileInfo2.setFileName(sFileName);
-            if (!FileInfo2.moveToTrash())
+            if (!FileInfo2.remove())
             {
                 MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxCritical);
@@ -861,7 +865,7 @@ void MainWindow::on_mExporter_triggered()
             QFile FileInfo2;
             if (FileInfoVerif.exists()) {
                 FileInfo2.setFileName(sFileName);
-                if (!FileInfo2.moveToTrash()) {
+                if (!FileInfo2.remove()) {
                     MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
                                       sFileName,"",QStyle::SP_MessageBoxCritical);
                     return;
@@ -991,7 +995,11 @@ void MainWindow::on_mPlanches_triggered()
 
 void MainWindow::on_mSuccessionParPlanche_triggered()
 {
-    OpenPotaTab("SuccPlanches","Successions_par_planche",tr("Succ. planches"));
+    //OpenPotaTab("SuccPlanches","Successions_par_planche",tr("Succ. planches"));
+    if (OpenPotaTab("SuccPlanches","Cultures__Tempo",tr("Succ. planches"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//num_planche, necessary in the view for row painting.
+    }
 }
 
 void MainWindow::on_mIlots_triggered()
@@ -1171,7 +1179,7 @@ void MainWindow::on_mAnaITP_triggered()
 
 void MainWindow::on_mAnaCultures_triggered()
 {
-    OpenPotaTab("Cultures_Tempo_Espece","Cultures__Tempo",tr("Analyse cultures"));
+    OpenPotaTab("Cultures_analyse","Cultures__analyse",tr("Analyse cultures"));
 }
 
 void MainWindow::on_mIncDatesCultures_triggered()

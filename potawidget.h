@@ -44,7 +44,6 @@ public:
     QSet<int> rowsToRemove,rowsToInsert;
     //QSet<int> modifiedRows;
     QProgressBar* progressBar;
-    QLabel* label=nullptr;
     QString tempTableName;
 
     int FieldIndex(QString FieldName);
@@ -119,7 +118,8 @@ public:
             }
         }
         if (role == Qt::TextAlignmentRole) {
-            if (moneyColumns.contains(index.column())) {
+            if (StrLast(data(index,Qt::EditRole).toString(),1)=='%' or
+                moneyColumns.contains(index.column())) {
                 return Qt::AlignRight;
             }
         }
@@ -369,7 +369,8 @@ public:
         : QHeaderView(orientation, parent) {
         //setStretchLastSection(false);
     }
-    int TempoCol=-1;
+    QSet<int> TempoCols;
+    QStringList TempoTitles;
     int iSortCol = 0;
 
 protected:
@@ -377,7 +378,8 @@ protected:
 
     void paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const override {
 
-        if (logicalIndex == TempoCol) {
+        if (TempoCols.contains(logicalIndex)) {
+            QString title=TempoTitles[logicalIndex];
             painter->save();
             int xOffset = -22;
             int yOffset = rect.height()-5;
@@ -386,21 +388,36 @@ protected:
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
             painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
-            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+            if(title.isEmpty()) {
+                painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
+                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+            } else {
+                QBrush b;
+                b.setStyle(Qt::SolidPattern);
+                QColor c("red");
+                c.setAlpha(60);
+                b.setColor(c);
+                xOffset+=37;
+                painter->fillRect(rect.left()+xOffset,rect.top()+3, 36, rect.height()-6,b);
+                painter->drawText(rect.left()+xOffset+3, rect.top() + yOffset, title);
+                xOffset+=24;
+            }
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(8).left(3));
             painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(9).left(3));
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(10).left(3));
             painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(11).left(3));
             painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(12).left(3));
-            //Year 2
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
-            painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
-            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
-            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+
+            if(title.isEmpty()) {
+                //Year 2
+                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
+                painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
+                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
+                painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
+                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
+                painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
+                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+            }
 
             painter->restore();
         } else
@@ -419,9 +436,11 @@ public:
     QColor cTableColor;
     QColor cColColors[50];
     int RowColorCol=-1;
-    int TempoCol=-1;
+    QSet<int> TempoCols;
+    int TempoNowCol;
     int FilterCol=-1;
     QString FindText="";
+    bool FindTextchanged;
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
@@ -532,6 +551,7 @@ public:
     void SetVisibleEditNotes(bool bVisible, bool autoSize);
     void PositionSave();
     void PositionRestore();
+    void RefreshHorizontalHeader();
 
 private:
     //Filtering

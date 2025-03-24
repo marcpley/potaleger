@@ -187,7 +187,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             QString FileName=ui->lDB->text();
             FileInfo.setFileName(FileName+"-backup");
             if (FileInfo.exists()) {
-                if (!FileInfo.moveToTrash()) {
+                if (!FileInfo.remove()) {
                     MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
                                       FileName+"-backup","",QStyle::SP_MessageBoxCritical);
                     dbClose();
@@ -208,18 +208,24 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             //Update schema.
             if (UpdateDBShema(sVerBDD)) {
                 sVerBDD = ui->lVerBDDAttendue->text();
-            }
-            else {
+
+                //Delete backup file.
+                FileInfo.setFileName(FileName+"-backup");
+                if (!FileInfo.remove()) {
+                    MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                                      FileName+"-backup","",QStyle::SP_MessageBoxWarning);
+                }
+            } else {
                 dbClose();
 
                 //Restore old db file.
                 FileInfo.setFileName(FileName+"-crashed");
                 if (FileInfo.exists())
-                    FileInfo.moveToTrash();
+                    FileInfo.remove();
 
                 FileInfo.setFileName(FileName);
                 FileInfo.copy(FileName+"-crashed");
-                FileInfo.moveToTrash();
+                FileInfo.remove();
                 FileInfo.setFileName(FileName+"-backup");
                 if (FileInfo.copy(FileName))
                     MessageDialog(tr("Le fichier")+"\n"+
@@ -394,7 +400,8 @@ void MainWindow::SetUi(){
     ui->mDetailsRotations->setIcon(QIcon(TablePixmap("Rotations_détails__Tempo","T")));
     ui->mRotationManquants->setIcon(QIcon(TablePixmap("IT_rotations_manquants","")));
     ui->mPlanches->setIcon(QIcon(TablePixmap("Planches","T")));
-    ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
+    //ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
+    ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
     ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
 
     ui->mCulturesParIlots->setIcon(QIcon(TablePixmap("IT_rotations_ilots","")));
@@ -417,7 +424,7 @@ void MainWindow::SetUi(){
     ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
 
     ui->mAnaITP->setIcon(QIcon(TablePixmap("ITP__analyse","")));
-    ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
+    ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__analyse","")));
     ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
     ui->mAnaDestinations->setIcon(QIcon(TablePixmap("Destinations__conso","")));
 

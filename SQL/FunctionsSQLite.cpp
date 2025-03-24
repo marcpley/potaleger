@@ -100,12 +100,12 @@ bool registerScalarFunctions(QSqlDatabase *db) {
         return false;
     }
 
-    q1.clear();
-    if (!q1.exec("SELECT define('ZeroSiErrPlusDe5mois','"+RemoveComment(sZeroSiErrPlusDe5mois,"--")+"')")){
-        qCritical() << "Failed to register function 'ZeroSiErrPlusDe5mois': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
+    // q1.clear();
+    // if (!q1.exec("SELECT define('ZeroSiErrPlusDe','"+RemoveComment(sZeroSiErrPlusDe,"--")+"')")){
+    //     qCritical() << "Failed to register function 'ZeroSiErrPlusDe': "<< q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return false;
+    // }
 
     q1.clear();
     if (!q1.exec("SELECT define('CulIncDate','"+RemoveComment(sCulIncDate,"--")+"')")){
@@ -206,13 +206,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     // qInfo() << "Function ok : SumTest(1,2) = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT PlanifCultureCalcDate('2025-02-01','01-01')") or !q1.next() or q1.value(0).toString()!="2026-01-01"){
-        qCritical() << "Function failed: PlanifCultureCalcDate('2025-02-01','01-01') = " << q1.value(0).toString();
+    if (!q1.exec("SELECT PlanifCultureCalcDate('2025-02-01','03-01')") or !q1.next() or q1.value(0).toString()!="2025-03-01"){
+        qCritical() << "Function failed: PlanifCultureCalcDate('2025-02-01','03-01') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "PlanifCultureCalcDate";
     }
-    qInfo() << "Function ok : PlanifCultureCalcDate('2025-02-01','01-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : PlanifCultureCalcDate('2025-02-01','03-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT ItpCompleteDFPeriode(10)") or !q1.next() or q1.value(0).toString()!="10-01"){
@@ -269,7 +269,7 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : CulTempoNJPeriode('2000-01-01','2000-01-31') = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:2:12:2:13:14"){
+    if (!q1.exec("SELECT CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:4:10:4:11:14"){
         qCritical() << "Function failed: CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
@@ -277,17 +277,17 @@ QString testCustomFunctions(QSqlDatabase *db) {
     }
     qInfo() << "Function ok : CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
 
-    q1.clear();
-    if (!q1.exec("SELECT ZeroSiErrPlusDe5mois(151)") or !q1.next() or q1.value(0).toInt()!=0){
-        qCritical() << "Function failed: ZeroSiErrPlusDe5mois(...) = " << q1.value(0).toString();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ZeroSiErrPlusDe5mois";
-    }
-    qInfo() << "Function ok : ZeroSiErrPlusDe5mois(151) = " << q1.value(0).toString();
+    // q1.clear();
+    // if (!q1.exec("SELECT ZeroSiErrPlusDe(1000)") or !q1.next() or q1.value(0).toInt()!=0){
+    //     qCritical() << "Function failed: ZeroSiErrPlusDe(...) = " << q1.value(0).toString();
+    //     qCritical() << q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return "ZeroSiErrPlusDe";
+    // }
+    // qInfo() << "Function ok : ZeroSiErrPlusDe(1000) = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT CulIncDate('2000-01-30','02-01','D',1)") or !q1.next() or q1.value(0).toInt()!=1){
+    if (!q1.exec("SELECT CulIncDate('2000','02-01','2000-01-30','02-01','D',1)") or !q1.next() or q1.value(0).toInt()!=1){
         qCritical() << "Function failed: CulIncDate(...) = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
@@ -296,7 +296,7 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : CulIncDate(...) = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT CulIncDates('2000-02-02','02-01','02-15','2000-03-02','03-01','03-15','2000-04-02','04-01','2000-04-14','04-15')") or !q1.next() or q1.value(0).toString()!=""){
+    if (!q1.exec("SELECT CulIncDates('2000','02-01','2000-02-02','02-01','02-15','2000-03-02','03-01','03-15','2000-04-02','04-01','2000-04-14','04-15')") or !q1.next() or q1.value(0).toString()!=""){
         qCritical() << "Function failed: CulIncDates(...) = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();

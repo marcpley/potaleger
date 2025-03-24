@@ -31,7 +31,7 @@ QString GeneratedFielnameForDummyFilter(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
 QString NoData(const QString sTableName);
 bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);
-QColor RowColor(QString sValue);
+QColor RowColor(QString sValue, QString sTableName);
 QString RowSummary(QString TableName, const QSqlRecord &rec);
 QColor TableColor(QString sTName,QString sFName);
 QPixmap TablePixmap(QString sTName, QString text);

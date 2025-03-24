@@ -6,9 +6,11 @@ QString sTest = QStringLiteral(R"#(
 QString sPlanifCultureCalcDate = QStringLiteral(R"#(
 -- :D_min (YYYY-MM-DD)
 -- :Déb_période (MM-DD)
-iif(strftime(''%Y'',:D_min)||''-''||:Déb_période<:D_min,
+iif(strftime(''%Y'',:D_min)||''-''||:Déb_période<DATE(:D_min,''-''||(SELECT Valeur FROM Params WHERE Paramètre=''Planifier_retard'')||'' days''),
     DATE(strftime(''%Y'',:D_min)||''-''||:Déb_période,''+1 years''),
-    strftime(''%Y'',:D_min)||''-''||:Déb_période)
+    iif(strftime(''%Y'',:D_min)||''-''||:Déb_période<:D_min,
+        DATE(:D_min,''+1 days''),
+        strftime(''%Y'',:D_min)||''-''||:Déb_période))
 )#");
 
 QString sItpCompleteDFPeriode = QStringLiteral(R"#(
@@ -104,64 +106,69 @@ QString sCulTempo = QStringLiteral(R"#(
 -- :Type : type_culture
 -- :dXxx date.
 iif(:Type=''Semis sous abris'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
-                               ''2:''|| -- Durée semis
-                               (CulTempoNJPeriode(:dSem,:dPlant)-2) ||'':''|| -- Semis fait attente plantation
-                               ''2:''|| -- Durée plantation
-                               (CulTempoNJPeriode(:dPlant,:dRec)-2) ||'':''|| -- Plantation faite attente récolte
+                               ''4:''|| -- Durée semis
+                               (CulTempoNJPeriode(:dSem,:dPlant)-4) ||'':''|| -- Semis fait attente plantation
+                               ''4:''|| -- Durée plantation
+                               (CulTempoNJPeriode(:dPlant,:dRec)-4) ||'':''|| -- Plantation faite attente récolte
                                CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
 iif(:Type=''Semis direct'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
-                           ''2:''|| -- Durée semis
+                           ''4:''|| -- Durée semis
                            ''0:''|| -- Semis fait attente récolte
                            ''0:''||
-                           (CulTempoNJPeriode(:dSem,:dRec)-2) ||'':''|| -- Semis fait attente récolte
+                           (CulTempoNJPeriode(:dSem,:dRec)-4) ||'':''|| -- Semis fait attente récolte
                            CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
 iif(:Type=''Plant'',CulTempoNJPeriode(strftime(''%Y'',:dPlant)||''-01-01'',:dPlant)||'':''|| -- Attente
                     ''0:''|| -- Durée semis
                     ''0:''||
-                    ''2:''|| -- Durée plantation
-                    (CulTempoNJPeriode(:dPlant,:dRec)-2) ||'':''|| -- Plantation faite attente récolte
+                    ''4:''|| -- Durée plantation
+                    (CulTempoNJPeriode(:dPlant,:dRec)-4) ||'':''|| -- Plantation faite attente récolte
                     CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
 iif(:Type=''Engrais vert'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
-                           ''2:''|| -- Durée semis
+                           ''4:''|| -- Durée semis
                            ''0:''||
                            ''0:''|| -- Durée plantation
-                           (CulTempoNJPeriode(:dSem,coalesce(:fRec,strftime(''%Y'',:dSem)||''-12-31''))-2) ||'':''|| -- Plantation faite attente récolte
+                           (CulTempoNJPeriode(:dSem,coalesce(:fRec,strftime(''%Y'',:dSem)||''-12-31''))-4) ||'':''|| -- Plantation faite attente récolte
                            ''0'', -- Durée récolte
 iif(:Type=''Sans récolte'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
-                           ''2:''|| -- Durée semis
-                           (CulTempoNJPeriode(:dSem,:dPlant)-2) ||'':''|| -- Semis fait attente plantation
-                           ''2:''|| -- Durée plantation
-                           CulTempoNJPeriode(:dPlant,:dRec)-2 ||'':''|| -- Plantation faite attente récolte
+                           ''4:''|| -- Durée semis
+                           (CulTempoNJPeriode(:dSem,:dPlant)-4) ||'':''|| -- Semis fait attente plantation
+                           ''4:''|| -- Durée plantation
+                           (CulTempoNJPeriode(:dPlant,coalesce(:fRec,strftime(''%Y'',:dSem)||''-12-31''))-4) ||'':''|| -- Plantation faite attente fin de culture
                            ''0'', NULL -- Durée récolte
 )))))
 -- out : 15:15:15:15:15:15
 )#");
 
-QString sZeroSiErrPlusDe5mois = QStringLiteral(R"#(
-iif(:err BETWEEN 0 AND 150, :err,0)
+QString sZeroSiErrPlusDe = QStringLiteral(R"#(
+-- iif(:err BETWEEN 0 AND 150, :err,0)
 )#");
 
 QString sCulIncDate = QStringLiteral(R"#(
+-- :a : Année de semis ou plantation de la culture (YYYY)
 -- :c : date de la culture (YYYY-MM-DD)
 -- :i : début ou fin de période de l'IT_plante (MM-DD)
 -- :test : 'D' ou 'F'
 -- :tol : nb de jour de tolérance de sortie de la période.
-iif((:c NOTNULL)AND(:i NOTNULL),
-    iif(:test=''D'',ZeroSiErrPlusDe5mois(julianday(DATE(substr(:c,1,5)||:i,-max(:tol,0)||'' days''))-julianday(:c)),
-                    ZeroSiErrPlusDe5mois(julianday(:c)-julianday(DATE(substr(:c,1,5)||:i,max(:tol,0)||'' days'')))),
+iif((:a NOTNULL)AND(:i0 NOTNULL)AND(:c NOTNULL)AND(:i NOTNULL),
+    -- iif(:test=''D'',ZeroSiErrPlusDe(julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,-max(:tol,0)||'' days''))-julianday(:c)),
+    --                 ZeroSiErrPlusDe(julianday(:c)-julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,max(:tol,0)||'' days'')))),
+    iif(:test=''D'',julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,-max(:tol,0)||'' days''))-julianday(:c),
+                    julianday(:c)-julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,max(:tol,0)||'' days''))),
 0)
 -- out : nb de jour de sortie de la période+tolérance.
 )#");
 
 QString sCulIncDates = QStringLiteral(R"#(
+-- :annee : Année de semis ou plantation de la culture (YYYY)
+-- :i0 : Début de semis ou Début de plantation de l'ITP
 -- :cXxx : dates de la culture (YYYY-MM-DD)
 -- :iDXxx et iFXxx : débuts et fins de période de l'IT_plante (MM-DD)
-iif(CulIncDate(:cSem,:iDSem,''D'',    (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_semis''))>0,     ''Semis trop tôt'',
-iif(CulIncDate(:cSem,:iFSem,''F'',    (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_semis''))>0,     ''Semis trop tard'',
-iif(CulIncDate(:cPlant,:iDPlant,''D'',(SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_plantation''))>0,''Plant. trop tôt'',
-iif(CulIncDate(:cPlant,:iFPlant,''F'',(SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_plantation''))>0,''Plant. trop tard'',
-iif(CulIncDate(:cDRec,:iDRec,''D'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_récolte''))>0,   ''Récolte trop tôt'',
-iif(CulIncDate(:cFRec,:iFRec,''F'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_récolte''))>0,   ''Récolte trop tard'',
+iif(CulIncDate(:annee,:i0,:cSem,:iDSem,''D'',    (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_semis''))>0,     ''Semis trop tôt'',
+iif(CulIncDate(:annee,:i0,:cSem,:iFSem,''F'',    (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_semis''))>0,     ''Semis trop tard'',
+iif(CulIncDate(:annee,:i0,:cPlant,:iDPlant,''D'',(SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_plantation''))>0,''Plant. trop tôt'',
+iif(CulIncDate(:annee,:i0,:cPlant,:iFPlant,''F'',(SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_plantation''))>0,''Plant. trop tard'',
+iif(CulIncDate(:annee,:i0,:cDRec,:iDRec,''D'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_A_récolte''))>0,   ''Récolte trop tôt'',
+iif(CulIncDate(:annee,:i0,:cFRec,:iFRec,''F'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_récolte''))>0,   ''Récolte trop tard'',
 NULL))))))
 -- out : Texte qui dit où est l'incohérence.
 )#");

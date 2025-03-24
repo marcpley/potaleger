@@ -548,6 +548,43 @@ void PotaWidget::PositionRestore() {
     lSelect->setText("");
 }
 
+void PotaWidget::RefreshHorizontalHeader() {
+    PotaHeaderView *phv=dynamic_cast<PotaHeaderView*>(tv->horizontalHeader());
+    delegate->TempoCols.clear();
+    delegate->TempoNowCol=-1;
+    phv->TempoCols.clear();
+    phv->TempoTitles.clear();
+    PotaQuery query(*model->db);
+    int saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
+    for (int i=0; i<model->columnCount();i++)             {
+        if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO")){
+            delegate->TempoCols.insert(i);
+            phv->TempoCols.insert(i);
+            if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()!="TEMPO"){//Multiple TEMPO columns
+                if (StrLast(model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),2)=="NP") {
+                    phv->TempoTitles.append(str(saison-1));
+                    if (QDate::currentDate().toString("yyyy").toInt()==saison-1)
+                        delegate->TempoNowCol=i;
+                } else if (StrLast(model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),2)=="NN") {
+                    phv->TempoTitles.append(str(saison+1));
+                    if (QDate::currentDate().toString("yyyy").toInt()==saison+1)
+                        delegate->TempoNowCol=i;
+                } else {
+                    phv->TempoTitles.append(str(saison));
+                    if (QDate::currentDate().toString("yyyy").toInt()==saison)
+                        delegate->TempoNowCol=i;
+                }
+                if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()!="TEMPO")
+                    phv->setSectionResizeMode(i, QHeaderView::Fixed);
+            } else {//Single TEMPO column
+                phv->TempoTitles.append("");
+            }
+        } else {
+            phv->TempoTitles.append("");
+        }
+    }
+}
+
 void PotaWidget::SetLeFilterWith(QString sFieldName, QString sDataType, QString sData){
     //Filtering
     //QString sDataType = DataType(model->db, model->tableName(),sDataName);
@@ -657,6 +694,12 @@ void PotaWidget::pbRefreshClick(){
     bUserCurrChanged=false;
     PositionSave();
     model->SelectShowErr();
+
+    if (!dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->TempoCols.isEmpty()) {
+        RefreshHorizontalHeader();
+        emit model->headerDataChanged(Qt::Horizontal, 0, model->columnCount() - 1);
+        tv->horizontalHeader()->update();
+    }
     PositionRestore();
     bUserCurrChanged=true;
 }
@@ -849,7 +892,7 @@ void PotaWidget::pbFilterClick(bool checked)
     PositionRestore();
     bUserCurrChanged=true;
 
-    lFilterResult->setText(str(model->rowCount())+" "+tr("lignes"));
+    //lFilterResult->setText(str(model->rowCount())+" "+tr("lignes"));
 
 
 }
@@ -895,11 +938,19 @@ void PotaWidget::leFindTextEdited(const QString &text){
     pbFindNext->setEnabled(!text.isEmpty());
     pbFindPrev->setEnabled(!text.isEmpty());
     delegate->FindText=text.toLower();
+    delegate->FindTextchanged=true;
 }
 
 void PotaWidget::leFindReturnPressed() {
-    if (pbFindNext->isEnabled())
-        pbFindNextClick();
+    if (delegate->FindTextchanged) {
+        if (pbFindFirst->isEnabled()) {
+            pbFindFirstClick();
+            delegate->FindTextchanged=false;
+        }
+    } else {
+        if (pbFindNext->isEnabled())
+            pbFindNextClick();
+    }
 }
 
 void PotaWidget::FindFrom(int row, int column, bool Backward){
@@ -1020,6 +1071,9 @@ bool PotaTableModel::select()  {
 
     // timer->stop();
     // timer->deleteLater();
+
+    dynamic_cast<PotaWidget*>(parent())->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
+
     AppBusy(false,progressBar);
     bool result=(lastError().type() == QSqlError::NoError);
     //dbSuspend(db,true,!wasSuspended,label);
@@ -1281,12 +1335,15 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         //Hightlight not null empty value. They are not normal, it causes SQL failure.
         c=Qt::red;
         c.setAlpha(150);
+    } else if (index.data(Qt::EditRole).toString().startsWith("Err")) {
+        c=Qt::red;
+        c.setAlpha(150);
     } else if (RowColorCol>-1) {
-        c=RowColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString());
+        c=RowColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString(),pw->model->tableName());
     }
     if (!c.isValid()) {//Table color.
         c=cColColors[index.column()];
-        if (!c.isValid() and index.column()!=TempoCol)
+        if (!c.isValid() and !TempoCols.contains(index.column()))
             c=cTableColor;
         if (isDarkTheme())
             c.setAlpha(30);
@@ -1324,7 +1381,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     }
 
     //Paint data
-    if (index.column()==TempoCol)
+    if (TempoCols.contains(index.column()))
          paintTempo(painter,option,index);
     else {
         if(!index.data(Qt::EditRole).toDate().isNull() and index.data(Qt::EditRole).toDate()>QDate::currentDate()){//todo
@@ -1378,14 +1435,14 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
     QBrush b;
     b.setStyle(Qt::SolidPattern);
     QColor c;
-    QRect r;
+    QRect r1,r2,r3,r4;
     int left=0;
 
-    //Vert bar for month
+    //Vertical bars for month
     c=QColor(128,128,128);
     b.setColor(c);
-    r.setBottom(option.rect.bottom());
-    r.setTop(option.rect.top());
+    r1.setBottom(option.rect.bottom());
+    r1.setTop(option.rect.top());
     int nbJ=0;
     for(int i=1;i<24;i++){
         if(QSet<int>{1,3,5,7,8,10,12,13,15,17,19,20,22,24}.contains(i))
@@ -1395,34 +1452,59 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         else
             nbJ+=30;
         left=option.rect.left()+round(nbJ*coef);
-        if(left+2>=option.rect.right())
+        if(left>option.rect.right())
             break;
-        r.setLeft(left);
-        r.setWidth(2);
-        painter->fillRect(r,b);
+        r1.setLeft(left);
+        r1.setWidth(1);
+        painter->fillRect(r1,b);
+    }
+
+    if (TempoNowCol==index.column()) {//Red vertical bar for now
+        c=QColor("red");
+        b.setColor(c);
+        r1.setBottom(option.rect.bottom());
+        r1.setTop(option.rect.top());
+        left=option.rect.left()+round(QDate::currentDate().dayOfYear()*coef);
+        r1.setLeft(left);
+        r1.setWidth(1);
+        painter->fillRect(r1,b);
     }
 
     QStringList ql = index.data(Qt::DisplayRole).toString().split(":");
-    if (ql.count()!=6)
+    if (ql.count()<6)
         return;
     int const attente=ql[0].toInt()*coef;
-    int const semis=ql[1].toInt()*coef;
-    int const semisF=ql[2].toInt()*coef;
-    int const plant=ql[3].toInt()*coef;
-    int const plantF=ql[4].toInt()*coef;
+    int semis=ql[1].toInt()*coef;
+    int semisF=ql[2].toInt()*coef;
+    int plant=ql[3].toInt()*coef;
+    int plantF=ql[4].toInt()*coef;
     int const recolte=ql[5].toInt()*coef;
+    QString t;
+    if (ql.count()>6)
+        t=ql[6];
+    bool bSemis=true;
+    bool bPlant=true;
+    bool bDRec=true;
+    bool bFRec=true;
+    if (ql.count()>10) {
+        bSemis=!ql[7].isEmpty();
+        bPlant=!ql[8].isEmpty();
+        bDRec=!ql[9].isEmpty();
+        bFRec=!ql[10].isEmpty();
+    }
 
-    r.setBottom(option.rect.bottom()-2);
+    r2.setBottom(option.rect.bottom()-2);
+    r2.setLeft(option.rect.left()+attente);
+    r2.setWidth(0);
+
     if (semis>0){
         //Période de semis
-        if(plant>0) c=cSousAbris;
-        else c=cEnPlace;
-        c.setAlpha(255);
+        if (plant>0) c=cSousAbris; else c=cEnPlace;
+        if (bSemis) c.setAlpha(255); else  c.setAlpha(100);
         b.setColor(c);
-        r.setTop(r.bottom()-4);
-        r.setLeft(option.rect.left()+attente);
-        r.setRight(option.rect.left()+attente+fmax(semis,4));
-        painter->fillRect(r,b);
+        r2.setTop(r2.bottom()-4);
+        r2.setWidth(semis);
+        painter->fillRect(r2,b);
     }
     if (semisF>0){
         //Semis fait, attente plantation
@@ -1430,41 +1512,57 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         else c=cEnPlace;
         c.setAlpha(100);
         b.setColor(c);
-        r.setTop(r.bottom()-4);
-        r.setLeft(option.rect.left()+attente+semis);
-        r.setRight(option.rect.left()+attente+semis+semisF);
-        painter->fillRect(r,b);
+        r2.setTop(r2.bottom()-4);
+        r2.setLeft(r2.left()+r2.width());
+        r2.setWidth(semisF);
+        painter->fillRect(r2,b);
     }
-    if (plant>0){
+    if (plant>0) {
         //Période de plantation
         c=cEnPlace;
-        c.setAlpha(255);
+        if (bPlant) c.setAlpha(255); else  c.setAlpha(150);
         b.setColor(c);
-        r.setTop(r.bottom()-10);
-        r.setLeft(option.rect.left()+attente+semis+semisF);
-        r.setRight(option.rect.left()+attente+semis+semisF+fmax(plant,4));
-        painter->fillRect(r,b);
+        r2.setTop(r2.bottom()-10);
+        r2.setLeft(r2.left()+r2.width());
+        r2.setWidth(plant);
+        painter->fillRect(r2,b);
     }
     if (plantF>0){
         //Plantation faite, attente récolte
         c=cEnPlace;
         c.setAlpha(150);
         b.setColor(c);
-        r.setTop(r.bottom()-10);
-        r.setLeft(option.rect.left()+attente+semis+semisF+plant);
-        r.setRight(option.rect.left()+attente+semis+semisF+plant+plantF);
-        painter->fillRect(r,b);
+        r2.setTop(r2.bottom()-10);
+        r2.setLeft(r2.left()+r2.width());
+        r2.setWidth(plantF);
+        painter->fillRect(r2,b);
     }
-    if (recolte>0){
+    if (recolte>0 or bDRec or bFRec){
         //Période de récolte
         c=cRecolte;
         c.setAlpha(255);
+        if (bDRec) c.setAlpha(255); else  c.setAlpha(100);
         b.setColor(c);
-        r.setTop(r.bottom()-12);
-        r.setBottom(r.bottom()-6);
-        r.setLeft(option.rect.left()+attente+semis+semisF+plant+plantF);
-        r.setRight(option.rect.left()+attente+semis+semisF+plant+plantF+fmax(recolte,4));
-        painter->fillRect(r,b);
+        r2.setTop(r2.bottom()-12);
+        r2.setBottom(r2.bottom()-6);
+        r2.setLeft(r2.left()+r2.width());
+        if (bDRec)
+            r2.setWidth(fmax(recolte/2,4));
+        else
+            r2.setWidth(recolte/2);
+        painter->fillRect(r2,b);
+
+        if (bFRec) c.setAlpha(255); else  c.setAlpha(100);
+        b.setColor(c);
+        r2.setLeft(r2.left()+r2.width());
+        if (bFRec)
+            r2.setWidth(fmax(recolte/2,4));
+        else
+            r2.setWidth(recolte/2);
+        painter->fillRect(r2,b);
+    }
+    if (!t.isEmpty()) {
+        painter->drawText(option.rect.left()+attente+semis+semisF+plant+3, option.rect.bottom()-2, t);
     }
 }
 
