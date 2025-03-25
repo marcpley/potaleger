@@ -109,6 +109,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
+        // Update shema (specific).
         if (bResult and(sDBVersion == "2024-12-30")) { //Useless specific update shema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
@@ -132,6 +133,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             bResult = query->ExecMultiShowErr(sDDL20250305,";",ui->progressBar);
             sResult.append(sDBVersion+" -> 2025-03-05 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-03-05";
+        }
+        if (bResult and(sDBVersion == "2025-03-05")) { //Drop field: Culture.Récolte_comm.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = query->ExecMultiShowErr(sDDL20250325,";",ui->progressBar);
+            sResult.append(sDBVersion+" -> 2025-03-25 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-03-25";
         }
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);

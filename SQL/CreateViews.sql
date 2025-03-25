@@ -382,15 +382,15 @@ CREATE VIEW Cultures__Tempo AS SELECT
        -- C.Fin_récolte,
        CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)AS TEXT)
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
-                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_com,'')||':'||coalesce(C.Récolte_faite,'')
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')
             ELSE NULL END TEMPO_NP,
        CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
-            coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_com,'')||':'||coalesce(C.Récolte_faite,'')
+            coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')
             ELSE NULL END TEMPO_N,
        CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)AS TEXT)
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
-            coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_com,'')||':'||coalesce(C.Récolte_faite,'')
+            coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')
             ELSE NULL END TEMPO_NN,
        C.Saison,
        C.Longueur,
@@ -428,7 +428,6 @@ CREATE VIEW Cultures__non_terminées AS SELECT
         C.Date_plantation,
         C.Plantation_faite,
         C.Début_récolte,
-        C.Récolte_com,
         C.Fin_récolte,
         C.Récolte_faite,
         CAST(round((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture),3)AS REAL) Qté_réc,
@@ -487,7 +486,7 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (Terminée ISNULL) AND
         (Date_semis < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_semis')||' days')) AND
-        (Semis_fait ISNULL)
+        (coalesce(Semis_fait,'') NOT LIKE 'x%')
 ORDER BY    Date_semis,
             Planche,
             IT_plante;
@@ -523,7 +522,7 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (Terminée ISNULL) AND
         (Date_semis < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_semis')||' days')) AND
-        (Semis_fait ISNULL) AND
+        (coalesce(Semis_fait,'') NOT LIKE 'x%') AND
         (Date_plantation NOTNULL)
 GROUP BY C.IT_plante,C.Variété,C.Type,C.Etat,C.Date_semis,C.Semis_fait
 ORDER BY    Date_semis,
@@ -566,7 +565,7 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (Terminée ISNULL) AND
         (Date_semis < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_semis')||' days')) AND
-        (Semis_fait ISNULL) AND
+        (coalesce(Semis_fait,'') NOT LIKE 'x%') AND
         (Date_plantation ISNULL)
 ORDER BY    Date_semis,
             Planche,
@@ -606,7 +605,7 @@ LEFT JOIN Espèces E USING (Espèce)
 WHERE   (Terminée ISNULL) AND
         (Date_plantation < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_plantation')||' days')) AND
         (Plantation_faite ISNULL) AND
-        ((Semis_fait NOTNULL)OR(Date_semis ISNULL))
+        ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL))
 ORDER BY    Date_plantation,
             Planche,
             IT_plante;
@@ -622,7 +621,6 @@ CREATE VIEW Cultures__à_récolter AS SELECT
         C.Date_plantation,
         C.Plantation_faite,
         C.Début_récolte,
-        C.Récolte_com,
         C.Fin_récolte,
         C.Récolte_faite,
         CAST(round((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture),3)AS REAL) Qté_réc,
@@ -641,8 +639,8 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (C.Terminée ISNULL) AND
         (Début_récolte < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_récolte')||' days')) AND
-        (Récolte_faite ISNULL)  AND
-        ((Semis_fait NOTNULL)OR(Date_semis ISNULL)) AND
+        (coalesce(Récolte_faite,'') NOT LIKE 'x%')  AND
+        ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL)) AND
         ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL))
 ORDER BY    C.Début_récolte,
             C.Planche,
@@ -674,7 +672,6 @@ CREATE VIEW Cultures__à_terminer AS SELECT
         C.Date_semis,
         C.Date_plantation,
         C.Début_récolte,
-        C.Récolte_com,
         C.Fin_récolte,
         C.Récolte_faite,
         C.Terminée,
@@ -689,9 +686,9 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (C.Terminée ISNULL) AND
         ((C.Fin_récolte ISNULL)OR(C.Fin_récolte < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_terminer')||' days'))) AND
-        ((Semis_fait NOTNULL)OR(Date_semis ISNULL)) AND
+        ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL)) AND
         ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL)) AND
-        ((Récolte_faite NOTNULL)OR(Début_récolte ISNULL))
+        ((Récolte_faite LIKE 'x%')OR(Début_récolte ISNULL))
 ORDER BY    C.Fin_récolte,
             C.Planche,
             C.IT_plante;

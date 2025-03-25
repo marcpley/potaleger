@@ -215,7 +215,7 @@ BEGIN
                             Date_Plantation,
                             Plantation_faite,
                             Début_récolte,
-                            Récolte_com,
+                            -- Récolte_com,
                             Fin_récolte,
                             Récolte_faite,
                             Terminée,
@@ -234,7 +234,7 @@ BEGIN
             NEW.Date_Plantation,
             NEW.Plantation_faite,
             NEW.Début_récolte,
-            NEW.Récolte_com,
+            -- NEW.Récolte_com,
             NEW.Fin_récolte,
             NEW.Récolte_faite,
             NEW.Terminée,
@@ -259,7 +259,7 @@ BEGIN
         Date_Plantation=NEW.Date_Plantation,
         Plantation_faite=NEW.Plantation_faite,
         Début_récolte=NEW.Début_récolte,
-        Récolte_com=NEW.Récolte_com,
+        -- Récolte_com=NEW.Récolte_com,
         Fin_récolte=NEW.Fin_récolte,
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
@@ -353,7 +353,7 @@ BEGIN
         Date_Plantation=NEW.Date_Plantation,
         Plantation_faite=NEW.Plantation_faite,
         Début_récolte=NEW.Début_récolte,
-        Récolte_com=NEW.Récolte_com,
+        -- Récolte_com=NEW.Récolte_com,
         Fin_récolte=NEW.Fin_récolte,
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
@@ -368,7 +368,7 @@ BEGIN
         Date_semis=NEW.Date_semis,
         Date_Plantation=NEW.Date_Plantation,
         Début_récolte=NEW.Début_récolte,
-        Récolte_com=NEW.Récolte_com,
+        -- Récolte_com=NEW.Récolte_com,
         Fin_récolte=NEW.Fin_récolte,
         Récolte_faite=NEW.Récolte_faite,
         Terminée=NEW.Terminée,
@@ -638,15 +638,15 @@ BEGIN
        SET Début_récolte=(SELECT min(Date)
                           FROM Récoltes
                           WHERE Culture=NEW.Culture),
-           Récolte_com=(CASE WHEN (SELECT count(*)
+           Récolte_faite=(CASE WHEN (SELECT count(*)
                                    FROM Récoltes
-                                   WHERE Culture=NEW.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                   WHERE Culture=NEW.Culture)>0 THEN coalesce(Récolte_faite,'-') -- Récolte commencée
                                    ELSE NULL
                                    END),
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=NEW.Culture),
-                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+                           CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
      WHERE Culture=NEW.Culture;
 END;;
 
@@ -657,29 +657,29 @@ BEGIN
        SET Début_récolte=(SELECT min(Date)
                           FROM Récoltes
                           WHERE Culture=NEW.Culture),
-           Récolte_com=(CASE WHEN (SELECT count(*)
+           Récolte_faite=(CASE WHEN (SELECT count(*)
                                    FROM Récoltes
-                                   WHERE Culture=NEW.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                   WHERE Culture=NEW.Culture)>0 THEN coalesce(Récolte_faite,'-')
                                    ELSE NULL
                                    END),
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=NEW.Culture),
-                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+                           CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
      WHERE Culture=NEW.Culture;
      UPDATE Cultures
        SET Début_récolte=(SELECT min(Date)
                           FROM Récoltes
                           WHERE Culture=OLD.Culture),
-           Récolte_com=(CASE WHEN (SELECT count(*)
+           Récolte_faite=(CASE WHEN (SELECT count(*)
                                    FROM Récoltes
-                                   WHERE Culture=OLD.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                   WHERE Culture=OLD.Culture)>0 THEN coalesce(Récolte_faite,'-')
                                    ELSE NULL
                                    END),
            Fin_récolte=max((SELECT max(Date)
                             FROM Récoltes
                             WHERE Culture=OLD.Culture),
-                           CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+                           CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
      WHERE (NEW.Culture!=OLD.Culture)AND(Culture=OLD.Culture);
 END;;
 
@@ -697,16 +697,16 @@ BEGIN
                                                        (SELECT ITP.Déb_récolte FROM ITP
                                                         WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
                             END,
-         Récolte_com=(CASE WHEN (SELECT count(*)
+         Récolte_faite=(CASE WHEN (SELECT count(*)
                                  FROM Récoltes
-                                 WHERE Culture=OLD.Culture)>0 THEN coalesce(Récolte_com,'x')
+                                 WHERE Culture=OLD.Culture)>0 THEN coalesce(Récolte_faite,'-')
                                  ELSE NULL
                                  END)
      WHERE Culture=OLD.Culture;
      UPDATE Cultures
      SET Fin_récolte=CASE WHEN (SELECT count() FROM Récoltes WHERE Culture=OLD.Culture)>0
                           THEN max((SELECT max(Date) FROM Récoltes WHERE Culture=OLD.Culture),
-                                   CASE WHEN Récolte_faite ISNULL THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolté, ne pas effacer la date de fin de récolte prévue.
+                                   CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
                           ELSE PlanifCultureCalcDate(coalesce(Début_récolte,Date_plantation,Date_semis),
                                                      (SELECT ITP.Fin_récolte FROM ITP
                                                       WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.

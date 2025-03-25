@@ -28,8 +28,8 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                                           WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
                        Saison TEXT AS (substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)),
                        Etat TEXT AS (CASE WHEN Terminée NOTNULL THEN 'Terminée' --gris
-                                          WHEN Récolte_faite NOTNULL THEN 'A terminer' --bleu
-                                          WHEN Récolte_com NOTNULL THEN 'Récolte' --violet
+                                          WHEN Récolte_faite LIKE 'x%' THEN 'A terminer' --bleu
+                                          WHEN Récolte_faite NOTNULL THEN 'Récolte' --violet
                                           WHEN Plantation_faite NOTNULL THEN 'En place' --vert
                                           WHEN Semis_fait NOTNULL THEN iif(Date_plantation IS NULL,'En place', --vert
                                                                                                    'Sous abris') --rouge
@@ -41,7 +41,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Date_plantation DATE,
                        Plantation_faite BOOL,
                        Début_récolte DATE,
-                       Récolte_com BOOL,
+                       -- Récolte_com BOOL,
                        Fin_récolte DATE,
                        Récolte_faite BOOL,
                        Terminée BOOL,

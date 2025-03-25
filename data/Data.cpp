@@ -202,7 +202,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Date_plantation" or
                       sFieldName=="Plantation_faite" or
                       sFieldName=="Début_récolte" or
-                      sFieldName=="Récolte_com" or
+                      // sFieldName=="Récolte_com" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
                       sFieldName=="Terminée" or
@@ -244,7 +244,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Date_plantation" or
                       sFieldName=="Plantation_faite" or
                       sFieldName=="Début_récolte" or
-                      sFieldName=="Récolte_com" or
+                      // sFieldName=="Récolte_com" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
                       sFieldName=="Terminée" or
@@ -253,7 +253,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
         bReadOnly = !(sFieldName=="Date_semis" or
                       sFieldName=="Date_plantation" or
                       sFieldName=="Début_récolte" or
-                      sFieldName=="Récolte_com" or
+                      // sFieldName=="Récolte_com" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
                       sFieldName=="Terminée" or
@@ -772,8 +772,12 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                  "La planification des cultures est faite en fonction de l'ITP, les dates de la cultures sont calées sur le début de période de l'ITP.\n"
                                  "Effacer 'D_planif' et valider pour replanifier les opérations non déjà faites.\n"
                                  "Pour planifier la culture sur une saison particulière, saisissez dans 'D_planif' l'année sur 4 chiffres (2025).");
-        else if (sFieldName=="Récolte_com")
-            sToolTip=QObject::tr("Récolte commencée.")+"\n"+
+        else if (sFieldName=="Semis_fait")
+            sToolTip=QObject::tr("'x' ou commence par 'x' : le semis est réussi.\n"
+                                 "Autre valeur : le semis est en cours.");
+        else if (sFieldName=="Récolte_faite")
+            sToolTip=QObject::tr("'x' ou commence par 'x' : la récolte est terminée.\n"
+                                 "Autre valeur : la récolte est en cours.")+"\n"+
                      QObject::tr("Va être mis à jour lors de la saisie des récoltes.");
         else if (sFieldName=="Terminée")
             sToolTip=QObject::tr("La planche est fermée, disponible pour la culture suivante.\nSaisissez 'NS' (non significative) si la culture ne doit pas être prise en compte dans les analyses.");
@@ -920,7 +924,7 @@ QString ToolTipTable(const QString sTableName) {
         else if (sTableName=="Cultures__à_planter")
             sToolTip=QObject::tr("Cultures non terminées, déjà semées (ou à partir de plants), dont le champ 'Plantation_faite' est vide et dont la date de plantation est proche (paramètre 'C_horizon_plantation') ou passée.")+"\n\n";
         else if (sTableName=="Cultures__à_récolter")
-            sToolTip=QObject::tr("Cultures non terminées, déjà semées/plantées, dont le champ 'Récolte_faite' est vide et dont la date de début de récolte est proche (paramètre 'C_horizon_récolte') ou passée.")+"\n\n";
+            sToolTip=QObject::tr("Cultures non terminées, déjà semées/plantées, dont le champ 'Récolte_faite' ne commence pas par 'x' et dont la date de début de récolte est proche (paramètre 'C_horizon_récolte') ou passée.")+"\n\n";
         else if (sTableName=="Cultures__à_terminer")
             sToolTip=QObject::tr("Cultures non terminées, déjà semées/plantées/récoltées.\n"
                                  "Pour les cultures sans récolte ('Début_récolte' vide) sont incluses les cultures dont la date de fin de récolte est proche (paramètre 'C_horizon_terminer') ou passée.")+"\n\n";

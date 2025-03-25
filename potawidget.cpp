@@ -1484,13 +1484,13 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         t=ql[6];
     bool bSemis=true;
     bool bPlant=true;
-    bool bDRec=true;
-    bool bFRec=true;
-    if (ql.count()>10) {
+    bool bDRec;
+    bool bFRec;
+    if (ql.count()>9) {
         bSemis=!ql[7].isEmpty();
         bPlant=!ql[8].isEmpty();
         bDRec=!ql[9].isEmpty();
-        bFRec=!ql[10].isEmpty();
+        bFRec=ql[9].startsWith('x');
     }
 
     r2.setBottom(option.rect.bottom()-2);
