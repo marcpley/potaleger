@@ -158,7 +158,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
             QFont font = this->font();
             w->lTabTitle->setFont(font);
-            w->lTabTitle->setText(sTitre);
+            w->lTabTitle->setText(" "+sTitre+" ");
             w->lTabTitle->setContentsMargins(10, 4, 10, 4);
             w->lTabTitle->setAlignment(Qt::AlignCenter);
 
@@ -239,7 +239,7 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         PotaWidget *w=dynamic_cast<PotaWidget*>(Tab);
 
         if (w->pbCommit->isEnabled()) {
-            if (YesNoDialog(w->lTabTitle->text()+"\n\n"+
+            if (YesNoDialog(w->lTabTitle->text().trimmed()+"\n\n"+
                                tr("Valider les modifications avant de fermer ?"))) {
                 if (!w->model->SubmitAllShowErr())
                     return;
@@ -300,7 +300,9 @@ void MainWindow::on_tabWidget_currentChanged(int index)
                 w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
             else
                 w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
-
+            //w->lTabTitle->updateGeometry();
+            //ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, w->lTabTitle);
+            //ui->tabWidget->tabBar()->tabButton(i,QTabBar::LeftSide)->updateGeometry();
         }
     }
 
@@ -526,7 +528,7 @@ void MainWindow::on_mImporter_triggered()
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
 
         if (w->pbCommit->isEnabled()) {
-            if (YesNoDialog(w->lTabTitle->text()+"\n\n"+
+            if (YesNoDialog(w->lTabTitle->text().trimmed()+"\n\n"+
                             tr("Valider les modifications en cours ?"))) {
                 if (!w->model->SubmitAllShowErr())
                     return;
@@ -542,7 +544,7 @@ void MainWindow::on_mImporter_triggered()
             PathImport=PathExport;
 
         QString sFileName = QFileDialog::getOpenFileName(this, tr("Importer des données"),
-                                                         PathImport+w->lTabTitle->text(), "*.csv");
+                                                         PathImport+w->lTabTitle->text().trimmed(), "*.csv");
 
         //Check filename.
         if (sFileName.isEmpty()) return;
@@ -590,7 +592,7 @@ void MainWindow::on_mImporter_triggered()
         if (info.isEmpty()) {
             MessageDialog(QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
                               .arg(FileInfoVerif.fileName())
-                              .arg(w->lTabTitle->text()),"",QStyle::SP_MessageBoxWarning);
+                              .arg(w->lTabTitle->text().trimmed()),"",QStyle::SP_MessageBoxWarning);
             return;
         // } else if (primaryFieldImport==-1) {
         //     TypeImport=4; //Append only
@@ -612,7 +614,7 @@ void MainWindow::on_mImporter_triggered()
             if(linesToImport.count()>4)
                 info2+="<br>...";
 
-            choice = RadiobuttonDialog(w->lTabTitle->text()+"<br><br>"+
+            choice = RadiobuttonDialog(w->lTabTitle->text().trimmed()+"<br><br>"+
                                            "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
                                            sFileName+"<br><br>"+
                                            "<b>"+tr("Les champs suivants vont être importés:")+"</b><br>"+info+"<br><br>"+
@@ -777,7 +779,7 @@ void MainWindow::on_mExporter_triggered()
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
 
         QString sFileName = QFileDialog::getSaveFileName(this, tr("Exporter les données dans un fichier %1").arg("CSV"),
-                                                         PathExport+w->lTabTitle->text(), "*.csv",
+                                                         PathExport+w->lTabTitle->text().trimmed(), "*.csv",
                                                          nullptr,QFileDialog::DontConfirmOverwrite);
         //Check filename.
         if (sFileName.isEmpty()) return;
@@ -828,7 +830,7 @@ void MainWindow::on_mExporter_triggered()
             if (FileExport.write(data)!=-1) {
                 data.clear();
 
-                AppBusy(true,ui->progressBar,totalRow,w->lTabTitle->text()+" %p%");
+                AppBusy(true,ui->progressBar,totalRow,w->lTabTitle->text().trimmed()+" %p%");
 
                 //Data export
                 for (row = 0; row < w->model->rowCount(); ++row) {

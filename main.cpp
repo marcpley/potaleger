@@ -11,6 +11,7 @@
 #include "QDebug"
 #include "PotaUtils.h"
 #include <QWindow>
+#include <QStyleFactory>
 //#include <QLocale>
 //#include "qtimer.h"
 #include "SQL/FunctionsSQLite.h"
@@ -513,13 +514,15 @@ void MainWindow::closeEvent(QCloseEvent *)
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     QTranslator qtTranslator;
     if (qtTranslator.load(QLocale(), "qt", "_", QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
         a.installTranslator(&qtTranslator);
     }
 
+    MainWindow w;
     //w.db = NEW;
     //w.db.addDatabase("QSQLITE");
     w.SetUi();
