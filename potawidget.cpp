@@ -3,6 +3,7 @@
 #include "qapplication.h"
 #include "qheaderview.h"
 #include "qlineedit.h"
+#include "qmenu.h"
 #include "qsqlerror.h"
 #include "PotaUtils.h"
 #include <QStandardItemModel>
@@ -23,13 +24,13 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     delegate->setParent(this);
     //query = new PotaQuery(nullptr);
     lTabTitle = new QLabel();
+    lTabTitle->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
 
     //Toolbar
     toolbar = new QWidget(this);
 
     pbRefresh = new QToolButton(this);
     pbRefresh->setIcon(QIcon(":/images/reload.svg"));
-    SetButtonSize(pbRefresh);
     pbRefresh->setShortcut( QKeySequence(Qt::Key_F5));
     pbRefresh->setToolTip(tr("Recharger les données depuis le fichier.")+"\n"+
                           tr("Les modifications en cours seront automatiquement enregistrées")+"\n"+
@@ -38,7 +39,6 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
     pbEdit = new QToolButton(this);
     pbEdit->setIcon(QIcon(":/images/edit.svg"));
-    SetButtonSize(pbEdit);
     pbEdit->setCheckable(true);
     pbEdit->setChecked(false);
     pbEdit->setShortcut( QKeySequence(Qt::Key_F2));
@@ -48,7 +48,6 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
     pbCommit = new QToolButton(this);
     pbCommit->setIcon(QIcon(":/images/commit.svg"));
-    SetButtonSize(pbCommit);
     // Associer plusieurs raccourcis
     QAction *action = new QAction(pbCommit);
     action->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Enter), QKeySequence(Qt::CTRL | Qt::Key_Return)});
@@ -62,7 +61,6 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
     pbRollback = new QToolButton(this);
     pbRollback->setIcon(QIcon(":/images/rollback.svg"));
-    SetButtonSize(pbRollback);
     pbRollback->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Escape));
     pbRollback->setToolTip(tr("Abandonner les modifications en cours.")+"\n"+
                          "Ctrl + Escape");
@@ -80,7 +78,6 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
     pbInsertRow = new QToolButton(this);
     pbInsertRow->setIcon(QIcon(":/images/insert_row.svg"));
-    SetButtonSize(pbInsertRow);
     pbInsertRow->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Insert));
     pbInsertRow->setToolTip(tr("Ajouter des lignes.\nSi le nombre de ligne à ajouter en mis à 0, l'enregistrement courant sera dupliqué.")+"\n"+
                                "Ctrl + Insert");
@@ -90,7 +87,6 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
     pbDeleteRow = new QToolButton(this);
     pbDeleteRow->setIcon(QIcon(":/images/delete_row.svg"));
-    SetButtonSize(pbDeleteRow);
     pbDeleteRow->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Delete));
     pbDeleteRow->setToolTip(tr("Supprimer des lignes.")+"\n"+
                             "Ctrl + Delete (Suppr)");
@@ -104,24 +100,19 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     filterFrame->setBackgroundRole(QPalette::Midlight);
     filterFrame->setAutoFillBackground(true);
     lFilterOn = new QLabel(this);
-    lFilterOn->setFixedWidth(80);
     lFilterOn->setText("...");
     cbFilterType = new QComboBox(this);
-    cbFilterType->setFixedWidth(125);
     connect(cbFilterType, &QComboBox::currentIndexChanged,this, &PotaWidget::cbFilterTypeChanged);
     leFilter = new QLineEdit(this);
-    leFilter->setFixedWidth(80);
     connect(leFilter, &QLineEdit::returnPressed, this, &PotaWidget::leFilterReturnPressed);
     pbFilter = new QPushButton(this);
     pbFilter->setText(tr("Filtrer"));
     pbFilter->setCheckable(true);
-    pbFilter->setFixedWidth(70);
     pbFilter->setEnabled(false);
     pbFilter->setShortcut(QKeySequence(Qt::Key_F6));
     pbFilter->setToolTip("F6");
     connect(pbFilter, &QPushButton::clicked,this,&PotaWidget::pbFilterClick);
     lFilterResult = new QLabel(this);
-    lFilterResult->setFixedWidth(80);
 
     //Find tool
     findFrame = new QFrame(this);
@@ -131,26 +122,22 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     lFind = new QLabel(this);
     lFind->setText(tr("Rechercher"));
     leFind = new QLineEdit(this);
-    leFind->setFixedWidth(80);
     connect(leFind, &QLineEdit::textEdited, this, &PotaWidget::leFindTextEdited);
     connect(leFind, &QLineEdit::returnPressed, this, &PotaWidget::leFindReturnPressed);
     pbFindFirst = new QPushButton(this);
     pbFindFirst->setText(tr("1er"));
-    pbFindFirst->setFixedWidth(40);
     pbFindFirst->setEnabled(false);
     pbFindFirst->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_F3));
     pbFindFirst->setToolTip("Ctrl + F3");
     connect(pbFindFirst, &QPushButton::clicked,this,&PotaWidget::pbFindFirstClick);
     pbFindNext = new QPushButton(this);
     pbFindNext->setText(tr("Suivant"));
-    pbFindNext->setFixedWidth(70);
     pbFindNext->setEnabled(false);
     pbFindNext->setShortcut( QKeySequence(Qt::Key_F3));
     pbFindNext->setToolTip("F3");
     connect(pbFindNext, &QPushButton::clicked,this,&PotaWidget::pbFindNextClick);
     pbFindPrev = new QPushButton(this);
     pbFindPrev->setText(tr("Précédent"));
-    pbFindPrev->setFixedWidth(70);
     pbFindPrev->setEnabled(false);
     pbFindPrev->setShortcut( QKeySequence(Qt::Key_F4));
     pbFindPrev->setToolTip("Ctrl + F4");
@@ -178,8 +165,9 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     tv->setModel(model);
     tv->setItemDelegate(delegate);
     auto *header = new PotaHeaderView( Qt::Horizontal, tv);
+    //header->setParent(tv);
     tv->setHorizontalHeader(header);
-    tv->setLocale(QLocale::C );
+    //tv->setLocale(QLocale::C ); ???
 
     connect(tv->selectionModel(), &QItemSelectionModel::currentChanged, this, &PotaWidget::curChanged);
     connect(tv->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PotaWidget::selChanged);
@@ -191,9 +179,19 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     editNotes->setVisible(false);
     editNotes->setReadOnly(true);
     QPalette palette = editNotes->palette();
+    //palette.setColor(QPalette::Base, delegate->cTableColor);
     palette.setColor(QPalette::Base, QApplication::palette().color(QPalette::ToolTipBase));
     palette.setColor(QPalette::Text, QApplication::palette().color(QPalette::ToolTipText));
     editNotes->setPalette(palette);
+
+    QAction* aEditNotes = new QAction(tv);
+    aEditNotes->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    connect(aEditNotes, &QAction::triggered, [this]() {
+        QModelIndex currentIndex = tv->currentIndex();
+        hEditNotes(currentIndex);
+    });
+    //connect(aEditNotes, &QAction::triggered, this, &PotaWidget::hEditNotes);
+    tv->addAction(aEditNotes);
 
     editSelInfo = new QTextEdit();
     editSelInfo->setParent(this);
@@ -310,16 +308,20 @@ void PotaWidget::Init(QString TableName)
     }
 
     tv->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    tv->verticalHeader()->setDefaultSectionSize(0);//Mini.
     tv->verticalHeader()->setDefaultAlignment(Qt::AlignTop);
     tv->verticalHeader()->hide();
     tv->setTabKeyNavigation(false);
     dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->iSortCol=NaturalSortCol(TableName);
     dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->model()->setHeaderData(NaturalSortCol(TableName), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
 
+    tv->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(tv, &QTableView::customContextMenuRequested, this, &PotaWidget::showContextMenu);
+
+    //widget width according to font size
+    SetSizes();
 }
 
-void PotaWidget::curChanged(const QModelIndex cur)//, const QModelIndex pre
+void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 {
     if (bUserCurrChanged){
         tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
@@ -353,8 +355,10 @@ void PotaWidget::curChanged(const QModelIndex cur)//, const QModelIndex pre
         }
 
 
+        if (pbEdit->isChecked() and !editNotes->isReadOnly()) {
+            hEditNotes(pre);
+        }
         editNotes->setReadOnly(true);
-        mEditNotes->setChecked(!editNotes->isReadOnly());
 
         if (AcceptReturns(FieldName)){
             QString text = model->data(cur,Qt::DisplayRole).toString();
@@ -451,6 +455,78 @@ void PotaWidget::selChanged() {
     }
 }
 
+void PotaWidget::showContextMenu(const QPoint& pos) {
+    QMenu contextMenu(tr("Context menu"), this);
+
+    QAction mDefColWidth(QIcon::fromTheme("object-flip-horizontal"),tr("Largeurs de colonnes par défaut"), this);
+    QAction mEditNotes(tr("Editer"), this);
+
+    QModelIndex index = tv->indexAt(pos);
+    QString FieldName = model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+
+    mEditNotes.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    mEditNotes.setCheckable(true);
+    mEditNotes.setChecked(!editNotes->isReadOnly());
+    if (index.isValid()) {
+        mEditNotes.setEnabled(pbEdit->isChecked() and
+                              !model->nonEditableColumns.contains(index.column()) and AcceptReturns(FieldName));
+    } else {
+        mDefColWidth.setEnabled(false);
+        mEditNotes.setEnabled(false);
+    }
+
+    connect(&mDefColWidth, &QAction::triggered, this, &PotaWidget::hDefColWidth);
+    connect(&mEditNotes, &QAction::triggered, [this]() {
+        QModelIndex currentIndex = tv->currentIndex();
+        hEditNotes(currentIndex);
+    });
+    //connect(&mEditNotes, &QAction::triggered, this, &PotaWidget::hEditNotes);
+
+    contextMenu.addAction(&mDefColWidth);
+    contextMenu.addAction(&mEditNotes);
+
+    contextMenu.exec(tv->viewport()->mapToGlobal(pos));
+}
+
+void PotaWidget::hDefColWidth() {
+    for (int i=0; i<model->columnCount();i++) {
+        int iWidth=DefColWidth(model->db, model->tableName(),model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+        if (iWidth<=0 or iWidth>500)
+            tv->resizeColumnToContents(i);
+        else
+            tv->setColumnWidth(i,iWidth);
+    }
+}
+
+void PotaWidget::hEditNotes(const QModelIndex index) {
+    if (pbEdit->isChecked() and
+        !model->nonEditableColumns.contains(index.column())) {
+        // qDebug() << "toMarkdown: " << w->editNotes->toMarkdown();
+        // qDebug() << "toPlainText: " << w->editNotes->toPlainText();
+        if (editNotes->isReadOnly()) { //Go to notes edit mode
+            editNotes->setReadOnly(false);
+            editNotes->setPlainText(editNotes->toMarkdown().trimmed());
+            editNotes->setFocus();
+        } else { //Save data and return to notes read mode
+            editNotes->setReadOnly(true);
+            QString save = editNotes->toPlainText().trimmed();
+            int i = editNotes->toPlainText().count("<");
+            editNotes->setMarkdown(editNotes->toPlainText().trimmed());
+            if (i != editNotes->toMarkdown().count("<")) {
+                qDebug() << save;
+                editNotes->setPlainText(save);
+                editNotes->setReadOnly(false);
+                //MessageDialog(tr("Les balises HTML (<b>, <br>, etc) ne sont pas accéptées.")); todo: reactivate this.
+            } else {
+                if (save!=model->data(index).toString())
+                    model->setData(index,save);
+                tv->setFocus();
+            }
+        }
+        SetVisibleEditNotes(true,false);
+    }
+}
+
 void PotaWidget::showSelInfo() {
     editSelInfo->setGeometry(lSelect->geometry().left(),
                              lSelect->geometry().top(),
@@ -459,6 +535,7 @@ void PotaWidget::showSelInfo() {
 }
 
 void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
+    QColor tc = delegate->cTableColor;
     if (bVisible){
         int x = tv->columnViewportPosition(tv->currentIndex().column())+5;
         int y = tv->rowViewportPosition(tv->currentIndex().row())+
@@ -469,10 +546,22 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
 
         if (editNotes->isReadOnly()) {
             editNotes->setMarkdown(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
+            // editNotes->setLineWidth(4);
+            // editNotes->setFrameShape(QFrame::Panel);
+            if (isDarkTheme())
+                tc.setAlpha(50);
+            else
+                tc.setAlpha(80);
         } else {
             editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
-
+            // editNotes->setLineWidth(1);
+            // editNotes->setFrameShape(QFrame::StyledPanel);
+            tc.setAlpha(0);
         }
+        QPalette palette = editNotes->palette();
+        palette.setColor(QPalette::Base, blendColors(tv->palette().color(QPalette::Base),tc));
+        palette.setColor(QPalette::Text, tv->palette().color(QPalette::Text));
+        editNotes->setPalette(palette);
 
         if (autoSize) {
             //editNotes->document()->setTextWidth(QWIDGETSIZE_MAX);
@@ -550,39 +639,92 @@ void PotaWidget::PositionRestore() {
 
 void PotaWidget::RefreshHorizontalHeader() {
     PotaHeaderView *phv=dynamic_cast<PotaHeaderView*>(tv->horizontalHeader());
-    delegate->TempoCols.clear();
-    delegate->TempoNowCol=-1;
-    phv->TempoCols.clear();
-    phv->TempoTitles.clear();
+    //delegate->PaintedCols.clear();
+    delegate->PaintedColsTitles.clear();
+    delegate->PaintedColsTypes.clear();
     PotaQuery query(*model->db);
     int saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
     for (int i=0; i<model->columnCount();i++)             {
+        delegate->PaintedColsTitles.append("");
+        delegate->PaintedColsTypes.append("");
         if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO")){
-            delegate->TempoCols.insert(i);
-            phv->TempoCols.insert(i);
+            //delegate->PaintedCols.insert(i);
+            delegate->PaintedColsTypes[i]="Tempo";
             if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()!="TEMPO"){//Multiple TEMPO columns
                 if (StrLast(model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),2)=="NP") {
-                    phv->TempoTitles.append(str(saison-1));
+                    delegate->PaintedColsTitles[i]=str(saison-1);
                     if (QDate::currentDate().toString("yyyy").toInt()==saison-1)
-                        delegate->TempoNowCol=i;
+                        delegate->PaintedColsTypes[i]="TempoNow";
                 } else if (StrLast(model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),2)=="NN") {
-                    phv->TempoTitles.append(str(saison+1));
+                    delegate->PaintedColsTitles[i]=str(saison+1);
                     if (QDate::currentDate().toString("yyyy").toInt()==saison+1)
-                        delegate->TempoNowCol=i;
+                        delegate->PaintedColsTypes[i]="TempoNow";
                 } else {
-                    phv->TempoTitles.append(str(saison));
+                    delegate->PaintedColsTitles[i]=str(saison);
                     if (QDate::currentDate().toString("yyyy").toInt()==saison)
-                        delegate->TempoNowCol=i;
+                        delegate->PaintedColsTypes[i]="TempoNow";
                 }
                 if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()!="TEMPO")
                     phv->setSectionResizeMode(i, QHeaderView::Fixed);
-            } else {//Single TEMPO column
-                phv->TempoTitles.append("");
             }
-        } else {
-            phv->TempoTitles.append("");
+        } else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("Prod_N")) {
+            delegate->PaintedColsTypes[i]="TitleRed";
+            if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Prod_Nm1")
+                delegate->PaintedColsTitles[i]=str(saison-1);
+            else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Prod_N")
+                delegate->PaintedColsTitles[i]=str(saison);
+            else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Prod_Np1")
+                delegate->PaintedColsTitles[i]=str(saison+1);
+        } else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("Couv_N")) {
+            delegate->PaintedColsTypes[i]="Title";
+            delegate->PaintedColsTitles[i]="Perf";
         }
     }
+}
+
+void PotaWidget::SetSizes() {
+    int UserFont=cbFontSize->currentText().toInt();
+    int ButtonSize=24*UserFont/10;
+    pbRefresh->setFixedSize(ButtonSize,ButtonSize);
+    pbRefresh->setIconSize(QSize(ButtonSize,ButtonSize));
+    pbEdit->setFixedSize(ButtonSize,ButtonSize);
+    pbEdit->setIconSize(QSize(ButtonSize,ButtonSize));
+    pbCommit->setFixedSize(ButtonSize,ButtonSize);
+    pbCommit->setIconSize(QSize(ButtonSize,ButtonSize));
+    pbRollback->setFixedSize(ButtonSize,ButtonSize);
+    pbRollback->setIconSize(QSize(ButtonSize,ButtonSize));
+    sbInsertRows->setFixedSize(1.4*ButtonSize,ButtonSize);
+    //sbInsertRows->setIconSize(QSize(ButtonSize,ButtonSize));
+    pbInsertRow->setFixedSize(ButtonSize,ButtonSize);
+    pbInsertRow->setIconSize(QSize(ButtonSize,ButtonSize));
+    pbDeleteRow->setFixedSize(ButtonSize,ButtonSize);
+    pbDeleteRow->setIconSize(QSize(ButtonSize,ButtonSize));
+
+    lFilterOn->setFixedWidth(80*UserFont/10);
+    cbFilterType->setFixedWidth(125*UserFont/10);
+    leFilter->setFixedWidth(85*UserFont/10);
+    pbFilter->setFixedWidth(70*UserFont/10);
+    lFilterResult->setFixedWidth(80*UserFont/10);
+    leFind->setFixedWidth(80*UserFont/10);
+    pbFindFirst->setFixedWidth(40*UserFont/10);
+    pbFindNext->setFixedWidth(70*UserFont/10);
+    pbFindPrev->setFixedWidth(70*UserFont/10);
+    tv->horizontalHeader()->setMinimumHeight(24*UserFont/10);
+    tv->horizontalHeader()->setMaximumHeight(24*UserFont/10);
+    tv->verticalHeader()->setDefaultSectionSize(0);//Mini.
+
+    QColor c=delegate->cTableColor;
+    if (model->tableName().startsWith("Cultures"))
+        c=cCulture;
+    lTabTitle->setStyleSheet(QString(
+                             "background-color: rgba(%1, %2, %3, %4);"
+                             "font-weight: bold;"
+                             "font-size: "+str(UserFont)+";"
+                             )
+                             .arg(c.red())
+                             .arg(c.green())
+                             .arg(c.blue())
+                             .arg(60));
 }
 
 void PotaWidget::SetLeFilterWith(QString sFieldName, QString sDataType, QString sData){
@@ -675,7 +817,6 @@ void PotaWidget::dataChanged(const QModelIndex &topLeft)//,const QModelIndex &bo
     pbRollback->setEnabled(true);
     pbFilter->setEnabled(false);
     twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
-    //lTabTitle->setStyleSheet(lTabTitle->styleSheet().append("color: red;"));
 
     if (!topLeft.data(Qt::EditRole).isNull() and
         (topLeft.data(Qt::EditRole) == ""))
@@ -695,7 +836,15 @@ void PotaWidget::pbRefreshClick(){
     PositionSave();
     model->SelectShowErr();
 
-    if (!dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->TempoCols.isEmpty()) {
+    bool PaintedCols=false;
+    for (int i=0;i<delegate->PaintedColsTypes.count();i++){
+        if (delegate->PaintedColsTypes[i]!="") {
+            PaintedCols=true;
+            break;
+        }
+    }
+    if(PaintedCols) {
+    //if(!delegate->PaintedCols.isEmpty()) {
         RefreshHorizontalHeader();
         emit model->headerDataChanged(Qt::Horizontal, 0, model->columnCount() - 1);
         tv->horizontalHeader()->update();
@@ -752,12 +901,14 @@ void PotaWidget::pbEditClick(){
 void PotaWidget::pbCommitClick()
 {
     bUserCurrChanged=false;
+    AppBusy(true);
     PositionSave();
     if (model->SubmitAllShowErr())
         PositionRestore();
     pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+    AppBusy(false);
     bUserCurrChanged=true;
 }
 
@@ -915,7 +1066,7 @@ void PotaWidget::cbFilterTypeChanged(int i){
             // qDebug() << "sFieldNameFilter: "+sFieldNameFilter;
             // qDebug() << "data: "+index.data(Qt::DisplayRole).toString();
             // qDebug() << "sDataFilter: "+sDataFilter;
-            // if(model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString()!=sFieldNameFilter){//sDataTypeFilter todo
+            // if(model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString()!=sFieldNameFilter){//sDataTypeFilter
             //     sDataFilter=index.data(Qt::DisplayRole).toString();
             // }
 
@@ -958,7 +1109,8 @@ void PotaWidget::FindFrom(int row, int column, bool Backward){
     if (!Backward){
         for (int i=row;i<model->rowCount();i++) {
             for (int j=column;j<model->columnCount();j++) {
-                if (model->index(i,j).data(Qt::DisplayRole).toString().toLower().contains(leFind->text().toLower())){
+                if (!tv->isColumnHidden(j) and
+                    model->index(i,j).data(Qt::DisplayRole).toString().toLower().contains(leFind->text().toLower())){
                     tv->setCurrentIndex(model->index(i,j));
                     return;
                 }
@@ -968,7 +1120,8 @@ void PotaWidget::FindFrom(int row, int column, bool Backward){
     } else {
         for (int i=row;i>=0;i--) {
             for (int j=column;j>=0;j--) {
-                if (model->index(i,j).data(Qt::DisplayRole).toString().toLower().contains(leFind->text().toLower())){
+                if (!tv->isColumnHidden(j) and
+                    model->index(i,j).data(Qt::DisplayRole).toString().toLower().contains(leFind->text().toLower())){
                     tv->setCurrentIndex(model->index(i,j));
                     return;
                 }
@@ -1025,10 +1178,14 @@ bool PotaTableModel::select()  {
 
     //dbSuspend(db,false,true,label);
 
-    AppBusy(true,progressBar,0,tableName()+" %p%");
-    //modifiedCells.clear();
-    commitedCells.clear();
-    copiedCells.clear();
+
+
+    if (!bBatch) {
+        AppBusy(true,progressBar,0,tableName()+" %p%");
+        //modifiedCells.clear();
+        commitedCells.clear();
+        copiedCells.clear();
+    }
 
     QString sQuery="SELECT * FROM "+tableName();
 
@@ -1042,13 +1199,15 @@ bool PotaTableModel::select()  {
     qInfo() << sQuery;
 
     PotaQuery query(*db);
-    query.ExecShowErr("SELECT COUNT(*) FROM "+tableName()+
-                           iif(filter().toStdString()!=""," WHERE "+filter(),"").toString());
-    int totalRows = 0;
-    if (query.next())
-        totalRows = query.value(0).toInt();
-    progressBar->setMaximum(totalRows);
-    qDebug() << "totalRows " << totalRows;
+    if (!bBatch) {
+        query.ExecShowErr("SELECT COUNT(*) FROM "+tableName()+
+                               iif(filter().toStdString()!=""," WHERE "+filter(),"").toString());
+        int totalRows = 0;
+        if (query.next())
+            totalRows = query.value(0).toInt();
+        progressBar->setMaximum(totalRows);
+        qDebug() << "totalRows " << totalRows;
+    }
 
     // QTimer *timer = new QTimer(this);
     // connect(timer, &QTimer::timeout, this, &PotaTableModel::selectTimer);
@@ -1057,28 +1216,33 @@ bool PotaTableModel::select()  {
     setLastError(QSqlError());
 
     QSqlRelationalTableModel::select();//Avoids duplicate display of inserted lines
-    qDebug() << rowCount() << "(select)";
-    progressBar->setValue(1);
+    // qDebug() << rowCount() << "(select)";
+    if (!bBatch)
+        progressBar->setValue(1);
     setQuery(sQuery);
-    progressBar->setValue(rowCount());
-    qDebug() << rowCount() << "(setQuery)";
+    if (!bBatch)
+        progressBar->setValue(rowCount());
+    // qDebug() << rowCount() << "(setQuery)";
 
     while (canFetchMore()) {
         fetchMore();
-        progressBar->setValue(rowCount());
-        qDebug() << rowCount();
+        if (!bBatch)
+            progressBar->setValue(rowCount());
+        // qDebug() << rowCount();
     }
 
     // timer->stop();
     // timer->deleteLater();
 
-    dynamic_cast<PotaWidget*>(parent())->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
-
-    AppBusy(false,progressBar);
+    if (!bBatch) {
+        dynamic_cast<PotaWidget*>(parent())->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
+        AppBusy(false,progressBar);
+    }
     bool result=(lastError().type() == QSqlError::NoError);
     //dbSuspend(db,true,!wasSuspended,label);
 
-    if (!tempTableName.isEmpty()){
+    if (!tempTableName.isEmpty() and
+        !bBatch) {
         //Show modified cells
         //qDebug() << "culture ligne 1" << query.Selec0ShowErr("SELECT Culture FROM temp."+tempTableName+" WHERE Culture=1700");
         AppBusy(true,progressBar,rowCount(),"Show modified cells %p%");
@@ -1119,21 +1283,23 @@ bool PotaTableModel::select()  {
 
 bool PotaTableModel::SelectShowErr()
 {
-    int i;
-    for (i=0;i<columnCount();i++) {
+
+    for (int i=0;i<columnCount();i++) {
         if (relationModel(i)){
             //relationModel(i)->select();//FkNull
             relationModel(i)->setQuery("SELECT * FROM "+relationModel(i)->tableName()+
                                        iif(relationModel(i)->filter().toStdString()!=""," WHERE "+relationModel(i)->filter(),"").toString());
+            while (relationModel(i)->canFetchMore())
+                relationModel(i)->fetchMore();
         }
     }
+
 
     setLastError(QSqlError());
 
     select();
 
-    if ((lastError().type() == QSqlError::NoError)and(parent()->objectName().startsWith("PW")))
-    {
+    if ((lastError().type() == QSqlError::NoError)and(parent()->objectName().startsWith("PW"))) {
         SetColoredText(dynamic_cast<PotaWidget*>(parent())->lErr,tableName()+" - "+str(rowCount()),"Ok");
         return true;
     }
@@ -1155,7 +1321,6 @@ bool PotaTableModel::SubmitAllShowErr() {
         pw->pbRollback->setEnabled(false);
         pw->pbFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
-        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().replace("color: red;", ""));
         //dbSuspend(db,true,true,label);
         return true;
     } else {
@@ -1179,7 +1344,6 @@ bool PotaTableModel::RevertAllShowErr() {
         pw->pbRollback->setEnabled(false);
         pw->pbFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
-        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().replace("color: red;", ""));
         //dbSuspend(db,true,true,label);
         return true;
     } else {
@@ -1243,7 +1407,6 @@ bool PotaTableModel::DeleteRowShowErr()
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
-        //pw->lTabTitle->setStyleSheet(pw->lTabTitle->styleSheet().append("color: red;"));
         return true;
     }
     return false;
@@ -1276,6 +1439,80 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  PotaHeaderView
 //////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PotaHeaderView::paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const {
+
+    PotaWidget *pw = dynamic_cast<PotaWidget*>(parent()->parent());
+    QString title=pw->delegate->PaintedColsTitles[logicalIndex];
+    if (pw->delegate->PaintedColsTypes[logicalIndex].startsWith("Tempo")) {
+    //if (pw->delegate->PaintedCols.contains(logicalIndex)) {
+        //painter->save();
+        int xOffset = -22;
+        int yOffset = rect.height()-5;
+        painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
+        painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
+        painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
+        painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
+        painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
+        if(title.isEmpty()) {
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+        } else {
+            QBrush b;
+            b.setStyle(Qt::SolidPattern);
+            QColor c("red");
+            c.setAlpha(60);
+            b.setColor(c);
+            xOffset+=37;
+            painter->fillRect(rect.left()+xOffset,rect.top()+3, 36, rect.height()-6,b);
+            painter->drawText(rect.left()+xOffset+3, rect.top() + yOffset, title);
+            xOffset+=24;
+        }
+        painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(8).left(3));
+        painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(9).left(3));
+        painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(10).left(3));
+        painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(11).left(3));
+        painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(12).left(3));
+
+        if(title.isEmpty()) {
+            //Year 2
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
+            painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
+            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
+            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
+        }
+
+        //painter->restore();
+    } else if (pw->delegate->PaintedColsTypes[logicalIndex]=="TitleRed") {
+        if(title!="") {
+            QBrush b;
+            b.setStyle(Qt::SolidPattern);
+            QColor c("red");
+            c.setAlpha(60);
+            b.setColor(c);
+            painter->fillRect(rect.left()+6,rect.top()+3, 36, rect.height()-6,b);
+            painter->drawText(rect.left()+9,rect.top() + rect.height()-5, title);
+        }
+    } else if (pw->delegate->PaintedColsTypes[logicalIndex]=="Title") {
+        if(title!="") {
+            painter->drawText(rect.left()+9,rect.top() + rect.height()-5, title);
+        }
+    } else {
+        QString FieldName=pw->model->headerData(logicalIndex,Qt::Horizontal,Qt::DisplayRole).toString();
+        QString DisplayName=FieldName;
+        if (DisplayName.endsWith("_pc"))
+            DisplayName=StrReplace(DisplayName,"_pc","%");
+        DisplayName=StrReplace(DisplayName,"_"," ");
+        pw->model->setHeaderData(logicalIndex, Qt::Horizontal,DisplayName);
+
+        QHeaderView::paintSection(painter, rect, logicalIndex);
+
+        pw->model->setHeaderData(logicalIndex, Qt::Horizontal,FieldName);
+    }
+}
 
 void PotaHeaderView::mouseDoubleClickEvent(QMouseEvent *event)  {
     int logicalIndex = logicalIndexAt(event->pos());
@@ -1316,6 +1553,7 @@ void PotaHeaderView::mouseDoubleClickEvent(QMouseEvent *event)  {
     QHeaderView::mouseDoubleClickEvent(event);
 }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  PotaItemDelegate
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1335,7 +1573,8 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         //Hightlight not null empty value. They are not normal, it causes SQL failure.
         c=Qt::red;
         c.setAlpha(150);
-    } else if (index.data(Qt::EditRole).toString().startsWith("Err")) {
+    } else if (index.data(Qt::EditRole).toString().startsWith("Err") or
+               index.data(Qt::DisplayRole).toString().startsWith("Err")) {
         c=Qt::red;
         c.setAlpha(150);
     } else if (RowColorCol>-1) {
@@ -1343,8 +1582,8 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     }
     if (!c.isValid()) {//Table color.
         c=cColColors[index.column()];
-        if (!c.isValid() and !TempoCols.contains(index.column()))
-            c=cTableColor;
+        // if (!c.isValid() and !TempoCols.contains(index.column()))
+        //     c=cTableColor;
         if (isDarkTheme())
             c.setAlpha(30);
         else
@@ -1380,11 +1619,13 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         painter->fillRect(r,b);
     }
 
+    //PotaHeaderView* phv = dynamic_cast<PotaHeaderView*>(pw->tv->horizontalHeader());
     //Paint data
-    if (TempoCols.contains(index.column()))
+    if (PaintedColsTypes[index.column()].startsWith("Tempo")) {
+    //if (PaintedCols.contains(index.column()))
          paintTempo(painter,option,index);
-    else {
-        if(!index.data(Qt::EditRole).toDate().isNull() and index.data(Qt::EditRole).toDate()>QDate::currentDate()){//todo
+    } else {
+        if(!index.data(Qt::EditRole).toDate().isNull() and index.data(Qt::EditRole).toDate()>QDate::currentDate()){
             //Write red date in future
             QStyleOptionViewItem opt = option;
             if (isDarkTheme())
@@ -1435,7 +1676,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
     QBrush b;
     b.setStyle(Qt::SolidPattern);
     QColor c;
-    QRect r1,r2,r3,r4;
+    QRect r1,r2;
     int left=0;
 
     //Vertical bars for month
@@ -1459,7 +1700,8 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         painter->fillRect(r1,b);
     }
 
-    if (TempoNowCol==index.column()) {//Red vertical bar for now
+    if (PaintedColsTypes[index.column()]=="TempoNow") {
+        //Red vertical bar for now
         c=QColor("red");
         b.setColor(c);
         r1.setBottom(option.rect.bottom());
@@ -1484,8 +1726,8 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         t=ql[6];
     bool bSemis=true;
     bool bPlant=true;
-    bool bDRec;
-    bool bFRec;
+    bool bDRec=true;
+    bool bFRec=true;
     if (ql.count()>9) {
         bSemis=!ql[7].isEmpty();
         bPlant=!ql[8].isEmpty();
@@ -1598,10 +1840,20 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             displayValue=RowSummary(relationModel->tableName(),relationModel->record(i));
             comboBox->addItem( displayValue,value);
         }
-
-
         return comboBox;
+    } else if (sFieldName=="Type"){
+        PotaQuery query(*model->db);
+        QStringList TypeValues=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='"+model->tableName()+"_Type'").toString().split("|");
+        if (TypeValues.count()>1) {
+            QComboBox *comboBox = new QComboBox(parent);
+            comboBox->addItem("", QVariant()); // Option for setting a NULL
+            for (int i = 0; i < TypeValues.count(); ++i)
+                comboBox->addItem(TypeValues[i],TypeValues[i]);
+            return comboBox;
+        }
     } else if (sDataType=="REAL"){
+        return new QLineEdit(parent);
+    } else if (sDataType=="INTEGER"){
         return new QLineEdit(parent);
     } else if (sDataType.startsWith("BOOL")){
         return new QLineEdit(parent);

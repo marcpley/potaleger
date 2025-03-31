@@ -72,6 +72,7 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY,
                       Prix_kg REAL,
                       Conservation BOOL,
                       A_planifier BOOL DEFAULT ('x'),
+                      Obj_annuel REAL,
                       Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Familles (Famille TEXT PRIMARY KEY,
@@ -102,6 +103,13 @@ CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY,
                   Nb_graines_trou REAL,
                   Dose_semis REAL,
                   Notes TEXT) WITHOUT ROWID;
+
+CREATE TABLE Notes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Date_création DATE,
+                    Date_modif DATE,
+                    Type TEXT,
+                    Description TEXT,
+                    Texte TEXT);
 
 CREATE TABLE Params (Section TEXT, Paramètre TEXT, Description TEXT, Valeur TEXT, Unité TEXT, Date_modif DATE);
 

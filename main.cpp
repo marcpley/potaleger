@@ -11,7 +11,7 @@
 #include "QDebug"
 #include "PotaUtils.h"
 #include <QWindow>
-#include <QLocale>
+//#include <QLocale>
 //#include "qtimer.h"
 #include "SQL/FunctionsSQLite.h"
 
@@ -20,6 +20,7 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
     ui->mCopyBDD->setEnabled(b);
     ui->mUpdateSchema->setEnabled(b);
     ui->mParam->setEnabled(b);
+    ui->mNotes->setEnabled(b);
     for (int i = 0; i < ui->mBaseData->actions().count(); i++)
         ui->mBaseData->actions().at(i)->setEnabled(b);
 
@@ -31,6 +32,10 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
 
     for (int i = 0; i < ui->mCultures->actions().count(); i++)
         ui->mCultures->actions().at(i)->setEnabled(b);
+
+    ui->mASemer->setEnabled(b);
+    for (int i = 0; i < ui->mASemer->actions().count(); i++)
+        ui->mASemer->actions().at(i)->setEnabled(b);
 
     for (int i = 0; i < ui->mStock->actions().count(); i++)
         ui->mStock->actions().at(i)->setEnabled(b);
@@ -295,6 +300,10 @@ void MainWindow::RestaureParams()
     else
         ui->cbTheme->setCurrentIndex(0);
 
+    if (settings.value("font").toInt()>=8 and settings.value("font").toInt()<=16)
+        ui->cbFont->setCurrentText(str(settings.value("font").toInt()));
+    else
+        ui->cbFont->setCurrentText("10");
 
     if (settings.value("database_path").toString().isEmpty()) {
         int choice = RadiobuttonDialog(tr("Potaléger stoque ses données dans un fichier unique à l'emplacement de votre choix."),
@@ -310,33 +319,46 @@ void MainWindow::RestaureParams()
     } else
         PotaDbOpen(settings.value("database_path").toString(),"",false);
 
-    if (!settings.value("notes").toString().isEmpty())
-        ui->pteNotes->setMarkdown(settings.value("notes").toString());
-    else {
-        QFile mdFile;
-        mdFile.setFileName(QApplication::applicationDirPath()+"/readme.md");
-        if (mdFile.exists()) {
-            qDebug() << mdFile.fileName();
-            mdFile.open(QFile::ReadOnly);
-            ui->pteNotes->setMarkdown(mdFile.readAll());
-        } else
-            ui->pteNotes->setPlainText(tr("Notes au format Markdown (CTRL+N pour éditer).")+"\n"+
-                                       tr("Ce texte est enregistré sur votre ordinateur (pas dans la BDD)."));
-    }
-
+    QFile mdFile;
+    mdFile.setFileName(QApplication::applicationDirPath()+"/readme.md");
+    if (mdFile.exists()) {
+        qDebug() << mdFile.fileName();
+        mdFile.open(QFile::ReadOnly);
+        ui->pteNotes->setMarkdown(mdFile.readAll());
+    } else
+        ui->pteNotes->setPlainText(tr("Fichier non trouvé :")+"\n"+
+                                   QApplication::applicationDirPath()+"/readme.md");
 
     QFile imgFile(QApplication::applicationDirPath()+"/infotab1.png");
+    QGraphicsScene *scene = new QGraphicsScene(this);
     if (imgFile.exists()) {
         qDebug() << imgFile.fileName();
         //Image on first tab.
-        QGraphicsScene *scene = new QGraphicsScene(this);
         QPixmap pixmap(imgFile.fileName());
         scene->addPixmap(pixmap);
-        ui->graphicsView->setScene(scene);
-        //ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
     } else {
-        ui->graphicsView->setVisible(false);
+        //ui->graphicsView->setVisible(false);
+        QPixmap pixmap(700,40);
+        pixmap.fill(Qt::transparent);
+        QColor cPen=QColor();
+        if (!isDarkTheme())
+            cPen=QColor("#000000");
+        else
+            cPen=QColor("#ffffff");
+        cPen=QApplication::palette().color(QPalette::WindowText);
+        QPainter painter(&pixmap);
+        painter.setPen(cPen);
+        QFont font( "Arial", 10); //, QFont::Bold
+        painter.setFont(font);
+
+        QRect rect(5, 2, 690, 15);
+        painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
+        rect.setRect(5, 17, 690, 15);
+        painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+"/infotab1.png");
+        scene->addPixmap(pixmap);
     }
+    ui->graphicsView->setScene(scene);
+    //ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
     PathExport=settings.value("PathExport").toString();
     PathImport=settings.value("PathImport").toString();
@@ -356,16 +378,13 @@ void MainWindow::SauvParams()
     else
         settings.setValue("theme","");
 
+    settings.setValue("font",ui->cbFont->currentText());
+
     if (!ui->lDB->text().isEmpty()) {
         QFile file(ui->lDB->text());
         if (file.exists())
             settings.setValue("database_path", ui->lDB->text());
     }
-
-    if (ui->pteNotes->isReadOnly())
-        settings.setValue("notes", ui->pteNotes->toMarkdown().trimmed());
-    else
-        settings.setValue("notes", ui->pteNotes->toPlainText().trimmed());
 
     settings.setValue("PathExport",PathExport);
     settings.setValue("PathImport",PathImport);
@@ -381,52 +400,25 @@ void MainWindow::SetUi(){
     //std::setlocale(LC_NUMERIC, "C");
 
     ui->progressBar->setVisible(false);
-    ui->progressBar->setMinimumSize(200,ui->progressBar->height());
+    ui->progressBar->setMinimumSize(300,ui->progressBar->height());
     ui->tabWidget->widget(1)->deleteLater();//Used at UI design time.
     ui->Info->setLayout(ui->verticalLayout);
 
     ui->cbTheme->addItem(tr("clair"));
     ui->cbTheme->addItem(tr("sombre"));
 
-    ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
-    ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));
-    ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
-    ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
-    ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
-    ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
-    ui->mITPTempo->setIcon(QIcon(TablePixmap("ITP__Tempo","T")));
+    ui->cbFont->addItem(tr("8"));
+    ui->cbFont->addItem(tr("9"));
+    ui->cbFont->addItem(tr("10"));
+    ui->cbFont->addItem(tr("12"));
+    ui->cbFont->addItem(tr("14"));
+    ui->cbFont->addItem(tr("16"));
 
-    ui->mRotations->setIcon(QIcon(TablePixmap("Rotations","T")));
-    ui->mDetailsRotations->setIcon(QIcon(TablePixmap("Rotations_détails__Tempo","T")));
-    ui->mRotationManquants->setIcon(QIcon(TablePixmap("IT_rotations_manquants","")));
-    ui->mPlanches->setIcon(QIcon(TablePixmap("Planches","T")));
-    //ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
-    ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
-    ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
+    RestaureParams();
 
-    ui->mCulturesParIlots->setIcon(QIcon(TablePixmap("IT_rotations_ilots","")));
-    ui->mCulturesParplante->setIcon(QIcon(TablePixmap("IT_rotations","")));
-    ui->mCulturesParPlanche->setIcon(QIcon(TablePixmap("Cult_planif","")));
-    ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
+    MarkdownFont=false;
 
-    ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
-    ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
-    ui->mCuASemerSA->setIcon(QIcon(TablePixmap("Cultures__à_semer_SA","")));
-    ui->mCuASemerD->setIcon(QIcon(TablePixmap("Cultures__à_semer_D","")));
-    ui->mCuAPlanter->setIcon(QIcon(TablePixmap("Cultures__à_planter","")));
-    ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
-    ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
-    ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
-    ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
-
-    ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
-    ui->mEsSaisieSorties->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
-    ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
-
-    ui->mAnaITP->setIcon(QIcon(TablePixmap("ITP__analyse","")));
-    ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__analyse","")));
-    ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
-    ui->mAnaDestinations->setIcon(QIcon(TablePixmap("Destinations__conso","")));
+    SetMenuIcons();
 
     if (false) {
         QPalette palette = QApplication::palette();
@@ -448,6 +440,51 @@ void MainWindow::SetUi(){
             }
         }
     }
+}
+
+void MainWindow::SetMenuIcons() {
+    ui->mNotes->setIcon(QIcon(TablePixmap("Notes","T")));
+
+    ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
+    ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));
+    ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
+    ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
+    ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
+    ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
+    ui->mITPTempo->setIcon(QIcon(TablePixmap("ITP__Tempo","T")));
+
+    ui->mRotations->setIcon(QIcon(TablePixmap("Rotations","T")));
+    ui->mDetailsRotations->setIcon(QIcon(TablePixmap("Rotations_détails__Tempo","T")));
+    ui->mRotationManquants->setIcon(QIcon(TablePixmap("Espèces__manquantes","")));
+    ui->mPlanches->setIcon(QIcon(TablePixmap("Planches","T")));
+    //ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
+    ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
+    ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
+
+    ui->mCulturesParIlots->setIcon(QIcon(TablePixmap("Cult_planif_ilots","")));
+    ui->mCulturesParplante->setIcon(QIcon(TablePixmap("Cult_planif_espèces","")));
+    ui->mCulturesParPlanche->setIcon(QIcon(TablePixmap("Cult_planif","")));
+    ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
+
+    ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
+    ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__couverture","")));
+    ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
+    ui->mCuASemerSA->setIcon(QIcon(TablePixmap("Cultures__à_semer_SA","")));
+    ui->mCuASemerD->setIcon(QIcon(TablePixmap("Cultures__à_semer_D","")));
+    ui->mCuAPlanter->setIcon(QIcon(TablePixmap("Cultures__à_planter","")));
+    ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
+    ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
+    ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
+    ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
+
+    ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
+    ui->mEsSaisieSorties->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
+    ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
+
+    ui->mAnaITP->setIcon(QIcon(TablePixmap("ITP__analyse","")));
+    ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__analyse","")));
+    ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
+    ui->mAnaDestinations->setIcon(QIcon(TablePixmap("Destinations__conso","")));
 }
 
 void MainWindow::showIfDdOpen() {
@@ -477,10 +514,15 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
+
+    QTranslator qtTranslator;
+    if (qtTranslator.load(QLocale(), "qt", "_", QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+        a.installTranslator(&qtTranslator);
+    }
+
     //w.db = NEW;
     //w.db.addDatabase("QSQLITE");
     w.SetUi();
-    w.RestaureParams();
 
     w.show();
     return a.exec();

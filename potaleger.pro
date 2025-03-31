@@ -56,6 +56,7 @@ DISTFILES += \
     SQL/FunctionsSQLite.sql \
     SQL/UpdateStru.sql \
     SQL/UpdateTableParams.sql \
+    install/readme.md \
     zNoRepo/todo.txt
 
 RESOURCES += \

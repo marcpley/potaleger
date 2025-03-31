@@ -69,28 +69,28 @@ iif(:Type=''Semis sous abris'',(:dSem-1)||'':''|| -- Attente
                                ItpTempoNJInterPe(:dPlant,:fPlant,:dRec)||'':''|| -- Plantation faite attente récolte
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec), -- Durée récolte
 iif(:Type=''Semis direct''    ,(:dSem-1)||'':''|| -- Attente
-                               ItpTempoNJPeriode(:dSem,:fSem,:dRec) ||'':''||
+                               ItpTempoNJPeriode(:dSem,:fSem,:dRec)||'':''||
                                '':''||
                                '':''||
-                               ItpTempoNJInterPe(:dSem,:fSem,:dRec) ||'':''||
+                               ItpTempoNJInterPe(:dSem,:fSem,:dRec)||'':''||
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec),
-iif(:Type=''Plant''           ,(:dPlant-1) ||'':''|| -- Attente
+iif(:Type=''Plant''           ,(:dPlant-1)||'':''|| -- Attente
                                '':''||
                                '':''||
-                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
-                               ItpTempoNJInterPe(:dPlant,:fPlant,:dRec) ||'':''||
+                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec)||'':''||
+                               ItpTempoNJInterPe(:dPlant,:fPlant,:dRec)||'':''||
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec),
-iif(:Type=''Engrais vert''    ,(:dSem-1) ||'':''|| -- Attente
-                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant) ||'':''||
+iif(:Type=''Engrais vert''    ,(:dSem-1)||'':''|| -- Attente
+                               ItpTempoNJPeriode(:dSem,:fSem,coalesce(:fRec,365))||'':''||
                                '':''||
                                '':''||
-                               ItpTempoNJInterPe(:dSem,:fSem,coalesce(:fRec,365)) ||
+                               ItpTempoNJInterPe(:dSem,:fSem,coalesce(:fRec,365))||
                                '':'',
-iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
-                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant) ||'':''||
-                               ItpTempoNJInterPe(:dSem,:fSem,:dPlant) ||'':''||
-                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
-                               ItpTempoNJInterPe(:dPlant,:fPlant,coalesce(:fRec,365)) ||
+iif(:Type=''Sans récolte''    ,(:dSem-1)||'':''|| -- Attente
+                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant)||'':''||
+                               ItpTempoNJInterPe(:dSem,:fSem,:dPlant)||'':''||
+                               ItpTempoNJPeriode(:dPlant,:fPlant,:dRec)||'':''||
+                               ItpTempoNJInterPe(:dPlant,:fPlant,coalesce(:fRec,365))||
                                '':'',NULL
 )))))
 -- out : 15:15:15:15:15:15
@@ -196,8 +196,8 @@ QString sRotTempo = QStringLiteral(R"#(
 -- :dXxx nb de jour depuis le début de l'année.
 iif(:Type=''xxx'',:dSem||:fSem, --to force params oder
 iif(:Type=''Semis sous abris'',(:dPlant-1) ||'':''|| -- Attente
-                               ''0:''|| -- Durée semis
-                               ''0:''|| -- Semis fait attente plantation
+                               '':''|| -- Durée semis
+                               '':''|| -- Semis fait attente plantation
                                ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''|| -- Durée plantation
                                ItpTempoNJInterPe(:dPlant,:fPlant,:dRec) ||'':''|| -- Plantation faite attente récolte
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec), -- Durée récolte
@@ -219,9 +219,9 @@ iif(:Type=''Engrais vert''    ,(:dSem-1) ||'':''|| -- Attente
                                '':''||
                                ItpTempoNJInterPe(:dSem,:fSem,coalesce(:fRec,365)) ||
                                '':'',
-iif(:Type=''Sans récolte''    ,(:dSem-1) ||'':''|| -- Attente
-                               ItpTempoNJPeriode(:dSem,:fSem,:dPlant) ||'':''||
-                               ItpTempoNJInterPe(:dSem,:fSem,:dPlant) ||'':''||
+iif(:Type=''Sans récolte''    ,(:dPlant-1) ||'':''|| -- Attente
+                               '':''||
+                               '':''||
                                ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''||
                                ItpTempoNJInterPe(:dPlant,:fPlant,coalesce(:fRec,365)) ||
                                '':'',NULL

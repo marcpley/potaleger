@@ -415,6 +415,17 @@ BEGIN
     WHERE Destination=OLD.Destination;
 END;;
 
+DROP TRIGGER IF EXISTS Espèces__couverture_UPDATE;;
+CREATE TRIGGER Espèces__couverture_UPDATE INSTEAD OF UPDATE ON Espèces__couverture
+BEGIN
+    UPDATE Espèces SET
+        Rendement=NEW.Rendement,
+        Niveau=NEW.Niveau,
+        Obj_annuel=NEW.Obj_annuel,
+        Notes=NEW.Notes
+     WHERE Espèce=OLD.Espèce;
+END;;
+
 DROP TRIGGER IF EXISTS Espèces__inventaire_UPDATE;;
 CREATE TRIGGER Espèces__inventaire_UPDATE INSTEAD OF UPDATE ON Espèces__inventaire
 BEGIN
@@ -501,6 +512,23 @@ DROP TRIGGER IF EXISTS ITP__Tempo_DELETE;;
 CREATE TRIGGER ITP__Tempo_DELETE INSTEAD OF DELETE ON ITP__Tempo
 BEGIN
     DELETE FROM ITP WHERE IT_plante=OLD.IT_plante;
+END;;
+
+DROP TRIGGER IF EXISTS Notes_INSERT;;
+CREATE TRIGGER Notes_INSERT AFTER INSERT ON Notes
+BEGIN
+    UPDATE Notes SET
+        Date_création=coalesce(NEW.Date_création,DATE('now'))
+    WHERE ID=NEW.ID;
+END;;
+
+DROP TRIGGER IF EXISTS Notes_UPDATE;;
+CREATE TRIGGER Notes_UPDATE AFTER UPDATE ON Notes
+WHEN (coalesce(NEW.Date_modif,"")!=DATE('now'))
+BEGIN
+    UPDATE Notes SET
+        Date_modif=DATE('now')
+    WHERE (ID=NEW.ID)AND(SELECT Valeur!='Oui' FROM Params WHERE Paramètre='Notes_Modif_dates');
 END;;
 
 DROP TRIGGER IF EXISTS "Rotations_détails_INSERT";;

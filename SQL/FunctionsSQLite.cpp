@@ -314,7 +314,7 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT RotTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:0:0:14:47:31"){
+    if (!q1.exec("SELECT RotTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:::14:47:31"){
         qCritical() << "Function failed: RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();

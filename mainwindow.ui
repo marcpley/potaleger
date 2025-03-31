@@ -88,12 +88,18 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QLabel" name="label">
+            <widget class="QLabel" name="lDBlabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>110</width>
+               <height>0</height>
+              </size>
              </property>
              <property name="maximumSize">
               <size>
@@ -182,7 +188,7 @@
                <rect>
                 <x>10</x>
                 <y>11</y>
-                <width>50</width>
+                <width>71</width>
                 <height>20</height>
                </rect>
               </property>
@@ -193,9 +199,32 @@
              <widget class="QComboBox" name="cbTheme">
               <property name="geometry">
                <rect>
-                <x>60</x>
+                <x>80</x>
                 <y>10</y>
-                <width>79</width>
+                <width>111</width>
+                <height>23</height>
+               </rect>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_3">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>41</y>
+                <width>71</width>
+                <height>20</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Taille</string>
+              </property>
+             </widget>
+             <widget class="QComboBox" name="cbFont">
+              <property name="geometry">
+               <rect>
+                <x>80</x>
+                <y>40</y>
+                <width>111</width>
                 <height>23</height>
                </rect>
               </property>
@@ -474,8 +503,8 @@
     </property>
     <addaction name="mRotations"/>
     <addaction name="mDetailsRotations"/>
-    <addaction name="mRotationManquants"/>
     <addaction name="mPlanches"/>
+    <addaction name="mRotationManquants"/>
     <addaction name="mSuccessionParPlanche"/>
     <addaction name="mIlots"/>
    </widget>
@@ -493,11 +522,21 @@
     <property name="title">
      <string>Cultures</string>
     </property>
+    <widget class="QMenu" name="mASemer">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>A semer</string>
+     </property>
+     <addaction name="mCuASemer"/>
+     <addaction name="mCuASemerSA"/>
+     <addaction name="mCuASemerD"/>
+    </widget>
     <addaction name="mCuNonTer"/>
+    <addaction name="mCouverture"/>
     <addaction name="separator"/>
-    <addaction name="mCuASemer"/>
-    <addaction name="mCuASemerSA"/>
-    <addaction name="mCuASemerD"/>
+    <addaction name="mASemer"/>
     <addaction name="mCuAPlanter"/>
     <addaction name="mCuARecolter"/>
     <addaction name="mCuSaisieRecoltes"/>
@@ -519,10 +558,9 @@
     </property>
     <addaction name="mFermerOnglet"/>
     <addaction name="mFermerOnglets"/>
-    <addaction name="mLargeurs"/>
     <addaction name="mFilterFind"/>
-    <addaction name="mEditNotes"/>
     <addaction name="mParam"/>
+    <addaction name="mNotes"/>
     <addaction name="mImporter"/>
     <addaction name="mExporter"/>
    </widget>
@@ -707,7 +745,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>A semer (direct)</string>
+    <string>Semis direct</string>
    </property>
   </action>
   <action name="mCuAPlanter">
@@ -877,31 +915,6 @@
     <string>Itinéraires techniques</string>
    </property>
   </action>
-  <action name="mLargeurs">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="object-flip-horizontal"/>
-   </property>
-   <property name="text">
-    <string>Largeurs de colonnes par défaut pour l'onglet courant</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+L</string>
-   </property>
-  </action>
-  <action name="mEditNotes">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Editer les notes</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
-   </property>
-  </action>
   <action name="mAPropos">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::HelpAbout"/>
@@ -993,7 +1006,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>A semer (sous abris)</string>
+    <string>Semis sous abris</string>
    </property>
   </action>
   <action name="mCuASemer">
@@ -1001,7 +1014,23 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>A semer (toutes)</string>
+    <string>Toutes</string>
+   </property>
+  </action>
+  <action name="mCouverture">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Couverture des objectifs</string>
+   </property>
+  </action>
+  <action name="mNotes">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Notes</string>
    </property>
   </action>
  </widget>

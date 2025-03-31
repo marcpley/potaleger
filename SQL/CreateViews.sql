@@ -29,7 +29,8 @@ CREATE VIEW Consommations__Saisies AS SELECT
 FROM Consommations Co
 JOIN Espèces E USING(Espèce)
 LEFT JOIN Destinations D USING(Destination)
-WHERE Co.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='Conso_historique')||' days')
+WHERE (Co.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='Conso_historique')||' days'))OR
+      (DATE(Co.Date) ISNULL) -- Détection de date incorecte
 ORDER BY Co.Date,E.Espèce,D.Destination;
 
 CREATE VIEW Destinations__conso AS SELECT
@@ -295,78 +296,105 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
 -- ORDER BY Espèce,IT_plante;
 
 CREATE VIEW Cult_planif AS SELECT
-       PL.Planche,
-       RD.IT_plante,
-       (SELECT V.Variété
-          FROM Variétés V
-         WHERE V.Espèce=I.Espèce
-         ORDER BY V.Qté_stock DESC) Variété,
-       (SELECT V.Fournisseur
-          FROM Variétés V
-         WHERE V.Espèce=I.Espèce
-         ORDER BY V.Qté_stock DESC) Fournisseur,
-       CAST((SELECT Valeur
-             FROM Params
-             WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier,
-       PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
-                                  THEN (SELECT Valeur-1 FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
-                                  ELSE (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
-                                  END,
-                             I.Déb_semis) Date_semis,
-       PlanifCultureCalcDate(coalesce(PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
-                                                            THEN (SELECT Valeur-1 FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
-                                                            ELSE (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'
-                                                            END,
-                                                            I.Déb_semis),
-                                      (SELECT Valeur FROM Params WHERE Paramètre='Année_planif') ||'-01-01'),
-                             I.Déb_plantation) Date_plantation,
-       CAST(round((RD.Pc_planches/100*PL.Longueur),2)AS REAL) Longueur,
-       I.Nb_rangs,
-       I.Espacement,
-       'Simulation planif' Info
-  FROM Rotations_détails RD
-       JOIN Planches PL USING(Rotation,
-       Année)
-       JOIN ITP I USING(IT_plante)
- WHERE ( (SELECT (Valeur ISNULL)
-            FROM Params
-           WHERE Paramètre='Planifier_planches') OR
-         (PL.Planche LIKE (SELECT Valeur
-                             FROM Params
-                            WHERE Paramètre='Planifier_planches') ||'%') ) AND
-       ( (RD.Fi_planches ISNULL) OR
-         (Fi_planches LIKE '%'||substr(PL.Planche, -1, 1) ||'%') )
- ORDER BY coalesce(Date_plantation, Date_semis);
+   PL.Planche,
+   E.Espèce,
+   RD.IT_plante,
+   (SELECT V.Variété FROM Variétés V WHERE V.Espèce=I.Espèce ORDER BY V.Qté_stock DESC) Variété,
+   (SELECT V.Fournisseur FROM Variétés V WHERE V.Espèce=I.Espèce ORDER BY V.Qté_stock DESC) Fournisseur,
+   -- CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier,
+   PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
+                              THEN (SELECT Valeur FROM Params WHERE Paramètre='Année_culture') ||'-01-01'
+                              ELSE (SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture') ||'-01-01'
+                              END,
+                         I.Déb_semis) Date_semis,
+   PlanifCultureCalcDate(coalesce(PlanifCultureCalcDate(CASE WHEN (I.Déb_plantation NOTNULL) AND (I.Déb_plantation<I.Déb_semis)
+                                                        THEN (SELECT Valeur FROM Params WHERE Paramètre='Année_culture') ||'-01-01'
+                                                        ELSE (SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture') ||'-01-01'
+                                                        END,
+                                                        I.Déb_semis),
+                                  (SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture') ||'-01-01'),
+                         I.Déb_plantation) Date_plantation,
+   CAST(round((RD.Pc_planches/100*PL.Longueur),2)AS REAL) Longueur,
+   I.Nb_rangs,
+   I.Espacement,
+   CAST(round(RD.Pc_planches/100*PL.Longueur*PL.Largeur,2)AS REAL) Surface,
+   CAST(round(RD.Pc_planches/100*PL.Longueur*PL.Largeur*E.Rendement,2)AS REAL) Prod_possible,
+   -- CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
+   'Simulation planif' Info
+FROM Rotations_détails RD
+     JOIN Planches PL USING(Rotation,Année)
+     JOIN ITP I USING(IT_plante)
+     LEFT JOIN Espèces E USING(Espèce)
+WHERE ((SELECT (Valeur ISNULL) FROM Params WHERE Paramètre='Planifier_planches') OR
+        (PL.Planche LIKE (SELECT Valeur FROM Params WHERE Paramètre='Planifier_planches')||'%')) AND
+       ((RD.Fi_planches ISNULL) OR
+        (Fi_planches LIKE '%'||substr(PL.Planche, -1, 1) ||'%'))
+ORDER BY coalesce(Date_plantation, Date_semis);
 
-CREATE VIEW Successions_par_planche AS SELECT
-       PL.Planche,
-       CAST((SELECT count()
-             FROM C_en_place C
-             WHERE C.Planche=PL.Planche) AS INTEGER) Nb_cu_EP,
-       (SELECT group_concat(IT_plante, '/')
-        FROM (SELECT DISTINCT IT_plante
-              FROM C_en_place C
-              WHERE C.Planche=PL.Planche)) ITP_en_place,
-       (SELECT max(Fin_récolte)
-        FROM C_en_place C
-           WHERE C.Planche=PL.Planche) Libre_le,
+CREATE VIEW Cult_planif_ilots AS SELECT
+    substr(C.Planche,1,(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car')) Ilot,
+    C.Espèce,
+    min(Date_semis) Date_semis,
+    min(Date_plantation) Date_plantation,
+    CAST(count() AS INTEGER) Nb_planches,
+    CAST(sum(C.Longueur)AS REAL) Longueur,
+    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1))AS REAL) Long_rang,
+    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1)/coalesce(C.Espacement/100,1)) AS INTEGER) Nb_plants,
+    CAST(sum(C.Surface)AS REAL) Surface,
+    CAST(sum(C.Prod_possible)AS REAL) Prod_possible,
+    -- CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
+    'Simulation planif' Info
+FROM Cult_planif C
+GROUP BY Ilot,Espèce
+ORDER BY Ilot,Espèce;
 
-       CAST((SELECT count()
-            FROM C_à_venir C
-            WHERE C.Planche=PL.Planche) AS INTEGER) Nb_cu_AV,
-       (SELECT group_concat(IT_plante, '/')
-        FROM (SELECT DISTINCT IT_plante
-              FROM C_à_venir C
-              WHERE C.Planche=PL.Planche)) ITP_à_venir,
-       (SELECT min(coalesce(Date_plantation,Date_semis))
-        FROM C_à_venir C
-        WHERE C.Planche=PL.Planche) En_place_le,
-       CAST(((SELECT min(julianday(coalesce(Date_plantation,Date_semis)))
-                       FROM C_à_venir C
-                       WHERE C.Planche=PL.Planche) - (SELECT max(julianday(Fin_récolte))
-                                                      FROM C_en_place C
-                                                      WHERE C.Planche=PL.Planche)) AS INTEGER) Nb_J_inoccupée
-  FROM Planches PL;
+CREATE VIEW Cult_planif_espèces AS SELECT
+    C.Espèce,
+    CAST(count() AS INTEGER) Nb_planches,
+    CAST(sum(C.Longueur)AS REAL) Longueur,
+    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1))AS REAL) Long_rang,
+    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1)/coalesce(C.Espacement/100,1)) AS INTEGER) Nb_plants,
+    CAST(sum(C.Surface)AS REAL) Surface,
+    E.Rendement,
+    E.Obj_annuel,
+    CAST(sum(C.Prod_possible)AS REAL) Prod_possible,
+    round(sum(C.Prod_possible)/E.Obj_annuel*100) Couv_pc,
+    -- CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
+    'Simulation planif' Info
+FROM Cult_planif C
+LEFT JOIN Espèces E USING(Espèce)
+GROUP BY Espèce
+ORDER BY Espèce;
+
+-- CREATE VIEW Successions_par_planche AS SELECT
+--        PL.Planche,
+--        CAST((SELECT count()
+--              FROM C_en_place C
+--              WHERE C.Planche=PL.Planche) AS INTEGER) Nb_cu_EP,
+--        (SELECT group_concat(IT_plante, '/')
+--         FROM (SELECT DISTINCT IT_plante
+--               FROM C_en_place C
+--               WHERE C.Planche=PL.Planche)) ITP_en_place,
+--        (SELECT max(Fin_récolte)
+--         FROM C_en_place C
+--            WHERE C.Planche=PL.Planche) Libre_le,
+
+--        CAST((SELECT count()
+--             FROM C_à_venir C
+--             WHERE C.Planche=PL.Planche) AS INTEGER) Nb_cu_AV,
+--        (SELECT group_concat(IT_plante, '/')
+--         FROM (SELECT DISTINCT IT_plante
+--               FROM C_à_venir C
+--               WHERE C.Planche=PL.Planche)) ITP_à_venir,
+--        (SELECT min(coalesce(Date_plantation,Date_semis))
+--         FROM C_à_venir C
+--         WHERE C.Planche=PL.Planche) En_place_le,
+--        CAST(((SELECT min(julianday(coalesce(Date_plantation,Date_semis)))
+--                        FROM C_à_venir C
+--                        WHERE C.Planche=PL.Planche) - (SELECT max(julianday(Fin_récolte))
+--                                                       FROM C_en_place C
+--                                                       WHERE C.Planche=PL.Planche)) AS INTEGER) Nb_J_inoccupée
+--   FROM Planches PL;
 
 CREATE VIEW Cultures__Tempo AS SELECT
        -- row_number() OVER (ORDER BY Planche) AS num_planche,
@@ -487,7 +515,7 @@ LEFT JOIN Espèces E USING (Espèce)
 WHERE   (Terminée ISNULL) AND
         (Date_semis < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_semis')||' days')) AND
         (coalesce(Semis_fait,'') NOT LIKE 'x%')
-ORDER BY    Date_semis,
+ORDER BY    Date_semis,Date_plantation,
             Planche,
             IT_plante;
 
@@ -525,7 +553,7 @@ WHERE   (Terminée ISNULL) AND
         (coalesce(Semis_fait,'') NOT LIKE 'x%') AND
         (Date_plantation NOTNULL)
 GROUP BY C.IT_plante,C.Variété,C.Type,C.Etat,C.Date_semis,C.Semis_fait
-ORDER BY    Date_semis,
+ORDER BY    Date_semis,Date_plantation,
             Planche,
             IT_plante;
 
@@ -604,7 +632,8 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (Terminée ISNULL) AND
         (Date_plantation < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_plantation')||' days')) AND
-        (Plantation_faite ISNULL) AND
+        -- (Plantation_faite ISNULL) AND
+        (coalesce(Plantation_faite,'') NOT LIKE 'x%') AND
         ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL))
 ORDER BY    Date_plantation,
             Planche,
@@ -641,7 +670,7 @@ WHERE   (C.Terminée ISNULL) AND
         (Début_récolte < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_récolte')||' days')) AND
         (coalesce(Récolte_faite,'') NOT LIKE 'x%')  AND
         ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL)) AND
-        ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL))
+        ((Plantation_faite LIKE 'x%')OR(Date_plantation ISNULL))
 ORDER BY    C.Début_récolte,
             C.Planche,
             C.IT_plante;
@@ -660,7 +689,8 @@ CREATE VIEW Récoltes__Saisies AS SELECT
 FROM Récoltes R
 JOIN Cultures C USING(Culture)
 LEFT JOIN ITP I USING(IT_plante)
-WHERE R.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='C_historique_récolte')||' days')
+WHERE (R.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='C_historique_récolte')||' days'))OR
+      (DATE(R.Date) ISNULL) -- Détection de date incorecte
 ORDER BY R.Date,I.Espèce,R.Culture;
 
 CREATE VIEW Cultures__à_terminer AS SELECT
@@ -687,7 +717,7 @@ LEFT JOIN Espèces E USING (Espèce)
 WHERE   (C.Terminée ISNULL) AND
         ((C.Fin_récolte ISNULL)OR(C.Fin_récolte < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_terminer')||' days'))) AND
         ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL)) AND
-        ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL)) AND
+        ((Plantation_faite LIKE 'x%')OR(Date_plantation ISNULL)) AND
         ((Récolte_faite LIKE 'x%')OR(Début_récolte ISNULL))
 ORDER BY    C.Fin_récolte,
             C.Planche,
@@ -752,8 +782,8 @@ CREATE VIEW Cultures__analyse AS SELECT
        CAST(round(((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture)/(C.Longueur*PL.Largeur)),3)AS REAL) Rendement_C,
        E.Rendement,
        CASE WHEN E.Rendement NOTNULL
-       THEN substr(format('  %i%%',round(((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture)/(C.Longueur*PL.Largeur))/E.Rendement*100,0)),-4)
-       ELSE NULL END Performance,
+       THEN round(((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture)/(C.Longueur*PL.Largeur))/E.Rendement*100)
+       ELSE NULL END Perf_pc,
        CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce TEMPO,
        C.Notes
   FROM Cultures C
@@ -822,6 +852,23 @@ CREATE VIEW C_en_place AS --Cultures semées (SD) ou plantées.
              Plantation_faite NOTNULL)-- Plant ou SSA planté
      ORDER BY Planche;
 
+CREATE VIEW C_esp_prod AS SELECT
+    C.Culture,
+    E.Espèce,
+    C.Saison,
+    CASE WHEN (C.Terminée NOTNULL)OR(C.Récolte_faite LIKE 'x%')
+         THEN CAST(round((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture),3)AS REAL)
+         ELSE CAST(round(C.Longueur*P.Largeur*E.Rendement,3)AS REAL)
+         END Production,
+    CASE WHEN (C.Terminée NOTNULL)OR(C.Récolte_faite LIKE 'x%')
+         THEN 'Réel'
+         ELSE 'Possible'
+         END RP
+FROM Cultures C
+JOIN Planches P USING(Planche)
+JOIN ITP I USING(IT_plante)
+JOIN Espèces E USING(Espèce);
+
 CREATE VIEW F_actives AS
     SELECT *
       FROM Familles F
@@ -877,65 +924,103 @@ CREATE VIEW F_actives AS
 --      ORDER BY IT_plante,
 --               PLANCHE;
 
-CREATE VIEW IT_rotations AS
-    SELECT Espèce,
-           IT_plante,
-           sum(Nb_planches) Nb_planches,
-           sum(Longueur) Longueur,
-           sum(Long_rang) Long_rang,
-           sum(Nb_plants) Nb_plants,
-           CAST((SELECT Valeur
-                 FROM Params
-                 WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
-      FROM IT_rotations_ilots
-     GROUP BY IT_plante;
+-- CREATE VIEW IT_rotations AS
+--     SELECT Espèce,
+--            IT_plante,
+--            sum(Nb_planches) Nb_planches,
+--            sum(Longueur) Longueur,
+--            sum(Long_rang) Long_rang,
+--            sum(Nb_plants) Nb_plants,
+--            CAST((SELECT Valeur
+--                  FROM Params
+--                  WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
+--       FROM Cult_planif_ilots
+--      GROUP BY IT_plante;
 
-CREATE VIEW IT_rotations_ilots AS
-    SELECT E.Espèce,
-           RD.IT_plante,
-           substr(P.Planche, 1, (SELECT Valeur
-                                   FROM Params
-                                  WHERE Paramètre='Ilot_nb_car') ) Ilot,
-           CAST(count() AS INTEGER) Nb_planches,
-           CAST(round(sum(P.Longueur*RD.Pc_planches/100),2)AS REAL) Longueur,
-           CAST(round(sum(P.Longueur*coalesce(I.Nb_rangs, 1) *RD.Pc_planches/100),2)AS REAL) Long_rang,
-           CAST(sum(P.Longueur*coalesce(I.Nb_rangs, 1) /coalesce(I.Espacement/100, 1) *RD.Pc_planches/100) AS INTEGER) Nb_plants,
-           CAST((SELECT Valeur
-                 FROM Params
-                 WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
-      FROM Rotations_détails RD
-           LEFT JOIN ITP I USING(IT_plante)
-           LEFT JOIN Espèces E USING(Espèce)
-           LEFT JOIN Rotations R USING(Rotation)
-           LEFT JOIN Planches P ON (P.Rotation=RD.Rotation) AND
-                                   (P.Année=RD.Année) AND
-                                   (RD.Fi_planches ISNULL OR
-                                    ((RD.Fi_planches LIKE '%'||substr(P.Planche, -1, 1) ||'%') ) )
-     WHERE IT_plante NOTNULL
-     GROUP BY Espèce,
-              IT_plante,
-              Ilot
-     ORDER BY Espèce,
-              IT_plante,
-              Ilot;
+-- CREATE VIEW Cult_planif_ilots AS
+--     SELECT E.Espèce,
+--            RD.IT_plante,
+--            substr(P.Planche, 1, (SELECT Valeur
+--                                    FROM Params
+--                                   WHERE Paramètre='Ilot_nb_car') ) Ilot,
+--            CAST(count() AS INTEGER) Nb_planches,
+--            CAST(round(sum(P.Longueur*RD.Pc_planches/100),2)AS REAL) Longueur,
+--            CAST(round(sum(P.Longueur*coalesce(I.Nb_rangs, 1) *RD.Pc_planches/100),2)AS REAL) Long_rang,
+--            CAST(sum(P.Longueur*coalesce(I.Nb_rangs, 1) /coalesce(I.Espacement/100, 1) *RD.Pc_planches/100) AS INTEGER) Nb_plants,
+--            CAST(round(sum(P.Longueur*RD.Pc_planches/100*P.Largeur),2)AS REAL) Surface,
+--            CAST(round(sum(P.Longueur*RD.Pc_planches/100*P.Largeur)*E.Rendement,2)AS REAL) Prod_possible,
+--            CAST((SELECT Valeur
+--                  FROM Params
+--                  WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
+--       FROM Rotations_détails RD
+--            LEFT JOIN ITP I USING(IT_plante)
+--            LEFT JOIN Espèces E USING(Espèce)
+--            LEFT JOIN Rotations R USING(Rotation)
+--            LEFT JOIN Planches P ON (P.Rotation=RD.Rotation) AND
+--                                    (P.Année=RD.Année) AND
+--                                    (RD.Fi_planches ISNULL OR
+--                                     ((RD.Fi_planches LIKE '%'||substr(P.Planche, -1, 1) ||'%') ) )
+--      WHERE IT_plante NOTNULL
+--      GROUP BY Espèce,
+--               IT_plante,
+--               Ilot
+--      ORDER BY Espèce,
+--               IT_plante,
+--               Ilot;
 
-CREATE VIEW IT_rotations_manquants AS
-    SELECT Espèce,
-           IT_plante,
-           E.Rendement,
-           E.Niveau,
-           E.Apport,
-           CAST((SELECT sum(Qté_stock) FROM Variétés V WHERE V.Espèce=E.Espèce)AS INTEGER) Qté_stock,
-           ITP.Type_planche,
-           ITP.Type_culture,
-           ITP.Déb_semis,
-           ITP.Déb_plantation,
-           ITP.Déb_récolte,
-           CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
-      FROM ITP
-      LEFT JOIN Espèces E USING(Espèce)
-     WHERE NOT (Espèce IN(SELECT Espèce FROM IT_rotations_ilots) ) AND
-           E.A_planifier NOTNULL;
+-- CREATE VIEW IT_rotations_manquants AS
+--     SELECT Espèce,
+--            IT_plante,
+--            E.Rendement,
+--            E.Niveau,
+--            E.Apport,
+--            CAST((SELECT sum(Qté_stock) FROM Variétés V WHERE V.Espèce=E.Espèce)AS INTEGER) Qté_stock,
+--            ITP.Type_planche,
+--            ITP.Type_culture,
+--            ITP.Déb_semis,
+--            ITP.Déb_plantation,
+--            ITP.Déb_récolte,
+--            CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
+--       FROM ITP
+--       LEFT JOIN Espèces E USING(Espèce)
+--      WHERE NOT (Espèce IN(SELECT Espèce FROM Cult_planif_ilots) ) AND
+--            E.A_planifier NOTNULL;
+
+CREATE VIEW Espèces__manquantes AS SELECT
+    E.Espèce,
+    E.Rendement,
+    E.Niveau,
+    -- CAST((SELECT sum(Qté_stock) FROM Variétés V WHERE V.Espèce=E.Espèce)AS INTEGER) Qté_stock,
+    E.Obj_annuel,
+    CAST((SELECT sum(Prod_possible) FROM Cult_planif_espèces C WHERE C.Espèce=E.Espèce)AS INTEGER) Prod_possible,
+    round((SELECT sum(Prod_possible) FROM Cult_planif_espèces C WHERE C.Espèce=E.Espèce)/E.Obj_annuel*100) Couv_pc,
+    CAST((SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture')AS INTEGER) Année_à_planifier
+FROM Espèces E
+WHERE (E.A_planifier NOTNULL) AND
+      (NOT(Espèce IN(SELECT Espèce FROM Cult_planif_espèces))OR
+       ((SELECT sum(Prod_possible) FROM Cult_planif_espèces C WHERE C.Espèce=E.Espèce)<E.Obj_annuel));
+
+CREATE VIEW Espèces__couverture AS SELECT
+    E.Espèce,
+    E.Rendement,
+    E.Niveau,
+    CAST((SELECT sum(Qté_stock) FROM Variétés V WHERE V.Espèce=E.Espèce)AS INTEGER) Qté_stock,
+    E.Obj_annuel,
+    CAST((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur-1 FROM Params WHERE Paramètre='Année_culture'))AND
+                                                         (C.Espèce=E.Espèce))AS INTEGER) Prod_Nm1,
+    CAST(((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur-1 FROM Params WHERE Paramètre='Année_culture'))AND
+                                                          (C.Espèce=E.Espèce))/E.Obj_annuel*100)AS INTEGER) Couv_Nm1_pc,
+    CAST((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture'))AND
+                                                         (C.Espèce=E.Espèce))AS INTEGER) Prod_N,
+    CAST(((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture'))AND
+                                                          (C.Espèce=E.Espèce))/E.Obj_annuel*100)AS INTEGER) Couv_N_pc,
+    CAST((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'))AND
+                                                         (C.Espèce=E.Espèce))AS INTEGER) Prod_Np1,
+    CAST(((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'))AND
+                                                          (C.Espèce=E.Espèce))/E.Obj_annuel*100)AS INTEGER) Couv_Np1_pc,
+    E.Notes
+FROM Espèces E
+WHERE E.A_planifier NOTNULL;
 
 CREATE VIEW R_famille AS
     SELECT RD.ID,

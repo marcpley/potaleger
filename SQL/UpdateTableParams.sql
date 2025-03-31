@@ -10,9 +10,11 @@ CREATE TABLE Params (Section TEXT, Paramètre TEXT PRIMARY KEY, Description TEXT
 INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
     VALUES  ('Général', 'Utilisateur', 'Personne, entreprise ou organisation utilisant cette BDD Potaléger', NULL, NULL),
             ('Général', 'Montrer_modifs', 'Montrer les données modifiées depuis le passage en mode édition (plus lent)', 'Oui', 'Oui/Non'),
-            ('Données de base', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production. nEx: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
-            ('Planification', 'Année_culture', 'Saison en cours de culture', '2024', NULL), --todo
-            ('Planification', 'Année_planif', 'Saison à planifier', '2025', NULL),
+            ('Général', 'Notes_Type', 'Types de notes, séparés par des ''|'' (vide pour texte libre)', 'A faire|Fait|Important', NULL),
+            ('Général', 'Notes_Modif_dates', 'Permettre de modifier l''ID et les dates de création/modification des notes', 'Non', 'Oui/Non'),
+            ('Assolement', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production. nEx: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
+            ('Planification', 'Année_culture', 'Saison en cours de culture', '2025', NULL),
+            -- ('Planification', 'Année_planif', 'Saison à planifier', '2025', NULL),
             ('Planification', 'Planifier_planches', 'Début du nom des planches à planifier (vide pour toutes)', NULL, NULL),
             ('Planification', 'Planifier_retard', 'Si l''opération précédente (semis, plantation) est déjà faite et est en retard, avant de passer à l''année suivante, accepter de reporter l''opération suivante de maximum', '15', 'jours'),
             ('Cultures', 'C_horizon_semis', 'Voir les cultures à semer sur une période de', '90', 'jours'),

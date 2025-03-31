@@ -26,6 +26,7 @@ private:
 };
 
 void AppBusy(bool busy, QProgressBar *pb=nullptr, int max=0, QString text="%p%");
+QColor blendColors(const QColor& baseColor, const QColor& overlayColor);
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName);
 //QString SQLiteDate();
 //QString DBInfo(QSqlDatabase *db);
@@ -37,7 +38,6 @@ int min(int a,int b);
 void parseCSV(QString entry, QString sep, QStringList &list);
 //QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName);
 QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns=false);
-void SetButtonSize(QToolButton *b);
 void SetFontColor(QWidget* widget, QColor color);
 void SetFontWeight(QWidget* widget, QFont::Weight weight);
 void SetColoredText(QLabel *l, QString text, QString type);

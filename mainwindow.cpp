@@ -71,7 +71,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         PotaWidget *w = new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
         w->lErr=ui->lDBErr;
-        w->mEditNotes=ui->mEditNotes;
+        w->cbFontSize=ui->cbFont;
         //w->mFilterFind = ui->mFilterFind;
         w->model->db=&db;
         w->model->progressBar=ui->progressBar;
@@ -80,6 +80,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         //w->userDataEditing=&userDataEditing;
 
        //dbSuspend(&db,false,userDataEditing,ui->lDBErr);
+
+        w->delegate->cTableColor=TableColor(sTableName,"");//before init
+
         w->Init(sTableName);
 
         if (w->model->SelectShowErr()) {
@@ -123,7 +126,6 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             //w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
-            w->delegate->cTableColor=TableColor(sTableName,"");
             for (int i=0; i<w->model->columnCount();i++)             {
                 //Table color.
                 w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
@@ -154,17 +156,8 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             //Colored tab title
             ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
-            QColor c=w->delegate->cTableColor;
-            if (sTableName.startsWith("Cultures"))
-                c=cCulture;
-            w->lTabTitle->setStyleSheet(QString(
-                                     "background-color: rgba(%1, %2, %3, %4);"
-                                     "font-weight: bold;"
-                                     )
-                                     .arg(c.red())
-                                     .arg(c.green())
-                                     .arg(c.blue())
-                                     .arg(60));
+            QFont font = this->font();
+            w->lTabTitle->setFont(font);
             w->lTabTitle->setText(sTitre);
             w->lTabTitle->setContentsMargins(10, 4, 10, 4);
             w->lTabTitle->setAlignment(Qt::AlignCenter);
@@ -204,21 +197,23 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 int iWidth;
                 if (!w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO_")){
                     iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
-                    if (iWidth<=0 or iWidth>500)
+                    if (iWidth<=0 or iWidth>700)
                         iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
                 } else {
                     iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
                 }
-                if (iWidth<=0 or iWidth>500)
+                if (iWidth<=0 or iWidth>700)
                     w->tv->resizeColumnToContents(i);
                 else
                     w->tv->setColumnWidth(i,iWidth);
+                if (w->tv->columnWidth(i)>700)
+                    w->tv->setColumnWidth(i,700);
+
             }
             settings.endGroup();
 
             ui->mFermerOnglets->setEnabled(true);
             ui->mFermerOnglet->setEnabled(true);
-            ui->mLargeurs->setEnabled(true);
             ui->mImporter->setEnabled(w->pbInsertRow->isEnabled());
             ui->mExporter->setEnabled(true);
             ui->mImporter->setIcon(QIcon(TablePixmap(w->model->tableName(),">>  ")));
@@ -280,7 +275,6 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         if (ui->tabWidget->count()<3) {//Fermeture du dernier onglet data ouvert.
             ui->mFermerOnglets->setEnabled(false);
             ui->mFermerOnglet->setEnabled(false);
-            ui->mLargeurs->setEnabled(false);
             ui->mImporter->setEnabled(false);
             ui->mExporter->setEnabled(false);
         }
@@ -306,26 +300,20 @@ void MainWindow::on_tabWidget_currentChanged(int index)
                 w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
             else
                 w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+
         }
     }
 
     if (!ui->tabWidget->widget(index)->objectName().startsWith("PW")) {
-        // ui->mFilterFind->setEnabled(false);
-        // ui->mFilterFind->setChecked(false);
-        ui->mEditNotes->setChecked(!ui->pteNotes->isReadOnly());
         ui->mImporter->setEnabled(false);
         ui->mExporter->setEnabled(false);
     } else {
         PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        // ui->mFilterFind->setEnabled(true);
-        // ui->mFilterFind->setChecked(wc->filterFrame->isVisible());
-
-        //ui->mEditNotes->setEnabled(wc->pbEdit->isChecked());
-        ui->mEditNotes->setChecked(!wc->editNotes->isReadOnly());
         ui->mImporter->setEnabled(wc->pbInsertRow->isEnabled());
         ui->mExporter->setEnabled(true);
         ui->mImporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),">>  ")));
         ui->mExporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),"  >>")));
+        wc->SetSizes();
     }
     SetColoredText(ui->lDBErr,"","");
 }
@@ -496,21 +484,6 @@ void MainWindow::on_mFermerOnglets_triggered()
     ClosePotaTabs();
 }
 
-void MainWindow::on_mLargeurs_triggered()
-{
-    if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
-        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        for (int i=0; i<w->model->columnCount();i++)
-        {
-            int iWidth=DefColWidth(&db, w->model->tableName(),w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
-            if (iWidth<=0 or iWidth>500)
-                w->tv->resizeColumnToContents(i);
-            else
-                w->tv->setColumnWidth(i,iWidth);
-        }
-    }
-}
-
 void MainWindow::on_mFilterFind_triggered()
 {
     return;
@@ -527,65 +500,6 @@ void MainWindow::on_mFilterFind_triggered()
     //         w->curChanged(w->tv->selectionModel()->currentIndex());
     //     }
     // }
-}
-
-void MainWindow::on_mEditNotes_triggered()
-{
-    QTextEdit *textEdit;
-    PotaWidget *w=nullptr;
-    if (!ui->tabWidget->currentWidget()->objectName().startsWith("PW")){ //1rst tab
-        textEdit=ui->pteNotes;
-    } else { //Data tab
-        w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        if (!w->pbEdit->isChecked() or //tab not in edit mode : notes can't be modified
-            w->model->nonEditableColumns.contains(w->tv->currentIndex().column())) { //Readonly column
-            ui->mEditNotes->setChecked(false);
-            return;
-        }
-
-        textEdit=w->editNotes;
-        QString FieldName = w->model->headerData(w->tv->currentIndex().column(),Qt::Horizontal,Qt::DisplayRole).toString();
-        if (!textEdit->isVisible())
-            w->SetVisibleEditNotes(AcceptReturns(FieldName),false);
-    }
-
-    if (textEdit->isVisible()) {
-        // qDebug() << "toMarkdown: " << textEdit->toMarkdown();
-        // qDebug() << "toPlainText: " << textEdit->toPlainText();
-        if (textEdit->isReadOnly()) { //Go to notes edit mode
-            ui->mEditNotes->setChecked(true);
-            textEdit->setReadOnly(false);
-            textEdit->setPlainText(textEdit->toMarkdown().trimmed());
-            //textEdit->setBackgroundRole(QPalette::Highlight);
-            textEdit->setLineWidth(4);
-            textEdit->setFrameShape(QFrame::Panel);
-            textEdit->setFocus();
-        } else { //Save data and return to notes read mode
-            ui->mEditNotes->setChecked(false);
-            textEdit->setReadOnly(true);
-            QString save = textEdit->toPlainText().trimmed();
-            int i = textEdit->toPlainText().count("<");
-            textEdit->setMarkdown(textEdit->toPlainText().trimmed());
-            if (i != textEdit->toMarkdown().count("<")) {
-                qDebug() << save;
-                textEdit->setPlainText(save);
-                textEdit->setReadOnly(false);
-                ui->mEditNotes->setChecked(true);
-                MessageDialog(tr("Les balises HTML (<b>, <br>, etc) ne sont pas accéptées."));
-            } else {
-                //textEdit->setBackgroundRole(QPalette::Midlight);
-                textEdit->setLineWidth(1);
-                textEdit->setFrameShape(QFrame::StyledPanel);
-                if (w) {
-                    if (save!=w->model->data(w->tv->currentIndex()).toString())
-                        w->model->setData(w->tv->currentIndex(),save);
-                    w->tv->setFocus();
-                }
-            }
-        }
-    } else
-        ui->mEditNotes->setChecked(false);
-
 }
 
 void MainWindow::on_mParam_triggered()
@@ -669,15 +583,19 @@ void MainWindow::on_mImporter_triggered()
                 primaryFieldImport=col;
         }
 
+        if (primaryFieldImport==-1)
+            TypeImport=4; //Append only
+
         int choice=-1;
         if (info.isEmpty()) {
             MessageDialog(QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
                               .arg(FileInfoVerif.fileName())
                               .arg(w->lTabTitle->text()),"",QStyle::SP_MessageBoxWarning);
             return;
-        } else if (primaryFieldImport==-1) {
-            MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
-            return;
+        // } else if (primaryFieldImport==-1) {
+        //     TypeImport=4; //Append only
+        //     MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+        //     return;
         } else if (lines.count()<2) {
             MessageDialog(QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
             return;
@@ -700,8 +618,8 @@ void MainWindow::on_mImporter_triggered()
                                            "<b>"+tr("Les champs suivants vont être importés:")+"</b><br>"+info+"<br><br>"+
                                            "<b>"+tr("%1 lignes à importer:").arg(linesToImport.count()-1)+"</b>"+info2+"<br>"+
                                            tr("<u>Fusionner</u>: les lignes déjà présentes seront mises à jour, les autres seront créées.")+"<br>"+
-                                           tr("<u>Mettre à jour</u>: seules les lignes de la sélection seront mises à jour, aucune nouvelle ligne ne sera créée.")+"<br>"+
-                                           tr("<u>Supprimer</u>: les lignes de la sélection seront supprimées si elles ne sont pas utilisées ailleurs)."),
+                                           tr("<u>Mettre à jour</u>: seules les lignes visibles seront mises à jour, aucune nouvelle ligne ne sera créée.")+"<br>"+
+                                           tr("<u>Supprimer</u>: les lignes visibles seront supprimées si elles ne sont pas utilisées ailleurs)."),
                                        {tr("Fusionner, priorité aux données importées"),                               //0
                                         tr("Fusionner, priorité aux données déjà présentes"),                          //1
                                         tr("Mettre à jour, priorité aux données importées"),                           //2
@@ -712,6 +630,11 @@ void MainWindow::on_mImporter_triggered()
             if (choice==-1) return;
 
             TypeImport=choice;
+        }
+
+        if (primaryFieldImport==-1 and choice!=4) {
+            MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.\nSeul l'ajout de ligne est éventuellement possible.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            return;
         }
 
        //dbSuspend(&db,false,userDataEditing,ui->lDBErr);
@@ -764,6 +687,9 @@ void MainWindow::on_mImporter_triggered()
         //Import
 
         AppBusy(true,ui->progressBar,linesToImport.count(),FileInfoVerif.fileName()+" %p%");
+
+        w->model->bBatch=true;
+
         bool bModified;
 
         for(int i=0;i<linesToImport.count();i++) {
@@ -771,67 +697,70 @@ void MainWindow::on_mImporter_triggered()
             if (!linesToImport[i].isEmpty()) {
                 parseCSV(linesToImport[i],";",valuesToImport);
 
-                if(valuesToImport.count()>primaryFieldImport and !valuesToImport[primaryFieldImport].isEmpty()){
+                int recordToUpdate=-1;
+                if(primaryFieldImport>-1 and valuesToImport.count()>primaryFieldImport and !valuesToImport[primaryFieldImport].isEmpty()){
                     //Search existing record
-                    int recordToUpdate=-1;
                     for (int i=0;i<w->model->rowCount();i++) {
                         if (w->model->data(w->model->index(i,0)).toString()==valuesToImport[primaryFieldImport]){
                             recordToUpdate=i;
                             break;
                         }
                     }
-                    if(recordToUpdate>-1){
-                        if(choice!=4){
-                            //Update existing record.
-                            bModified=false;
-                            for (int col = 0; col < valuesToImport.count(); col++) {
-                                if (fieldindexes[col]>-1){//Col exists in table.
-                                    if (choice==0 or choice==2 or choice==5 or//Priority to imported data
-                                        w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()=="") {
-                                        if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()!=valuesToImport[col]){
-                                            w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
-                                            bModified=true;
-                                        }
+                }
+                if(recordToUpdate>-1){
+                    if(choice!=4){
+                        //Update existing record.
+                        bModified=false;
+                        for (int col = 0; col < valuesToImport.count(); col++) {
+                            if (fieldindexes[col]>-1){//Col exists in table.
+                                if (choice==0 or choice==2 or choice==5 or//Priority to imported data
+                                    w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()=="") {
+                                    if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()!=valuesToImport[col]){
+                                        w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
+                                        bModified=true;
                                     }
                                 }
                             }
+                        }
 
-                            if (bModified) {
-                                if(w->model->submitAll()) {
-                                    nbModifiedRows++;
-                                } else {
-                                    qInfo() << "Import (update) "+valuesToImport[primaryFieldImport]+" : "+w->model->lastError().text();
-                                    w->model->revertAll();
-                                    nbErrors++;
-                                }
+                        if (bModified) {
+                            if(w->model->submitAll()) {
+                                nbModifiedRows++;
+                            } else {
+                                qInfo() << "Import (update) "+linesToImport[i]+" : "+w->model->lastError().text();
+                                w->model->revertAll();
+                                nbErrors++;
                             }
                         }
-                    } else {
-                        if(choice!=2 and choice!=3){
-                            //Create new record.
-                            int row=w->model->rowCount();
-                            if (w->model->insertRow(row)){
-                                for (int col = 0; col < valuesToImport.count(); col++) {
-                                    if (fieldindexes[col]>-1)//Col exists in table.
-                                        w->model->setData(w->model->index(row,fieldindexes[col]),valuesToImport[col]);
-                                }
-                                if (w->model->submitAll()) {
-                                    nbCreatedRows++;
-                                } else {
-                                    qInfo() << "Import (create) "+valuesToImport[primaryFieldImport]+" : "+w->model->lastError().text();
-                                    w->model->revertAll();
-                                    nbErrors++;
-                                }
-
+                    }
+                } else {
+                    if(choice!=2 and choice!=3){
+                        //Create new record.
+                        int row=w->model->rowCount();
+                        if (w->model->insertRow(row)){
+                            for (int col = 0; col < valuesToImport.count(); col++) {
+                                if (fieldindexes[col]>-1)//Col exists in table.
+                                    w->model->setData(w->model->index(row,fieldindexes[col]),valuesToImport[col]);
                             }
+                            if (w->model->submitAll()) {
+                                nbCreatedRows++;
+                            } else {
+                                qInfo() << "Import (create) "+linesToImport[i]+" : "+w->model->lastError().text();
+                                w->model->revertAll();
+                                nbErrors++;
+                            }
+                        } else {
+                            qInfo() << "Import (insert) "+linesToImport[i]+" : "+w->model->lastError().text();
+                            nbErrors++;
                         }
                     }
                 }
             }
         }
+        w->model->bBatch=false;
         AppBusy(false,ui->progressBar);
 
-        w->model->SubmitAllShowErr();//To deactivate commit and rollback buttons.
+        w->model->SubmitAllShowErr();//To deactivate commit and rollback buttons, and show modified cells.
 
         //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
@@ -968,6 +897,11 @@ void MainWindow::on_mITPTempo_triggered()
     OpenPotaTab("ITP_tempo","ITP__Tempo",tr("ITP"));
 }
 
+void MainWindow::on_mNotes_triggered()
+{
+    OpenPotaTab("Notes","Notes",tr("Notes"));
+}
+
 //Menu Assolement
 
 void MainWindow::on_mRotations_triggered()
@@ -985,7 +919,7 @@ void MainWindow::on_mDetailsRotations_triggered()
 
 void MainWindow::on_mRotationManquants_triggered()
 {
-    OpenPotaTab("IT_rotations_manquants","IT_rotations_manquants",tr("Espèces manquantes"));
+    OpenPotaTab("Especes__manquantes","Espèces__manquantes",tr("Espèces manquantes"));
 }
 
 void MainWindow::on_mPlanches_triggered()
@@ -1011,12 +945,12 @@ void MainWindow::on_mIlots_triggered()
 
 void MainWindow::on_mCulturesParplante_triggered()
 {
-    OpenPotaTab("IT_rotations","IT_rotations",tr("Cult.prévues espèces"));
+    OpenPotaTab("Cult_planif_espèces","Cult_planif_espèces",tr("Cult.prévues espèces"));
 }
 
 void MainWindow::on_mCulturesParIlots_triggered()
 {
-    OpenPotaTab("IT_rotations_ilots","IT_rotations_ilots",tr("Cult.prévues ilots"));
+    OpenPotaTab("Cult_planif_ilots","Cult_planif_ilots",tr("Cult.prévues ilots"));
 }
 
 void MainWindow::on_mCulturesParPlanche_triggered()
@@ -1048,7 +982,7 @@ void MainWindow::on_mCreerCultures_triggered()
         icon=QStyle::SP_MessageBoxQuestion;
         CultAVenir="";
     }
-    if (OkCancelDialog(tr("Créer les cultures de la saison %1 ?").arg(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_planif'").toString())+"\n\n"+ //todo
+    if (OkCancelDialog(tr("Créer les cultures de la saison %1 ?").arg(pQuery.Selec0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString())+"\n\n"+
                        tr("%1 cultures vont être créées en fonction des rotations").arg(NbCultPlanif)+"\n"+
                        tr("Id de la dernière culture:")+" "+str(NbCultAVenir)+
                        CultAVenir,
@@ -1068,11 +1002,11 @@ void MainWindow::on_mCreerCultures_triggered()
 
         if (choice==0)
             result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
-                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur FROM Params WHERE Paramètre='Année_planif'),Longueur,Nb_rangs,Espacement "
+                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
                                        "FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')");
         else
             result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
-                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur FROM Params WHERE Paramètre='Année_planif'),Longueur,Nb_rangs,Espacement "
+                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
                                        "FROM Cult_planif");
         if (result) {
             int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
@@ -1099,6 +1033,11 @@ void MainWindow::on_mSemences_triggered()
 void MainWindow::on_mCuNonTer_triggered()
 {
     OpenPotaTab("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"));
+}
+
+void MainWindow::on_mCouverture_triggered()
+{
+     OpenPotaTab("Especes__couverture","Espèces__couverture",tr("Couverture obj."));
 }
 
 void MainWindow::on_mCuASemer_triggered()
@@ -1245,6 +1184,38 @@ void MainWindow::on_cbTheme_currentIndexChanged(int index)
     }
     QApplication::setPalette(palette);
 
+    SetMenuIcons();
 }
+
+void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
+{
+    if (ui->cbFont->count()<2) return;//Initialisation of cbfont entries.
+
+    QFont font = this->font();
+    font.setPointSize(arg1.toInt());
+    setFont(font);
+
+    QList<QWidget*> widgets = findChildren<QWidget*>();
+    foreach (QWidget* widget, widgets) {
+        widget->setFont(font);
+    }
+
+    //Tab titles
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
+            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
+            ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, nullptr);
+            ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, w->lTabTitle);
+            // w->cbFilterType->setFont(font);
+            // w->cbFilterType->setMinimumHeight(w->cbFilterType->sizeHint().height());
+            // w->cbFilterType->updateGeometry();
+        }
+    }
+
+    ui->lDBlabel->setFixedWidth(110*arg1.toInt()/10);
+}
+
+
+
 
 

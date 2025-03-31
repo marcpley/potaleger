@@ -88,6 +88,17 @@ void AppBusy(bool busy,QProgressBar *pb,int max,QString text) {
     }
 }
 
+QColor blendColors(const QColor& baseColor, const QColor& overlayColor) {
+    qreal alpha = overlayColor.alphaF();
+    qreal invAlpha = 1.0 - alpha;
+
+    int red = (baseColor.red() * invAlpha + overlayColor.red() * alpha);
+    int green = (baseColor.green() * invAlpha + overlayColor.green() * alpha);
+    int blue = (baseColor.blue() * invAlpha + overlayColor.blue() * alpha);
+
+    return QColor(red, green, blue);
+}
+
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
     QString result="";
     PotaQuery query(*db);
@@ -143,7 +154,6 @@ bool isDarkTheme() {
     QColor backgroundColor = QApplication::palette().color(QPalette::Window);
     return backgroundColor.lightness() < 128;
 }
-
 
 float min(float a,float b) {
     if (a>b)
@@ -243,12 +253,6 @@ void SetColoredText(QLabel *l, QString text, QString type)
     else
         p.setColor(QPalette::WindowText, QApplication::palette().color(QPalette::ColorGroup::Disabled,QPalette::WindowText));//"white"
     l->setPalette(p);
-}
-
-void SetButtonSize(QToolButton *b)
-{
-    b->setFixedSize(24,24);
-    b->setIconSize(QSize(24,24));
 }
 
 void SetFontColor(QWidget* widget, QColor color) {

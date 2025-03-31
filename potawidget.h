@@ -45,6 +45,7 @@ public:
     //QSet<int> modifiedRows;
     QProgressBar* progressBar;
     QString tempTableName;
+    bool bBatch;
 
     int FieldIndex(QString FieldName);
     QString FieldName(int index);
@@ -90,7 +91,7 @@ public:
             font.setItalic(true);
             return font;
         }
-        if (role == Qt::DisplayRole) {
+        if (role==Qt::DisplayRole and !data(index,Qt::EditRole).isNull()) {
             // Because model->select() is overriden, the code below isn't necessary.
             // QString columnName = headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
             // if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) {
@@ -112,9 +113,17 @@ public:
 
 
             if (dateColumns.contains(index.column())) {// #DateFormat
-                return data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy");
-            } else if (!data(index,Qt::EditRole).isNull() and moneyColumns.contains(index.column())) {
-                return QString::number(data(index,Qt::EditRole).toFloat(),'f', 2);
+                if (data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy").isEmpty())
+                    return "Err:"+data(index,Qt::EditRole).toString(); //Not date format
+                else
+                    return data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy");
+            } else if (moneyColumns.contains(index.column())) {
+                if (data(index,Qt::EditRole).toFloat()==0 and data(index,Qt::EditRole).toString()!="0")
+                    return "Err:"+data(index,Qt::EditRole).toString(); //Not number format
+                else
+                    return QString::number(data(index,Qt::EditRole).toFloat(),'f', 2);
+            } else if (StrLast(headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString(),3)=="_pc") {
+                return data(index,Qt::EditRole).toString()+"%";
             }
         }
         if (role == Qt::TextAlignmentRole) {
@@ -369,61 +378,12 @@ public:
         : QHeaderView(orientation, parent) {
         //setStretchLastSection(false);
     }
-    QSet<int> TempoCols;
-    QStringList TempoTitles;
     int iSortCol = 0;
 
 protected:
     bool bSortDes = false;
 
-    void paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const override {
-
-        if (TempoCols.contains(logicalIndex)) {
-            QString title=TempoTitles[logicalIndex];
-            painter->save();
-            int xOffset = -22;
-            int yOffset = rect.height()-5;
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
-            painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
-            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
-            if(title.isEmpty()) {
-                painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
-                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
-            } else {
-                QBrush b;
-                b.setStyle(Qt::SolidPattern);
-                QColor c("red");
-                c.setAlpha(60);
-                b.setColor(c);
-                xOffset+=37;
-                painter->fillRect(rect.left()+xOffset,rect.top()+3, 36, rect.height()-6,b);
-                painter->drawText(rect.left()+xOffset+3, rect.top() + yOffset, title);
-                xOffset+=24;
-            }
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(8).left(3));
-            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(9).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(10).left(3));
-            painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(11).left(3));
-            painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(12).left(3));
-
-            if(title.isEmpty()) {
-                //Year 2
-                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(1).left(3));
-                painter->drawText(rect.left() + (xOffset+=28), rect.top() + yOffset, locale().monthName(2).left(3));
-                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(3).left(3));
-                painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(4).left(3));
-                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(5).left(3));
-                painter->drawText(rect.left() + (xOffset+=30), rect.top() + yOffset, locale().monthName(6).left(3));
-                painter->drawText(rect.left() + (xOffset+=31), rect.top() + yOffset, locale().monthName(7).left(3));
-            }
-
-            painter->restore();
-        } else
-            QHeaderView::paintSection(painter, rect, logicalIndex);
-    }
-
+    void paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 };
 
@@ -436,8 +396,9 @@ public:
     QColor cTableColor;
     QColor cColColors[50];
     int RowColorCol=-1;
-    QSet<int> TempoCols;
-    int TempoNowCol;
+    //QSet<int> PaintedCols;
+    QStringList PaintedColsTypes;
+    QStringList PaintedColsTitles;
     int FilterCol=-1;
     QString FindText="";
     bool FindTextchanged;
@@ -500,6 +461,7 @@ public:
     bool isCommittingError=false;
     QLabel *lTabTitle;
     QTextEdit *editNotes;
+    QAction *aEditNotes;
     QTextEdit *editSelInfo;
 
     QWidget *toolbar;
@@ -539,6 +501,7 @@ public:
 
     QLabel *lErr;
     QAction *mEditNotes;
+    QComboBox *cbFontSize;
     //QAction *mFilterFind;
 
     //bool *userDataEditing;
@@ -552,6 +515,7 @@ public:
     void PositionSave();
     void PositionRestore();
     void RefreshHorizontalHeader();
+    void SetSizes();
 
 private:
     //Filtering
@@ -575,9 +539,12 @@ private slots:
     void leFilterReturnPressed();
     void leFindReturnPressed();
     void leFindTextEdited(const QString &text);
+    void showContextMenu(const QPoint& pos);
+    void hDefColWidth();
+    void hEditNotes(const QModelIndex index);
 
 public slots:
-    void curChanged(const QModelIndex cur);//, const QModelIndex pre
+    void curChanged(const QModelIndex cur, const QModelIndex pre);
     void selChanged();
     void showSelInfo();
     void pbRefreshClick();

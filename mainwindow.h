@@ -16,7 +16,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC7";
+QString const Version="1.0RC8";
 QString const DbVersion="2025-03-25";
 
 class MainWindow : public QMainWindow
@@ -33,15 +33,17 @@ public:
 
     //global variables.
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    // bool userDataEditing=false;//todo
+    // bool userDataEditing=false;
     // bool dbIsOpen=false;
     QString PathExport="";
     QString PathImport="";
     int TypeImport=0;
+    bool MarkdownFont=false;
 
     void RestaureParams();
     void SauvParams();
     void SetUi();
+    void SetMenuIcons();
     void showIfDdOpen();
 
 private slots:
@@ -99,10 +101,6 @@ private slots:
 
     void on_mCulturesParplante_triggered();
 
-    void on_mLargeurs_triggered();
-
-    void on_mEditNotes_triggered();
-
     void on_mAPropos_triggered();
 
     void on_mFilterFind_triggered();
@@ -126,6 +124,12 @@ private slots:
     void on_mCuASemerSA_triggered();
 
     void on_mCuASemer_triggered();
+
+    void on_mCouverture_triggered();
+
+    void on_cbFont_currentTextChanged(const QString &arg1);
+
+    void on_mNotes_triggered();
 
 private:
     void SetEnabledDataMenuEntries(bool b);

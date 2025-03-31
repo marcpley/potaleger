@@ -189,8 +189,9 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                             }
                         }
                         sFieldsList=sFieldsList.removeLast();
-                        sUpdateSchema +="INSERT INTO "+query->value("name").toString()+" ("+sFieldsList+") " //todo: spécifier les champs si pas le même nom.
-                                        "SELECT "+sFieldsList+" FROM Temp_"+query->value("name").toString()+";";
+                        if (!sFieldsList.isEmpty())
+                            sUpdateSchema +="INSERT INTO "+query->value("name").toString()+" ("+sFieldsList+") " //todo: spécifier les champs si pas le même nom.
+                                            "SELECT "+sFieldsList+" FROM Temp_"+query->value("name").toString()+";";
                     }
                 }
 
