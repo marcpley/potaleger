@@ -299,7 +299,11 @@ BEGIN
     -- Mise à jour semis sur toutes les cultures groupées.
     UPDATE Cultures SET
         Date_semis=NEW.Date_semis,
-        Semis_fait=NEW.Semis_fait
+        Semis_fait=CASE WHEN NEW.Semis_fait NOTNULL AND(CAST(NEW.Semis_fait AS INTEGER)=NEW.Semis_fait) -- Valeur numérique entière, répartir au prorata de la longueur.
+                        THEN NEW.Semis_fait /(SELECT sum(C.Longueur) FROM Cultures C WHERE instr(OLD.Cultures,C.Culture||' ')>0)
+                                             *Cultures.Longueur
+                        ELSE NEW.Semis_fait -- Même valeur pour toutes les cultures.
+                        END
     WHERE instr(OLD.Cultures,Cultures.Culture||' ')>0;
     -- Mise à jour des notes uniquement sur les cultures qui avaient la même notes avant édition.
     UPDATE Cultures SET

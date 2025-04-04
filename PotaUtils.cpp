@@ -202,6 +202,12 @@ void parseCSV(QString entry, QString sep, QStringList &list) {
 //     return "";
 // }
 
+QString RemoveAccents(QString input) {
+    QString normalized = input.normalized(QString::NormalizationForm_D).toLower();
+    normalized.remove(QRegularExpression("[̀-̈]"));  // Supprime les accents combinés
+    return normalized;
+}
+
 QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns)
 {
     QStringList LinesList = sCde.split("\n");

@@ -959,18 +959,19 @@ void PotaWidget::pbFilterClick(bool checked)
                 else
                     filter=lFilterOn->text()+" ISNULL";
             } else {
+                QString raField="remove_accents("+lFilterOn->text()+")";
                 if (cbFilterType->currentText()==tr("contient"))
-                    filter=lFilterOn->text()+" LIKE '%"+StrReplace(leFilter->text(),"'","''")+"%'";
+                    filter=raField+" LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
                 else if (cbFilterType->currentText()==tr("ne contient pas"))
-                    filter=lFilterOn->text()+" NOT LIKE '%"+StrReplace(leFilter->text(),"'","''")+"%'";
+                    filter=raField+" NOT LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
                 else if (cbFilterType->currentText()==tr("égal à"))
-                    filter=lFilterOn->text()+" = '"+StrReplace(leFilter->text(),"'","''")+"'";
+                    filter=raField+" = '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else if (cbFilterType->currentText()==tr("différent de"))
-                    filter=lFilterOn->text()+" != '"+StrReplace(leFilter->text(),"'","''")+"'";
+                    filter=raField+" != '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else if (cbFilterType->currentText()==tr("fini par"))
-                    filter=lFilterOn->text()+" LIKE '%"+StrReplace(leFilter->text(),"'","''")+"'";
+                    filter=raField+" LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else//commence par
-                    filter=lFilterOn->text()+" LIKE '"+StrReplace(leFilter->text(),"'","''")+"%'";
+                    filter=raField+" LIKE '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
             }
         } else if (sDataType=="DATE") {
             if (leFilter->text()==""){
@@ -1088,7 +1089,7 @@ void PotaWidget::leFindTextEdited(const QString &text){
     pbFindFirst->setEnabled(!text.isEmpty());
     pbFindNext->setEnabled(!text.isEmpty());
     pbFindPrev->setEnabled(!text.isEmpty());
-    delegate->FindText=text.toLower();
+    delegate->FindText=RemoveAccents(text);
     delegate->FindTextchanged=true;
 }
 
@@ -1110,7 +1111,7 @@ void PotaWidget::FindFrom(int row, int column, bool Backward){
         for (int i=row;i<model->rowCount();i++) {
             for (int j=column;j<model->columnCount();j++) {
                 if (!tv->isColumnHidden(j) and
-                    model->index(i,j).data(Qt::DisplayRole).toString().toLower().contains(leFind->text().toLower())){
+                    RemoveAccents(model->index(i,j).data(Qt::DisplayRole).toString()).contains(RemoveAccents(leFind->text()))){
                     tv->setCurrentIndex(model->index(i,j));
                     return;
                 }
@@ -1121,7 +1122,7 @@ void PotaWidget::FindFrom(int row, int column, bool Backward){
         for (int i=row;i>=0;i--) {
             for (int j=column;j>=0;j--) {
                 if (!tv->isColumnHidden(j) and
-                    model->index(i,j).data(Qt::DisplayRole).toString().toLower().contains(leFind->text().toLower())){
+                    RemoveAccents(model->index(i,j).data(Qt::DisplayRole).toString()).contains(RemoveAccents(leFind->text()))){
                     tv->setCurrentIndex(model->index(i,j));
                     return;
                 }
@@ -1595,7 +1596,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     }
 
     if (index.column()==FilterCol or //Filtering column.
-        (!FindText.isEmpty() and index.data(Qt::DisplayRole).toString().toLower().contains(FindText))) { //Find
+        (!FindText.isEmpty() and RemoveAccents(index.data(Qt::DisplayRole).toString()).contains(FindText))) { //Find
         if (!isDarkTheme())
             cFiltered=QColor("#000000");
         else

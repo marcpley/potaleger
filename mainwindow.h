@@ -1,13 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "PotaUtils.h"
 #include <QMainWindow>
 #include <QtSql/QSqlQueryModel>
 #include <QSqlTableModel>
 #include <QMessageBox>
 #include <QtSvg>
-#include "sqlite/sqlite3.h"
 #include <QStyle>
 
 QT_BEGIN_NAMESPACE
@@ -16,7 +14,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC9b1";
+QString const Version="1.0RC10";
 QString const DbVersion="2025-03-25";
 
 class MainWindow : public QMainWindow

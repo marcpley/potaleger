@@ -528,7 +528,7 @@ CREATE VIEW Cultures__à_semer_SA AS SELECT
         C.Type,
         C.Etat,
         C.Date_semis,
-        C.Semis_fait,
+        CASE WHEN sum(C.Semis_fait)>0 THEN sum(C.Semis_fait) ELSE min(C.Semis_fait) END Semis_fait,
         CASE WHEN min(C.Date_plantation)=max(C.Date_plantation) THEN strftime('%d/%m/%Y',min(C.Date_plantation))
         ELSE group_concat(strftime('%d/%m/%Y',C.Date_plantation),x'0a0a')
         END Dates_plantation,
@@ -552,7 +552,7 @@ WHERE   (Terminée ISNULL) AND
         (Date_semis < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_semis')||' days')) AND
         (coalesce(Semis_fait,'') NOT LIKE 'x%') AND
         (Date_plantation NOTNULL)
-GROUP BY C.IT_plante,C.Variété,C.Type,C.Etat,C.Date_semis,C.Semis_fait
+GROUP BY C.IT_plante,C.Variété,C.Type,C.Etat,C.Date_semis --,C.Semis_fait
 ORDER BY    Date_semis,Date_plantation,
             Planche,
             IT_plante;

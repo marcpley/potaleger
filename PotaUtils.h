@@ -37,6 +37,7 @@ float min(float a,float b);
 int min(int a,int b);
 void parseCSV(QString entry, QString sep, QStringList &list);
 //QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName);
+QString RemoveAccents(QString input);
 QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns=false);
 void SetFontColor(QWidget* widget, QColor color);
 void SetFontWeight(QWidget* widget, QFont::Weight weight);

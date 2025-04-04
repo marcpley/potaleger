@@ -15,6 +15,7 @@
 //#include <QLocale>
 //#include "qtimer.h"
 #include "SQL/FunctionsSQLite.h"
+#include "sqlite/sqlite3.h"
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
@@ -87,14 +88,24 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
     }
 
     PotaQuery query(db);
-    if (!query.exec("PRAGMA journal_mode = WAL;") or //query.exec("PRAGMA journal_mode=DELETE;");
-        !query.exec("PRAGMA locking_mode = NORMAL;") or
-        !query.exec("PRAGMA quick_check;") or
-        !query.next()) {
+    if (!query.exec("PRAGMA journal_mode = WAL;")) {
         dbClose();
-        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite"), "Err");
+        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite journal_mode = WAL"), "Err");
         return false;
     }
+
+    if (!query.exec("PRAGMA locking_mode = NORMAL;")) {
+        dbClose();
+        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite locking_mode = NORMAL"), "Err");
+        return false;
+    }
+
+    // if (!query.exec("PRAGMA quick_check;") or //return false with POTACOLLATION.
+    //     !query.next()) {
+    //     dbClose();
+    //     SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite quick_check"), "Err");
+    //     return false;
+    // }
 
     if (SetFkOn and !query.exec("PRAGMA foreign_keys = ON")) {
         dbClose();
@@ -121,6 +132,19 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
         //     return false;
         // }
     }
+
+    if (!registerPotaCollation(db)) {
+        dbClose();
+        SetColoredText(ui->lDBErr, "Collation : Err", "Err");
+        return false;
+    }
+
+    if (!registerRemoveAccentsFunction(db)) {
+        dbClose();
+        SetColoredText(ui->lDBErr, "RemoveAccents : Err", "Err");
+        return false;
+    }
+
 
     return true;
 }

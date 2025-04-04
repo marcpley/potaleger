@@ -9,6 +9,7 @@
 #include <QButtonGroup>
 #include <QLabel>
 #include <QLEInteger>
+#include "PotaUtils.h"
 
 void MainWindow::MessageDialog(const QString &message, const QString &message2, QStyle::StandardPixmap iconType)
 {
