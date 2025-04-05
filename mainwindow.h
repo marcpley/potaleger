@@ -14,8 +14,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC10";
-QString const DbVersion="2025-03-25";
+QString const Version="1.0RC11";
+QString const DbVersion="2025-04-04";
 
 class MainWindow : public QMainWindow
 {
@@ -37,6 +37,7 @@ public:
     QString PathImport="";
     int TypeImport=0;
     bool MarkdownFont=false;
+    bool ReadOnlyDb=true;
 
     void RestaureParams();
     void SauvParams();

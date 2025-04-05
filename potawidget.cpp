@@ -1301,7 +1301,7 @@ bool PotaTableModel::SelectShowErr()
     select();
 
     if ((lastError().type() == QSqlError::NoError)and(parent()->objectName().startsWith("PW"))) {
-        SetColoredText(dynamic_cast<PotaWidget*>(parent())->lErr,tableName()+" - "+str(rowCount()),"Ok");
+        SetColoredText(dynamic_cast<PotaWidget*>(parent())->lErr,tableName(),"Ok");
         return true;
     }
     {

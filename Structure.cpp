@@ -65,8 +65,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sDBVersion = DbVersion;
 
     } else {    //Updating an existing db.
-        if (bResult){
-            //DROP all views
+        if (bResult){ //DROP all views
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("DROP VIEWS %p%");
@@ -83,8 +82,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 sResult.append("Reset views : Err");
         }
 
-        if (bResult){
-            //DROP SQLean functions
+        if (bResult){ //DROP SQLean functions
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("DROP SQLean functions %p%");
@@ -100,8 +98,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 sResult.append("Reset SQLean : Err");
         }
 
-        if (bResult){
-            //Create scalar functions
+        if (bResult){ //Create scalar functions
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Scalar functions %p%");
@@ -141,6 +138,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             bResult = query->ExecMultiShowErr(sDDL20250325,";",ui->progressBar);
             sResult.append(sDBVersion+" -> 2025-03-25 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-03-25";
+        }
+        if (bResult and(sDBVersion == "2025-03-25")) { //Views and triggers update.
+            sResult.append(sDBVersion+" -> 2025-04-04 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-04-04";
         }
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);
@@ -211,7 +212,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         }
     }
 
-    if (bResult and(sDBVersion == ui->lVerBDDAttendue->text())) { //Tables shema ok.
+    if (bResult and(sDBVersion == DbVersion)) { //Tables shema ok.
         //if (sResult=="")
         //    sResult.append("Version : "+sDBVersion+"\n");
 
@@ -285,7 +286,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     AppBusy(false,ui->progressBar);
 
     if (bResult) {
-        if (sDBVersion == ui->lVerBDDAttendue->text()) {
+        if (sDBVersion == DbVersion) {
             if (!bNew)
                 MessageDialog(tr("Mise à jour réussie."),
                                   sResult,QStyle::SP_MessageBoxInformation);

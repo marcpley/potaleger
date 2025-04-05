@@ -163,6 +163,7 @@ void MainWindow::dbClose()
 bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 {
     //userDataEditing=false;
+    ReadOnlyDb=true;
 
     if (!dbOpen(sFichier,(sNew!=""),false,true))
         return false;
@@ -172,15 +173,12 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
 
+    QString sVerBDD = "";
     if (sNew==""){//Vérifier une BDD existante.
-        QString sVerBDD = "";
         if (pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) {//Si la vue Info n'existe pas ou pas correcte, on tente pas de mettre cette BDD à jour.
             pQuery.next();
             sVerBDD = pQuery.value(0).toString();
-        }
-        else if (bUpdate)
-            sVerBDD = ui->lVerBDDAttendue->text();
-        else {
+        } else {
             MessageDialog(tr("Cette BDD n'est pas une BDD Potaléger."),
                           sFichier,QStyle::SP_MessageBoxCritical);
             //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
@@ -196,90 +194,104 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             return false;
         }
 
-        if (sVerBDD > ui->lVerBDDAttendue->text()) {
-            MessageDialog(tr("La version de cette BDD est trop récente: ")+sVerBDD+"\n\n"+
-                          tr("Utilisez une version plus récente de Potaléger."),
-                          sFichier,QStyle::SP_MessageBoxCritical);
-            // ui->tbInfoDB->append(tr("La version de cette BDD est trop récente: ")+sVerBDD);
-            // ui->tbInfoDB->append("-> "+tr("Utilisez une version plus récente de Potaléger."));
-            dbClose();
-            return false;
-        }
-
-        if (bUpdate or
-            ((sVerBDD != ui->lVerBDDAttendue->text())and
-             (OkCancelDialog(tr("Base de données trop ancienne:")+"\n"+
-                             ui->lDB->text()+"\n" +
-                             tr("Version ")+sVerBDD + "\n\n" +
-                             tr("Mettre à jour cette BDD vers la version %1 ?").arg(ui->lVerBDDAttendue->text())+" ?",QStyle::SP_MessageBoxQuestion)))) {   //Mettre à jour la BDD.
-            //Delete previous backup file.
-            QFile FileInfo;
-            QString FileName=ui->lDB->text();
-            FileInfo.setFileName(FileName+"-backup");
-            if (FileInfo.exists()) {
-                if (!FileInfo.remove()) {
-                    MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+        if (sVerBDD > DbVersion) {
+            MessageDialog(tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
+                             "certains onglets peuvent ne pas fonctionner.").arg("récente")+"\n\n"+
+                          sFichier+"\n"+
+                          tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
+                          tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
+                          tr("Vous devriez désinstaller %1 et intaller une version plus récente.").arg("Potaléger"),"",QStyle::SP_MessageBoxWarning);
+            // dbClose();
+            // return false;
+        } else if (bUpdate or (sVerBDD != DbVersion)) {
+            if (bUpdate or
+                YesNoDialog(tr("Base de données trop ancienne.")+"\n\n"+
+                               sFichier+"\n"+
+                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
+                               tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
+                               tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion)+" ?",
+                               QStyle::SP_MessageBoxQuestion)) {   //Mettre à jour la BDD.
+                //Delete previous backup file.
+                QFile FileInfo;
+                QString FileName=ui->lDB->text();
+                FileInfo.setFileName(FileName+"-backup");
+                if (FileInfo.exists()) {
+                    if (!FileInfo.remove()) {
+                        MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical);
+                        dbClose();
+                        return false;
+                    }
+                }
+                //Backup.
+                FileInfo.setFileName(FileName);
+                if (!FileInfo.copy(FileName+"-backup"))  {
+                    MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                                      FileName+"\n"+
+                                      tr("vers le fichier")+"\n"+
                                       FileName+"-backup","",QStyle::SP_MessageBoxCritical);
                     dbClose();
                     return false;
                 }
-            }
-            //Backup.
-            FileInfo.setFileName(FileName);
-            if (!FileInfo.copy(FileName+"-backup"))  {
-                MessageDialog(tr("Impossible de copier le fichier")+"\n"+
-                                  FileName+"\n"+
-                                  tr("vers le fichier")+"\n"+
-                                  FileName+"-backup","",QStyle::SP_MessageBoxCritical);
-                dbClose();
-                return false;
-            }
 
-            //Update schema.
-            if (UpdateDBShema(sVerBDD)) {
-                sVerBDD = ui->lVerBDDAttendue->text();
+                //Update schema.
+                if (UpdateDBShema(sVerBDD)) {
+                    sVerBDD = DbVersion;
+                    ReadOnlyDb=false;
 
-                //Delete backup file.
-                FileInfo.setFileName(FileName+"-backup");
-                if (!FileInfo.remove()) {
-                    MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
-                                      FileName+"-backup","",QStyle::SP_MessageBoxWarning);
+                    //Delete backup file.
+                    FileInfo.setFileName(FileName+"-backup");
+                    if (!FileInfo.remove()) {
+                        MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                                          FileName+"-backup","",QStyle::SP_MessageBoxWarning);
+                    }
+                } else {
+                    dbClose();
+
+                    //Restore old db file.
+                    FileInfo.setFileName(FileName+"-crashed");
+                    if (FileInfo.exists())
+                        FileInfo.remove();
+
+                    FileInfo.setFileName(FileName);
+                    FileInfo.copy(FileName+"-crashed");
+                    FileInfo.remove();
+                    FileInfo.setFileName(FileName+"-backup");
+                    if (FileInfo.copy(FileName))
+                        MessageDialog(tr("Le fichier")+"\n"+
+                                          FileName+"\n"+
+                                          tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation);
+                    else
+                        MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                                          FileName+"-backup\n"+
+                                          tr("vers le fichier")+"\n"+
+                                          FileName,"",QStyle::SP_MessageBoxCritical);
+
+                    return false;
                 }
             } else {
-                dbClose();
+                MessageDialog(tr("La version de cette BDD est trop %1,"
+                                 " vous ne pouvez pas la modifier et certains onglets peuvent ne pas fonctionner.").arg("ancienne")+"\n\n"+
+                              sFichier+"\n"+
+                              tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
+                              tr("Version attendue: %1").arg(DbVersion),"",QStyle::SP_MessageBoxWarning);
 
-                //Restore old db file.
-                FileInfo.setFileName(FileName+"-crashed");
-                if (FileInfo.exists())
-                    FileInfo.remove();
-
-                FileInfo.setFileName(FileName);
-                FileInfo.copy(FileName+"-crashed");
-                FileInfo.remove();
-                FileInfo.setFileName(FileName+"-backup");
-                if (FileInfo.copy(FileName))
-                    MessageDialog(tr("Le fichier")+"\n"+
-                                      FileName+"\n"+
-                                      tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation);
-                else
-                    MessageDialog(tr("Impossible de copier le fichier")+"\n"+
-                                      FileName+"-backup\n"+
-                                      tr("vers le fichier")+"\n"+
-                                      FileName,"",QStyle::SP_MessageBoxCritical);
-
-                return false;
             }
+        } else {
+            ReadOnlyDb=false;
         }
 
-        if (sVerBDD != ui->lVerBDDAttendue->text()) {
-            MessageDialog(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
-                          sFichier,QStyle::SP_MessageBoxCritical);
-            // ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
-            dbClose();
-            return false;
-        }
-    }
-    else if (!UpdateDBShema(sNew)) {
+        // if (sVerBDD != ui->lVerBDDAttendue->text()) {
+        //     MessageDialog(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
+        //                   sFichier,QStyle::SP_MessageBoxCritical);
+        //     // ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
+        //     dbClose();
+        //     return false;
+        // }
+    } else if (UpdateDBShema(sNew)) {
+        sVerBDD=DbVersion;
+        ReadOnlyDb=false;
+    } else {
         dbClose();
         return false;
     }
@@ -292,7 +304,10 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 
    //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
-    SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
+    if (ReadOnlyDb)
+        SetColoredText(ui->lDBErr, tr("Base de données en lecture seule (%1).").arg(sVerBDD), "Info");
+    else
+        SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
 
     return true;
 }
@@ -513,14 +528,6 @@ void MainWindow::SetMenuIcons() {
 }
 
 void MainWindow::showIfDdOpen() {
-    // if(db.isOpen()){
-    //     if(ui->lVerBDDAttendue->text().last(1)=="!")
-    //         SetColoredText(ui->lVerBDDAttendue,"Locked","Err");
-    //     else
-    //         SetColoredText(ui->lVerBDDAttendue,"Locked!","Err");
-    // } else {
-    //     SetColoredText(ui->lVerBDDAttendue,DbVersion,"");
-    // }
 }
 
 void MainWindow::showEvent(QShowEvent *){

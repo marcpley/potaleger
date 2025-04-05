@@ -88,12 +88,13 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         if (w->model->SelectShowErr()) {
             bool bEdit=false;
             PotaQuery query(db);
-            if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
-                                    "WHERE (tbl_name='"+sTableName+"')AND"
-                                                   "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
-                    query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
-                                        "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
-                                                       "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1){
+            if (!ReadOnlyDb and
+                (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "      //Table
+                                     "WHERE (tbl_name='"+sTableName+"')AND"
+                                           "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
+                query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
+                                    "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
+                                          "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1)){
                 QPalette palette = w->sbInsertRows->palette();
                 palette.setColor(QPalette::Text, Qt::white);
                 palette.setColor(QPalette::Base, QColor(234,117,0,110));
@@ -105,9 +106,10 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->pbDeleteRow->setEnabled(true);
                 w->bAllowDelete=true;
                 bEdit=true;
-            } else if (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
-                                           "WHERE (tbl_name='"+sTableName+"')AND"    //View without trigger instead of.
-                                                          "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0) {
+            } else if (ReadOnlyDb or
+                       (query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
+                                            "WHERE (tbl_name='"+sTableName+"')AND"    //View without trigger instead of.
+                                                  "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0)) {
                 w->pbEdit->setVisible(false);
             }
 
@@ -115,6 +117,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 if (bEdit and(FkFilter(&db,w->model->RealTableName(),"",w->model->index(0,0),true)!="NoFk")){
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName()));
                 } else {
+                    SetColoredText(ui->lDBErr,"","");
                     MessageDialog(sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
                     w->deleteLater();
                     return false;
@@ -221,7 +224,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             w->tv->setFocus();
            //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
-            SetColoredText(ui->lDBErr,sTableName+" - "+str(w->model->rowCount()),"Ok");
+            SetColoredText(ui->lDBErr,sTableName+
+                                      iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
+                                      iif(ReadOnlyDb,"Info","Ok").toString());
 
             return true;
         }
