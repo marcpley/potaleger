@@ -129,29 +129,34 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             //w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
 
-            for (int i=0; i<w->model->columnCount();i++)             {
-                //Table color.
-                w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+            for (int i=0; i<w->model->columnCount();i++){
+                //Store field name in header EditRole.
+                w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole),Qt::EditRole);
+                //Store corrected field name in header DisplayRole.
+                w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().replace("_pc","%").replace("_"," "),Qt::DisplayRole);
 
-                if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Etat")
+                //Table color.
+                w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
+
+                if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Etat")
                     w->delegate->RowColorCol=i;
-                else if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="num_planche")
+                else if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="num_planche")
                     w->delegate->RowColorCol=i;
-                else if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Paramètre")
+                else if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Paramètre")
                     w->delegate->RowColorCol=i;
 
                 //Tooltip
-                QString sTT=ToolTipField(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->model->dataTypes[i]);
+                QString sTT=ToolTipField(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->model->dataTypes[i]);
                 if (sTT!="")
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
                 //All columns read only for start
                 w->model->nonEditableColumns.insert(i);
 
-                if (DataType(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString())=="DATE")
+                if (DataType(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString())=="DATE")
                     w->model->dateColumns.insert(i);
                 else if (sTableName!="Params" and
-                         FieldIsMoney(w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()))
+                         FieldIsMoney(w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
                     w->model->moneyColumns.insert(i);
             }
 
@@ -198,12 +203,12 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             settings.beginGroup("ColWidth");
             for (int i=0; i<w->model->columnCount();i++) {
                 int iWidth;
-                if (!w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO_")){
-                    iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()).toInt(nullptr);
+                if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_")){
+                    iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toInt(nullptr);
                     if (iWidth<=0 or iWidth>700)
-                        iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                        iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
                 } else {
-                    iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+                    iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
                 }
                 if (iWidth<=0 or iWidth>700)
                     w->tv->resizeColumnToContents(i);
@@ -267,8 +272,8 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         //ColWidth
         settings.beginGroup("ColWidth");
             for (int i=0; i<w->model->columnCount();i++) {
-                if (!w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO_"))
-                    settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),w->tv->columnWidth(i));
+                if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_"))
+                    settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->columnWidth(i));
             }
         settings.endGroup();
 
@@ -825,8 +830,8 @@ void MainWindow::on_mExporter_triggered()
             for (int col = 0; col < w->model->columnCount(); ++col) {
                 if (col > 0)
                     data.append(";");
-                data.append(w->model->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString().toUtf8());
-                dataTypes.append(DataType(&db, w->model->tableName(),w->model->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString()));
+                data.append(w->model->headerData(col,Qt::Horizontal,Qt::EditRole).toString().toUtf8());
+                dataTypes.append(DataType(&db, w->model->tableName(),w->model->headerData(col,Qt::Horizontal,Qt::EditRole).toString()));
             }
             data.append("\n");
             int row=0;
@@ -989,8 +994,9 @@ void MainWindow::on_mCreerCultures_triggered()
         icon=QStyle::SP_MessageBoxQuestion;
         CultAVenir="";
     }
-    if (OkCancelDialog(tr("Créer les cultures de la saison %1 ?").arg(pQuery.Selec0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString())+"\n\n"+
-                       tr("%1 cultures vont être créées en fonction des rotations").arg(NbCultPlanif)+"\n"+
+    if (OkCancelDialog(tr("Créer les cultures de la saison %1 ?").arg("<b>"+pQuery.Selec0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString()+"</b>")+"<br><br>"+
+                       tr("La saison courante peut être modifiée dans les paramètres (menu 'Edition').")+"<br><br>"+
+                       tr("%1 cultures vont être créées en fonction des rotations.").arg("<b>"+str(NbCultPlanif)+"</b>")+"<br>"+
                        tr("Id de la dernière culture:")+" "+str(NbCultAVenir)+
                        CultAVenir,
                        icon)) {

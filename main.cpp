@@ -16,6 +16,9 @@
 //#include "qtimer.h"
 #include "SQL/FunctionsSQLite.h"
 #include "sqlite/sqlite3.h"
+#include <QGraphicsPixmapItem>
+#include <QPixmap>
+#include <QImage>
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
@@ -173,6 +176,8 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
 
+    bool result=true;
+
     QString sVerBDD = "";
     if (sNew==""){//Vérifier une BDD existante.
         if (pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) {//Si la vue Info n'existe pas ou pas correcte, on tente pas de mettre cette BDD à jour.
@@ -183,18 +188,18 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                           sFichier,QStyle::SP_MessageBoxCritical);
             //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
-            return false;
+            result=false;
         }
 
-        if (sVerBDD < "2024-12-30") {
+        if (result and (sVerBDD < "2024-12-30")) {
             MessageDialog(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD,
                           sFichier,QStyle::SP_MessageBoxCritical);
             //ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
             dbClose();
-            return false;
+            result=false;
         }
 
-        if (sVerBDD > DbVersion) {
+        if (result and (sVerBDD > DbVersion)) {
             MessageDialog(tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
                              "certains onglets peuvent ne pas fonctionner.").arg("récente")+"\n\n"+
                           sFichier+"\n"+
@@ -203,7 +208,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                           tr("Vous devriez désinstaller %1 et intaller une version plus récente.").arg("Potaléger"),"",QStyle::SP_MessageBoxWarning);
             // dbClose();
             // return false;
-        } else if (bUpdate or (sVerBDD != DbVersion)) {
+        } else if (result and (bUpdate or (sVerBDD != DbVersion))) {
             if (bUpdate or
                 YesNoDialog(tr("Base de données trop ancienne.")+"\n\n"+
                                sFichier+"\n"+
@@ -220,54 +225,56 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
                                           FileName+"-backup","",QStyle::SP_MessageBoxCritical);
                         dbClose();
+                        result=false;
+                    }
+                }
+                if (result) {
+                    //Backup.
+                    FileInfo.setFileName(FileName);
+                    if (!FileInfo.copy(FileName+"-backup"))  {
+                        MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                                          FileName+"\n"+
+                                          tr("vers le fichier")+"\n"+
+                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical);
+                        dbClose();
                         return false;
                     }
-                }
-                //Backup.
-                FileInfo.setFileName(FileName);
-                if (!FileInfo.copy(FileName+"-backup"))  {
-                    MessageDialog(tr("Impossible de copier le fichier")+"\n"+
-                                      FileName+"\n"+
-                                      tr("vers le fichier")+"\n"+
-                                      FileName+"-backup","",QStyle::SP_MessageBoxCritical);
-                    dbClose();
-                    return false;
-                }
 
-                //Update schema.
-                if (UpdateDBShema(sVerBDD)) {
-                    sVerBDD = DbVersion;
-                    ReadOnlyDb=false;
+                    //Update schema.
+                    if (UpdateDBShema(sVerBDD)) {
+                        sVerBDD = DbVersion;
+                        ReadOnlyDb=false;
 
-                    //Delete backup file.
-                    FileInfo.setFileName(FileName+"-backup");
-                    if (!FileInfo.remove()) {
-                        MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
-                                          FileName+"-backup","",QStyle::SP_MessageBoxWarning);
-                    }
-                } else {
-                    dbClose();
+                        //Delete backup file.
+                        FileInfo.setFileName(FileName+"-backup");
+                        if (!FileInfo.remove()) {
+                            MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                                              FileName+"-backup","",QStyle::SP_MessageBoxWarning);
+                        }
+                    } else {
+                        dbClose();
 
-                    //Restore old db file.
-                    FileInfo.setFileName(FileName+"-crashed");
-                    if (FileInfo.exists())
+                        //Restore old db file.
+                        FileInfo.setFileName(FileName+"-crashed");
+                        if (FileInfo.exists())
+                            FileInfo.remove();
+
+                        FileInfo.setFileName(FileName);
+                        FileInfo.copy(FileName+"-crashed");
                         FileInfo.remove();
+                        FileInfo.setFileName(FileName+"-backup");
+                        if (FileInfo.copy(FileName))
+                            MessageDialog(tr("Le fichier")+"\n"+
+                                              FileName+"\n"+
+                                              tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation);
+                        else
+                            MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                                              FileName+"-backup\n"+
+                                              tr("vers le fichier")+"\n"+
+                                              FileName,"",QStyle::SP_MessageBoxCritical);
 
-                    FileInfo.setFileName(FileName);
-                    FileInfo.copy(FileName+"-crashed");
-                    FileInfo.remove();
-                    FileInfo.setFileName(FileName+"-backup");
-                    if (FileInfo.copy(FileName))
-                        MessageDialog(tr("Le fichier")+"\n"+
-                                          FileName+"\n"+
-                                          tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation);
-                    else
-                        MessageDialog(tr("Impossible de copier le fichier")+"\n"+
-                                          FileName+"-backup\n"+
-                                          tr("vers le fichier")+"\n"+
-                                          FileName,"",QStyle::SP_MessageBoxCritical);
-
-                    return false;
+                        result=false;
+                    }
                 }
             } else {
                 MessageDialog(tr("La version de cette BDD est trop %1,"
@@ -277,7 +284,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                               tr("Version attendue: %1").arg(DbVersion),"",QStyle::SP_MessageBoxWarning);
 
             }
-        } else {
+        } else if (result) {
             ReadOnlyDb=false;
         }
 
@@ -288,28 +295,83 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         //     dbClose();
         //     return false;
         // }
-    } else if (UpdateDBShema(sNew)) {
+    } else if (result and UpdateDBShema(sNew)) {
         sVerBDD=DbVersion;
         ReadOnlyDb=false;
     } else {
         dbClose();
-        return false;
+        result=false;
     }
 
-    setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
+    if (result) {
+        setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
 
-    //Activer les menus
-    SetEnabledDataMenuEntries(true);
-    ui->lDBErr->clear();
+        //Activer les menus
+        SetEnabledDataMenuEntries(true);
+        ui->lDBErr->clear();
+    }
 
-   //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
+    //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
-    if (ReadOnlyDb)
-        SetColoredText(ui->lDBErr, tr("Base de données en lecture seule (%1).").arg(sVerBDD), "Info");
-    else
-        SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
+    QFileInfo file(sFichier);
+    QFile imgFile(file.absolutePath()+QDir::toNativeSeparators("/imgtab1.png"));
+    if (result and imgFile.exists()) {
+        QPixmap pixmap(imgFile.fileName());
+        ui->graphicsView->setImage(pixmap);
+    } else {
+        imgFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
+        if (imgFile.exists()) {
+            //Image on first tab.
+            QPixmap pixmap(imgFile.fileName());
+            ui->graphicsView->setImage(pixmap);
+        } else {
+            // ui->graphicsView->setVisible(false);
+            QGraphicsScene *scene = new QGraphicsScene(this);
+            QPixmap pixmap(700,40);
+            pixmap.fill(Qt::transparent);
+            QColor cPen=QColor();
+            if (!isDarkTheme())
+                cPen=QColor("#000000");
+            else
+                cPen=QColor("#ffffff");
+            cPen=QApplication::palette().color(QPalette::WindowText);
+            QPainter painter(&pixmap);
+            painter.setPen(cPen);
+            QFont font( "Arial", 10); //, QFont::Bold
+            painter.setFont(font);
 
-    return true;
+            QRect rect(5, 2, 690, 15);
+            painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
+            rect.setRect(5, 17, 690, 15);
+            painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
+            scene->addPixmap(pixmap);
+            ui->graphicsView->setScene(scene);
+        }
+    }
+
+    QFile mdFile(file.absolutePath()+QDir::toNativeSeparators("/texttab1.md"));
+    if (result and mdFile.exists()) {
+        mdFile.open(QFile::ReadOnly);
+        ui->pteNotes->setMarkdown(mdFile.readAll());
+    } else {
+        mdFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/readme.md"));
+        if (mdFile.exists()) {
+            mdFile.open(QFile::ReadOnly);
+            ui->pteNotes->setMarkdown(mdFile.readAll());
+        } else
+            ui->pteNotes->setPlainText(tr("Fichiers non trouvés :")+"\n"+
+                                       file.absolutePath()+QDir::toNativeSeparators("/texttab1.md")+"\n"+
+                                       QApplication::applicationDirPath()+QDir::toNativeSeparators("/readme.md"));
+    }
+
+    if (result) {
+        if (ReadOnlyDb)
+            SetColoredText(ui->lDBErr, tr("Base de données en lecture seule (%1).").arg(sVerBDD), "Info");
+        else
+            SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
+    }
+
+    return result;
 }
 
 void MainWindow::PotaDbClose()
@@ -358,47 +420,6 @@ void MainWindow::RestaureParams()
             on_mCreerBDDVide_triggered();
     } else
         PotaDbOpen(settings.value("database_path").toString(),"",false);
-
-    QFile mdFile;
-    mdFile.setFileName(QApplication::applicationDirPath()+"/readme.md");
-    if (mdFile.exists()) {
-        qDebug() << mdFile.fileName();
-        mdFile.open(QFile::ReadOnly);
-        ui->pteNotes->setMarkdown(mdFile.readAll());
-    } else
-        ui->pteNotes->setPlainText(tr("Fichier non trouvé :")+"\n"+
-                                   QApplication::applicationDirPath()+"/readme.md");
-
-    QFile imgFile(QApplication::applicationDirPath()+"/infotab1.png");
-    QGraphicsScene *scene = new QGraphicsScene(this);
-    if (imgFile.exists()) {
-        qDebug() << imgFile.fileName();
-        //Image on first tab.
-        QPixmap pixmap(imgFile.fileName());
-        scene->addPixmap(pixmap);
-    } else {
-        //ui->graphicsView->setVisible(false);
-        QPixmap pixmap(700,40);
-        pixmap.fill(Qt::transparent);
-        QColor cPen=QColor();
-        if (!isDarkTheme())
-            cPen=QColor("#000000");
-        else
-            cPen=QColor("#ffffff");
-        cPen=QApplication::palette().color(QPalette::WindowText);
-        QPainter painter(&pixmap);
-        painter.setPen(cPen);
-        QFont font( "Arial", 10); //, QFont::Bold
-        painter.setFont(font);
-
-        QRect rect(5, 2, 690, 15);
-        painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
-        rect.setRect(5, 17, 690, 15);
-        painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+"/infotab1.png");
-        scene->addPixmap(pixmap);
-    }
-    ui->graphicsView->setScene(scene);
-    //ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 
     PathExport=settings.value("PathExport").toString();
     PathImport=settings.value("PathImport").toString();

@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR=$(dirname "$0")
-echo $1 | sudo apt-get update
-echo $1 | sudo apt-get install libxcb-cursor0
+echo $1 | sudo -S apt-get update
+echo $1 | sudo -S apt-get install libxcb-cursor0
 
 #Lanceur
 LANCEUR="$HOME/.local/share/applications/Potaleger.desktop"

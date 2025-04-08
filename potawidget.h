@@ -93,7 +93,7 @@ public:
         }
         if (role==Qt::DisplayRole and !data(index,Qt::EditRole).isNull()) {
             // Because model->select() is overriden, the code below isn't necessary.
-            // QString columnName = headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
+            // QString columnName = headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString();
             // if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) {
             //     PotaQuery query;
             //     QString primaryKey=PrimaryKeyFieldName(RealTableName());
@@ -122,7 +122,7 @@ public:
                     return "Err:"+data(index,Qt::EditRole).toString(); //Not number format
                 else
                     return QString::number(data(index,Qt::EditRole).toFloat(),'f', 2);
-            } else if (StrLast(headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString(),3)=="_pc") {
+            } else if (StrLast(headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString(),3)=="_pc") {
                 return data(index,Qt::EditRole).toString()+"%";
             }
         }
@@ -330,7 +330,7 @@ private:
                     if (index.isValid() and
                         (clipboardData[iCB][jCB] != "erbg-Ds45") and (!clipboardData[iCB][jCB].isEmpty()) and
                         !m->nonEditableColumns.contains(index.column())) {
-                        if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString())=="DATE") {
+                        if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString())=="DATE") {
                             for (const QString &format : formats) {
                                 date = QDate::fromString(clipboardData[iCB][jCB], format);
                                 if (date.isValid()) {
@@ -379,6 +379,7 @@ public:
         //setStretchLastSection(false);
     }
     int iSortCol = 0;
+    mutable bool inPaintSection=false;
 
 protected:
     bool bSortDes = false;

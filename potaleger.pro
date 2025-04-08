@@ -22,6 +22,7 @@ SOURCES += \
     PotaUtils.cpp \
     SQL/FunctionsSQLite.cpp \
     Structure.cpp \
+    classes/zoomgraphicsview.cpp \
     data/Data.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
 HEADERS += \
     PotaUtils.h \
     SQL/FunctionsSQLite.h \
+    classes/zoomgraphicsview.h \
     data/Data.h \
     mainwindow.h \
     potawidget.h \

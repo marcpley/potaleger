@@ -423,6 +423,14 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                iif(rec.value(rec.indexOf("Date_semis")).isNull(),
                    "Plant "+rec.value(rec.indexOf("Date_Plantation")).toString(),
                    "Semis "+rec.value(rec.indexOf("Date_semis")).toString()).toString();
+    else if (TableName=="Cult_planif_espèces")
+        result=rec.value(rec.indexOf("Espèce")).toString()+" - "+
+               rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
+               rec.value(rec.indexOf("Longueur")).toString()+"m";
+    else if (TableName=="Cult_planif_ilots")
+        result=QObject::tr("Ilot ")+rec.value(rec.indexOf("Ilot")).toString()+" - "+
+               rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
+               rec.value(rec.indexOf("Longueur")).toString()+"m";
     else if (TableName.startsWith("Destinations"))
         result=rec.value(rec.indexOf("Destination")).toString()+" - "+
                rec.value(rec.indexOf("Date_RAZ")).toString()+" - "+
@@ -447,14 +455,10 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
         result=rec.value(rec.indexOf("IT_plante")).toString()+" - "+
                rec.value(rec.indexOf("Type_planche")).toString()+" - "+
                rec.value(rec.indexOf("Type_culture")).toString();
-    else if (TableName=="Cult_planif_espèces")
-        result=rec.value(rec.indexOf("Espèce")).toString()+" - "+
-               rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
-               rec.value(rec.indexOf("Longueur")).toString()+"m";
-    else if (TableName=="Cult_planif_ilots")
-        result=QObject::tr("Ilot ")+rec.value(rec.indexOf("Ilot")).toString()+" - "+
-               rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
-               rec.value(rec.indexOf("Longueur")).toString()+"m";
+    else if (TableName=="Notes")
+        result=rec.value(rec.indexOf("ID")).toString()+" - "+
+               rec.value(rec.indexOf("Type")).toString()+" - "+
+               rec.value(rec.indexOf("Description")).toString();
     else if (TableName=="Params")
         result=rec.value(rec.indexOf("Section")).toString()+" · "+
                  rec.value(rec.indexOf("Paramètre")).toString()+" : "+

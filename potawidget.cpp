@@ -335,7 +335,7 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
         else
             lRowSummary->setText("...");
 
-        QString FieldName=model->headerData(cur.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+        QString FieldName=model->headerData(cur.column(),Qt::Horizontal,Qt::EditRole).toString();
 
         if (filterFrame->isVisible()) {
             if (!pbFilter->isChecked()) {
@@ -462,7 +462,7 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     QAction mEditNotes(tr("Editer"), this);
 
     QModelIndex index = tv->indexAt(pos);
-    QString FieldName = model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+    QString FieldName = model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
 
     mEditNotes.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
     mEditNotes.setCheckable(true);
@@ -490,7 +490,7 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
 
 void PotaWidget::hDefColWidth() {
     for (int i=0; i<model->columnCount();i++) {
-        int iWidth=DefColWidth(model->db, model->tableName(),model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString());
+        int iWidth=DefColWidth(model->db, model->tableName(),model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
         if (iWidth<=0 or iWidth>500)
             tv->resizeColumnToContents(i);
         else
@@ -647,15 +647,15 @@ void PotaWidget::RefreshHorizontalHeader() {
     for (int i=0; i<model->columnCount();i++)             {
         delegate->PaintedColsTitles.append("");
         delegate->PaintedColsTypes.append("");
-        if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("TEMPO")){
+        if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO")){
             //delegate->PaintedCols.insert(i);
             delegate->PaintedColsTypes[i]="Tempo";
-            if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()!="TEMPO"){//Multiple TEMPO columns
-                if (StrLast(model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),2)=="NP") {
+            if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()!="TEMPO"){//Multiple TEMPO columns
+                if (StrLast(model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),2)=="NP") {
                     delegate->PaintedColsTitles[i]=str(saison-1);
                     if (QDate::currentDate().toString("yyyy").toInt()==saison-1)
                         delegate->PaintedColsTypes[i]="TempoNow";
-                } else if (StrLast(model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString(),2)=="NN") {
+                } else if (StrLast(model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),2)=="NN") {
                     delegate->PaintedColsTitles[i]=str(saison+1);
                     if (QDate::currentDate().toString("yyyy").toInt()==saison+1)
                         delegate->PaintedColsTypes[i]="TempoNow";
@@ -664,18 +664,18 @@ void PotaWidget::RefreshHorizontalHeader() {
                     if (QDate::currentDate().toString("yyyy").toInt()==saison)
                         delegate->PaintedColsTypes[i]="TempoNow";
                 }
-                if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()!="TEMPO")
+                if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()!="TEMPO")
                     phv->setSectionResizeMode(i, QHeaderView::Fixed);
             }
-        } else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("Prod_N")) {
+        } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Prod_N")) {
             delegate->PaintedColsTypes[i]="TitleRed";
-            if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Prod_Nm1")
+            if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_Nm1")
                 delegate->PaintedColsTitles[i]=str(saison-1);
-            else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Prod_N")
+            else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_N")
                 delegate->PaintedColsTitles[i]=str(saison);
-            else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()=="Prod_Np1")
+            else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_Np1")
                 delegate->PaintedColsTitles[i]=str(saison+1);
-        } else if (model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().startsWith("Couv_N")) {
+        } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Couv_N")) {
             delegate->PaintedColsTypes[i]="Title";
             delegate->PaintedColsTitles[i]="Perf";
         }
@@ -862,7 +862,7 @@ void PotaWidget::pbEditClick(){
         pbDeleteRow->setVisible(true);
         model->nonEditableColumns.clear();
         for (int i=0; i<model->columnCount();i++) {
-            if (ReadOnly(model->db, model->tableName(),model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()))
+            if (ReadOnly(model->db, model->tableName(),model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
                 model->nonEditableColumns.insert(i);
         }
         pbEdit->setIcon(QIcon(":/images/editOn.svg"));
@@ -1063,11 +1063,11 @@ void PotaWidget::cbFilterTypeChanged(int i){
                 iTypeReal=i;
             }
 
-            // qDebug() << "headerdata: "+model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+            // qDebug() << "headerdata: "+model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
             // qDebug() << "sFieldNameFilter: "+sFieldNameFilter;
             // qDebug() << "data: "+index.data(Qt::DisplayRole).toString();
             // qDebug() << "sDataFilter: "+sDataFilter;
-            // if(model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString()!=sFieldNameFilter){//sDataTypeFilter
+            // if(model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString()!=sFieldNameFilter){//sDataTypeFilter
             //     sDataFilter=index.data(Qt::DisplayRole).toString();
             // }
 
@@ -1153,7 +1153,7 @@ void PotaWidget::pbFindPrevClick(){
 
 int PotaTableModel::FieldIndex(QString FieldName){
     for (int i=0;i<columnCount();i++){
-        if (headerData(i,Qt::Horizontal,Qt::DisplayRole).toString()==FieldName)
+        if (headerData(i,Qt::Horizontal,Qt::EditRole).toString()==FieldName)
             return i;
     }
     return -1;
@@ -1162,7 +1162,7 @@ int PotaTableModel::FieldIndex(QString FieldName){
 
 QString PotaTableModel::FieldName(int index)
 {
-    return headerData(index,Qt::Horizontal,Qt::DisplayRole).toString();
+    return headerData(index,Qt::Horizontal,Qt::EditRole).toString();
     // PotaQuery *q = dynamic_cast<PotaWidget*>(parent())->query;
     // q->ExecShowErr("PRAGMA table_xinfo("+tableName()+");");
 
@@ -1178,8 +1178,6 @@ bool PotaTableModel::select()  {
     //If use of QSqlRelationalTableModel select(), the generated columns and null FK value rows are not displayed. #FKNull
 
     //dbSuspend(db,false,true,label);
-
-
 
     if (!bBatch) {
         AppBusy(true,progressBar,0,tableName()+" %p%");
@@ -1284,7 +1282,6 @@ bool PotaTableModel::select()  {
 
 bool PotaTableModel::SelectShowErr()
 {
-
     for (int i=0;i<columnCount();i++) {
         if (relationModel(i)){
             //relationModel(i)->select();//FkNull
@@ -1442,7 +1439,7 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PotaHeaderView::paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const {
-
+    if (inPaintSection) return;
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent()->parent());
     QString title=pw->delegate->PaintedColsTitles[logicalIndex];
     if (pw->delegate->PaintedColsTypes[logicalIndex].startsWith("Tempo")) {
@@ -1502,16 +1499,25 @@ void PotaHeaderView::paintSection(QPainter *painter, const QRect &rect, int logi
             painter->drawText(rect.left()+9,rect.top() + rect.height()-5, title);
         }
     } else {
-        QString FieldName=pw->model->headerData(logicalIndex,Qt::Horizontal,Qt::DisplayRole).toString();
-        QString DisplayName=FieldName;
-        if (DisplayName.endsWith("_pc"))
-            DisplayName=StrReplace(DisplayName,"_pc","%");
-        DisplayName=StrReplace(DisplayName,"_"," ");
-        pw->model->setHeaderData(logicalIndex, Qt::Horizontal,DisplayName);
+        // QString FieldName=pw->model->headerData(logicalIndex,Qt::Horizontal,Qt::EditRole).toString();
+        // QString DisplayName=FieldName;
+        // if (DisplayName.endsWith("_pc"))
+        //     DisplayName=StrReplace(DisplayName,"_pc","%");
+        // DisplayName=StrReplace(DisplayName,"_"," ");
+        // //painter->drawText(rect.left()+9,rect.top() + rect.height()-5, DisplayName);
+
+        // inPaintSection=true;
+        // pw->model->setHeaderData(logicalIndex, Qt::Horizontal,DisplayName);
+        // QCoreApplication::processEvents(); cause a crash
+        // inPaintSection=false;
 
         QHeaderView::paintSection(painter, rect, logicalIndex);
 
-        pw->model->setHeaderData(logicalIndex, Qt::Horizontal,FieldName);
+        // inPaintSection=true;
+        // pw->model->setHeaderData(logicalIndex, Qt::Horizontal,FieldName);
+        // QCoreApplication::processEvents();
+        // inPaintSection=false;
+
     }
 }
 
@@ -1816,7 +1822,7 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
     }
 
     PotaTableModel *model = const_cast<PotaTableModel *>(constModel);
-    QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::DisplayRole).toString();
+    QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
     QString sDataType=model->dataTypes[index.column()];
     if (model->relation(index.column()).isValid()) {
         //Create QComboBox for relational columns

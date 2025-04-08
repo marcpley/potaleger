@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
@@ -152,11 +152,20 @@
           </layout>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item>
-            <widget class="QGraphicsView" name="graphicsView">
+          <widget class="QSplitter" name="vSplitter">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <widget class="QSplitter" name="hSplitter">
+            <property name="mouseTracking">
+             <bool>true</bool>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <widget class="ZoomGraphicsView" name="graphicsView">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -170,13 +179,14 @@
              <property name="sizeAdjustPolicy">
               <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
              </property>
+             <property name="renderHints">
+              <set>QPainter::RenderHint::Antialiasing|QPainter::RenderHint::SmoothPixmapTransform|QPainter::RenderHint::TextAntialiasing</set>
+             </property>
             </widget>
-           </item>
-           <item>
             <widget class="QFrame" name="frame_2">
              <property name="minimumSize">
               <size>
-               <width>150</width>
+               <width>200</width>
                <height>0</height>
               </size>
              </property>
@@ -230,20 +240,24 @@
               </property>
              </widget>
             </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QTextEdit" name="pteNotes">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
+           </widget>
+           <widget class="QTextEdit" name="pteNotes">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>200</height>
+             </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
           </widget>
          </item>
         </layout>
@@ -1034,6 +1048,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ZoomGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>classes/zoomgraphicsview.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="images/images.qrc"/>
  </resources>
