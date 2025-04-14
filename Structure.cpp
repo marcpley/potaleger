@@ -143,6 +143,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-04-04 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-04-04";
         }
+        if (bResult and(sDBVersion == "2025-04-04")) { //Views and triggers update.
+            sResult.append(sDBVersion+" -> 2025-04-12 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-04-12";
+        }
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);

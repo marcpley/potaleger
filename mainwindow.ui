@@ -507,7 +507,6 @@
     <addaction name="mFournisseurs"/>
     <addaction name="mVarietes"/>
     <addaction name="mApports"/>
-    <addaction name="mTypes_de_planche"/>
     <addaction name="mITP"/>
     <addaction name="mITPTempo"/>
    </widget>
@@ -879,14 +878,6 @@
    </property>
    <property name="text">
     <string>Faire une copie de  la BDD</string>
-   </property>
-  </action>
-  <action name="mTypes_de_planche">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Types de planche</string>
    </property>
   </action>
   <action name="mITRotationsIlots">

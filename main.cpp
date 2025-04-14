@@ -407,7 +407,8 @@ void MainWindow::RestaureParams()
     else
         ui->cbFont->setCurrentText("10");
 
-    if (settings.value("database_path").toString().isEmpty()) {
+    if (settings.value("database_path").toString().isEmpty() or
+        !PotaDbOpen(settings.value("database_path").toString(),"",false)) {
         int choice = RadiobuttonDialog(tr("Potaléger stoque ses données dans un fichier unique à l'emplacement de votre choix."),
                                        {tr("Sélectionner une base de données existante"),
                                         tr("Créer une BDD avec les données de base"),
@@ -418,8 +419,9 @@ void MainWindow::RestaureParams()
             on_mCreerBDD_triggered();
         else if (choice==2)
             on_mCreerBDDVide_triggered();
-    } else
-        PotaDbOpen(settings.value("database_path").toString(),"",false);
+    }
+     // else
+     //    PotaDbOpen(settings.value("database_path").toString(),"",false);
 
     PathExport=settings.value("PathExport").toString();
     PathImport=settings.value("PathImport").toString();
@@ -481,6 +483,7 @@ void MainWindow::SetUi(){
 
     SetMenuIcons();
 
+
     if (false) {
         QPalette palette = QApplication::palette();
 
@@ -511,7 +514,7 @@ void MainWindow::SetMenuIcons() {
     ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
     ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
     ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
-    ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
+    // ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
     ui->mITPTempo->setIcon(QIcon(TablePixmap("ITP__Tempo","T")));
 
     ui->mRotations->setIcon(QIcon(TablePixmap("Rotations","T")));

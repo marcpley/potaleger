@@ -385,6 +385,7 @@ CREATE TRIGGER Destinations__conso_INSERT INSTEAD OF INSERT ON Destinations__con
 BEGIN
     INSERT INTO Destinations (
         Destination,
+        Type,
         Adresse,
         Site_web,
         Date_RAZ,
@@ -392,6 +393,7 @@ BEGIN
         Notes)
     VALUES (
         NEW.Destination,
+        NEW.Type,
         NEW.Adresse,
         NEW.Site_web,
         NEW.Date_RAZ,
@@ -404,6 +406,7 @@ CREATE TRIGGER Destinations__conso_UPDATE INSTEAD OF UPDATE ON Destinations__con
 BEGIN
     UPDATE Destinations SET
         Destination=NEW.Destination,
+        Type=NEW.Type,
         Adresse=NEW.Adresse,
         Site_web=NEW.Site_web,
         Date_RAZ=NEW.Date_RAZ,

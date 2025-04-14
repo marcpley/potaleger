@@ -20,6 +20,16 @@ bool AcceptReturns(const QString sFieldName) {
            sFieldName=="Texte";
 }
 
+QString ComboField(const QString sTableName,const QString sFieldName) {
+    //Valable uniquement pour les champs modifiables.
+    if (sFieldName=="Type" or
+        sFieldName=="Irrig")
+        return sTableName+"_"+sFieldName;
+    else if (sFieldName=="Type_planche")
+        return "Planches_Type";
+    else return "";
+}
+
 int DefColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
     QString sType = DataType(db, sTableName,sFieldName);
     if (sType=="DATE")
@@ -161,7 +171,9 @@ QString NoData(const QString sTableName){
         return QObject::tr("Aucune !\nToutes les espèces marquées 'A planifier' sont suffisamment incluses dans les rotations.\n\n"
                            "L'onglet 'Planification/Cultures prévues par espèce' donne la production prévue par espèce.");
     else if (sTableName=="Récoltes__Saisies")
-        return QObject::tr("Il n'y a aucune culture à récolter pour le moment.");
+        return QObject::tr("Il n'y a aucune culture à récolter pour le moment.\n\n"
+                           "Les récoltes peuvent être saisies avant ou après la période de récolte\n"
+                           "en modifiant les paramètres 'C_avance_saisie_récolte' et 'C_retard_saisie_récolte'.");
     else if (sTableName=="Rotations_détails__Tempo")
         return QObject::tr("Vous devez d'abort saisir au moins une entête de rotation (menu 'Rotations').");
     else
@@ -356,11 +368,11 @@ QColor RowColor(QString sValue, QString sTableName){
         else
             return QColor();
     } else if (sTableName=="Params") {
-        if (sValue.startsWith("Ilot"))
+        if (sValue=="Assolement")
             c=cPlanche;
-        else if (sValue.startsWith("C_"))
+        else if (sValue=="Cultures")
             c=cEnPlace;
-        else if (sValue.startsWith("Conso_"))
+        else if (sValue=="Consommations")
             c=cEspece;
         else
             return QColor();
@@ -587,8 +599,8 @@ QColor TableColor(QString sTName,QString sFName)
         return cCulture;
     else if (sTName.toUpper().startsWith("ROTATIONS"))
         return cRotation;
-    else if (sTName.toUpper().startsWith("TYPES_PLANCHE"))
-        return cBase;
+    // else if (sTName.toUpper().startsWith("TYPES_PLANCHE"))
+    //     return cBase;
     else if (sTName.toUpper().startsWith("VARIÉTÉS"))
         return cVariete;
     else
@@ -635,7 +647,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
 
     //Champs présents dans plusieurs tables avec des significations différentes.
     if (sTableName=="Apports"){
-
+        if (sFieldName=="Type")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Apports_Type').");
     } else if (sTableName=="Consommations" or sTableName.startsWith("Consommations__")){
         if (sFieldName=="Date")
             sToolTip=QObject::tr("Date de sortie de stock.\n"
@@ -646,7 +659,9 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Quantité restante en stock (kg), à cette date.");
         else if (sFieldName=="Sorties")
             sToolTip=QObject::tr("Somme à cette date des sorties (kg) pour cette espèce et cette destination, depuis Date_RAZ de la destination (incluse).");
-
+    } else if (sTableName=="Destinations"){
+        if (sFieldName=="Type")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Destinations_Type').");
     } else if (sTableName=="Cultures" or sTableName.startsWith("Cultures__")){
         if (sFieldName=="Type")
             sToolTip=QObject::tr("Automatique, en fonction des date de semis, plantation et récolte.");
@@ -686,9 +701,13 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
     } else if (sTableName=="Fournisseurs"){
         if (sFieldName=="Priorité")
             sToolTip=QObject::tr("Chez qui commander en priorité.");
+        else if (sFieldName=="Type")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Fournisseurs_Type').");
 
     } else if (sTableName=="ITP" or sTableName.startsWith("ITP__")){
-        if (sFieldName=="Dose_semis")
+        if (sFieldName=="Type_planche")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Planches_Type').");
+        else if (sFieldName=="Dose_semis")
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire SI ESPACEMENT = 0.");
         else if (sFieldName.startsWith("J_"))
             sToolTip=QObject::tr("Nombre de jours pour...")+"\n"+
@@ -700,17 +719,21 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
 
     } else if (sTableName=="Notes"){
         if (sFieldName=="Type")
-            sToolTip=QObject::tr("Type de note (paramétre 'Types_notes').");
+            sToolTip=QObject::tr("Type de note (paramétre 'Combo_Notes_Type').");
         else if (sFieldName=="Notes")
             sToolTip=QObject::tr("Texte de la note (Ctrl + N pour éditer).");
     } else if (sTableName=="Planches"){
-        if (sFieldName=="Longueur")
+        if (sFieldName=="Type")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Planches_Type').");
+        else if (sFieldName=="Longueur")
             sToolTip=QObject::tr("Longueur de la planche (m).");
         else if (sFieldName=="Rotation")
             sToolTip=QObject::tr("Rotation de cultures qui utilise cette planche.");
 
     } else if (sTableName=="Rotations"){
-        if (sFieldName=="Nb_années")
+        if (sFieldName=="Type")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Planches_Type').");
+        else if (sFieldName=="Nb_années")
             sToolTip=QObject::tr(   "Automatique, en fonction des détails de la rotation.\n"
                                     "3 à 6 ans en général.");
 
@@ -749,9 +772,9 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName=="Qté_réc")
             sToolTip=QObject::tr("Quantité totale déja récoltée (kg), à cette date.");
 
-    } else if (sTableName=="Types_planche"){
-        if (sFieldName=="Type")
-            sToolTip=QObject::tr("Par exemple 'Serre', 'Extérieur'...");
+    // } else if (sTableName=="Types_planche"){
+    //     if (sFieldName=="Type")
+    //         sToolTip=QObject::tr("Par exemple 'Serre', 'Extérieur'...");
 
     } else if (sTableName=="Variétés"){
     }
@@ -762,6 +785,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         //Champs existant dans plusieurs tables
         if (sFieldName=="")
             sToolTip=QObject::tr("");
+        else if (sFieldName.startsWith("Couv"))
+            sToolTip=QObject::tr("Pourcentage de couverture des objectifs.");
         else if (sFieldName=="Espacement")
             sToolTip=QObject::tr("Espacement entre 2 plants dans un rang de culture (cm)")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         else if (sFieldName=="IT_plante")
@@ -855,6 +880,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         //Planches
         else if (sFieldName=="Largeur")
             sToolTip=QObject::tr("Largeur de la planche (m).");
+        else if (sFieldName=="Irrig")
+            sToolTip=QObject::tr("Irrigation actuellement installée sur la planche (paramétre 'Combo_Planches_Irrig').");
         //Rotations
         else if (sFieldName=="Année_1")
             sToolTip=QObject::tr("Année de début de la rotation.")+"\n"+QObject::tr("Cette valeur ne doit pas être changée d'une année sur l'autre tant que la rotation se poursuit.");
@@ -967,7 +994,11 @@ QString ToolTipTable(const QString sTableName) {
     else if (sTableName=="Destinations__conso")
         sToolTip=QObject::tr("Destinations des légumes sortis du stock.");
     else if (sTableName=="Espèces")
-        sToolTip=QObject::tr("Plante pouvant se reproduire et engendrer une descendance viable et féconde.\nPermet d'enregistrer:\n- Les caractéristiques des graines.\n- L'amendement nécessaire.");
+        sToolTip=QObject::tr("Plante pouvant se reproduire et engendrer une descendance viable et féconde.\n"
+                             "Permet d'enregistrer:\n"
+                             "- Les caractéristiques des graines.\n"
+                             "- L'amendement nécessaire.\n"
+                             "- Les objectifs de production.");
     else if (sTableName=="Familles")
         sToolTip=QObject::tr("Espèces ayant une certaine proximité phylogénétique.\nPermet de d'enregistrer l'intervale de temps minimum entre 2 cultures d'une même famille.");
     else if (sTableName=="Fournisseurs")
@@ -1000,8 +1031,8 @@ QString ToolTipTable(const QString sTableName) {
                                 "la moitié de chaque planche se terminant par A.");
     else if (sTableName=="Récoltes__Saisies")
         sToolTip=QObject::tr("Quantités de légume récoltées par culture.");
-    else if (sTableName=="Types_planche")
-        sToolTip=QObject::tr("Permet de caractériser les planches de culture.")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
+    // else if (sTableName=="Types_planche")
+    //     sToolTip=QObject::tr("Permet de caractériser les planches de culture.")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
     else if (sTableName=="Variétés")
         sToolTip=QObject::tr("Variété cultivée (cultivar) qui a été sélectionné et choisi pour certaines de ses caractéristiques.\nPermet de gérer les stocks et commandes de semence.");
 

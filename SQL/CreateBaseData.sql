@@ -117,11 +117,11 @@ INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Valérianacées', 3.0
 
 Sensible au mildiou (Peronospora valerianellae), à la sclérotiniose. Rique de de fonte des semis (Pythium, Rhizoctonia).');
 
-INSERT INTO Apports (Apport, Description, Poids_m², Notes) VALUES ('Aucun', NULL, 0.0, NULL);
-INSERT INTO Apports (Apport, Description, Poids_m², Notes) VALUES ('CDM20', 'Compost demi-mûr', 20.0, NULL);
-INSERT INTO Apports (Apport, Description, Poids_m², Notes) VALUES ('CDM40', 'Compost demi-mûr', 40.0, NULL);
-INSERT INTO Apports (Apport, Description, Poids_m², Notes) VALUES ('CM20', 'Compost mûr', 20.0, NULL);
-INSERT INTO Apports (Apport, Description, Poids_m², Notes) VALUES ('CM40', 'Compost mûr', 40.0, NULL);
+INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('Aucun',NULL, NULL, 0.0, NULL);
+INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CDM20','Organique', 'Compost demi-mûr', 20.0, NULL);
+INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CDM40','Organique', 'Compost demi-mûr', 40.0, NULL);
+INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CM20','Organique', 'Compost mûr', 20.0, NULL);
+INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CM40','Organique', 'Compost mûr', 40.0, NULL);
 
 INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Apport, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Ail', 'Alliacées', 0.7, 'Facile', 'Aucun', NULL, NULL, NULL, NULL, NULL, 'Oui', NULL);
 INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Apport, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Aubergine', 'Solanacées', 2.0, 'Difficile', 'CM40', 0.04, 250.0, 6.0, '24-30', 6.0, 'Oui', NULL);
@@ -174,21 +174,21 @@ INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Apport, Dose_semis, N
 INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Apport, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Trèfle violet', 'Fabacées', NULL, NULL, NULL, 2.0, 40.0, NULL, '5-10', 8.0, NULL, 'Pour mélange engrais vert');
 INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Apport, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Vesce', 'Fabacées', NULL, NULL, NULL, 12.0, 45.0, NULL, '5-10', 8.0, NULL, 'Pour mélange engrais vert');
 
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Agrosemens', NULL, 'https://www.agrosemens.com', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Baumaux', NULL, 'https://www.graines-baumaux.fr', NULL);
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Biau germe', NULL, 'https://www.biaugerme.com', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Del Païs', NULL, 'https://grainesdelpais.com', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Essembio', NULL, 'https://essembio.com', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Gautier', NULL, 'https://www.gautiersemences.com', NULL);
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Germinance', NULL, 'https://www.germinance.com', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Kokopelli', NULL, 'https://kokopelli-semences.fr', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Pensez Sauvage', NULL, 'https://pensezsauvage.org', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Prosem', NULL, 'https://www.prosem.fr', NULL);
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Sativa', NULL, 'https://www.sativa-semencesbio.fr', 'Bio');
-INSERT INTO Fournisseurs (Fournisseur, Priorité, Site_web, Notes) VALUES ('Voltz', NULL, 'https://www.graines-voltz.com', NULL);
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Agrosemens','Semences', NULL, 'https://www.agrosemens.com', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Baumaux', 'Semences', NULL, 'https://www.graines-baumaux.fr', NULL);
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Biau germe', 'Semences', NULL, 'https://www.biaugerme.com', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Del Païs', 'Semences', NULL, 'https://grainesdelpais.com', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Essembio', 'Semences', NULL, 'https://essembio.com', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Gautier', 'Semences', NULL, 'https://www.gautiersemences.com', NULL);
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Germinance', 'Semences', NULL, 'https://www.germinance.com', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Kokopelli', 'Semences', NULL, 'https://kokopelli-semences.fr', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Pensez Sauvage', 'Semences', NULL, 'https://pensezsauvage.org', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Prosem', 'Semences', NULL, 'https://www.prosem.fr', NULL);
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Sativa', 'Semences', NULL, 'https://www.sativa-semencesbio.fr', 'Bio');
+INSERT INTO Fournisseurs (Fournisseur, Type, Priorité, Site_web, Notes) VALUES ('Voltz', 'Semences', NULL, 'https://www.graines-voltz.com', NULL);
 
-INSERT INTO Types_planche (Type, Notes) VALUES ('Extérieur', NULL);
-INSERT INTO Types_planche (Type, Notes) VALUES ('Serre', NULL);
+-- INSERT INTO Types_planche (Type, Notes) VALUES ('Extérieur', NULL);
+-- INSERT INTO Types_planche (Type, Notes) VALUES ('Serre', NULL);
 
 INSERT INTO Planches (Planche, Type, Longueur, Largeur, Rotation, Année, Notes) VALUES ('GC1A', 'Extérieur', 50.0, 1.0, 'Grande culture', 3, NULL);
 INSERT INTO Planches (Planche, Type, Longueur, Largeur, Rotation, Année, Notes) VALUES ('GC1B', 'Extérieur', 50.0, 1.0, 'Grande culture', 3, NULL);
@@ -289,7 +289,7 @@ INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_p
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Epinard de printemps', 'Epinard', 'Extérieur', '02-15', '04-15', NULL, NULL, '04-15', '06-15', 3.0, 2.0, 1.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Fenouil', 'Fenouil', 'Extérieur', '07-15', '09-01', NULL, NULL, '11-01', '01-01', 2.0, 2.0, 1.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Fève', 'Fève', 'Extérieur', '09-15', '11-15', NULL, NULL, '04-01', '07-01', 2.0, 15.0, 1.0, NULL, NULL);
-INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Haricot SD-Ext', 'Haricot mangetout à écosser', 'Extérieur', '04-15', '08-15', NULL, NULL, '06-15', '11-01', 2.0, 30.0, 4.0, NULL, NULL);
+INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Haricot SD-Ext', 'Haricot mangetout', 'Extérieur', '04-15', '08-15', NULL, NULL, '06-15', '11-01', 2.0, 30.0, 4.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Haricot SSA-Ser', 'Haricot mangetout', 'Serre', '03-01', '05-01', '04-01', '06-01', '06-01', '11-01', 2.0, 40.0, 4.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Haricot Tarbais (maïs)', 'Haricot à écosser', 'Extérieur', '05-01', '06-01', NULL, NULL, '10-15', '11-01', 2.0, 25.0, 1.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Laitue plant. automne ext', 'Laitue', 'Extérieur', '08-15', '09-15', '09-01', '10-01', '04-01', '06-15', 3.0, 30.0, 2.0, NULL, NULL);

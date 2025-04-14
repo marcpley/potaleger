@@ -133,7 +133,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 //Store field name in header EditRole.
                 w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole),Qt::EditRole);
                 //Store corrected field name in header DisplayRole.
-                w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().replace("_pc","%").replace("_"," "),Qt::DisplayRole);
+                w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().replace("_pc","").replace("_"," "),Qt::DisplayRole);
 
                 //Table color.
                 w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
@@ -142,7 +142,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                     w->delegate->RowColorCol=i;
                 else if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="num_planche")
                     w->delegate->RowColorCol=i;
-                else if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Paramètre")
+                else if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Section")
                     w->delegate->RowColorCol=i;
 
                 //Tooltip
@@ -470,7 +470,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
 void MainWindow::on_mAPropos_triggered()
 {
-    MessageDialog("Auteur: Marc Pleysier ...................................................................<br>"
+    MessageDialog("Auteur: Marc Pleysier<br>"
                   "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
                   "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
                   "<b>Crédits</b>:<br>"
@@ -479,7 +479,7 @@ void MainWindow::on_mAPropos_triggered()
                   "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
                   "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a><br>"
-                  "ChatGPT, hé oui...<br>"
+                  "IA: ChatGPT, Mistral et Copilot<br>"
                   "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
                   QStyle::NStandardPixmap);
 }
@@ -901,7 +901,7 @@ void MainWindow::on_mFournisseurs_triggered()
 
 void MainWindow::on_mTypes_de_planche_triggered()
 {
-    OpenPotaTab("TypesPlanche","Types_planche",tr("Types planche"));
+    // OpenPotaTab("TypesPlanche","Types_planche",tr("Types planche"));
 }
 
 void MainWindow::on_mITPTempo_triggered()
@@ -988,7 +988,7 @@ void MainWindow::on_mCreerCultures_triggered()
     QString CultAVenir;
     if(NbCultAVenir>0) {
         icon=QStyle::SP_MessageBoxWarning;
-        CultAVenir="\n\n"+tr("IL Y A DÉJÀ %1 CULTURES NI SEMÉES NI PLANTÉES.").arg(NbCultAVenir)+"\n"+
+        CultAVenir="<br><br>"+tr("IL Y A DÉJÀ %1 CULTURES NI SEMÉES NI PLANTÉES.").arg(NbCultAVenir)+"<br>"+
                    iif(NbCultAVenir>NbCultPlanif*0.9,tr("Peut-être avez-vous déjà généré les prochaines cultures."),"").toString();
     } else {
         icon=QStyle::SP_MessageBoxQuestion;
@@ -1138,6 +1138,8 @@ void MainWindow::on_mIncDatesCultures_triggered()
 {
     OpenPotaTab("Cultures_inc_dates","Cultures__inc_dates",tr("Inc. dates cultures"));
 }
+
+// Local params
 
 void MainWindow::on_cbTheme_currentIndexChanged(int index)
 {

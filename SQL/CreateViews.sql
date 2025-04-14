@@ -35,6 +35,7 @@ ORDER BY Co.Date,E.Espèce,D.Destination;
 
 CREATE VIEW Destinations__conso AS SELECT
     D.Destination,
+    D.Type,
     D.Adresse,
     D.Site_web,
     D.Date_RAZ,
@@ -338,8 +339,8 @@ CREATE VIEW Cult_planif_ilots AS SELECT
     min(Date_plantation) Date_plantation,
     CAST(count() AS INTEGER) Nb_planches,
     CAST(sum(C.Longueur)AS REAL) Longueur,
-    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1))AS REAL) Long_rang,
-    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1)/coalesce(C.Espacement/100,1)) AS INTEGER) Nb_plants,
+    CAST(sum(C.Longueur*C.Nb_rangs)AS REAL) Long_rang,
+    CAST(sum(C.Longueur*C.Nb_rangs/C.Espacement/100) AS INTEGER) Nb_plants,
     CAST(sum(C.Surface)AS REAL) Surface,
     CAST(sum(C.Prod_possible)AS REAL) Prod_possible,
     -- CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
@@ -352,8 +353,8 @@ CREATE VIEW Cult_planif_espèces AS SELECT
     C.Espèce,
     CAST(count() AS INTEGER) Nb_planches,
     CAST(sum(C.Longueur)AS REAL) Longueur,
-    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1))AS REAL) Long_rang,
-    CAST(sum(C.Longueur*coalesce(C.Nb_rangs,1)/coalesce(C.Espacement/100,1)) AS INTEGER) Nb_plants,
+    CAST(sum(C.Longueur*C.Nb_rangs)AS REAL) Long_rang,
+    CAST(sum(C.Longueur*C.Nb_rangs/C.Espacement/100) AS INTEGER) Nb_plants,
     CAST(sum(C.Surface)AS REAL) Surface,
     E.Rendement,
     E.Obj_annuel,
@@ -397,10 +398,26 @@ ORDER BY Espèce;
 --   FROM Planches PL;
 
 CREATE VIEW Cultures__Tempo AS SELECT
-       -- row_number() OVER (ORDER BY Planche) AS num_planche,
-       -- rank() OVER (ORDER BY Planche) AS num_planche,
+    num_planche,
+    Planche,
+    Culture,
+    Variété_ou_It_plante,
+    (TEMPO_NP || CASE WHEN Planche!=Lag THEN coalesce(Irrig,'') ELSE iif(Irrig NOTNULL,'x','') END) TEMPO_NP,
+    (TEMPO_N  || CASE WHEN Planche!=Lag THEN coalesce(Irrig,'') ELSE iif(Irrig NOTNULL,'x','') END) TEMPO_N,
+    (TEMPO_NN || CASE WHEN Planche!=Lag THEN coalesce(Irrig,'') ELSE iif(Irrig NOTNULL,'x','') END) TEMPO_NN,
+    Saison,
+    Longueur,
+    Nb_rangs,
+    Surface,
+    Notes
+FROM Cultures__Tempo2;
+
+CREATE VIEW Cultures__Tempo2 AS SELECT
        dense_rank() OVER (ORDER BY Planche) AS num_planche,
+       -- row_number() OVER (ORDER BY Planche) AS num_planche2,
+       -- rank() OVER (ORDER BY Planche) AS num_planche3,
        C.Planche,
+       lag(Planche) OVER (ORDER BY Planche,coalesce(C.Date_semis, C.Date_plantation)) AS Lag,
        C.Culture,
        coalesce(C.Variété,C.IT_plante) Variété_ou_It_plante,
        -- C.Type,
@@ -410,20 +427,21 @@ CREATE VIEW Cultures__Tempo AS SELECT
        -- C.Fin_récolte,
        CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)AS TEXT)
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
-                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')
-            ELSE NULL END TEMPO_NP,
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
+            ELSE '::::::::::' END TEMPO_NP,
        CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
-            coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')
-            ELSE NULL END TEMPO_N,
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
+            ELSE '::::::::::' END TEMPO_N,
        CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)AS TEXT)
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
-            coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')
-            ELSE NULL END TEMPO_NN,
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
+            ELSE '::::::::::' END TEMPO_NN,
        C.Saison,
        C.Longueur,
        C.Nb_rangs,
        C.Longueur*PL.Largeur Surface,
+       PL.Irrig,
        C.Notes
   FROM Cultures C
        LEFT JOIN ITP I USING(IT_plante)
@@ -446,8 +464,8 @@ CREATE VIEW Cultures__non_terminées AS SELECT
         C.Type,
         C.Saison,
         CASE WHEN Variété NOTNULL AND IT_plante NOTNULL AND
-                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=IT_plante)!=
-                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=Variété)) THEN 'Err. variété'
+                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=C.IT_plante)!=
+                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=C.Variété)) THEN 'Err. variété'
              ELSE C.Etat
              END Etat,
         C.D_planif,
@@ -485,8 +503,8 @@ CREATE VIEW Cultures__à_semer AS SELECT
         C.Fournisseur,
         C.Type,
         CASE WHEN Variété NOTNULL AND IT_plante NOTNULL AND
-                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=IT_plante)!=
-                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=Variété)) THEN 'Err. variété'
+                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=C.IT_plante)!=
+                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=C.Variété)) THEN 'Err. variété'
              ELSE C.Etat
              END Etat,
         C.D_planif,
@@ -565,8 +583,8 @@ CREATE VIEW Cultures__à_semer_D AS SELECT
         C.Fournisseur,
         C.Type,
         CASE WHEN Variété NOTNULL AND IT_plante NOTNULL AND
-                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=IT_plante)!=
-                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=Variété)) THEN 'Err. variété'
+                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=C.IT_plante)!=
+                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=C.Variété)) THEN 'Err. variété'
              ELSE C.Etat
              END Etat,
         C.D_planif,
@@ -607,8 +625,8 @@ CREATE VIEW Cultures__à_planter AS SELECT
         C.Fournisseur,
         C.Type,
         CASE WHEN Variété NOTNULL AND IT_plante NOTNULL AND
-                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=IT_plante)!=
-                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=Variété)) THEN 'Err. variété'
+                  ((SELECT I.Espèce FROM ITP I WHERE I.IT_plante=C.IT_plante)!=
+                   (SELECT V.Espèce FROM Variétés V WHERE V.Variété=C.Variété)) THEN 'Err. variété'
              ELSE C.Etat
              END Etat,
         C.D_planif,
@@ -783,7 +801,7 @@ CREATE VIEW Cultures__analyse AS SELECT
        E.Rendement,
        CASE WHEN E.Rendement NOTNULL
        THEN round(((SELECT sum(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture)/(C.Longueur*PL.Largeur))/E.Rendement*100)
-       ELSE NULL END Perf_pc,
+       ELSE NULL END Couv_pc,
        CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce TEMPO,
        C.Notes
   FROM Cultures C

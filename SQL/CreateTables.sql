@@ -3,6 +3,7 @@ QString sDDLTables = QStringLiteral(R"#(
 -- BEGIN TRANSACTION;
 
 CREATE TABLE Apports (Apport TEXT PRIMARY KEY COLLATE POTACOLLATION,
+                      Type TEXT COLLATE POTACOLLATION,
                       Description TEXT COLLATE POTACOLLATION,
                       Poids_m² REAL,
                       Notes TEXT) WITHOUT ROWID;
@@ -51,6 +52,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Notes TEXT);
 
 CREATE TABLE Destinations (Destination TEXT PRIMARY KEY COLLATE POTACOLLATION,
+                           Type TEXT COLLATE POTACOLLATION,
                            Adresse TEXT COLLATE POTACOLLATION,
                            Site_web TEXT,
                            Date_RAZ DATE,
@@ -80,13 +82,14 @@ CREATE TABLE Familles (Famille TEXT PRIMARY KEY COLLATE POTACOLLATION,
                        Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY COLLATE POTACOLLATION,
+                           Type TEXT COLLATE POTACOLLATION,
                            Priorité INTEGER,
                            Site_web TEXT,
                            Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
                   Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
-                  Type_planche TEXT REFERENCES Types_planche (Type) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                  Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                   Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis sous abris'
                                              WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant'
                                              WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis direct'
@@ -114,14 +117,15 @@ CREATE TABLE Notes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
 CREATE TABLE Params (Section TEXT, Paramètre TEXT, Description TEXT, Valeur TEXT, Unité TEXT, Date_modif DATE);
 
 CREATE TABLE Planches (Planche TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                       Type TEXT REFERENCES Types_planche (Type) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Type TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                        Longueur REAL,
                        Largeur REAL,
+                       Irrig TEXT COLLATE POTACOLLATION,
                        Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Année INTEGER, Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Rotations (Rotation TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                        Type_planche TEXT REFERENCES Types_planche (Type) ON UPDATE CASCADE,
+                        Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                         Année_1 INTEGER,
                         Nb_années INTEGER,
                         Notes TEXT) WITHOUT ROWID;
@@ -142,8 +146,8 @@ CREATE TABLE Récoltes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                        Quantité REAL NOT NULL,
                        Notes TEXT);
 
-CREATE TABLE Types_planche (Type TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                            Notes TEXT) WITHOUT ROWID;
+-- CREATE TABLE Types_planche (Type TEXT PRIMARY KEY COLLATE POTACOLLATION,
+--                             Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Variétés (Variété TEXT PRIMARY KEY COLLATE POTACOLLATION,
                        Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE COLLATE POTACOLLATION,

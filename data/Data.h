@@ -23,6 +23,7 @@ const QColor cATerminer=QColor("#007aff");//Bleu
 const QColor cTerminee=QColor("#808080");//Gris
 
 bool AcceptReturns(const QString sFieldName);
+QString ComboField(const QString sTableName, const QString sFieldName);
 int DefColWidth(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 QString DynDDL(QString sQuery);
 bool FieldIsMoney(const QString sFieldName);

@@ -485,6 +485,10 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     contextMenu.addAction(&mDefColWidth);
     contextMenu.addAction(&mEditNotes);
 
+    QFont font = contextMenu.font();
+    font.setPointSize(cbFontSize->currentText().toInt());
+    contextMenu.setFont(font);
+
     contextMenu.exec(tv->viewport()->mapToGlobal(pos));
 }
 
@@ -677,7 +681,7 @@ void PotaWidget::RefreshHorizontalHeader() {
                 delegate->PaintedColsTitles[i]=str(saison+1);
         } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Couv_N")) {
             delegate->PaintedColsTypes[i]="Title";
-            delegate->PaintedColsTitles[i]="Perf";
+            delegate->PaintedColsTitles[i]="Couv";
         }
     }
 }
@@ -1707,112 +1711,168 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         painter->fillRect(r1,b);
     }
 
+    QStringList ql = index.data(Qt::DisplayRole).toString().split(":");
+    QString t;
+    int xt=0;
+    if (ql.count()>=6) {
+        int const attente=ql[0].toInt()*coef;
+        int const semis=ql[1].toInt()*coef;
+        int const semisF=ql[2].toInt()*coef;
+        int const plant=ql[3].toInt()*coef;
+        int const plantF=ql[4].toInt()*coef;
+        int const recolte=ql[5].toInt()*coef;
+        if (ql.count()>6) {
+            t=ql[6];
+            xt=option.rect.left()+attente+semis+semisF+plant+3;
+        }
+        bool bSemis=true;
+        bool bPlant=true;
+        bool bDRec=true;
+        bool bFRec=true;
+        if (ql.count()>9) {
+            bSemis=!ql[7].isEmpty();
+            bPlant=!ql[8].isEmpty();
+            bDRec=!ql[9].isEmpty();
+            bFRec=ql[9].startsWith('x');
+        }
+
+        r2.setBottom(option.rect.bottom()-2);
+        r2.setLeft(option.rect.left()+attente);
+        r2.setWidth(0);
+
+        if (semis>0){
+            //Période de semis
+            if (plant>0) c=cSousAbris; else c=cEnPlace;
+            if (bSemis) c.setAlpha(255); else  c.setAlpha(100);
+            b.setColor(c);
+            r2.setTop(r2.bottom()-4);
+            r2.setWidth(semis);
+            painter->fillRect(r2,b);
+        }
+        if (semisF>0){
+            //Semis fait, attente plantation
+            if(plant>0) c=cSousAbris;
+            else c=cEnPlace;
+            c.setAlpha(100);
+            b.setColor(c);
+            r2.setTop(r2.bottom()-4);
+            r2.setLeft(r2.left()+r2.width());
+            r2.setWidth(semisF);
+            painter->fillRect(r2,b);
+        }
+        if (plant>0) {
+            //Période de plantation
+            c=cEnPlace;
+            if (bPlant) c.setAlpha(255); else  c.setAlpha(150);
+            b.setColor(c);
+            r2.setTop(r2.bottom()-10);
+            r2.setLeft(r2.left()+r2.width());
+            r2.setWidth(plant);
+            painter->fillRect(r2,b);
+        }
+        if (plantF>0){
+            //Plantation faite, attente récolte
+            c=cEnPlace;
+            c.setAlpha(150);
+            b.setColor(c);
+            r2.setTop(r2.bottom()-10);
+            r2.setLeft(r2.left()+r2.width());
+            r2.setWidth(plantF);
+            painter->fillRect(r2,b);
+        }
+        if (recolte>0 or bDRec or bFRec){
+            //Période de récolte
+            c=cRecolte;
+            c.setAlpha(255);
+            if (bDRec) c.setAlpha(255); else  c.setAlpha(100);
+            b.setColor(c);
+            r2.setTop(r2.bottom()-12);
+            r2.setBottom(r2.bottom()-6);
+            r2.setLeft(r2.left()+r2.width());
+            if (bDRec)
+                r2.setWidth(fmax(recolte/2,4));
+            else
+                r2.setWidth(recolte/2);
+            painter->fillRect(r2,b);
+
+            if (bFRec) c.setAlpha(255); else  c.setAlpha(100);
+            b.setColor(c);
+            r2.setLeft(r2.left()+r2.width());
+            if (bFRec)
+                r2.setWidth(fmax(recolte/2,4));
+            else
+                r2.setWidth(recolte/2);
+            painter->fillRect(r2,b);
+        }
+    }
+
     if (PaintedColsTypes[index.column()]=="TempoNow") {
-        //Red vertical bar for now
+
         c=QColor("red");
+        left=option.rect.left()+round(QDate::currentDate().dayOfYear()*coef);
+        int r1w=1;
+
+        if (ql.count()>10) {
+            //Blue indicator for water.
+            QString tDrop=ql[10];
+            if (!tDrop.isEmpty()) {
+                painter->save();
+                QColor waterDropColor(0, 122, 255);
+                c=waterDropColor;
+                r1w=3;
+                //Draw drop
+                //painter->setRenderHint(QPainter::Antialiasing, true);
+                // painter->setBrush(waterDropColor);
+                // painter->setPen(Qt::NoPen);
+                int dropX = left;
+                int dropY = option.rect.top();
+                // QRectF ellipseRect( dropX-3, dropY+3, 6, 6);
+                // painter->drawEllipse(ellipseRect);
+                // QPolygonF dropPolygon;
+                // dropPolygon << QPointF(dropX, dropY) // Pointe
+                //             << QPointF(dropX-2, dropY + 4)  // Coin gauche
+                //             << QPointF(dropX+2, dropY + 4); // Coin droit
+                // painter->drawPolygon(dropPolygon);
+
+                if (tDrop.toLower()!="x") {
+                    //Irrig text
+                    painter->setPen(Qt::SolidLine);
+                    painter->setPen(waterDropColor);
+                    QFont font = painter->font();
+                    font.setBold(true);
+                    int fontSize=font.pointSize();
+                    font.setPointSize(fontSize-2);
+                    painter->setFont(font);
+                    QFontMetrics metrics(font);
+                    int textX;
+                    if (t.isEmpty() or dropX>xt+30)
+                        textX=dropX+5;
+                    else
+                        textX=xt+30+5;
+                    int textY=dropY+10;
+                    QRectF textRect(textX, textY-metrics.height()+3, metrics.horizontalAdvance(tDrop)+1, metrics.height()-3);
+                    QColor backgroundColor(180, 180, 180);
+                    painter->setBrush(backgroundColor);
+                    painter->setPen(Qt::NoPen);
+                    painter->drawRect(textRect);
+                    painter->setPen(Qt::SolidLine);
+                    painter->setPen(waterDropColor);
+                    painter->drawText(textX, textY, tDrop);
+                }
+
+                painter->restore();
+            }
+        }
+        //Vertical bar for now
         b.setColor(c);
         r1.setBottom(option.rect.bottom());
         r1.setTop(option.rect.top());
-        left=option.rect.left()+round(QDate::currentDate().dayOfYear()*coef);
-        r1.setLeft(left);
-        r1.setWidth(1);
+        r1.setLeft(left-iif(r1w>1,1,0).toInt());
+        r1.setWidth(r1w);
         painter->fillRect(r1,b);
     }
-
-    QStringList ql = index.data(Qt::DisplayRole).toString().split(":");
-    if (ql.count()<6)
-        return;
-    int const attente=ql[0].toInt()*coef;
-    int semis=ql[1].toInt()*coef;
-    int semisF=ql[2].toInt()*coef;
-    int plant=ql[3].toInt()*coef;
-    int plantF=ql[4].toInt()*coef;
-    int const recolte=ql[5].toInt()*coef;
-    QString t;
-    if (ql.count()>6)
-        t=ql[6];
-    bool bSemis=true;
-    bool bPlant=true;
-    bool bDRec=true;
-    bool bFRec=true;
-    if (ql.count()>9) {
-        bSemis=!ql[7].isEmpty();
-        bPlant=!ql[8].isEmpty();
-        bDRec=!ql[9].isEmpty();
-        bFRec=ql[9].startsWith('x');
-    }
-
-    r2.setBottom(option.rect.bottom()-2);
-    r2.setLeft(option.rect.left()+attente);
-    r2.setWidth(0);
-
-    if (semis>0){
-        //Période de semis
-        if (plant>0) c=cSousAbris; else c=cEnPlace;
-        if (bSemis) c.setAlpha(255); else  c.setAlpha(100);
-        b.setColor(c);
-        r2.setTop(r2.bottom()-4);
-        r2.setWidth(semis);
-        painter->fillRect(r2,b);
-    }
-    if (semisF>0){
-        //Semis fait, attente plantation
-        if(plant>0) c=cSousAbris;
-        else c=cEnPlace;
-        c.setAlpha(100);
-        b.setColor(c);
-        r2.setTop(r2.bottom()-4);
-        r2.setLeft(r2.left()+r2.width());
-        r2.setWidth(semisF);
-        painter->fillRect(r2,b);
-    }
-    if (plant>0) {
-        //Période de plantation
-        c=cEnPlace;
-        if (bPlant) c.setAlpha(255); else  c.setAlpha(150);
-        b.setColor(c);
-        r2.setTop(r2.bottom()-10);
-        r2.setLeft(r2.left()+r2.width());
-        r2.setWidth(plant);
-        painter->fillRect(r2,b);
-    }
-    if (plantF>0){
-        //Plantation faite, attente récolte
-        c=cEnPlace;
-        c.setAlpha(150);
-        b.setColor(c);
-        r2.setTop(r2.bottom()-10);
-        r2.setLeft(r2.left()+r2.width());
-        r2.setWidth(plantF);
-        painter->fillRect(r2,b);
-    }
-    if (recolte>0 or bDRec or bFRec){
-        //Période de récolte
-        c=cRecolte;
-        c.setAlpha(255);
-        if (bDRec) c.setAlpha(255); else  c.setAlpha(100);
-        b.setColor(c);
-        r2.setTop(r2.bottom()-12);
-        r2.setBottom(r2.bottom()-6);
-        r2.setLeft(r2.left()+r2.width());
-        if (bDRec)
-            r2.setWidth(fmax(recolte/2,4));
-        else
-            r2.setWidth(recolte/2);
-        painter->fillRect(r2,b);
-
-        if (bFRec) c.setAlpha(255); else  c.setAlpha(100);
-        b.setColor(c);
-        r2.setLeft(r2.left()+r2.width());
-        if (bFRec)
-            r2.setWidth(fmax(recolte/2,4));
-        else
-            r2.setWidth(recolte/2);
-        painter->fillRect(r2,b);
-    }
-    if (!t.isEmpty()) {
-        painter->drawText(option.rect.left()+attente+semis+semisF+plant+3, option.rect.bottom()-2, t);
-    }
+    if (!t.isEmpty())
+        painter->drawText(xt, option.rect.bottom()-2, t);
 }
 
 QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const   {
@@ -1824,12 +1884,12 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
     PotaTableModel *model = const_cast<PotaTableModel *>(constModel);
     QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
     QString sDataType=model->dataTypes[index.column()];
+    QString sComboField=ComboField(model->RealTableName(),sFieldName);
     if (model->relation(index.column()).isValid()) {
         //Create QComboBox for relational columns
         QComboBox *comboBox = new QComboBox(parent);
         QSqlTableModel *relationModel = model->relationModel(index.column());
         int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
-
         QString filter=FkFilter(model->db,model->RealTableName(),sFieldName,index);
         if (filter!="") {
             //dbSuspend(model->db,false,true,model->label);
@@ -1848,9 +1908,9 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             comboBox->addItem( displayValue,value);
         }
         return comboBox;
-    } else if (sFieldName=="Type"){
+    } else if (!sComboField.isEmpty()){
         PotaQuery query(*model->db);
-        QStringList TypeValues=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='"+model->tableName()+"_Type'").toString().split("|");
+        QStringList TypeValues=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Combo_"+sComboField+"'").toString().split("|");
         if (TypeValues.count()>1) {
             QComboBox *comboBox = new QComboBox(parent);
             comboBox->addItem("", QVariant()); // Option for setting a NULL
