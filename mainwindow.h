@@ -14,7 +14,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0RC13";
+QString const Version="1.0";
 QString const DbVersion="2025-04-12";
 
 class MainWindow : public QMainWindow

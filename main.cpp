@@ -214,7 +214,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                                sFichier+"\n"+
                                tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                                tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
-                               tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion)+" ?",
+                               tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion),
                                QStyle::SP_MessageBoxQuestion)) {   //Mettre à jour la BDD.
                 //Delete previous backup file.
                 QFile FileInfo;
