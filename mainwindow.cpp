@@ -474,7 +474,7 @@ void MainWindow::on_mAPropos_triggered()
                   "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
                   "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
                   "<b>Crédits</b>:<br>"
-                  "Qt Creator community 6.8.1 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
+                  "Qt Creator community 6.8 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
                   "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
                   "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
