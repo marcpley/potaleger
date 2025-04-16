@@ -135,7 +135,7 @@
               </palette>
              </property>
              <property name="text">
-              <string>Base de donnée :</string>
+              <string>Base de données :</string>
              </property>
              <property name="margin">
               <number>3</number>
@@ -858,7 +858,7 @@
     <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
    </property>
    <property name="text">
-    <string>Créer une BDD avec les données de base </string>
+    <string>Créer une BDD avec les données de base</string>
    </property>
   </action>
   <action name="mCreerBDDVide">
@@ -877,7 +877,7 @@
     <iconset theme="QIcon::ThemeIcon::EditCopy"/>
    </property>
    <property name="text">
-    <string>Faire une copie de  la BDD</string>
+    <string>Faire une copie de la BDD</string>
    </property>
   </action>
   <action name="mITRotationsIlots">

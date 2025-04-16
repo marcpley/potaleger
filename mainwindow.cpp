@@ -335,7 +335,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 void MainWindow::on_mSelecDB_triggered()
 {
     ClosePotaTabs();
-    const QString sFileName = QFileDialog::getOpenFileName( this, tr("Base de donnée Potaléger"), ui->lDB->text(), "*.sqlite3");
+    const QString sFileName = QFileDialog::getOpenFileName( this, tr("Base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3");
     if (sFileName != "") {
         PotaDbClose();
         PotaDbOpen(sFileName,"",false);
@@ -349,7 +349,7 @@ void MainWindow::on_mUpdateSchema_triggered()
                        ui->lDB->text()+"\n\n"+
                        tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
                        tr("Vos données vont être conservées.")+"\n"+
-                       tr("En cas d'échec, votre BDD sera remise dans sont état initial."))){
+                       tr("En cas d'échec, votre BDD sera remise dans son état initial."))){
         QString sFileName=ui->lDB->text();
         PotaDbClose();
         PotaDbOpen(sFileName,"",true);
@@ -366,7 +366,7 @@ void MainWindow::on_mCopyBDD_triggered()
         return;
     }
 
-    const QString sFileName = QFileDialog::getSaveFileName(this, tr("Copie de la base de donnée Potaléger"), ui->lDB->text(), "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
+    const QString sFileName = QFileDialog::getSaveFileName(this, tr("Copie de la base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
     if (sFileName.isEmpty()) return;
     FileInfoVerif.setFile(sFileName);
     if (!FileInfoVerif.exists() or
@@ -434,7 +434,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
                   QDir::toNativeSeparators("/Documents/Potaleger.sqlite3");
     }
 
-    sFileName = QFileDialog::getSaveFileName(this, tr("Nom pour la BDD Potaléger %1").arg(sEmpty), sFileName, "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
+    sFileName = QFileDialog::getSaveFileName(this, tr("Nom pour la BDD %1").arg("Potaléger "+sEmpty), sFileName, "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
     if (sFileName.isEmpty()) return;
 
     FileInfoVerif.setFile(sFileName);

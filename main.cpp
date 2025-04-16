@@ -184,7 +184,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             pQuery.next();
             sVerBDD = pQuery.value(0).toString();
         } else {
-            MessageDialog(tr("Cette BDD n'est pas une BDD Potaléger."),
+            MessageDialog(tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
                           sFichier,QStyle::SP_MessageBoxCritical);
             //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
@@ -192,7 +192,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         }
 
         if (result and (sVerBDD < "2024-12-30")) {
-            MessageDialog(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD,
+            MessageDialog(tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
                           sFichier,QStyle::SP_MessageBoxCritical);
             //ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
             dbClose();
@@ -409,7 +409,7 @@ void MainWindow::RestaureParams()
 
     if (settings.value("database_path").toString().isEmpty() or
         !PotaDbOpen(settings.value("database_path").toString(),"",false)) {
-        int choice = RadiobuttonDialog(tr("Potaléger stoque ses données dans un fichier unique à l'emplacement de votre choix."),
+        int choice = RadiobuttonDialog(tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
                                        {tr("Sélectionner une base de données existante"),
                                         tr("Créer une BDD avec les données de base"),
                                         tr("Créer une BDD vide")},1,QStyle::NStandardPixmap);

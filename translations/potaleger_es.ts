@@ -15,7 +15,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="138"/>
-        <source>Base de donnée :</source>
+        <source>Base de données :</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -275,19 +275,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.ui" line="861"/>
-        <source>Créer une BDD avec les données de base </source>
+        <location filename="../mainwindow.ui" line="880"/>
+        <source>Faire une copie de la BDD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../mainwindow.ui" line="869"/>
         <location filename="../main.cpp" line="415"/>
         <source>Créer une BDD vide</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../mainwindow.ui" line="880"/>
-        <source>Faire une copie de  la BDD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -458,12 +453,12 @@
     </message>
     <message>
         <location filename="../main.cpp" line="187"/>
-        <source>Cette BDD n&apos;est pas une BDD Potaléger.</source>
+        <source>Cette BDD n&apos;est pas une BDD %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../main.cpp" line="195"/>
-        <source>La version de cette BDD Potaléger est trop ancienne: </source>
+        <source>La version de cette BDD %1 est trop ancienne: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -561,7 +556,7 @@ certains onglets peuvent ne pas fonctionner.</source>
     </message>
     <message>
         <location filename="../main.cpp" line="412"/>
-        <source>Potaléger stoque ses données dans un fichier unique à l&apos;emplacement de votre choix.</source>
+        <source>%1 stoque ses données dans un fichier unique à l&apos;emplacement de votre choix.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -570,6 +565,7 @@ certains onglets peuvent ne pas fonctionner.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../mainwindow.ui" line="861"/>
         <location filename="../main.cpp" line="414"/>
         <source>Créer une BDD avec les données de base</source>
         <translation type="unfinished"></translation>
@@ -630,11 +626,6 @@ certains onglets peuvent ne pas fonctionner.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="338"/>
-        <source>Base de donnée Potaléger</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../mainwindow.cpp" line="348"/>
         <source>Mettre à jour le schéma de la BDD ?</source>
         <translation type="unfinished"></translation>
@@ -647,16 +638,6 @@ certains onglets peuvent ne pas fonctionner.</source>
     <message>
         <location filename="../mainwindow.cpp" line="351"/>
         <source>Vos données vont être conservées.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../mainwindow.cpp" line="352"/>
-        <source>En cas d&apos;échec, votre BDD sera remise dans sont état initial.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../mainwindow.cpp" line="369"/>
-        <source>Copie de la base de donnée Potaléger</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -682,8 +663,23 @@ certains onglets peuvent ne pas fonctionner.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../mainwindow.cpp" line="338"/>
+        <source>Base de données %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="352"/>
+        <source>En cas d&apos;échec, votre BDD sera remise dans son état initial.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="369"/>
+        <source>Copie de la base de données %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../mainwindow.cpp" line="437"/>
-        <source>Nom pour la BDD Potaléger %1</source>
+        <source>Nom pour la BDD %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
