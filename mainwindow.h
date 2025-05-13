@@ -14,7 +14,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.01";
+QString const Version="1.02";
 QString const DbVersion="2025-05-13";
 
 class MainWindow : public QMainWindow
@@ -119,10 +119,10 @@ private:
     void SetEnabledDataMenuEntries(bool b);
     // bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
-    void MessageDialog(const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
-    bool OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
-    int RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
-    bool YesNoDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    void MessageDialog(const QString &titre, const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
     bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn);
     void dbClose();
     bool PotaDbOpen(QString sFichier, QString sNew, bool bUpdate);

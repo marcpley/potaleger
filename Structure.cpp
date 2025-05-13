@@ -296,17 +296,17 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     if (bResult) {
         if (sDBVersion == DbVersion) {
             if (!bNew)
-                MessageDialog(tr("Mise à jour réussie."),
+                MessageDialog("Potaléger "+ui->lVer->text(),tr("Mise à jour réussie."),
                                   sResult,QStyle::SP_MessageBoxInformation);
             return true;
         }
         else {
-            MessageDialog(tr("Version de BDD inconnue:")+sDBVersion,
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("Version de BDD inconnue:")+sDBVersion,
                           sResult,QStyle::SP_MessageBoxCritical);
             return false;
         }
     } else {
-        MessageDialog(tr("Echec de la mise à jour."),
+        MessageDialog("Potaléger "+ui->lVer->text(),tr("Echec de la mise à jour."),
                           sResult,QStyle::SP_MessageBoxCritical);
         return false;
     }

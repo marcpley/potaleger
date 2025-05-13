@@ -117,7 +117,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName()));
                 } else {
                     SetColoredText(ui->lDBErr,"","");
-                    MessageDialog(sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
+                    MessageDialog(windowTitle(),sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
                     w->deleteLater();
                     return false;
                 }
@@ -248,7 +248,8 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         PotaWidget *w=dynamic_cast<PotaWidget*>(Tab);
 
         if (w->pbCommit->isEnabled()) {
-            if (YesNoDialog(w->lTabTitle->text().trimmed()+"\n\n"+
+            if (YesNoDialog(windowTitle(),
+                            w->lTabTitle->text().trimmed()+"\n\n"+
                                tr("Valider les modifications avant de fermer ?"))) {
                 if (!w->model->SubmitAllShowErr())
                     return;
@@ -344,7 +345,7 @@ void MainWindow::on_mSelecDB_triggered()
 void MainWindow::on_mUpdateSchema_triggered()
 {
     ClosePotaTabs();
-    if (OkCancelDialog(tr("Mettre à jour le schéma de la BDD ?")+"\n\n"+
+    if (OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Mettre à jour le schéma de la BDD ?")+"\n\n"+
                        ui->lDB->text()+"\n\n"+
                        tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
                        tr("Vos données vont être conservées.")+"\n"+
@@ -361,7 +362,7 @@ void MainWindow::on_mCopyBDD_triggered()
     QFileInfo FileInfo,FileInfoVerif;
     FileInfo.setFile(ui->lDB->text());
     if (!FileInfo.exists()) {
-        MessageDialog(tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),"",QStyle::SP_MessageBoxCritical);
+        MessageDialog("Potaléger "+ui->lVer->text(),tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),"",QStyle::SP_MessageBoxCritical);
         return;
     }
 
@@ -369,7 +370,7 @@ void MainWindow::on_mCopyBDD_triggered()
     if (sFileName.isEmpty()) return;
     FileInfoVerif.setFile(sFileName);
     if (!FileInfoVerif.exists() or
-        OkCancelDialog(tr("Le fichier existe déjà")+"\n"+
+        OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par")+"\n"+
@@ -380,7 +381,7 @@ void MainWindow::on_mCopyBDD_triggered()
             FileInfo2.setFileName(sFileName);
             if (!FileInfo2.remove())
             {
-                MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             };
@@ -395,7 +396,7 @@ void MainWindow::on_mCopyBDD_triggered()
             //FileInfo3.setFileTime(FileInfo.lastModified(),QFileDevice::FileAccessTime);
         }
         else
-            MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                           sFileNameSave+"\n"+
                           tr("vers le fichier")+"\n"+
                           sFileName,"",QStyle::SP_MessageBoxCritical);
@@ -438,7 +439,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
     FileInfoVerif.setFile(sFileName);
     if (!FileInfoVerif.exists() or
-        OkCancelDialog(tr("Le fichier existe déjà")+"\n"+
+        OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par une base de données %1 ?").arg(sEmpty),QStyle::SP_MessageBoxWarning))
@@ -449,7 +450,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
             FileInfo2.setFileName(sFileName);
             if (!FileInfo2.remove())
             {
-                MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             };
@@ -459,7 +460,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
         PotaDbClose();
 
         if (!PotaDbOpen(sFileName,iif(bEmpty,"New","NewWithBaseData").toString(),false)) {
-            MessageDialog(tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
             dbClose();
             PotaDbOpen(sFileNameSave,"",false);
@@ -469,7 +470,8 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
 void MainWindow::on_mAbout_triggered()
 {
-    MessageDialog("Auteur: Marc Pleysier<br>"
+    MessageDialog("Potaléger "+ui->lVer->text(),
+                  "Auteur: Marc Pleysier<br>"
                   "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
                   "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
                   "<b>Crédits</b>:<br>"
@@ -477,7 +479,7 @@ void MainWindow::on_mAbout_triggered()
                   "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
                   "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
-                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a><br>"
+                  "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a>, merci Silvère !<br>"
                   "IA: ChatGPT, Mistral et Copilot<br>"
                   "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
                   QStyle::NStandardPixmap,500);
@@ -485,14 +487,17 @@ void MainWindow::on_mAbout_triggered()
 
 void MainWindow::on_mWhatSNew_triggered()
 {
-    MessageDialog(tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.01</b><br>"+
+    MessageDialog("Potaléger "+ui->lVer->text(),
+                  tr("Evolutions et corrections de bugs"),
+                  "<b>Potaléger 1.02</b> - 13/05/2025<br>"+
                   tr("Cultures à planter: contient les 'Semis fait' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   tr("Cultures à récolter: contient les 'Semis fait'/'Plantation faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   tr("Cultures à terminer: contient les 'Semis fait'/'Plantation faite'/'Récolte faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   tr("Planification: les rotations sont maintenant correctement appliquées.")+"<br>"+
                   tr("Correction itinéraires techniques (création nouvelle BDD): navet.")+"<br>"+
-                  tr("Amélioration de l'aide en ligne: saison et production."),
+                  tr("Amélioration de l'aide en ligne: saison et production.")+"<br><br>"+
+                  "<b>Potaléger 1.0</b> - 16/04/2025<br>"+
+                  tr("Données de base, planification, gestion des cultures, objectifs de production..."),
                   QStyle::NStandardPixmap,800);
 }
 
@@ -532,7 +537,7 @@ void MainWindow::on_mImport_triggered()
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
 
         if (w->pbCommit->isEnabled()) {
-            if (YesNoDialog(w->lTabTitle->text().trimmed()+"\n\n"+
+            if (YesNoDialog(windowTitle(),w->lTabTitle->text().trimmed()+"\n\n"+
                             tr("Valider les modifications en cours ?"))) {
                 if (!w->model->SubmitAllShowErr())
                     return;
@@ -559,7 +564,7 @@ void MainWindow::on_mImport_triggered()
 
         QFile FileImport(sFileName);
         if (!FileImport.open(QIODevice::ReadOnly)) {
-            MessageDialog(tr("Impossible d'ouvrir le fichier")+"\n"+
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible d'ouvrir le fichier")+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
             return;
         }
@@ -594,7 +599,7 @@ void MainWindow::on_mImport_triggered()
 
         int choice=-1;
         if (info.isEmpty()) {
-            MessageDialog(QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
+            MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
                               .arg(FileInfoVerif.fileName())
                               .arg(w->lTabTitle->text().trimmed()),"",QStyle::SP_MessageBoxWarning);
             return;
@@ -603,7 +608,7 @@ void MainWindow::on_mImport_triggered()
         //     MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
         //     return;
         } else if (lines.count()<2) {
-            MessageDialog(QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
             return;
         } else {
             //Concat lines for each records.
@@ -618,7 +623,7 @@ void MainWindow::on_mImport_triggered()
             if(linesToImport.count()>4)
                 info2+="<br>...";
 
-            choice = RadiobuttonDialog(w->lTabTitle->text().trimmed()+"<br><br>"+
+            choice = RadiobuttonDialog("Potaléger "+ui->lVer->text(),w->lTabTitle->text().trimmed()+"<br><br>"+
                                            "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
                                            sFileName+"<br><br>"+
                                            "<b>"+tr("Les champs suivants vont être importés:")+"</b><br>"+info+"<br><br>"+
@@ -639,7 +644,7 @@ void MainWindow::on_mImport_triggered()
         }
 
         if (primaryFieldImport==-1 and choice!=4) {
-            MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.\nSeul l'ajout de ligne est éventuellement possible.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("Champ %1 non trouvée dans le fichier %2.\nSeul l'ajout de ligne est éventuellement possible.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
             return;
         }
 
@@ -660,7 +665,7 @@ void MainWindow::on_mImport_triggered()
         int nbErrors=0;
         if (choice==5 or choice==6) {//Delete selected lines
             if(w->model->rowCount()>1 and
-                !OkCancelDialog(tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning)) {
+                !OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning)) {
                //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
                 return;
             }
@@ -770,7 +775,7 @@ void MainWindow::on_mImport_triggered()
 
         //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
-        MessageDialog(QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
+        MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
                       QObject::tr("%1 lignes créées").arg(nbCreatedRows)+"\n"+
                       QObject::tr("%1 lignes modifiées").arg(nbModifiedRows)+"\n"+
                       QObject::tr("%1 erreurs").arg(nbErrors));
@@ -793,7 +798,7 @@ void MainWindow::on_mExport_triggered()
         QFileInfo FileInfoVerif;
         FileInfoVerif.setFile(sFileName);
         if (!FileInfoVerif.exists() or
-            OkCancelDialog(tr("Le fichier existe déjà")+"\n"+
+            OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                                sFileName+"\n"+
                                FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                                tr("Remplacer ?"),QStyle::SP_MessageBoxWarning)) {
@@ -801,7 +806,7 @@ void MainWindow::on_mExport_triggered()
             if (FileInfoVerif.exists()) {
                 FileInfo2.setFileName(sFileName);
                 if (!FileInfo2.remove()) {
-                    MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                    MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                       sFileName,"",QStyle::SP_MessageBoxCritical);
                     return;
                 }
@@ -812,7 +817,7 @@ void MainWindow::on_mExport_triggered()
             //Export
             QFile FileExport(sFileName);
             if (!FileExport.open(QIODevice::WriteOnly)) {// | QIODevice::Text
-                MessageDialog(tr("Impossible de créer le fichier")+"\n"+
+                MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de créer le fichier")+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             }
@@ -857,10 +862,10 @@ void MainWindow::on_mExport_triggered()
             }
 
             if (exportedRow==totalRow) {
-                MessageDialog(tr("%1 lignes exportées vers le fichier").arg(str(totalRow))+"\n"+
+                MessageDialog("Potaléger "+ui->lVer->text(),tr("%1 lignes exportées vers le fichier").arg(str(totalRow))+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxInformation);
             } else
-                MessageDialog(tr("%1 sur %2 lignes exportées vers le fichier").arg(str(exportedRow)).arg(str(totalRow))+"\n"+
+                MessageDialog("Potaléger "+ui->lVer->text(),tr("%1 sur %2 lignes exportées vers le fichier").arg(str(exportedRow)).arg(str(totalRow))+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxWarning);
         }
     }
@@ -970,7 +975,7 @@ void MainWindow::on_mCreerCultures_triggered()
     pQuery.lErr=ui->lDBErr;
     int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif").toInt();
     if (NbCultPlanif==0) {
-        MessageDialog(tr("Aucune culture à planifier:")+"\n\n"+
+        MessageDialog(windowTitle(),tr("Aucune culture à planifier:")+"\n\n"+
                           tr("- Créez des rotations")+"\n"+
                           tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
         return;
@@ -988,7 +993,8 @@ void MainWindow::on_mCreerCultures_triggered()
         icon=QStyle::SP_MessageBoxQuestion;
         CultAVenir="";
     }
-    if (OkCancelDialog(tr("Créer les cultures de la saison %1 ?").arg("<b>"+pQuery.Selec0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString()+"</b>")+"<br><br>"+
+    if (OkCancelDialog(windowTitle(),
+                       tr("Créer les cultures de la saison %1 ?").arg("<b>"+pQuery.Selec0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString()+"</b>")+"<br><br>"+
                        tr("La saison courante peut être modifiée dans les paramètres (menu 'Edition').")+"<br><br>"+
                        tr("%1 cultures vont être créées en fonction des rotations.").arg("<b>"+str(NbCultPlanif)+"</b>")+"<br>"+
                        tr("Id de la dernière culture:")+" "+str(NbCultAVenir)+
@@ -996,7 +1002,7 @@ void MainWindow::on_mCreerCultures_triggered()
                        icon)) {
         int choice=2;
         if (NbCultPlanifRetard>0){
-            choice = RadiobuttonDialog(tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanif).arg(NbCultPlanifRetard),
+            choice = RadiobuttonDialog(windowTitle(),tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanif).arg(NbCultPlanifRetard),
                                            {tr("Ne pas créer ces cultures en retard"),
                                             tr("Créer aussi ces cultures en retard")},
                                             iif(NbCultPlanifRetard<NbCultPlanif/10,1,0).toInt(),
@@ -1019,13 +1025,13 @@ void MainWindow::on_mCreerCultures_triggered()
             int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
             int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
             if (IdCult3>IdCult2 and IdCult2>IdCult1)
-                MessageDialog(tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
+                MessageDialog(windowTitle(),tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
                                   tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3),"",QStyle::SP_MessageBoxInformation);
             else
-                MessageDialog(tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
+                MessageDialog(windowTitle(),tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
         }
         else
-            MessageDialog(tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
+            MessageDialog(windowTitle(),tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
 
     }
 }

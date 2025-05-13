@@ -184,7 +184,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             pQuery.next();
             sVerBDD = pQuery.value(0).toString();
         } else {
-            MessageDialog(tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
                           sFichier,QStyle::SP_MessageBoxCritical,600);
             //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
@@ -192,7 +192,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         }
 
         if (result and (sVerBDD < "2024-12-30")) {
-            MessageDialog(tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
                           sFichier,QStyle::SP_MessageBoxCritical,600);
             //ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
             dbClose();
@@ -200,7 +200,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         }
 
         if (result and (sVerBDD > DbVersion)) {
-            MessageDialog(tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
+            MessageDialog("Potaléger "+ui->lVer->text(),tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
                              "certains onglets peuvent ne pas fonctionner.").arg("récente")+"\n\n"+
                           sFichier+"\n"+
                           tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
@@ -211,7 +211,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             // return false;
         } else if (result and (bUpdate or (sVerBDD != DbVersion))) {
             if (bUpdate or
-                YesNoDialog(tr("Base de données trop ancienne.")+"\n\n"+
+                YesNoDialog("Potaléger "+ui->lVer->text(),tr("Base de données trop ancienne.")+"\n\n"+
                                sFichier+"\n"+
                                tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                                tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
@@ -223,7 +223,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                 FileInfo.setFileName(FileName+"-backup");
                 if (FileInfo.exists()) {
                     if (!FileInfo.remove()) {
-                        MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                        MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                           FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
                         dbClose();
                         result=false;
@@ -233,7 +233,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                     //Backup.
                     FileInfo.setFileName(FileName);
                     if (!FileInfo.copy(FileName+"-backup"))  {
-                        MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                        MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                                           FileName+"\n"+
                                           tr("vers le fichier")+"\n"+
                                           FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
@@ -249,7 +249,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         //Delete backup file.
                         FileInfo.setFileName(FileName+"-backup");
                         if (!FileInfo.remove()) {
-                            MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
+                            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                               FileName+"-backup","",QStyle::SP_MessageBoxWarning,600);
                         }
                     } else {
@@ -265,11 +265,11 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         FileInfo.remove();
                         FileInfo.setFileName(FileName+"-backup");
                         if (FileInfo.copy(FileName))
-                            MessageDialog(tr("Le fichier")+"\n"+
+                            MessageDialog("Potaléger "+ui->lVer->text(),tr("Le fichier")+"\n"+
                                               FileName+"\n"+
                                               tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation,600);
                         else
-                            MessageDialog(tr("Impossible de copier le fichier")+"\n"+
+                            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                                               FileName+"-backup\n"+
                                               tr("vers le fichier")+"\n"+
                                               FileName,"",QStyle::SP_MessageBoxCritical,600);
@@ -278,7 +278,8 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                     }
                 }
             } else {
-                MessageDialog(tr("La version de cette BDD est trop %1, vous ne pouvez pas\n"
+                MessageDialog("Potaléger "+ui->lVer->text(),
+                              tr("La version de cette BDD est trop %1, vous ne pouvez pas\n"
                                  "la modifier et certains onglets peuvent ne pas fonctionner.").arg("ancienne")+"\n\n"+
                               sFichier+"\n"+
                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
@@ -410,7 +411,8 @@ void MainWindow::RestaureParams()
 
     if (settings.value("database_path").toString().isEmpty() or
         !PotaDbOpen(settings.value("database_path").toString(),"",false)) {
-        int choice = RadiobuttonDialog(tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
+        int choice = RadiobuttonDialog("Potaléger "+ui->lVer->text(),
+                                        tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
                                        {tr("Sélectionner une base de données existante"),
                                         tr("Créer une BDD avec les données de base"),
                                         tr("Créer une BDD vide")},1,QStyle::NStandardPixmap);

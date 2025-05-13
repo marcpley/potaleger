@@ -11,18 +11,10 @@
 #include <QLEInteger>
 #include "PotaUtils.h"
 
-void MainWindow::MessageDialog(const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
+void MainWindow::MessageDialog(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
 {
-    // QMessageBox msgBox;
-    // msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    // msgBox.setText(sMessage);
-    // msgBox.setIcon(Icon);
-    // msgBox.exec();
     QDialog dialog(this);
-    if (!windowTitle().contains(" - "))
-        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    else
-        dialog.setWindowTitle(windowTitle());
+    dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
@@ -96,21 +88,10 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
     dialog.exec();
 }
 
-bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
+bool MainWindow::OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {
-    // QMessageBox msgBox;
-    // msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    // msgBox.setText(sMessage);
-    // msgBox.addButton(QMessageBox::Ok);
-    // msgBox.addButton(QMessageBox::Cancel);
-    // msgBox.setIcon(QMessageBox::Question);
-    // return (msgBox.exec() == QMessageBox::Ok);
-
     QDialog dialog(this);
-    if (!windowTitle().contains(" - "))
-        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    else
-        dialog.setWindowTitle(windowTitle());
+    dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
@@ -164,12 +145,9 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
     return result;
 }
 
-int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType, const int MinWidth) {
+int MainWindow::RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType, const int MinWidth) {
     QDialog dialog(this);
-    if (!windowTitle().contains(" - "))
-        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    else
-        dialog.setWindowTitle(windowTitle());
+    dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
@@ -237,21 +215,10 @@ int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &opt
     return result;
 }
 
-bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
+bool MainWindow::YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {
-    // QMessageBox msgBox;
-    // msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    // msgBox.setText(sMessage);
-    // msgBox.addButton(QMessageBox::Yes);
-    // msgBox.addButton(QMessageBox::No);
-    // msgBox.setIcon(QMessageBox::Question);
-    // return (msgBox.exec() == QMessageBox::Yes);
-
     QDialog dialog(this);
-    if (!windowTitle().contains(" - "))
-        dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
-    else
-        dialog.setWindowTitle(windowTitle());
+    dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
     QHBoxLayout *headerLayout = new QHBoxLayout();
