@@ -11,7 +11,7 @@
 #include <QLEInteger>
 #include "PotaUtils.h"
 
-void MainWindow::MessageDialog(const QString &message, const QString &message2, QStyle::StandardPixmap iconType)
+void MainWindow::MessageDialog(const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
 {
     // QMessageBox msgBox;
     // msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
@@ -29,13 +29,13 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
 
     if (iconType!=QStyle::SP_CustomBase) {
         QLabel *iconLabel = new QLabel();
-        //iconLabel->setPixmap(dialog.style()->standardIcon(icon));
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
             icon = QIcon(":/images/potaleger.svg");
         else
             icon = QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
+        iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
@@ -55,7 +55,9 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
     layout->addLayout(headerLayout);
 
     if (message2!=""){
-        QHBoxLayout *textLayout = new QHBoxLayout();
+        QScrollArea *scrollArea = new QScrollArea();
+        scrollArea->setWidgetResizable(true);
+        //QHBoxLayout *textLayout = new QHBoxLayout();
         QLabel *messageLabel2 = new QLabel(sMess2);
         messageLabel2->setWordWrap(true);
         messageLabel2->setOpenExternalLinks(true);
@@ -63,8 +65,13 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
         messageLabel2->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
         SetFontWeight(messageLabel2,QFont::Light);
         SetFontWeight(messageLabel,QFont::DemiBold);
-        textLayout->addWidget(messageLabel2);
-        layout->addLayout(textLayout);
+        scrollArea->setWidget(messageLabel2);
+        layout->addWidget(scrollArea);
+        //textLayout->addWidget(messageLabel2);
+        //layout->addLayout(textLayout);
+        QSize screenSize = QGuiApplication::primaryScreen()->size();
+        int maxHeight = screenSize.height()-200; // Par exemple, la moitié de la hauteur de l'écran
+        scrollArea->setMaximumHeight(maxHeight);
     }
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
@@ -80,14 +87,16 @@ void MainWindow::MessageDialog(const QString &message, const QString &message2, 
     });
 
     int w,h;
-    w=fmax(dialog.sizeHint().width(),250);
+    w=fmax(dialog.sizeHint().width(),MinWidth);
     h=fmax(dialog.sizeHint().height(),150);
     dialog.setFixedSize(w,h);//User can't resize the window.
+    //dialog.setMinimumWidth(w);
+
 
     dialog.exec();
 }
 
-bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType)
+bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {
     // QMessageBox msgBox;
     // msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
@@ -108,13 +117,13 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
 
     if (iconType!=QStyle::SP_CustomBase) {
         QLabel *iconLabel = new QLabel();
-        //iconLabel->setPixmap(dialog.style()->standardIcon(icon));
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
             icon = QIcon(":/images/potaleger.svg");
         else
             icon = QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
+        iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
@@ -146,7 +155,7 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
     });
 
     int w,h;
-    w=fmax(dialog.sizeHint().width(),250);
+    w=fmax(dialog.sizeHint().width(),MinWidth);
     h=fmax(dialog.sizeHint().height(),150);
     dialog.setFixedSize(w,h);//User can't resize the window.
 
@@ -155,7 +164,7 @@ bool MainWindow::OkCancelDialog(const QString &message, QStyle::StandardPixmap i
     return result;
 }
 
-int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType) {
+int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType, const int MinWidth) {
     QDialog dialog(this);
     if (!windowTitle().contains(" - "))
         dialog.setWindowTitle(windowTitle()+" "+ui->lVer->text());
@@ -167,13 +176,13 @@ int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &opt
 
     if (iconType!=QStyle::SP_CustomBase) {
         QLabel *iconLabel = new QLabel();
-        //iconLabel->setPixmap(dialog.style()->standardIcon(icon));
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
             icon = QIcon(":/images/potaleger.svg");
         else
             icon = QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
+        iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
@@ -219,7 +228,7 @@ int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &opt
     });
 
     int w,h;
-    w=fmax(dialog.sizeHint().width(),250);
+    w=fmax(dialog.sizeHint().width(),MinWidth);
     h=fmax(dialog.sizeHint().height(),150);
     dialog.setFixedSize(w,h);//User can't resize the window.
 
@@ -228,7 +237,7 @@ int MainWindow::RadiobuttonDialog(const QString &message, const QStringList &opt
     return result;
 }
 
-bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap iconType)
+bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {
     // QMessageBox msgBox;
     // msgBox.setWindowTitle(windowTitle()+" "+ui->lVer->text());
@@ -249,13 +258,13 @@ bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap icon
 
     if (iconType!=QStyle::SP_CustomBase) {
         QLabel *iconLabel = new QLabel();
-        //iconLabel->setPixmap(dialog.style()->standardIcon(icon));
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
             icon = QIcon(":/images/potaleger.svg");
         else
             icon = QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
+        iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
@@ -287,7 +296,7 @@ bool MainWindow::YesNoDialog(const QString &message, QStyle::StandardPixmap icon
     });
 
     int w,h;
-    w=fmax(dialog.sizeHint().width(),250);
+    w=fmax(dialog.sizeHint().width(),MinWidth);
     h=fmax(dialog.sizeHint().height(),150);
     dialog.setFixedSize(w,h);//User can't resize the window.
 

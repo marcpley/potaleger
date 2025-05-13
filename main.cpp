@@ -185,7 +185,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             sVerBDD = pQuery.value(0).toString();
         } else {
             MessageDialog(tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
-                          sFichier,QStyle::SP_MessageBoxCritical);
+                          sFichier,QStyle::SP_MessageBoxCritical,600);
             //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
             result=false;
@@ -193,7 +193,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 
         if (result and (sVerBDD < "2024-12-30")) {
             MessageDialog(tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
-                          sFichier,QStyle::SP_MessageBoxCritical);
+                          sFichier,QStyle::SP_MessageBoxCritical,600);
             //ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
             dbClose();
             result=false;
@@ -205,7 +205,8 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                           sFichier+"\n"+
                           tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                           tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
-                          tr("Vous devriez désinstaller %1 et intaller une version plus récente.").arg("Potaléger"),"",QStyle::SP_MessageBoxWarning);
+                          tr("Vous devriez désinstaller %1 et intaller une version plus récente.").arg("Potaléger"),"",
+                          QStyle::SP_MessageBoxWarning,600);
             // dbClose();
             // return false;
         } else if (result and (bUpdate or (sVerBDD != DbVersion))) {
@@ -215,7 +216,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                                tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                                tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
                                tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion),
-                               QStyle::SP_MessageBoxQuestion)) {   //Mettre à jour la BDD.
+                               QStyle::SP_MessageBoxQuestion,600)) {   //Mettre à jour la BDD.
                 //Delete previous backup file.
                 QFile FileInfo;
                 QString FileName=ui->lDB->text();
@@ -223,7 +224,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                 if (FileInfo.exists()) {
                     if (!FileInfo.remove()) {
                         MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
-                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical);
+                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
                         dbClose();
                         result=false;
                     }
@@ -235,7 +236,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         MessageDialog(tr("Impossible de copier le fichier")+"\n"+
                                           FileName+"\n"+
                                           tr("vers le fichier")+"\n"+
-                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical);
+                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
                         dbClose();
                         return false;
                     }
@@ -249,7 +250,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         FileInfo.setFileName(FileName+"-backup");
                         if (!FileInfo.remove()) {
                             MessageDialog(tr("Impossible de supprimer le fichier")+"\n"+
-                                              FileName+"-backup","",QStyle::SP_MessageBoxWarning);
+                                              FileName+"-backup","",QStyle::SP_MessageBoxWarning,600);
                         }
                     } else {
                         dbClose();
@@ -266,22 +267,22 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         if (FileInfo.copy(FileName))
                             MessageDialog(tr("Le fichier")+"\n"+
                                               FileName+"\n"+
-                                              tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation);
+                                              tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation,600);
                         else
                             MessageDialog(tr("Impossible de copier le fichier")+"\n"+
                                               FileName+"-backup\n"+
                                               tr("vers le fichier")+"\n"+
-                                              FileName,"",QStyle::SP_MessageBoxCritical);
+                                              FileName,"",QStyle::SP_MessageBoxCritical,600);
 
                         result=false;
                     }
                 }
             } else {
-                MessageDialog(tr("La version de cette BDD est trop %1,"
-                                 " vous ne pouvez pas la modifier et certains onglets peuvent ne pas fonctionner.").arg("ancienne")+"\n\n"+
+                MessageDialog(tr("La version de cette BDD est trop %1, vous ne pouvez pas\n"
+                                 "la modifier et certains onglets peuvent ne pas fonctionner.").arg("ancienne")+"\n\n"+
                               sFichier+"\n"+
                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
-                              tr("Version attendue: %1").arg(DbVersion),"",QStyle::SP_MessageBoxWarning);
+                              tr("Version attendue: %1").arg(DbVersion),"",QStyle::SP_MessageBoxWarning,600);
 
             }
         } else if (result) {
@@ -290,7 +291,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 
         // if (sVerBDD != ui->lVerBDDAttendue->text()) {
         //     MessageDialog(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
-        //                   sFichier,QStyle::SP_MessageBoxCritical);
+        //                   sFichier,QStyle::SP_MessageBoxCritical,600);
         //     // ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
         //     dbClose();
         //     return false;
@@ -416,9 +417,9 @@ void MainWindow::RestaureParams()
         if (choice==0)
             on_mSelecDB_triggered();
         else if (choice==1)
-            on_mCreerBDD_triggered();
+            on_mCreateDB_triggered();
         else if (choice==2)
-            on_mCreerBDDVide_triggered();
+            on_mCreateEmptyDB_triggered();
     }
      // else
      //    PotaDbOpen(settings.value("database_path").toString(),"",false);

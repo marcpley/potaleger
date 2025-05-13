@@ -494,9 +494,10 @@
     <addaction name="mSelecDB"/>
     <addaction name="mCopyBDD"/>
     <addaction name="mUpdateSchema"/>
-    <addaction name="mCreerBDD"/>
-    <addaction name="mCreerBDDVide"/>
-    <addaction name="mAPropos"/>
+    <addaction name="mCreateDB"/>
+    <addaction name="mCreateEmptyDB"/>
+    <addaction name="mAbout"/>
+    <addaction name="mWhatSNew"/>
    </widget>
    <widget class="QMenu" name="mBaseData">
     <property name="title">
@@ -569,13 +570,12 @@
     <property name="title">
      <string>Édition</string>
     </property>
-    <addaction name="mFermerOnglet"/>
-    <addaction name="mFermerOnglets"/>
-    <addaction name="mFilterFind"/>
+    <addaction name="mCloseTab"/>
+    <addaction name="mCloseTabs"/>
     <addaction name="mParam"/>
     <addaction name="mNotes"/>
-    <addaction name="mImporter"/>
-    <addaction name="mExporter"/>
+    <addaction name="mImport"/>
+    <addaction name="mExport"/>
    </widget>
    <widget class="QMenu" name="mStock">
     <property name="title">
@@ -825,7 +825,7 @@
     <string>Toutes les cultures non terminées</string>
    </property>
   </action>
-  <action name="mFermerOnglet">
+  <action name="mCloseTab">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -839,7 +839,7 @@
     <string>Ctrl+W</string>
    </property>
   </action>
-  <action name="mFermerOnglets">
+  <action name="mCloseTabs">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -853,7 +853,7 @@
     <string>Ctrl+Shift+W</string>
    </property>
   </action>
-  <action name="mCreerBDD">
+  <action name="mCreateDB">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
    </property>
@@ -861,7 +861,7 @@
     <string>Créer une BDD avec les données de base</string>
    </property>
   </action>
-  <action name="mCreerBDDVide">
+  <action name="mCreateEmptyDB">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
    </property>
@@ -920,29 +920,12 @@
     <string>Itinéraires techniques</string>
    </property>
   </action>
-  <action name="mAPropos">
+  <action name="mAbout">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::HelpAbout"/>
    </property>
    <property name="text">
     <string>A propos...</string>
-   </property>
-  </action>
-  <action name="mFilterFind">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Filtrer rechercher</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+F</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
    </property>
   </action>
   <action name="mUpdateSchema">
@@ -956,12 +939,12 @@
     <string>Mettre à jour le schéma de BDD</string>
    </property>
   </action>
-  <action name="mImporter">
+  <action name="mImport">
    <property name="text">
     <string>Importer des données</string>
    </property>
   </action>
-  <action name="mExporter">
+  <action name="mExport">
    <property name="text">
     <string>Exporter les données</string>
    </property>
@@ -1036,6 +1019,14 @@
    </property>
    <property name="text">
     <string>Notes</string>
+   </property>
+  </action>
+  <action name="mWhatSNew">
+   <property name="icon">
+    <iconset theme="dialog-question"/>
+   </property>
+   <property name="text">
+    <string>Quoi d'neuf ?</string>
    </property>
   </action>
  </widget>

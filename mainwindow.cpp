@@ -72,7 +72,6 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->setObjectName("PW"+sObjName);
         w->lErr=ui->lDBErr;
         w->cbFontSize=ui->cbFont;
-        //w->mFilterFind = ui->mFilterFind;
         w->model->db=&db;
         w->model->progressBar=ui->progressBar;
         //w->query->lErr=ui->lDBErr;
@@ -220,12 +219,12 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             }
             settings.endGroup();
 
-            ui->mFermerOnglets->setEnabled(true);
-            ui->mFermerOnglet->setEnabled(true);
-            ui->mImporter->setEnabled(w->pbInsertRow->isEnabled());
-            ui->mExporter->setEnabled(true);
-            ui->mImporter->setIcon(QIcon(TablePixmap(w->model->tableName(),">>  ")));
-            ui->mExporter->setIcon(QIcon(TablePixmap(w->model->tableName(),"  >>")));
+            ui->mCloseTabs->setEnabled(true);
+            ui->mCloseTab->setEnabled(true);
+            ui->mImport->setEnabled(w->pbInsertRow->isEnabled());
+            ui->mExport->setEnabled(true);
+            ui->mImport->setIcon(QIcon(TablePixmap(w->model->tableName(),">>  ")));
+            ui->mExport->setIcon(QIcon(TablePixmap(w->model->tableName(),"  >>")));
 
             w->tv->setFocus();
            //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
@@ -283,10 +282,10 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         }
 
         if (ui->tabWidget->count()<3) {//Fermeture du dernier onglet data ouvert.
-            ui->mFermerOnglets->setEnabled(false);
-            ui->mFermerOnglet->setEnabled(false);
-            ui->mImporter->setEnabled(false);
-            ui->mExporter->setEnabled(false);
+            ui->mCloseTabs->setEnabled(false);
+            ui->mCloseTab->setEnabled(false);
+            ui->mImport->setEnabled(false);
+            ui->mExport->setEnabled(false);
         }
         Tab->deleteLater();
     }
@@ -317,14 +316,14 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     }
 
     if (!ui->tabWidget->widget(index)->objectName().startsWith("PW")) {
-        ui->mImporter->setEnabled(false);
-        ui->mExporter->setEnabled(false);
+        ui->mImport->setEnabled(false);
+        ui->mExport->setEnabled(false);
     } else {
         PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-        ui->mImporter->setEnabled(wc->pbInsertRow->isEnabled());
-        ui->mExporter->setEnabled(true);
-        ui->mImporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),">>  ")));
-        ui->mExporter->setIcon(QIcon(TablePixmap(wc->model->tableName(),"  >>")));
+        ui->mImport->setEnabled(wc->pbInsertRow->isEnabled());
+        ui->mExport->setEnabled(true);
+        ui->mImport->setIcon(QIcon(TablePixmap(wc->model->tableName(),">>  ")));
+        ui->mExport->setIcon(QIcon(TablePixmap(wc->model->tableName(),"  >>")));
         wc->SetSizes();
     }
     SetColoredText(ui->lDBErr,"","");
@@ -404,12 +403,12 @@ void MainWindow::on_mCopyBDD_triggered()
     }
 }
 
-void MainWindow::on_mCreerBDD_triggered()
+void MainWindow::on_mCreateDB_triggered()
 {
     CreateNewDB(false);
 }
 
-void MainWindow::on_mCreerBDDVide_triggered()
+void MainWindow::on_mCreateEmptyDB_triggered()
 {
     CreateNewDB(true);
 }
@@ -468,7 +467,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
     }
 }
 
-void MainWindow::on_mAPropos_triggered()
+void MainWindow::on_mAbout_triggered()
 {
     MessageDialog("Auteur: Marc Pleysier<br>"
                   "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
@@ -481,37 +480,32 @@ void MainWindow::on_mAPropos_triggered()
                   "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a><br>"
                   "IA: ChatGPT, Mistral et Copilot<br>"
                   "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
-                  QStyle::NStandardPixmap);
+                  QStyle::NStandardPixmap,500);
+}
+
+void MainWindow::on_mWhatSNew_triggered()
+{
+    MessageDialog(tr("Evolutions et corrections de bugs"),
+                  "<b>Potaléger 1.01</b><br>"+
+                  tr("Cultures à planter: contient les 'Semis fait' non nuls (et pas seulement commençant par 'x').")+"<br>"+
+                  tr("Cultures à récolter: contient les 'Semis fait'/'Plantation faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
+                  tr("Cultures à terminer: contient les 'Semis fait'/'Plantation faite'/'Récolte faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
+                  tr("Planification: les rotations sont maintenant correctement appliquées.")+"<br>"+
+                  tr("Correction itinéraires techniques (création nouvelle BDD): navet.")+"<br>"+
+                  tr("Amélioration de l'aide en ligne: saison et production."),
+                  QStyle::NStandardPixmap,800);
 }
 
 //edit menu
 
-void MainWindow::on_mFermerOnglet_triggered()
+void MainWindow::on_mCloseTab_triggered()
 {
     ClosePotaTab(ui->tabWidget->currentWidget());
 }
 
-void MainWindow::on_mFermerOnglets_triggered()
+void MainWindow::on_mCloseTabs_triggered()
 {
     ClosePotaTabs();
-}
-
-void MainWindow::on_mFilterFind_triggered()
-{
-    return;
-    // if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")) {
-    //     PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-    //     if (w->filterFrame->isVisible()) {
-    //         ui->mFilterFind->setChecked(false);
-    //         w->pbFilter->setChecked(false);
-    //         w->pbFilterClick(false);
-    //         w->ffFrame->setVisible(false);
-    //     } else {
-    //         ui->mFilterFind->setChecked(true);
-    //         w->ffFrame->setVisible(true);
-    //         w->curChanged(w->tv->selectionModel()->currentIndex());
-    //     }
-    // }
 }
 
 void MainWindow::on_mParam_triggered()
@@ -532,7 +526,7 @@ void MainWindow::on_mParam_triggered()
     }
 }
 
-void MainWindow::on_mImporter_triggered()
+void MainWindow::on_mImport_triggered()
 {
     if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
@@ -783,7 +777,7 @@ void MainWindow::on_mImporter_triggered()
     }
 }
 
-void MainWindow::on_mExporter_triggered()
+void MainWindow::on_mExport_triggered()
 {
     if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
@@ -1229,8 +1223,5 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
 
     ui->lDBlabel->setFixedWidth(110*arg1.toInt()/10);
 }
-
-
-
 
 

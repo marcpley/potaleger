@@ -296,6 +296,16 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
 -- GROUP BY Espèce
 -- ORDER BY Espèce,IT_plante;
 
+CREATE VIEW Planches_Décalées AS SELECT
+   PL.Planche,
+   PL.Rotation,
+   (SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1-R.Année_1+PL.Année-
+   (R.Nb_années*floor(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1-R.Année_1+PL.Année)/R.Nb_années)) Année,
+   PL.Longueur,
+   PL.Largeur
+FROM Planches PL
+     JOIN Rotations R USING(Rotation);
+
 CREATE VIEW Cult_planif AS SELECT
    PL.Planche,
    E.Espèce,
@@ -323,7 +333,8 @@ CREATE VIEW Cult_planif AS SELECT
    -- CAST((SELECT Valeur FROM Params WHERE Paramètre='Année_planif')AS INTEGER) Année_à_planifier
    'Simulation planif' Info
 FROM Rotations_détails RD
-     JOIN Planches PL USING(Rotation,Année)
+     JOIN Rotations R USING(Rotation)
+     JOIN Planches_Décalées PL USING(Rotation,Année)
      JOIN ITP I USING(IT_plante)
      LEFT JOIN Espèces E USING(Espèce)
 WHERE ((SELECT (Valeur ISNULL) FROM Params WHERE Paramètre='Planifier_planches') OR
@@ -652,7 +663,7 @@ WHERE   (Terminée ISNULL) AND
         (Date_plantation < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_plantation')||' days')) AND
         -- (Plantation_faite ISNULL) AND
         (coalesce(Plantation_faite,'') NOT LIKE 'x%') AND
-        ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL))
+        ((Semis_fait NOTNULL)OR(Date_semis ISNULL))
 ORDER BY    Date_plantation,
             Planche,
             IT_plante;
@@ -687,8 +698,8 @@ LEFT JOIN Espèces E USING (Espèce)
 WHERE   (C.Terminée ISNULL) AND
         (Début_récolte < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_récolte')||' days')) AND
         (coalesce(Récolte_faite,'') NOT LIKE 'x%')  AND
-        ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL)) AND
-        ((Plantation_faite LIKE 'x%')OR(Date_plantation ISNULL))
+        ((Semis_fait NOTNULL)OR(Date_semis ISNULL)) AND
+        ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL))
 ORDER BY    C.Début_récolte,
             C.Planche,
             C.IT_plante;
@@ -734,9 +745,9 @@ LEFT JOIN Planches PL USING (Planche)
 LEFT JOIN Espèces E USING (Espèce)
 WHERE   (C.Terminée ISNULL) AND
         ((C.Fin_récolte ISNULL)OR(C.Fin_récolte < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_terminer')||' days'))) AND
-        ((Semis_fait LIKE 'x%')OR(Date_semis ISNULL)) AND
-        ((Plantation_faite LIKE 'x%')OR(Date_plantation ISNULL)) AND
-        ((Récolte_faite LIKE 'x%')OR(Début_récolte ISNULL))
+        ((Semis_fait NOTNULL)OR(Date_semis ISNULL)) AND
+        ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL)) AND
+        ((Récolte_faite NOTNULL)OR(Début_récolte ISNULL))
 ORDER BY    C.Fin_récolte,
             C.Planche,
             C.IT_plante;

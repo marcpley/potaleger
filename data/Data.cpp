@@ -805,7 +805,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr(   "Regroupement de planches\n"
                                     "(voir le paramètre 'Ilot_nb_car').");
         else if (sFieldName=="Prod_possible")
-            sToolTip=QObject::tr("Production possibles pour les cultures prévues (kg).");
+            sToolTip=QObject::tr("Production possible pour les cultures prévues (kg).\n"
+                                 "Rendement x surface");
         else if (sFieldName=="Qté_réc")
             sToolTip=QObject::tr("Quantité totale récoltée (kg).");
         else if (sFieldName=="Rotation")
@@ -821,6 +822,9 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName=="Culture")
             sToolTip=QObject::tr("Numéro unique de la culture\n"
                                  "(pas de remise à zéro tous les ans).");
+        else if (sFieldName=="Saison")
+            sToolTip=QObject::tr("Année de la date de plantation ou de semis direct\n"
+                                 "(mise en place sur la planche de culture).");
         else if (sFieldName=="D_planif")
             sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte (planification).\n"
                                  "La planification des cultures est faite en fonction de l'ITP, les dates de la cultures sont calées sur le début de période de l'ITP.\n"
@@ -929,6 +933,11 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr(  "Nombre de cultures terminées utilisant cet itinéraire technique.");
         else if (sFieldName=="Nb_cu_TS")
             sToolTip=QObject::tr(  "Nombre de cultures terminées et significatives (champ Terminée différent de 'NS').");
+        else if (sFieldName.startsWith("Prod_N"))
+            sToolTip=QObject::tr(  "Somme des productions (réelles ou possibles) des cultures de la saison (kg).")+"\n"+
+                     QObject::tr(  "Saison = année de mise en place (plantation ou semis direct), la récolte peut se terminer l'année suivante.")+"\n"+
+                     QObject::tr(  "Production réelle (somme des récoltes) pour les cultures terminées.")+"\n"+
+                     QObject::tr(  "Production possible (rendement de l'espèce x surface de la culture) pour les cultures non terminées.");
         else if (sFieldName=="Qté_nécess")
             sToolTip=QObject::tr(   "Semence nécessaire (g) pour les cultures non encore semées.");
         else if (sFieldName=="Qté_manquante")

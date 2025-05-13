@@ -503,7 +503,6 @@ public:
     QLabel *lErr;
     QAction *mEditNotes;
     QComboBox *cbFontSize;
-    //QAction *mFilterFind;
 
     //bool *userDataEditing;
     bool bUserCurrChanged=true;

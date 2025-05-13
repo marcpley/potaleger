@@ -14,8 +14,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.0";
-QString const DbVersion="2025-04-12";
+QString const Version="1.01";
+QString const DbVersion="2025-05-13";
 
 class MainWindow : public QMainWindow
 {
@@ -48,11 +48,12 @@ public:
 private slots:
     void on_mSelecDB_triggered();
     void on_mParam_triggered();
-    void on_mFermerOnglet_triggered();
-    void on_mFermerOnglets_triggered();
+    void on_mCloseTab_triggered();
+    void on_mCloseTabs_triggered();
     void on_mCopyBDD_triggered();
-    void on_mCreerBDD_triggered();
-    void on_mCreerBDDVide_triggered();
+    void on_mCreateDB_triggered();
+    void on_mCreateEmptyDB_triggered();
+
     void on_mFamilles_triggered();
     void on_mEspeces_triggered();
     void on_mVarietes_triggered();
@@ -64,51 +65,33 @@ private slots:
     void on_mIlots_triggered();
     void on_mSuccessionParPlanche_triggered();
     void on_mTypes_de_planche_triggered();
-
-
     void on_mCulturesParIlots_triggered();
-
     void on_mRotationManquants_triggered();
-
     void on_mCulturesParPlanche_triggered();
-
     void on_mSemences_triggered();
-
     void on_mCuNonTer_triggered();
-
     void on_mCuASemerD_triggered();
-
     void on_mCuAPlanter_triggered();
-
     void on_mCuARecolter_triggered();
-
     void on_mCuSaisieRecoltes_triggered();
-
     void on_mCuATerminer_triggered();
-
     void on_mCuToutes_triggered();
-
     void on_mAnaITP_triggered();
-
     void on_mAnaCultures_triggered();
-
     void on_mITPTempo_triggered();
-
     void on_mCreerCultures_triggered();
 
     void on_tabWidget_currentChanged(int index);
 
     void on_mCulturesParplante_triggered();
 
-    void on_mAPropos_triggered();
-
-    void on_mFilterFind_triggered();
+    void on_mAbout_triggered();
 
     void on_mUpdateSchema_triggered();
 
-    void on_mExporter_triggered();
+    void on_mExport_triggered();
 
-    void on_mImporter_triggered();
+    void on_mImport_triggered();
 
     void on_mIncDatesCultures_triggered();
 
@@ -130,14 +113,16 @@ private slots:
 
     void on_mNotes_triggered();
 
+    void on_mWhatSNew_triggered();
+
 private:
     void SetEnabledDataMenuEntries(bool b);
     // bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
-    void MessageDialog(const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
-    bool OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
-    int RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
-    bool YesNoDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase);
+    void MessageDialog(const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    bool OkCancelDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    int RadiobuttonDialog(const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
+    bool YesNoDialog(const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=250);
     bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn);
     void dbClose();
     bool PotaDbOpen(QString sFichier, QString sNew, bool bUpdate);
