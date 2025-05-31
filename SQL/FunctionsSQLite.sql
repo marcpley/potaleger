@@ -291,12 +291,46 @@ QString sRepartir_Recolte_sur = QStringLiteral(R"#(
 SELECT C.Culture,I.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
 FROM Cultures C JOIN ITP I USING(IT_plante)
 WHERE (:Repartir NOTNULL)AND
-      -- (C.Début_récolte <= DATE('now','+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days'))AND
-      -- (C.Fin_récolte >= DATE('now','-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days'))AND
       ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
       (DATE(C.Début_récolte,'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days') <= coalesce(:Date,DATE('now')))AND
       (DATE(C.Fin_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days') >= coalesce(:Date,DATE('now')))AND
+      (DATE(coalesce(C.Date_plantation,C.Date_semis),'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_après_MEP')||' days') <= coalesce(:Date,DATE('now')))AND --1.1b1
       ((:Repartir='*')OR
        (C.Planche LIKE :Repartir||'%'))
+)#");
 
+QString sAnalyse_de_sol_proche = QStringLiteral(R"#(
+SELECT 1 Proximité,*
+FROM Analyses_de_sol
+WHERE Planche=:Pl
+UNION
+SELECT 2 Proximité,*
+FROM Analyses_de_sol
+WHERE (:Pl LIKE substr(Planche,-1,-100)||'%')AND(length(Planche)>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+UNION
+SELECT 3 Proximité,*
+FROM Analyses_de_sol
+WHERE (:Pl LIKE substr(Planche,-2,-100)||'%')AND(length(Planche)-1>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+UNION
+SELECT 4 Proximité,*
+FROM Analyses_de_sol
+WHERE (:Pl LIKE substr(Planche,-3,-100)||'%')AND(length(Planche)-2>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+UNION
+SELECT 5 Proximité,*
+FROM Analyses_de_sol
+WHERE (:Pl LIKE substr(Planche,-4,-100)||'%')AND(length(Planche)-3>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+ORDER BY Proximité,Date DESC
+)#");
+
+QString sRepartir_Fertilisation_sur = QStringLiteral(R"#(
+SELECT C.Culture,I.Espèce,C.Longueur*P.Largeur Surface,C.Début_récolte,C.Fin_récolte
+FROM Cultures C
+JOIN ITP I USING(IT_plante)
+JOIN Planches P USING(Planche)
+WHERE (:Repartir NOTNULL)AND
+      ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
+      (DATE(coalesce(C.Date_plantation,C.Date_semis),'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_avance_saisie')||' days') <= coalesce(:Date,DATE('now')))AND
+      (DATE(C.Début_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_retard_saisie')||' days') >= coalesce(:Date,DATE('now')))AND
+      ((:Repartir='*')OR
+       (C.Planche LIKE :Repartir||'%'))
 )#");

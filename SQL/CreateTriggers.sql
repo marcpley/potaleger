@@ -49,16 +49,16 @@ BEGIN
     VALUES ('temp_date_planif', CASE
                                 WHEN ((length(NEW.D_planif)=4)AND(CAST(NEW.D_planif AS INTEGER) BETWEEN 2000 AND 2100))
                                 THEN    CASE
-                                        WHEN (SELECT (ITP.Déb_plantation NOTNULL)AND(ITP.Déb_plantation<ITP.Déb_semis) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                                        WHEN (SELECT (ITP.Déb_plantation NOTNULL)AND(ITP.Déb_plantation<ITP.Déb_semis) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                                         THEN CAST(CAST(NEW.D_planif AS INTEGER)-1 AS TEXT)||'-01-01' -- Semis sous abris l'année précédent la mise en place.
                                         ELSE NEW.D_planif||'-01-01' END
                                 ELSE DATE() END);
 
     UPDATE Cultures SET
         Date_semis=CASE WHEN Semis_fait NOTNULL THEN Date_semis
-                        WHEN (SELECT (ITP.Déb_semis NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Déb_semis NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Déb_semis FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Déb_semis FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END,
         D_planif=DATE()-- Nécessaire pour ne pas provoquer un appel récursif.
@@ -69,9 +69,9 @@ BEGIN
 
     UPDATE Cultures SET
         Date_plantation=CASE WHEN Plantation_faite NOTNULL THEN Date_plantation
-                        WHEN (SELECT (ITP.Déb_plantation NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Déb_plantation NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Déb_plantation FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Déb_plantation FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END
     WHERE Culture=NEW.Culture;
@@ -81,9 +81,9 @@ BEGIN
 
     UPDATE Cultures SET
         Début_récolte=  CASE WHEN Récolte_faite NOTNULL THEN Début_récolte
-                        WHEN (SELECT (ITP.Déb_récolte NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Déb_récolte NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Déb_récolte FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Déb_récolte FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END
     WHERE Culture=NEW.Culture;
@@ -93,9 +93,9 @@ BEGIN
 
     UPDATE Cultures SET
         Fin_récolte=  CASE WHEN Récolte_faite NOTNULL THEN Fin_récolte
-                        WHEN (SELECT (ITP.Fin_récolte NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Fin_récolte NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Fin_récolte FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Fin_récolte FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END
     WHERE Culture=NEW.Culture;
@@ -114,16 +114,16 @@ BEGIN--Code identique à INSERT
     VALUES ('temp_date_planif', CASE
                                 WHEN ((length(NEW.D_planif)=4)AND(CAST(NEW.D_planif AS INTEGER) BETWEEN 2000 AND 2100))
                                 THEN    CASE
-                                        WHEN (SELECT (ITP.Déb_plantation NOTNULL)AND(ITP.Déb_plantation<ITP.Déb_semis) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                                        WHEN (SELECT (ITP.Déb_plantation NOTNULL)AND(ITP.Déb_plantation<ITP.Déb_semis) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                                         THEN CAST(CAST(NEW.D_planif AS INTEGER)-1 AS TEXT)||'-01-01' -- Semis sous abris l'année précédent la mise en place.
                                         ELSE NEW.D_planif||'-01-01' END
                                 ELSE DATE() END);
 
     UPDATE Cultures SET
         Date_semis=CASE WHEN Semis_fait NOTNULL THEN Date_semis
-                        WHEN (SELECT (ITP.Déb_semis NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Déb_semis NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Déb_semis FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Déb_semis FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END,
         D_planif=DATE()-- Nécessaire pour ne pas provoquer un appel récursif.
@@ -134,9 +134,9 @@ BEGIN--Code identique à INSERT
 
     UPDATE Cultures SET
         Date_plantation=CASE WHEN Plantation_faite NOTNULL THEN Date_plantation
-                        WHEN (SELECT (ITP.Déb_plantation NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Déb_plantation NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Déb_plantation FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Déb_plantation FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END
     WHERE Culture=NEW.Culture;
@@ -146,9 +146,9 @@ BEGIN--Code identique à INSERT
 
     UPDATE Cultures SET
         Début_récolte=  CASE WHEN Récolte_faite NOTNULL THEN Début_récolte
-                        WHEN (SELECT (ITP.Déb_récolte NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Déb_récolte NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Déb_récolte FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Déb_récolte FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END
     WHERE Culture=NEW.Culture;
@@ -158,9 +158,9 @@ BEGIN--Code identique à INSERT
 
     UPDATE Cultures SET
         Fin_récolte=  CASE WHEN Récolte_faite NOTNULL THEN Fin_récolte
-                        WHEN (SELECT (ITP.Fin_récolte NOTNULL) FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante)
+                        WHEN (SELECT (ITP.Fin_récolte NOTNULL) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
                         THEN PlanifCultureCalcDate( (SELECT Valeur FROM Params WHERE Paramètre='temp_date_planif'),
-                                                    (SELECT ITP.Fin_récolte FROM ITP WHERE ITP.IT_Plante=NEW.IT_Plante))
+                                                    (SELECT ITP.Fin_récolte FROM ITP WHERE ITP.IT_plante=NEW.IT_plante))
                         ELSE NULL
                         END
     WHERE Culture=NEW.Culture;
@@ -444,6 +444,123 @@ BEGIN
      WHERE Espèce=OLD.Espèce;
 END;;
 
+DROP TRIGGER IF EXISTS Fertilisants__inventaire_UPDATE;;
+CREATE TRIGGER Fertilisants__inventaire_UPDATE INSTEAD OF UPDATE ON Fertilisants__inventaire
+BEGIN
+    UPDATE Fertilisants SET
+        Date_inv=NEW.Date_inv,
+        Inventaire=NEW.Inventaire,
+        Prix_kg=NEW.Prix_kg,
+        Notes=NEW.Notes
+     WHERE Fertilisant=OLD.Fertilisant;
+END;;
+
+DROP TRIGGER IF EXISTS Fertilisations__Saisies_INSERT;;
+CREATE TRIGGER Fertilisations__Saisies_INSERT INSTEAD OF INSERT ON Fertilisations__Saisies
+BEGIN
+    SELECT RAISE(ABORT,'NOT NULL constraint failed Fertilisations.Culture/Répartir unable to fetch row') WHERE (NEW.Culture ISNULL)AND(NEW.Répartir ISNULL);
+    --Saisie d'un Fertilisations pour une culture unique0
+    INSERT INTO Fertilisations (Date,
+                                Espèce,
+                                Culture,
+                                Fertilisant,
+                                Quantité,
+                                N,P,K,
+                                Notes)
+    SELECT coalesce(NEW.Date,DATE('now')),
+           NEW.Espèce,
+           C.Culture,
+           NEW.Fertilisant,
+           NEW.Quantité, -- kg
+           NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10 -- g
+                       *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_N')/100,
+           NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
+                       *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_P')/100,
+           NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
+                       *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_K')/100,
+           NEW.Notes
+    FROM Cultures C
+    WHERE (NEW.Répartir ISNULL)AND
+          (C.Culture=NEW.Culture);
+    --Répartition de la quantité de fertilisant.
+    INSERT INTO Fertilisations (Date,
+                                Espèce,
+                                Culture,
+                                Fertilisant,
+                                Quantité,
+                                N,P,K,
+                                Notes)
+    SELECT coalesce(NEW.Date,DATE('now')),
+            NEW.Espèce,
+            C.Culture,
+            NEW.Fertilisant,
+            round(NEW.Quantité/(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                              *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_N')/100
+                              /(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                              *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_P')/100
+                              /(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                              *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_K')/100
+                              /(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            NEW.Notes
+     FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date) C;
+END;;
+
+DROP TRIGGER IF EXISTS Fertilisations__Saisies_UPDATE;;
+CREATE TRIGGER Fertilisations__Saisies_UPDATE INSTEAD OF UPDATE ON Fertilisations__Saisies
+BEGIN
+    --Mise à jour de la ligne fertilisation si pas de répartition.
+    UPDATE Fertilisations SET
+           Date=coalesce(NEW.Date,DATE('now')),
+           Espèce=NEW.Espèce,
+           Culture=NEW.Culture,
+           Fertilisant=NEW.Fertilisant,
+           Quantité=NEW.Quantité,
+           N=NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                         *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_N')/100,
+           P=NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                         *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_P')/100,
+           K=NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                         *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_K')/100,
+           Notes=NEW.Notes
+     WHERE (ID=OLD.ID)AND(NEW.Répartir ISNULL);
+     --Suppression de la ligne fertilisation si répartition.
+     DELETE FROM Fertilisations WHERE (ID=OLD.ID)AND(NEW.Répartir NOTNULL);
+     --Répartition de la quantité de fertilisant.
+     INSERT INTO Fertilisations (Date,
+                                 Espèce,
+                                 Culture,
+                                 Fertilisant,
+                                 Quantité,
+                                 N,P,K,
+                                 Notes)
+     SELECT coalesce(NEW.Date,DATE('now')),
+            NEW.Espèce,
+            C.Culture,
+            NEW.Fertilisant,
+            round(NEW.Quantité/(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                              *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_N')/100
+                              /(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                              *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_P')/100
+                              /(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                              *(SELECT Valeur FROM Params WHERE Paramètre='Ferti_coef_K')/100
+                              /(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
+            NEW.Notes
+      FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date) C;
+END;;
+
+DROP TRIGGER IF EXISTS Fertilisations__Saisies_DELETE;;
+CREATE TRIGGER Fertilisations__Saisies_DELETE INSTEAD OF DELETE ON Fertilisations__Saisies
+BEGIN
+    DELETE FROM Fertilisations WHERE ID=OLD.ID;
+END;;
+
+
 DROP TRIGGER IF EXISTS ITP_UPDATE_FinsPériodes;;
 CREATE TRIGGER ITP_UPDATE_FinsPériodes AFTER UPDATE ON ITP
           WHEN (NEW.Déb_semis NOTNULL AND NEW.Fin_semis ISNULL) OR
@@ -723,14 +840,14 @@ CREATE TRIGGER "Récoltes_DELETE" AFTER DELETE ON Récoltes
 BEGIN
     DELETE FROM Params WHERE Paramètre LIKE 'temp_%';
     INSERT INTO Params (Paramètre, Valeur)
-    VALUES ('temp_ITP', (SELECT IT_Plante FROM Cultures WHERE Culture=OLD.Culture));
+    VALUES ('temp_ITP', (SELECT IT_plante FROM Cultures WHERE Culture=OLD.Culture));
 
      UPDATE Cultures
      SET Début_récolte=CASE WHEN (SELECT count() FROM Récoltes WHERE Culture=OLD.Culture)>0
                             THEN (SELECT min(Date) FROM Récoltes WHERE Culture=OLD.Culture)
                             ELSE PlanifCultureCalcDate(coalesce(Date_plantation,Date_semis),
                                                        (SELECT ITP.Déb_récolte FROM ITP
-                                                        WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
+                                                        WHERE ITP.IT_plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
                             END,
          Récolte_faite=(CASE WHEN (SELECT count(*)
                                  FROM Récoltes
@@ -744,7 +861,7 @@ BEGIN
                                    CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
                           ELSE PlanifCultureCalcDate(coalesce(Début_récolte,Date_plantation,Date_semis),
                                                      (SELECT ITP.Fin_récolte FROM ITP
-                                                      WHERE ITP.IT_Plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
+                                                      WHERE ITP.IT_plante=(SELECT Valeur FROM Params WHERE Paramètre='temp_ITP'))) -- Echec récup de l'ITP sans passer par la table temporaire.
                           END
      WHERE Culture=OLD.Culture;
      DELETE FROM Params WHERE Paramètre LIKE 'temp_%';

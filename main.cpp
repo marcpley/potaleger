@@ -42,6 +42,9 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
     for (int i = 0; i < ui->mASemer->actions().count(); i++)
         ui->mASemer->actions().at(i)->setEnabled(b);
 
+    for (int i = 0; i < ui->mFertilisation->actions().count(); i++)
+        ui->mFertilisation->actions().at(i)->setEnabled(b);
+
     for (int i = 0; i < ui->mStock->actions().count(); i++)
         ui->mStock->actions().at(i)->setEnabled(b);
 
@@ -515,7 +518,7 @@ void MainWindow::SetMenuIcons() {
     ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
     ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));
     ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
-    ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
+    //ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
     ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
     // ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
     ui->mITPTempo->setIcon(QIcon(TablePixmap("ITP__Tempo","T")));
@@ -543,6 +546,13 @@ void MainWindow::SetMenuIcons() {
     ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
     ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
+
+    ui->mAnalysesSol->setIcon(QIcon(TablePixmap("Analyses_de_sol","T")));
+    ui->mFertilisants->setIcon(QIcon(TablePixmap("Fertilisants","T")));
+    ui->mInventaireFert->setIcon(QIcon(TablePixmap("Fertilisants__inventaire","")));
+    ui->mCuAFertiliser->setIcon(QIcon(TablePixmap("Cultures__à_fertiliser","")));
+    ui->mFertilisations->setIcon(QIcon(TablePixmap("Fertilisations__Saisies","T")));
+    ui->mBilanPlanches->setIcon(QIcon(TablePixmap("Planches__bilan_fert","")));
 
     ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
     ui->mEsSaisieSorties->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));

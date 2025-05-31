@@ -400,22 +400,22 @@ void PotaWidget::selChanged() {
             //for (const QModelIndex &index : selectedIndexes) {
             for (int i=0;i<nbSelected;i++) {
                 //QModelIndex &index : selectedIndexes) {
-                sumSelected+=selectedIndexes[i].data().toFloat(&bOk);
+                sumSelected+=selectedIndexes[i].data(Qt::EditRole).toFloat(&bOk);
                 if (bOk){
                     if (nbOkSelected==0) {
-                        minSelected=selectedIndexes[i].data().toFloat();
-                        maxSelected=selectedIndexes[i].data().toFloat();
+                        minSelected=selectedIndexes[i].data(Qt::EditRole).toFloat();
+                        maxSelected=selectedIndexes[i].data(Qt::EditRole).toFloat();
                     } else {
-                        minSelected=min(minSelected,selectedIndexes[i].data().toFloat());
-                        maxSelected=fmax(maxSelected,selectedIndexes[i].data().toFloat());
+                        minSelected=min(minSelected,selectedIndexes[i].data(Qt::EditRole).toFloat());
+                        maxSelected=fmax(maxSelected,selectedIndexes[i].data(Qt::EditRole).toFloat());
                     }
                     nbOkSelected++;
                 }
-                if (selectedIndexes[i].data().toString().isEmpty()) {
+                if (selectedIndexes[i].data(Qt::EditRole).toString().isEmpty()) {
                     nbEmptySelected++;
                 } else {
-                    if (!sl.contains(selectedIndexes[i].data().toString()))
-                        sl.append(selectedIndexes[i].data().toString());
+                    if (!sl.contains(selectedIndexes[i].data(Qt::EditRole).toString()))
+                        sl.append(selectedIndexes[i].data(Qt::EditRole).toString());
                 }
             }
             lSelect->setText(tr("Sélection: ")+str(nbSelected)+
@@ -1187,7 +1187,7 @@ bool PotaTableModel::select()  {
         AppBusy(true,progressBar,0,tableName()+" %p%");
         //modifiedCells.clear();
         commitedCells.clear();
-        copiedCells.clear();
+        //copiedCells.clear(); Danger
     }
 
     QString sQuery="SELECT * FROM "+tableName();
@@ -1577,6 +1577,9 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     b.setStyle(Qt::SolidPattern);
     QColor c,cFiltered,cCopied,cModified,cModifiedError;
     QItemSelectionModel *selection = pw->tv->selectionModel();
+    QString sFieldName=pw->model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
+    QString sTableName=pw->model->tableName();
+
 
 
     if (!index.data(Qt::EditRole).isNull() and
@@ -1635,12 +1638,106 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     if (PaintedColsTypes[index.column()].startsWith("Tempo")) {
     //if (PaintedCols.contains(index.column()))
          paintTempo(painter,option,index);
-    } else {
-        if(!index.data(Qt::EditRole).toDate().isNull() and index.data(Qt::EditRole).toDate()>QDate::currentDate()){
-            //Write red date in future
+    } else { //Green or red value.
+        QString ColoText="";
+        if(!index.data(Qt::EditRole).toDate().isNull()){
+            if(index.data(Qt::EditRole).toDate()>QDate::currentDate())//Date in future
+                ColoText="G";
+        } else if(sFieldName=="pH"){
+            if(index.data(Qt::EditRole).toDouble()>8 or index.data(Qt::EditRole).toDouble()<6) //Todo : code métier à mettre ailleurs
+                ColoText="R";
+        } else if(sFieldName.startsWith("★")){
+            if(index.data(Qt::EditRole).toString()=="Elevé") //Todo : code métier à mettre ailleurs
+                ColoText="R";
+            else if (index.data(Qt::EditRole).toString()=="Faible")
+                ColoText="G";
+        } else if(sFieldName.startsWith("☆")){
+            if(index.data(Qt::EditRole).toString()=="Elevé") //Todo : code métier à mettre ailleurs
+                ColoText="G";
+            else if (index.data(Qt::EditRole).toString()=="Faible")
+                ColoText="R";
+        } else if(sFieldName.endsWith("_manq")){
+            if(index.data(Qt::EditRole).toDouble()>0) //Todo : code métier à mettre ailleurs
+                ColoText="R";
+            else if (index.data(Qt::EditRole).toDouble()<0)
+                ColoText="G";
+        } else if(sTableName=="Analyses_de_sol"){
+            if(sFieldName=="MO") {
+                if(index.data(Qt::EditRole).toDouble()<=15) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=20) ColoText="G";
+            } else if(sFieldName=="IB") {
+                if(index.data(Qt::EditRole).toDouble()>=1.4) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()<=0.7) ColoText="G";
+            } else if(sFieldName=="CEC") {
+                if(index.data(Qt::EditRole).toDouble()<10) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>15) ColoText="G";
+            } else if(sFieldName=="N") {
+                if(index.data(Qt::EditRole).toDouble()<=0.9) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=1.1) ColoText="G";
+            } else if(sFieldName=="P") {
+                if(index.data(Qt::EditRole).toDouble()<=0.08) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=0.12) ColoText="G";
+            } else if(sFieldName=="K") {
+                if(index.data(Qt::EditRole).toDouble()<=0.12) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=0.15) ColoText="G";
+            } else if(sFieldName=="C") {
+                if(index.data(Qt::EditRole).toDouble()<=9) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=11) ColoText="G";
+            } else if(sFieldName=="CN") {
+                if(index.data(Qt::EditRole).toDouble()<=8) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=11) ColoText="G";
+            } else if(sFieldName=="Ca") {
+                if(index.data(Qt::EditRole).toDouble()<=3.7) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=3.9) ColoText="G";
+            } else if(sFieldName=="Mg") {
+                if(index.data(Qt::EditRole).toDouble()<=0.09) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>=0.14) ColoText="G";
+            } else if(sFieldName=="Na") {
+                if(index.data(Qt::EditRole).toDouble()>=0.24) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()<=0.02) ColoText="G";
+            }
+        } else if(sTableName=="Fertilisants"){
+            if(sFieldName=="N_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.2) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>1) ColoText="G";
+            } else if(sFieldName=="P_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.1) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>0.5) ColoText="G";
+            } else if(sFieldName=="K_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.4) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>2) ColoText="G";
+            } else if(sFieldName=="Ca_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.4) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>2) ColoText="G";
+            } else if(sFieldName=="Fe_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.02) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>0.1) ColoText="G";
+            } else if(sFieldName=="Mg_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.2) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>1) ColoText="G";
+            } else if(sFieldName=="Na_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.04) ColoText="G";
+                else if(index.data(Qt::EditRole).toDouble()>0.2) ColoText="R";
+            } else if(sFieldName=="S_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.04) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>0.2) ColoText="G";
+            } else if(sFieldName=="Si_disp_pc") {
+                if(index.data(Qt::EditRole).toDouble()<0.1) ColoText="R";
+                else if(index.data(Qt::EditRole).toDouble()>0.5) ColoText="G";
+            }
+        }
+
+        if (ColoText=="G") {
             QStyleOptionViewItem opt = option;
             if (isDarkTheme())
-                opt.palette.setColor(QPalette::Text, QColor("#ffadad"));//light red
+                opt.palette.setColor(QPalette::Text, QColor("#77ff77"));//light green
+            else
+                opt.palette.setColor(QPalette::Text, QColor("#009e00"));//dark green
+            QStyledItemDelegate::paint(painter, opt, index);
+        } else if (ColoText=="R") {
+            QStyleOptionViewItem opt = option;
+            if (isDarkTheme())
+                opt.palette.setColor(QPalette::Text, QColor("#ff7171"));//light red
             else
                 opt.palette.setColor(QPalette::Text, QColor("#b70000"));//dark red
             QStyledItemDelegate::paint(painter, opt, index);

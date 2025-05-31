@@ -8,6 +8,7 @@
 #include "SQL/CreateBaseData.sql"
 #include "SQL/CreateTriggers.sql"
 #include "SQL/UpdateTableParams.sql"
+#include "SQL/UpdateBaseData.sql"
 #include "PotaUtils.h"
 #include "data/Data.h"
 #include "SQL/FunctionsSQLite.h"
@@ -59,6 +60,20 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setFormat("BASE DATA %p%");
             bResult=query->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar,true);
             sResult.append("Base data : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+        if (bResult and(sDBVersion == "NewWithBaseData")) {
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("UPDATE NPK DATA (Espèces) %p%");
+            bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar,true);
+            sResult.append("Update base data (Espèces) : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+        if (bResult and(sDBVersion == "NewWithBaseData")) {
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("UPDATE NPK DATA (Fertilisants) %p%");
+            bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar,true);
+            sResult.append("Update base data (Fertilisants) : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult)
@@ -151,6 +166,16 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-05-13 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-05-13";
         }
+        if (bResult and(sDBVersion == "2025-05-13")) { //Adding field: Espèces.N P K.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = query->ExecMultiShowErr(sDDL20250514,";",ui->progressBar) and
+                      query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar) and
+                      query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar);
+            sResult.append(sDBVersion+" -> 2025-05-14 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-05-14";
+        }
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
@@ -185,13 +210,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                         !query->value("name").toString().startsWith("Temp_") and
                         !query->value("name").toString().startsWith("sql")) {
                         sFieldsList="";
+                        qNewTableFields->clear();
                         qNewTableFields->ExecShowErr("PRAGMA table_xinfo("+query->value("name").toString()+");");//New table
                         while (qNewTableFields->next()) {
                             if (qNewTableFields->value("hidden").toInt()==0) {
                                 qOldTableFields->ExecShowErr("PRAGMA table_xinfo(Temp_"+query->value("name").toString()+");");//Old table
-                                qDebug() << query->value("name").toString() << " - " << qNewTableFields->value("name").toString();
+                                // qDebug() << query->value("name").toString() << " - " << qNewTableFields->value("name").toString();
                                 while (qOldTableFields->next()) {
-                                    qDebug() << qOldTableFields->value("name").toString();
+                                    // qDebug() << qOldTableFields->value("name").toString();
                                     if (qOldTableFields->value("name").toString()==qNewTableFields->value("name").toString())//Fields exists in old and new tables
                                         sFieldsList +=qNewTableFields->value("name").toString()+",";
                                 }

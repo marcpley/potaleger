@@ -56,6 +56,7 @@ DISTFILES += \
     SQL/CreateTriggers.sql \
     SQL/CreateViews.sql \
     SQL/FunctionsSQLite.sql \
+    SQL/UpdateBaseData.sql \
     SQL/UpdateStru.sql \
     SQL/UpdateTableParams.sql \
     install/readme.md \

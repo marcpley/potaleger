@@ -114,7 +114,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 
             if(w->model->rowCount()==0) {
                 if (bEdit and(FkFilter(&db,w->model->RealTableName(),"",w->model->index(0,0),true)!="NoFk")){
-                    w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName()));
+                    w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName().replace("_"," ").toLower()));
                 } else {
                     SetColoredText(ui->lDBErr,"","");
                     MessageDialog(windowTitle(),sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
@@ -349,7 +349,7 @@ void MainWindow::on_mUpdateSchema_triggered()
                        ui->lDB->text()+"\n\n"+
                        tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
                        tr("Vos données vont être conservées.")+"\n"+
-                       tr("En cas d'échec, votre BDD sera remise dans son état initial."))){
+                       tr("En cas d'échec, votre BDD sera remise dans son état initial."),QStyle::SP_MessageBoxQuestion,600)){
         QString sFileName=ui->lDB->text();
         PotaDbClose();
         PotaDbOpen(sFileName,"",true);
@@ -375,7 +375,7 @@ void MainWindow::on_mCopyBDD_triggered()
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par")+"\n"+
                        ui->lDB->text()+"\n"+
-                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",QStyle::SP_MessageBoxWarning)) {
+                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",QStyle::SP_MessageBoxWarning,600)) {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists()) {
             FileInfo2.setFileName(sFileName);
@@ -442,7 +442,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
         OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
-                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),QStyle::SP_MessageBoxWarning))
+                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),QStyle::SP_MessageBoxWarning,600))
     {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists())
@@ -489,15 +489,26 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDialog("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
+                  "<b>Potaléger 1.1</b> - /05/2025<br>"
+                  "<u>"+tr("Evolutions")+" :</u><br>"+
+                  "- "+tr("Fertilisations: besoins NPK, fertilisants, bilan par culture et par planche.")+"<br>"+
+                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Plus de possibilité de saisir des récoltes avant la date de mise en place de la culture.")+"<br>"+
+                  "- "+tr("Infos (min, max, etc) sur une sélection de pourcentages.")+"<br>"+
+                  "- "+tr("Bugs minimes sur les fenêtres de dialogue..")+"<br><br>"+
                   "<b>Potaléger 1.02</b> - 13/05/2025<br>"+
-                  tr("Cultures à planter: contient les 'Semis fait' non nuls (et pas seulement commençant par 'x').")+"<br>"+
-                  tr("Cultures à récolter: contient les 'Semis fait'/'Plantation faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
-                  tr("Cultures à terminer: contient les 'Semis fait'/'Plantation faite'/'Récolte faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
-                  tr("Planification: les rotations sont maintenant correctement appliquées.")+"<br>"+
-                  tr("Correction itinéraires techniques (création nouvelle BDD): navet.")+"<br>"+
-                  tr("Amélioration de l'aide en ligne: saison et production.")+"<br><br>"+
+                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Cultures à planter: contient les 'Semis fait' non nuls (et pas seulement commençant par 'x').")+"<br>"+
+                  "- "+tr("Cultures à récolter: contient les 'Semis fait'/'Plantation faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
+                  "- "+tr("Cultures à terminer: contient les 'Semis fait'/'Plantation faite'/'Récolte faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
+                  "- "+tr("Planification: les rotations sont maintenant correctement appliquées.")+"<br>"+
+                  "- "+tr("Correction itinéraires techniques (création nouvelle BDD): navet.")+"<br>"+
+                  "- "+tr("Amélioration de l'aide en ligne: saison et production.")+"<br><br>"+
                   "<b>Potaléger 1.0</b> - 16/04/2025<br>"+
-                  tr("Données de base, planification, gestion des cultures, objectifs de production..."),
+                  "- "+tr("Données de base: Espèces, itinéraires techniques, variétés...")+"<br>"+
+                  "- "+tr("Plans de rotation et planification des cultures.")+"<br>"+
+                  "- "+tr("Gestion des cultures.")+"<br>"+
+                  "- "+tr("Récoltes et objectifs de production.")+"<br>",
                   QStyle::NStandardPixmap,800);
 }
 
@@ -665,7 +676,7 @@ void MainWindow::on_mImport_triggered()
         int nbErrors=0;
         if (choice==5 or choice==6) {//Delete selected lines
             if(w->model->rowCount()>1 and
-                !OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning)) {
+                !OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning,600)) {
                //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
                 return;
             }
@@ -801,7 +812,7 @@ void MainWindow::on_mExport_triggered()
             OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                                sFileName+"\n"+
                                FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
-                               tr("Remplacer ?"),QStyle::SP_MessageBoxWarning)) {
+                               tr("Remplacer ?"),QStyle::SP_MessageBoxWarning,600)) {
             QFile FileInfo2;
             if (FileInfoVerif.exists()) {
                 FileInfo2.setFileName(sFileName);
@@ -888,19 +899,14 @@ void MainWindow::on_mVarietes_triggered()
     OpenPotaTab("Varietes","Variétés",tr("Variétés"));
 }
 
-void MainWindow::on_mApports_triggered()
-{
-    OpenPotaTab("Apports","Apports",tr("Apports"));
-}
+// void MainWindow::on_mApports_triggered()
+// {
+//     OpenPotaTab("Apports","Apports",tr("Apports"));
+// }
 
 void MainWindow::on_mFournisseurs_triggered()
 {
     OpenPotaTab("Fournisseurs","Fournisseurs",tr("Fournisseurs"));
-}
-
-void MainWindow::on_mTypes_de_planche_triggered()
-{
-    // OpenPotaTab("TypesPlanche","Types_planche",tr("Types planche"));
 }
 
 void MainWindow::on_mITPTempo_triggered()
@@ -1014,11 +1020,11 @@ void MainWindow::on_mCreerCultures_triggered()
         bool result;
 
         if (choice==0)
-            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
+            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
                                        "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
                                        "FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')");
         else
-            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_Plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
+            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
                                        "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
                                        "FROM Cult_planif");
         if (result) {
@@ -1101,6 +1107,42 @@ void MainWindow::on_mCuToutes_triggered()
     OpenPotaTab("Cultures","Cultures",tr("Cultures"));
 }
 
+// Menu Fertilisation
+void MainWindow::on_mAnalysesSol_triggered()
+{
+    OpenPotaTab("Analyses_de_sol", "Analyses_de_sol",tr("Analyses sol"));
+}
+
+void MainWindow::on_mFertilisants_triggered()
+{
+    OpenPotaTab("Fertilisants","Fertilisants",tr("Fertilisants"));
+}
+
+void MainWindow::on_mInventaireFert_triggered()
+{
+    OpenPotaTab("Fertilisants__inventaire","Fertilisants__inventaire",tr("Inventaire F."));
+}
+
+void MainWindow::on_mCuAFertiliser_triggered()
+{
+    OpenPotaTab( "Cultures__a_fertiliser","Cultures__à_fertiliser",tr("A fertiliser"));
+}
+
+void MainWindow::on_mFertilisations_triggered()
+{
+    if (OpenPotaTab("Fertilisations__Saisies","Fertilisations__Saisies",tr("Fertilisations"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+        //Go to last row.
+        w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+    }
+}
+
+void MainWindow::on_mBilanPlanches_triggered()
+{
+    OpenPotaTab( "Planches__bilan_fert","Planches__bilan_fert",tr("Bilan fert."));
+}
+
 //Menu Stock
 void MainWindow::on_mDestinations_triggered()
 {
@@ -1119,7 +1161,7 @@ void MainWindow::on_mEsSaisieSorties_triggered()
 
 void MainWindow::on_mInventaire_triggered()
 {
-    OpenPotaTab( "Especes__inventaire","Espèces__inventaire",tr("Inventaire"));
+    OpenPotaTab( "Especes__inventaire","Espèces__inventaire",tr("Inventaire E."));
 }
 
 //Menu Analyses

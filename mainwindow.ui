@@ -507,7 +507,6 @@
     <addaction name="mEspeces"/>
     <addaction name="mFournisseurs"/>
     <addaction name="mVarietes"/>
-    <addaction name="mApports"/>
     <addaction name="mITP"/>
     <addaction name="mITPTempo"/>
    </widget>
@@ -585,12 +584,24 @@
     <addaction name="mEsSaisieSorties"/>
     <addaction name="mInventaire"/>
    </widget>
+   <widget class="QMenu" name="mFertilisation">
+    <property name="title">
+     <string>Fertilisation</string>
+    </property>
+    <addaction name="mAnalysesSol"/>
+    <addaction name="mFertilisants"/>
+    <addaction name="mInventaireFert"/>
+    <addaction name="mCuAFertiliser"/>
+    <addaction name="mFertilisations"/>
+    <addaction name="mBilanPlanches"/>
+   </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
    <addaction name="mBaseData"/>
    <addaction name="mAssolement"/>
    <addaction name="mPlanif"/>
    <addaction name="mCultures"/>
+   <addaction name="mFertilisation"/>
    <addaction name="mStock"/>
    <addaction name="mAnalyses"/>
   </widget>
@@ -626,12 +637,12 @@
     <string>Fournisseurs</string>
    </property>
   </action>
-  <action name="mApports">
+  <action name="mFertilisants">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Apports</string>
+    <string>Fertilisants</string>
    </property>
   </action>
   <action name="mPlanches">
@@ -1027,6 +1038,46 @@
    </property>
    <property name="text">
     <string>Quoi d'neuf ?</string>
+   </property>
+  </action>
+  <action name="mAnalysesSol">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Analyses de sol</string>
+   </property>
+  </action>
+  <action name="mCuAFertiliser">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cultures à fertiliser</string>
+   </property>
+  </action>
+  <action name="mBilanPlanches">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Bilan par planches</string>
+   </property>
+  </action>
+  <action name="mFertilisations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Fertilisations</string>
+   </property>
+  </action>
+  <action name="mInventaireFert">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Inventaire</string>
    </property>
   </action>
  </widget>

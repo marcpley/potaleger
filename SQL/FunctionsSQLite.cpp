@@ -194,6 +194,22 @@ bool registerTableValuedFunctions(QSqlDatabase *db) {
         return false;
     }
 
+    q1.exec("DROP TABLE IF EXISTS Analyse_de_sol_proche");
+    q1.clear();
+    if (!q1.exec("CREATE VIRTUAL TABLE Analyse_de_sol_proche USING define(("+RemoveComment(sAnalyse_de_sol_proche,"--")+"))")){
+        qCritical() << "Failed to register function 'Analyse_de_sol_proche': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    q1.exec("DROP TABLE IF EXISTS Repartir_Fertilisation_sur");
+    q1.clear();
+    if (!q1.exec("CREATE VIRTUAL TABLE Repartir_Fertilisation_sur USING define(("+RemoveComment(sRepartir_Fertilisation_sur,"--")+"))")){
+        qCritical() << "Failed to register function 'Repartir_Fertilisation_sur': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
     //qCritical() << q1.lastQuery();
 
     qInfo() << "Table valued functions registered successfully.";
@@ -374,6 +390,24 @@ QString testCustomFunctions(QSqlDatabase *db) {
         return "Repartir_Recolte_sur";
     }
     qInfo() << "Function ok : Repartir_Recolte_sur('xxx','xxx','2000-01-01')";
+
+    q1.clear();
+    if (!q1.exec("SELECT * FROM Analyse_de_sol_proche('xxx')")){
+        qCritical() << "Function failed: Analyse_de_sol_proche('xxx')";
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "Analyse_de_sol_proche";
+    }
+    qInfo() << "Function ok : Analyse_de_sol_proche('xxx')";
+
+    q1.clear();
+    if (!q1.exec("SELECT * FROM Repartir_Fertilisation_sur('xxx','xxx','2000-01-01')")){
+        qCritical() << "Function failed: Repartir_Fertilisation_sur('xxx','xxx','2000-01-01')";
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "Repartir_Fertilisation_sur";
+    }
+    qInfo() << "Function ok : Repartir_Fertilisation_sur('xxx','xxx','2000-01-01')";
 
     qInfo() << "Functions tested.";
     return "";

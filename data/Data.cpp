@@ -11,13 +11,20 @@ bool AcceptReturns(const QString sFieldName) {
     return sFieldName=="Notes" or
            sFieldName.startsWith("N_")or
            sFieldName.startsWith("Adresse")or
+           sFieldName=="Analyse_sol" or
            sFieldName.startsWith("Conflit_")or
            sFieldName.startsWith("Cultures")or
-           sFieldName.startsWith("Dates_plantation")or
+           sFieldName.startsWith("Dates_")or
            sFieldName.startsWith("Description")or
+           sFieldName=="Espèces" or
+           sFieldName=="Etats" or
+           sFieldName=="Fonction" or
+           sFieldName=="Interprétation" or
            sFieldName.startsWith("Planches")or
            sFieldName.startsWith("Rangs_espacement") or
-           sFieldName=="Texte";
+           sFieldName=="Texte" or
+           sFieldName=="Utilisation" or
+           sFieldName=="Variétés_ou_It_plante";
 }
 
 QString ComboField(const QString sTableName,const QString sFieldName) {
@@ -85,6 +92,8 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName,const QString sField
         QString queryTest;
         if (sTableName=="Consommations")
             queryTest="SELECT count(*) FROM Espèces WHERE Conservation NOTNULL";
+        else if (sTableName=="Fertilisations")
+            queryTest="SELECT count(*) FROM Repartir_Fertilisation_sur('*',NULL,NULL)";
         else if (sTableName=="ITP")
             queryTest="SELECT count(*) FROM Espèces";
         else if (sTableName=="Récoltes")
@@ -97,13 +106,26 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName,const QString sField
     } else { //Set the filter depending of row data.
         const PotaTableModel *model = qobject_cast<const PotaTableModel *>(index.model());
         if (model) {
-            if (sTableName=="Cultures") {
+             if (sTableName=="Consommations") {
+                if (sFieldName=="Destination")
+                    filter="Active NOTNULL";
+                else if (sFieldName=="Espèce")
+                    filter="Conservation NOTNULL";
+            } else if (sTableName=="Cultures") {
                 if (sFieldName=="Variété")
                     filter="Espèce=(SELECT Espèce FROM ITP I WHERE I.IT_plante='"+
                            StrReplace(index.siblingAtColumn(model->fieldIndex("IT_plante")).data().toString(),"'","''")+
                            "')";
                 // else if (sFieldName=="IT_plante")
                 //     filter="Espèce IN (SELECT E.Espèce FROM Espèces E WHERE E.A_planifier NOTNULL)";
+            } else if (sTableName=="Fertilisations") {
+                if (sFieldName=="Culture")
+                    filter="Culture IN (SELECT Culture FROM Repartir_Fertilisation_sur('*','"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"',"+
+                                                                                        iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
+                                                                                            "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
+                else if (sFieldName=="Espèce")
+                    filter="Espèce IN (SELECT Espèce FROM Repartir_Fertilisation_sur('*',NULL,"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
+                                                                                               "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
             } else if (sTableName=="Récoltes") {
                 if (sFieldName=="Culture")
                     filter="Culture IN (SELECT Culture FROM Repartir_Recolte_sur('*','"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"',"+
@@ -112,14 +134,8 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName,const QString sField
                 else if (sFieldName=="Espèce")
                     filter="Espèce IN (SELECT Espèce FROM Repartir_Recolte_sur('*',NULL,"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
                                                                                                "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
-                qDebug() << "FkFilter: " << filter;
-            } else if (sTableName=="Consommations") {
-                if (sFieldName=="Destination")
-                    filter="Active NOTNULL";
-                else if (sFieldName=="Espèce")
-                    filter="Conservation NOTNULL";
-                qDebug() << "FkFilter: " << filter;
             }
+            qDebug() << "FkFilter: " << filter;
         }
     }
     return filter;
@@ -152,6 +168,8 @@ int NaturalSortCol(const QString sTableName){
         return 9;//Début_récolte
     else if (sTableName=="Cultures__à_terminer")
         return 8;//Fin_récolte
+    else if (sTableName=="Cultures__à_fertiliser")
+        return 6;//Date_MEP
     else if (sTableName=="Cultures__analyse")
         return 1;//ITP
     else
@@ -165,6 +183,10 @@ QString NoData(const QString sTableName){
         return QObject::tr("Saisissez au moins une rotation de cultures (menu Assolement) pour que la planification puisse générer des cultures.");
     else if (sTableName=="Cultures__analyse")
         return QObject::tr("Il n'y a aucune cultures terminées et significatives (champ 'Terminée' différent de 'NS') pour le moment.");
+    else if (sTableName=="Fertilisations__Saisies")
+        return QObject::tr("Il n'y a aucune culture à fertiliser pour le moment.\n\n"
+                           "Les fertilisations peuvent être saisies avant la mise en place de la culture sur la planche et jusqu'au début de récolte\n"
+                           "en modifiant les paramètres 'Ferti_avance_saisie' et 'Ferti_retard_saisie'.");
     else if (sTableName=="ITP__Tempo")
         return QObject::tr("Vous devez d'abort saisir au moins une espèce de plante (menu 'Espèces') avant de saisir des itinéraires techniques.");
     else if (sTableName=="Espèces__manquantes")
@@ -185,11 +207,18 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
     PotaQuery query(*db);
 
     //Tables
-    if (sTableName=="Cultures"){
+    if (sTableName=="Analyses_de_sol"){
+        bReadOnly = (sFieldName.startsWith("☆"));
+    } else if (sTableName=="Cultures"){
         bReadOnly = (((sFieldName=="Culture")and(query.Selec0ShowErr("SELECT Valeur!='Oui' FROM Params WHERE Paramètre='C_modif_N_culture'").toBool())) or
                      sFieldName=="Type" or
                      sFieldName=="Saison" or
                      sFieldName=="Etat");
+
+    } else if (sTableName=="Espèces"){
+        bReadOnly = (sFieldName.startsWith("★"));
+    } else if (sTableName=="Fertilisants"){
+        bReadOnly = (sFieldName.endsWith("_disp_pc"));
 
     } else if (sTableName=="ITP"){
         bReadOnly = (sFieldName=="Type_culture");
@@ -282,6 +311,18 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Inventaire" or
                       sFieldName=="Prix_kg" or
                       sFieldName=="Notes");
+    } else if (sTableName=="Fertilisants__inventaire"){
+        bReadOnly = !(sFieldName=="Date_inv" or
+                      sFieldName=="Inventaire" or
+                      sFieldName=="Prix_kg" or
+                      sFieldName=="Notes");
+    } else if (sTableName=="Fertilisations__Saisies"){
+        bReadOnly = (sFieldName=="ID" or
+                     sFieldName=="N" or
+                     sFieldName=="P" or
+                     sFieldName=="K" or
+                     sFieldName=="Planche" or
+                     sFieldName=="Variété");
     } else if (sTableName=="ITP__Tempo"){
         bReadOnly = !(sFieldName=="IT_plante" or
                       sFieldName=="Espèce" or
@@ -304,8 +345,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
     } else if (sTableName=="Récoltes__Saisies"){
         bReadOnly = (sFieldName=="ID" or
                      sFieldName=="Planche" or
-                     sFieldName=="Variété" or
-                     sFieldName=="Qté_réc");
+                     sFieldName=="Variété");
     } else if (sTableName=="Rotations"){
         bReadOnly = (sFieldName=="Nb_années");
     } else if (sTableName=="Rotations_détails__Tempo"){
@@ -374,6 +414,8 @@ QColor RowColor(QString sValue, QString sTableName){
             c=cEnPlace;
         else if (sValue=="Consommations")
             c=cEspece;
+        else if (sValue=="Fertilisation")
+            c=cBase;
         else
             return QColor();
     } else
@@ -389,11 +431,11 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
     QString result="";
     if (rec.isNull(0))
         return "";
-    else if (TableName=="Apports")
-        result=rec.value(rec.indexOf("Apport")).toString()+" - "+
-               rec.value(rec.indexOf("Description")).toString()+" - "+
-               iif(!rec.value(rec.indexOf("Poids_m²")).isNull(),
-                   rec.value(rec.indexOf("Poids_m²")).toString()+"kg/m²","").toString();
+    // else if (TableName=="Apports")
+    //     result=rec.value(rec.indexOf("Apport")).toString()+" - "+
+    //            rec.value(rec.indexOf("Description")).toString()+" - "+
+    //            iif(!rec.value(rec.indexOf("Poids_m²")).isNull(),
+    //                rec.value(rec.indexOf("Poids_m²")).toString()+"kg/m²","").toString();
     else if (TableName=="Consommations__Saisies")
         result=rec.value(rec.indexOf("Date")).toString()+" - "+
                  rec.value(rec.indexOf("Espèce")).toString()+" - "+
@@ -424,6 +466,11 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                  rec.value(rec.indexOf("Culture")).toString()+" - "+
                  rec.value(rec.indexOf("Variété_ou_It_plante")).toString()+" - "+
                  rec.value(rec.indexOf("Saison")).toString();
+    else if (TableName=="Cultures__à_fertiliser")
+        result=rec.value(rec.indexOf("Planches")).toString().replace("\n\n","/")+" - "+
+               rec.value(rec.indexOf("Espèce")).toString()+" - "+
+               rec.value(rec.indexOf("Type")).toString()+" - "+
+               rec.value(rec.indexOf("Etat")).toString();
     else if (TableName.startsWith("Cultures"))
         result=rec.value(rec.indexOf("Culture")).toString()+" - "+
                rec.value(rec.indexOf("Planche")).toString()+" - "+
@@ -460,6 +507,20 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
         result=rec.value(rec.indexOf("Famille")).toString()+" - "+
                  iif(!rec.value(rec.indexOf("Intervalle")).isNull(),
                      rec.value(rec.indexOf("Intervalle")).toString()+" "+QObject::tr("ans"),"").toString();
+    else if (TableName.startsWith("Fertilisants"))
+        result=rec.value(rec.indexOf("Fertilisant")).toString()+" - "+
+               rec.value(rec.indexOf("Type")).toString()+" "+
+               rec.value(rec.indexOf("N")).toString()+"-"+
+               rec.value(rec.indexOf("P")).toString()+"-"+
+               rec.value(rec.indexOf("K")).toString();
+    else if (TableName=="Fertilisations__Saisies")
+        result=rec.value(rec.indexOf("Date")).toString()+" - "+
+                 rec.value(rec.indexOf("Espèce")).toString()+" - "+
+                 rec.value(rec.indexOf("Culture")).toString()+" - "+
+                 rec.value(rec.indexOf("Fertilisant")).toString()+" - "+
+                 iif(!rec.value(rec.indexOf("Quantité")).isNull(),
+                     rec.value(rec.indexOf("Quantité")).toString()+"kg - ","").toString()+
+                 rec.value(rec.indexOf("Planche")).toString();
     else if (TableName.startsWith("Fournisseurs"))
         result=rec.value(rec.indexOf("Fournisseur")).toString()+" - "+
                rec.value(rec.indexOf("Site_web")).toString();
@@ -526,25 +587,38 @@ QColor TableColor(QString sTName,QString sFName)
     //Use sTName.toUpper().startsWith(...) to apply color to the corresponding views.
 
     //Color by field name for all tables or views.
-    if (sFName.startsWith("Culture") or
-        sFName.startsWith("Nb_cu")or
+    if (sFName.endsWith("_sol"))
+        return cBase;
+    else if (sFName.startsWith("Culture") or
+        sFName.endsWith("_MEP") or
+        sFName=="Etats" or
+        sFName.startsWith("Nb_cu") or
         sFName=="Min_semis" or sFName=="Max_semis" or
         sFName=="Min_plantation" or sFName=="Max_plantation" or
         sFName=="Min_recolte" or sFName=="Max_recolte" or
         sFName=="Qté_réc_moy")
         return cCulture;
-    else if (sFName=="Espèce" or
+    else if (sFName.startsWith("Espèce") or
         sFName=="Rendement" or
         sFName=="Niveau" or
         sFName=="FG" or
-        (sFName=="Apport" and !sTName.toUpper().startsWith("APPORTS")) or
+        // (sFName=="Apport" and !sTName.toUpper().startsWith("APPORTS")) or
         sFName=="A_planifier" or
         sFName=="Obj_annuel" or
+        sFName.endsWith("_esp") or
         sFName=="N_espèce")
         return cEspece;
     else if (sFName=="Famille" or
              sFName=="N_famille")
         return cFamille;
+    else if (sFName=="Fertilisant" or
+             sFName=="Apports_NPK" or
+             sFName=="Fert_pc" or
+             sFName.endsWith("_fert") or
+             sFName=="N_manq" or
+             sFName=="P_manq" or
+             sFName=="K_manq")
+        return cFertilisant;
     else if (sFName=="IT_plante" or
              sFName.startsWith("ITP") or
              (sFName=="Type_planche" and !sTName.toUpper().startsWith("ROTATIONS")) or
@@ -577,8 +651,8 @@ QColor TableColor(QString sTName,QString sFName)
         return QColor();
 
     //Color by table name.
-    else if (sTName.toUpper().startsWith("APPORTS"))
-        return cBase;
+    // else if (sTName.toUpper().startsWith("APPORTS"))
+    //     return cBase;
     else if (sTName.toUpper().startsWith("CONSOMMATIONS"))
         return cEspece;
     else if (sTName.toUpper().startsWith("CULTURES"))
@@ -589,6 +663,9 @@ QColor TableColor(QString sTName,QString sFName)
         return cEspece;
     else if (sTName.toUpper().startsWith("FAMILLES"))
         return cFamille;
+    else if (sTName.toUpper().startsWith("FERTILISA") or
+             sTName.toUpper().startsWith("ANALYSES_DE_SOL"))
+        return cFertilisant;
     else if (sTName.toUpper().startsWith("FOURNISSEURS"))
         return cBase;
     else if (sTName.toUpper().startsWith("ITP"))
@@ -646,10 +723,76 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
     QString sToolTip="";
 
     //Champs présents dans plusieurs tables avec des significations différentes.
-    if (sTableName=="Apports"){
-        if (sFieldName=="Type")
-            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Apports_Type').");
-    } else if (sTableName=="Consommations" or sTableName.startsWith("Consommations__")){
+    // if (sTableName=="Apports"){
+    //     if (sFieldName=="Type")
+    //         sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Apports_Type').");
+    // } else
+    if (sTableName=="Analyses_de_sol"){
+        const char* teneur="Teneur en %1 du prélèvement (g/kg).";
+        const char* teneurMol="Teneur en %1 du prélèvement (cmol+/kg).\n"
+                              "cmol+ : centimole de charge positive.";
+        const char* valRef="Valeurs de référence: %1.";
+        if (sFieldName=="Sable_grossier")
+            sToolTip=QObject::tr("Pourcentage de %1.").arg(QObject::tr("sable grossier")+" (0,2 - 2 mm)");
+        else if (sFieldName=="Sable_fin")
+            sToolTip=QObject::tr("Pourcentage de %1.").arg(QObject::tr("sable fin")+" (0,05 - 0,2 mm)");
+        else if (sFieldName=="Limon_grossier")
+            sToolTip=QObject::tr("Pourcentage de %1.").arg(QObject::tr("limon grossier")+" (0,2 - 2 mm)")+"\n"+
+                     QObject::tr("Favorise la battance");
+        else if (sFieldName=="Limon_fin")
+            sToolTip=QObject::tr("Pourcentage de %1.").arg(QObject::tr("limon fin")+" (0,05 - 0,2 mm)")+"\n"+
+                     QObject::tr("Favorise la battance");
+        else if (sFieldName=="Argile")
+            sToolTip=QObject::tr("Pourcentage de %1.").arg(QObject::tr("argile")+" (0,05 - 0,2 mm)");
+        else if (sFieldName=="IB")
+            sToolTip=QObject::tr("Indice de battance:\n"
+                                 "Risque de désagrégation du sol sous l'action de la pluie et de formation d'une croûte superficielle lors du ressuyage.")+"\n"+
+                     QObject::tr(valRef).arg("IB < 1,4");
+        else if (sFieldName=="pH")
+            sToolTip=QObject::tr("Potentiel hydrogène, à l'eau, du prélèvement.")+"\n"+
+                     QObject::tr(valRef).arg("6,5 < pH < 7,5");
+        else if (sFieldName=="MO")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Matière organique").toLower())+"\n"+
+                     QObject::tr(valRef).arg("15 < MO < 20");
+        else if (sFieldName=="CEC")
+            sToolTip=QObject::tr("Capacité d’Echange Cationique du prélèvement (cmol+/kg).\n"
+                                 "Mesure le pouvoir fixateur de cations du sol.")+"\n"+
+                     QObject::tr(valRef).arg("10 < CEC < 20");
+        else if (sFieldName=="Cations")
+            sToolTip=QObject::tr(teneurMol).arg(QObject::tr("Cations").toLower())+"\n"+
+                     QObject::tr(valRef).arg("Cations >= CEC");
+        else if (sFieldName=="N")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Azote").toLower()+" (Kjeldhal)")+"\n"+
+                     QObject::tr(valRef).arg("0,9 < N < 1,1");
+        else if (sFieldName=="P")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Phosphore").toLower())+"\n"+
+                     QObject::tr(valRef).arg("0,08 < P2O5 < 0,12");
+        else if (sFieldName=="K")
+            sToolTip=QObject::tr("Potassium")+"\n"+
+                     QObject::tr(teneur).arg(QObject::tr("Potasse").toLower())+"\n"+
+                     QObject::tr(valRef).arg("0,12 < K2O < 0,15");
+        else if (sFieldName=="C")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Carbone").toLower())+"\n"+
+                     QObject::tr(valRef).arg("9 < C < 11");
+        else if (sFieldName=="CN")
+            sToolTip=QObject::tr("Rapport Carbone/Azote.")+"\n"+
+                     QObject::tr(valRef).arg("8 < C/N < 11");
+        else if (sFieldName=="Ca")
+            sToolTip=QObject::tr("Calcium")+"\n"+
+                     QObject::tr(teneur).arg(QObject::tr("Chaux").toLower())+"\n"+
+                     QObject::tr(valRef).arg("3,7 < CaO < 3,9");
+        else if (sFieldName=="Mg")
+            sToolTip=QObject::tr("Magnésium")+"\n"+
+                     QObject::tr(teneur).arg(QObject::tr("Magnésie").toLower())+"\n"+
+                     QObject::tr(valRef).arg("0,09 < MgO < 0,14");
+        else if (sFieldName=="Na")
+            sToolTip=QObject::tr("Sodium")+"\n"+
+                     QObject::tr(teneur).arg(QObject::tr("Oxyde de sodium").toLower())+"\n"+
+                     QObject::tr(valRef).arg("0.02 < Na2O < 0,24");
+        else if (sFieldName.startsWith("☆"))
+            sToolTip=QObject::tr("Teneur qualitative du sol.");
+    } else
+    if (sTableName=="Consommations" or sTableName.startsWith("Consommations__")){
         if (sFieldName=="Date")
             sToolTip=QObject::tr("Date de sortie de stock.\n"
                                  "Laisser vide pour avoir automatiquement la date du jour.");
@@ -683,12 +826,28 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Valeur des sorties de stock (€) depuis Date_RAZ (incluse).");
 
     } else if (sTableName=="Espèces"){
+        const char* valRef="Valeurs de référence: %1.";
         if (sFieldName=="Dose_semis")
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Valeur par défaut pour les itinéraires techniques.");
         else if (sFieldName=="Nb_graines_g")
             sToolTip=QObject::tr("Nombre de graines par gramme.")+"\n"+QObject::tr("Valeur par défaut pour les variétés.");
+        else if (sFieldName=="N")
+            sToolTip=QObject::tr("Besoin en %1 (g/m²).").arg("Azote").toLower();
+        else if (sFieldName=="★N")
+            sToolTip=QObject::tr("Besoin qualitatif en %1.").arg("Azote").toLower()+"\n"+
+                     QObject::tr(valRef).arg("5 < N < 10");
+        else if (sFieldName=="P")
+            sToolTip=QObject::tr("Besoin en phosphore (g/m²).");
+        else if (sFieldName=="★P")
+            sToolTip=QObject::tr("Besoin qualitatif en %1.").arg("Phosphore").toLower()+"\n"+
+                     QObject::tr(valRef).arg("2.5 < P < 5");
+        else if (sFieldName=="K")
+            sToolTip=QObject::tr("Besoin en potassium (g/m²).");
+        else if (sFieldName=="★K")
+            sToolTip=QObject::tr("Besoin qualitatif en %1.").arg("Potassium").toLower()+"\n"+
+                     QObject::tr(valRef).arg("7 < K < 12");
 
-    } else if (sTableName.startsWith("Espèces__")){
+    } else if (sTableName=="Espèces__inventaire" or sTableName=="Fertilisants__inventaire"){
         if (sFieldName=="Stock")
             sToolTip=QObject::tr("Quantité totale en stock (kg).");
         else if (sFieldName=="Valeur")
@@ -698,12 +857,123 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         if (sFieldName=="Intervalle")
             sToolTip=QObject::tr("Nombre d'années nécessaires entre 2 cultures consécutives sur la même planche.");
 
+    } else if (sTableName=="Fertilisants"){
+        const char* teneur="Teneur en %1 du fertilisant (%).";
+        const char* coefficient="Coefficient de disponibilité (%) pour l'élément %1 en conditions optimales:\n"
+                                "- sol neutre, bien structuré, bien pourvu en matière organique ;\n"
+                                "- bonne humidité ;\n"
+                                "- bonne activité biologique ;\n"
+                                "- apport bien intégré.";
+        const char* dispo="Teneur en %1 disponible pour les plantes (% du poids de fertilisant) en conditions optimales:\n"
+                                "- sol neutre, bien structuré, bien pourvu en matière organique ;\n"
+                                "- bonne humidité ;\n"
+                                "- bonne activité biologique ;\n"
+                                "- apport bien intégré.\n\n"
+                                "Diponible = teneur x coefficient / 100\n"
+                                "Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').";
+        const char* valRef="Valeurs de référence: %1.";
+        if (sFieldName=="Type")
+            sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Fertilisants_Type').");
+        else if (sFieldName=="pH")
+            sToolTip=QObject::tr("Potentiel hydrogène.\n"
+                                 "pH < 7 : acide\n"
+                                 "pH > 7 : basique\n\n"
+                                 "La disponibilité des nutriments pour les plantes dépend directement du pH du sol.");
+        else if (sFieldName=="N")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Azote").toLower());
+        else if (sFieldName=="N_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Azote"));
+        else if (sFieldName=="N_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Azote"))+"\n"+
+                     QObject::tr(valRef).arg("0.2 < N disp < 1");
+        else if (sFieldName=="P")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Phosphore").toLower());
+        else if (sFieldName=="P_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Phosphore"));
+        else if (sFieldName=="P_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Phosphore"))+"\n"+
+                     QObject::tr(valRef).arg("0.1 < P disp < 0.5");
+        else if (sFieldName=="K")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Potassium").toLower());
+        else if (sFieldName=="K_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Potassium"));
+        else if (sFieldName=="K_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Potassium"))+"\n"+
+                     QObject::tr(valRef).arg("0.4 < K disp < 2");
+        else if (sFieldName=="Ca")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Calcium").toLower());
+        else if (sFieldName=="Ca_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Calcium"));
+        else if (sFieldName=="Ca_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Calcium"))+"\n"+
+                     QObject::tr(valRef).arg("0.4 < Ca disp < 2");
+        else if (sFieldName=="Fe")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Fer").toLower());
+        else if (sFieldName=="Fe_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Fer"));
+        else if (sFieldName=="Fe_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Fer"))+"\n"+
+                     QObject::tr(valRef).arg("0.02 < Fe disp < 0.1");
+        else if (sFieldName=="Mg")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Magnésium").toLower());
+        else if (sFieldName=="Mg_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Magnésium"));
+        else if (sFieldName=="Mg_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Magnésium"))+"\n"+
+                     QObject::tr(valRef).arg("0.2 < Mg disp < 1");
+        else if (sFieldName=="Na")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Sodium").toLower());
+        else if (sFieldName=="Na_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Sodium"));
+        else if (sFieldName=="Na_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Sodium"))+"\n"+
+                     QObject::tr(valRef).arg("0.04 < Na disp < 0.2");
+        else if (sFieldName=="S")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Souffre").toLower());
+        else if (sFieldName=="S_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Souffre"));
+        else if (sFieldName=="S_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Souffre"))+"\n"+
+                     QObject::tr(valRef).arg("0.04 < S disp < 0.2");
+        else if (sFieldName=="Si")
+            sToolTip=QObject::tr(teneur).arg(QObject::tr("Silicium").toLower());
+        else if (sFieldName=="Si_coef")
+            sToolTip=QObject::tr(coefficient).arg(QObject::tr("Silicium"));
+        else if (sFieldName=="Si_disp_pc")
+            sToolTip=QObject::tr(dispo).arg(QObject::tr("Silicium"))+"\n"+
+                     QObject::tr(valRef).arg("0.1 < Si disp < 0.5");
+
+    } else if (sTableName.startsWith("Fertilisations")){
+        const char* Apport="Apport en %1 sur la planche (g).\n"
+                           "Quantité x %2 disp fertilisant x Coefficient de disponibilité relatif au sol (paramètre 'Ferti_coef_%2')";
+        if (sFieldName=="Date")
+            sToolTip=QObject::tr("Date de fertilisation.\n"
+                                 "Laisser vide pour avoir automatiquement la date du jour.");
+        else if (sFieldName=="Espèce")
+            sToolTip=QObject::tr(  "Les espèces possibles pour saisir une fertilisation sont celles pour qui il existe des cultures à venir ou en place avant récolte.\n"
+                                   "Voir infobulle 'Culture'.");
+        else if (sFieldName=="Culture")
+            sToolTip=QObject::tr(  "Les cultures possibles pour saisir une fertilisation sont celles qui:\n"
+                                   "- Date de mise en place (semis direct ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance_saisie')\n"
+                                   "- Début de récolte (Début_récolte) >= date du jour moins délai de saisie de fertilisation (paramètre 'Ferti_retard_saisie')\n\n"
+                                   "Le paramètre 'Ferti_avance_saisie' permet de saisir des fertilisations avant la date de mise en place de la culture.\n"
+                                   "Le paramètre 'Ferti_retard_saisie' permet de saisir les fertilisation après le début de récolte (Début_récolte).");
+        else if (sFieldName=="Quantité")
+            sToolTip=QObject::tr("Quantité apportée sur la planche (kg).");
+        else if (sFieldName=="Répartir")
+            sToolTip=QObject::tr(  "Pour répartir la quantité apporté sur plusieurs cultures de l'espèce sélectionnée,\n"
+                                   "saisir le début du nom des planches concernées\n"
+                                   "ou saisir '*' pour répartir sur toutes les cultures possibles.\n"
+                                   "Vide: pas de répartition.\n\n"
+                                   "La répartition se fait au prorata des surfaces de planche.\n"
+                                   "Attention, la liste des cultures possibles dépend des paramètres 'Ferti_avance_saisie' et 'Ferti_retard_saisie'.");
+        else if (sFieldName=="N")
+            sToolTip=QObject::tr(Apport).arg(QObject::tr("Azote").toLower()).arg("N");
     } else if (sTableName=="Fournisseurs"){
         if (sFieldName=="Priorité")
             sToolTip=QObject::tr("Chez qui commander en priorité.");
         else if (sFieldName=="Type")
             sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Fournisseurs_Type').");
-
     } else if (sTableName=="ITP" or sTableName.startsWith("ITP__")){
         if (sFieldName=="Type_planche")
             sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Planches_Type').");
@@ -753,7 +1023,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr(  "Momment où la culture sera mise en place sur la planche.\n"
                                    "* indique un chevauchement avec la culture précédente (pas encore récoltée).\n"
                                    "- indique u temps important d'inoccupation de la planche.");
-    } else if (sTableName=="Récoltes" or sTableName.startsWith("Récoltes__")){
+    } else if (sTableName.startsWith("Récoltes")){
         if (sFieldName=="Date")
             sToolTip=QObject::tr("Date de récolte.\n"
                                  "Laisser vide pour avoir automatiquement la date de fin de récolte de la culture, ou la date du jour si la date de fin de récolte est dans le futur.");
@@ -769,6 +1039,13 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "Le paramètre 'C_retard_saisie_récolte' permet de saisir les récoltes après que celles-ci aient été faites.");
         else if (sFieldName=="Quantité")
             sToolTip=QObject::tr("Quantité récoltée sur la planche (kg).");
+        else if (sFieldName=="Répartir")
+            sToolTip=QObject::tr(  "Pour répartir la quantité récoltée sur plusieurs cultures de l'espèce sélectionnée,\n"
+                                   "saisir le début du nom des planches concernées\n"
+                                   "ou saisir '*' pour répartir sur toutes les cultures possibles.\n"
+                                   "Vide: pas de répartition.\n\n"
+                                   "La répartition se fait au prorata des longueurs de planche.\n"
+                                   "Attention, la liste des cultures possibles dépend des paramètres 'C_avance_saisie_récolte' et 'C_retard_saisie_récolte'.");
         else if (sFieldName=="Qté_réc")
             sToolTip=QObject::tr("Quantité totale déja récoltée (kg), à cette date.");
 
@@ -814,10 +1091,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName=="Variété_ou_It_plante")
             sToolTip=QObject::tr("Variété, à défaut l'itinéraire technique.");
         //Apports
-        else if (sFieldName=="Apport")
-            sToolTip=QObject::tr("Amendement nécessaire avant culture.");
-        else if (sFieldName=="Poids_m²")
-            sToolTip=QObject::tr("Quantité d'amendement avant culture (kg/m²).");
+        // else if (sFieldName=="Apport")
+        //     sToolTip=QObject::tr("Amendement nécessaire avant culture.");
         //Cultures
         else if (sFieldName=="Culture")
             sToolTip=QObject::tr("Numéro unique de la culture\n"
@@ -859,9 +1134,9 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName=="Levée")
             sToolTip=QObject::tr("Temps de levée (jours).")+"\n"+QObject::tr("Pour information, non utilisé pour le moment.");
         else if (sFieldName=="Inventaire")
-            sToolTip=QObject::tr("Quantité en stock (kg).");
+            sToolTip=QObject::tr("Quantité en stock (kg) à la date d'inventaire.");
         else if (sFieldName=="Date_inv")
-            sToolTip=QObject::tr("Date d'inventaire.\nLes espèces ayant une date d'inventaire apparaissent dans l'onglet Stock.");
+            sToolTip=QObject::tr("Date d'inventaire.");
         else if (sFieldName=="Entrées")
             sToolTip=QObject::tr("Quantité récolté totale depuis 'Date_inv' (kg).");
         else if (sFieldName=="Sorties")
@@ -907,8 +1182,18 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Semence commandée (g).")+"\n"+QObject::tr("A réception, mettre à 0 et ajouter la quantité à la quantité en stock.");
 
         //Views
+        else if (sFieldName=="Analyse_sol")
+            sToolTip=QObject::tr("Teneur NPK (g/kg) et interprétation de l'analyse de sol de la planche.\n"
+                                 "Si la planche n'a pas d'analyse, l'analyse d'une planche de la même unité de production, à défaut du même ilôt, est utilisée (similitude du début du nom des planches).\n"
+                                 "Si plusieurs planches de même proximité ont des analyses, c'est la plus récente qui est sélectionnée.\n"
+                                 "Les noms de planche ne doivent pas avoir plus de 4 caractères en plus du nom de l'ilôt (paramètre 'Ilot_nb_car').");
         else if (sFieldName=="Année_à_planifier")
             sToolTip=QObject::tr("Paramétre 'Année_culture' + 1.");
+        else if (sFieldName=="Apports_NPK")
+            sToolTip=QObject::tr("Sommes des fertilisations (Azote - Phosphore - Potassium) déjà faites sur les planches (g).");
+        else if (sFieldName=="Besoins_NPK")
+            sToolTip=QObject::tr("Besoins en Azote - Phosphore - Potassium, pour les planches (g).\n"
+                                 "(besoin de l'espèce x surface de planches)");
         else if (sFieldName=="C_à_venir")
             sToolTip=QObject::tr(   "Cultures prévues mais pas encore en place sur leur planche.\n"
                                     "Sont incluses les cultures déjà semées sous abris.");
@@ -917,10 +1202,12 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                     "Ne sont pas incluses les cultures semées sous abris mais non plantées.");
         else if (sFieldName=="C_non_commencées")
             sToolTip=QObject::tr(   "Cultures prévues mais ni semées ni plantées.");
-        // else if (sFieldName=="En_place_le")
-        //     sToolTip=QObject::tr("Plus petite date de semis (direct) ou de plantation parmis les cultures à venir.");
+         else if (sFieldName=="Date_MEP")
+             sToolTip=QObject::tr("Date de mise en place sur la planche de culture: date de semis (direct) ou de plantation.");
         // else if (sFieldName=="Libre_le")
         //     sToolTip=QObject::tr("Plus grande date de fin de récolte parmis les cultures en place.");
+        else if (sFieldName=="Fert_pc")
+            sToolTip=QObject::tr(  "Pourcentage de fertilisation déjà effectué pour l'élément N, P ou K (le plus déficitaire).");
         else if (sFieldName=="Nb_cu_AV")
             sToolTip=QObject::tr(  "Nombre de cultures à venir (AV) sur la planche.\n"
                                    "Ces cultures ne sont pour le moment ni semées (semis direct) ni plantées.");
@@ -938,17 +1225,25 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                      QObject::tr(  "Saison = année de mise en place (plantation ou semis direct), la récolte peut se terminer l'année suivante.")+"\n"+
                      QObject::tr(  "Production réelle (somme des récoltes) pour les cultures terminées.")+"\n"+
                      QObject::tr(  "Production possible (rendement de l'espèce x surface de la culture) pour les cultures non terminées.");
+        else if (sFieldName=="Pl_libre_le")
+            sToolTip=QObject::tr(   "Plus grande date de fin de récolte des cultures précédentes sur ces planches.");
         else if (sFieldName=="Qté_nécess")
             sToolTip=QObject::tr(   "Semence nécessaire (g) pour les cultures non encore semées.");
         else if (sFieldName=="Qté_manquante")
             sToolTip=QObject::tr(   "Qté nécessaire moins Qté en stock moins Qté commandée.");
-        else if (sFieldName=="Répartir")
-            sToolTip=QObject::tr(  "Pour répartir la quantité récoltée sur plusieurs cultures de l'espèce sélectionnée,\n"
-                                   "saisir le début du nom des planches concernées\n"
-                                   "ou saisir '*' pour répartir sur toutes les cultures possibles.\n"
-                                   "Vide: pas de répartition.\n\n"
-                                   "La répartition se fait au prorata des longueurs de planche.\n"
-                                   "Attention, la liste des cultures possibles dépend des paramètres 'C_avance_saisie_récolte' et 'C_retard_saisie_récolte'.");
+        else if (sFieldName=="Surface")
+            sToolTip=QObject::tr("En m²");
+        //Fertilisation
+        else if (sFieldName.startsWith("★") and sFieldName.endsWith("_esp"))
+            sToolTip=QObject::tr("Besoin qualitatif de l'espèce.");
+        else if (sFieldName.startsWith("☆") and sFieldName.endsWith("_sol"))
+            sToolTip=QObject::tr("Teneur qualitative du sol.");
+        else if (sFieldName==("N_manq"))
+            sToolTip=QObject::tr("Quantité %1 manquante (g).").arg(QObject::tr("Azote").toLower());
+        else if (sFieldName==("P_manq"))
+            sToolTip=QObject::tr("Quantité %1 manquante (g).").arg(QObject::tr("Phosphore").toLower());
+        else if (sFieldName==("K_manq"))
+            sToolTip=QObject::tr("Quantité %1 manquante (g).").arg(QObject::tr("Potassium").toLower());
     }
 
     if (!sDataType.isEmpty()){
@@ -976,9 +1271,10 @@ QString ToolTipTable(const QString sTableName) {
         sToolTip="";
 
     //Tables
-    else if (sTableName=="Apports")
-        sToolTip=QObject::tr("Amendement devant être apporté à une planche avant d'y cultiver une espèce de plante.");
-    else if (sTableName=="Consommations__Saisies")
+    // else if (sTableName=="Apports")
+    //     sToolTip=QObject::tr("Amendement devant être apporté à une planche avant d'y cultiver une espèce de plante.");
+    // else
+    if (sTableName=="Consommations__Saisies")
         sToolTip=QObject::tr("Quantités de légume sorties du stock.");
     else if (sTableName.startsWith("Cultures__à")or
              (sTableName=="Cultures__non_terminées")or
@@ -998,6 +1294,8 @@ QString ToolTipTable(const QString sTableName) {
         else if (sTableName=="Cultures__à_terminer")
             sToolTip=QObject::tr("Cultures non terminées, déjà semées/plantées/récoltées.\n"
                                  "Pour les cultures sans récolte ('Début_récolte' vide) sont incluses les cultures dont la date de fin de récolte est proche (paramètre 'C_horizon_terminer') ou passée.")+"\n\n";
+        else if (sTableName=="Cultures__à_fertiliser")
+            sToolTip=QObject::tr("Bilan de fertilisation pour les cultures prévues (paramètre 'C_horizon_fertiliser') ou en place.")+"\n\n";
         sToolTip+=QObject::tr("Une 'culture' c'est une plante (variété+itinéraire technique) sur une planche.\nSi la même plante est présente sur plusieurs planches, il y a une culture (numérotée) par planche.");
     }
     else if (sTableName=="Destinations__conso")
@@ -1010,6 +1308,10 @@ QString ToolTipTable(const QString sTableName) {
                              "- Les objectifs de production.");
     else if (sTableName=="Familles")
         sToolTip=QObject::tr("Espèces ayant une certaine proximité phylogénétique.\nPermet de d'enregistrer l'intervale de temps minimum entre 2 cultures d'une même famille.");
+    else if (sTableName=="Fertilisants")
+        sToolTip=QObject::tr("Engrais, ammendements et paillages pour la fertilisation des planches de culture.\nLes engrais vert ne sont pas à saisir ici, ils sont gérés comme les autres cultures.");
+    else if (sTableName=="Fertilisants__Saisies")
+        sToolTip=QObject::tr("Quantités de fertilisant apportés par culture.");
     else if (sTableName=="Fournisseurs")
         sToolTip=QObject::tr("Fournisseurs des semences.");
     else if (sTableName=="ITP__Tempo")
@@ -1109,15 +1411,9 @@ QString ToolTipTable(const QString sTableName) {
 }
 
 bool ViewFieldIsDate(const QString sFieldName){
-    if (// sFieldName=="Libre_le" or
-        // sFieldName=="En_place_le" or
-        // sFieldName=="Min_semis" or
-        // sFieldName=="Max_semis" or
-        // sFieldName=="Min_plantation" or
-        // sFieldName=="Max_plantation" or
-        // sFieldName=="Min_recolte" or
-        // sFieldName=="Max_recolte" or
-        //(sFieldName=="Mise_en_place" and sTableName!="Rotations_détails__Tempo") or
+    if (sFieldName=="Pl_libre_le" or
+        sFieldName=="Début_récolte" or
+        sFieldName=="Fin_récolte" or
         sFieldName.startsWith("Date_"))
         return true;
     else

@@ -8,13 +8,14 @@
 const QColor cBase=QColor("#a17dc2");//Violet gris
 const QColor cEspece=QColor("#002bff");//Bleu
 const QColor cFamille=QColor("#0085c4");//Bleu gris
+const QColor cFertilisant=QColor("#00A67A");//Bleu vert
 const QColor cITP=QColor("#ff0000");//Rouge
 const QColor cPlanche=QColor("#ff8100");//Orange
 const QColor cRotation=QColor("#ce9462");//Orange gris
 const QColor cVariete=QColor("#b7b202");//Jaune
 const QColor cParam=QColor("#7f7f7f");//Gris
 
-const QColor cCulture=QColor("#00ff00");
+const QColor cCulture=QColor("#00ff00");//Vert
 const QColor cPrevue=QColor();
 const QColor cSousAbris=QColor("#ff6000");//Rouge
 const QColor cEnPlace=QColor("#76c801");//Vert

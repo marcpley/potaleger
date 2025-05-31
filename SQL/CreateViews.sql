@@ -62,6 +62,19 @@ CREATE VIEW Espèces__inventaire AS SELECT
 FROM Espèces E
 WHERE E.Conservation NOT NULL;
 
+CREATE VIEW Fertilisants__inventaire AS SELECT
+    F.Fertilisant,
+    F.Date_inv,
+    F.Inventaire,
+    CAST(round((SELECT sum(Quantité) FROM Fertilisations Fe WHERE (Fe.Fertilisant=F.Fertilisant)AND(Fe.Date >= F.Date_inv)),3)AS REAL) Sorties,
+    CAST(round(F.Inventaire
+               -coalesce((SELECT sum(Quantité) FROM Fertilisations Fe WHERE (Fe.Fertilisant=F.Fertilisant)AND(Fe.Date >= F.Date_inv)),0),3)AS REAL) Stock,
+    F.Prix_kg,
+    CAST(round((F.Inventaire
+               -coalesce((SELECT sum(Quantité) FROM Fertilisations Fe WHERE (Fe.Fertilisant=F.Fertilisant)AND(Fe.Date >= F.Date_inv)),0))*F.Prix_kg,3)AS REAL) Valeur,
+    Notes
+FROM Fertilisants F;
+
 CREATE VIEW Variétés__inv_et_cde AS SELECT E.Famille,
        V.Espèce,
        V.Variété,
@@ -227,7 +240,7 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT
        --                              SELECT DISTINCT F.Famille
        --                              FROM Rotations_détails RD
        --                                   LEFT JOIN Rotations R USING(Rotation)
-       --                                   LEFT JOIN ITP I USING(IT_Plante)
+       --                                   LEFT JOIN ITP I USING(IT_plante)
        --                                   LEFT JOIN Espèces E USING(Espèce)
        --                                   LEFT JOIN Familles F USING(Famille)
        --                              WHERE (RD.Rotation=(SELECT Rotation FROM R_famille WHERE ID=R.ID))AND -- ITP dans la même rotation
@@ -752,6 +765,117 @@ ORDER BY    C.Fin_récolte,
             C.Planche,
             C.IT_plante;
 
+CREATE VIEW Cultures__à_fertiliser AS SELECT
+       group_concat(C.Planche,x'0a0a') Planches,
+       group_concat(C.Culture||' ',x'0a0a') Cultures,
+       C.Espèce,
+       group_concat(C.Variété_ou_It_plante,x'0a0a') Variétés_ou_It_plante,
+       Type,
+       CASE WHEN C.Etat='Prévue' OR C.Etat='Sous abris' THEN 'A venir' ELSE C.Etat END Etat,
+       C.Date_MEP,
+       min(C.Début_récolte) Début_récolte,
+       max(C.Fin_récolte) Fin_récolte,
+       max(C.Pl_libre_le) Pl_libre_le,
+       sum(C.Surface) Surface,
+       CAST(round(min(sum(coalesce(C.N_fert,0))/sum(C.N_esp*C.Surface),
+                      sum(coalesce(C.P_fert,0))/sum(C.P_esp*C.Surface),
+                      sum(coalesce(C.K_fert,0))/sum(C.K_esp*C.Surface))*100) AS INTEGER) Fert_pc,
+       CAST(round(sum(C.N_esp*C.Surface)) AS INTEGER)||'-'||
+       CAST(round(sum(C.P_esp*C.Surface)) AS INTEGER)||'-'||
+       CAST(round(sum(C.K_esp*C.Surface)) AS INTEGER) Besoins_NPK,
+       C.★N_esp,
+       C.★P_esp,
+       C.★K_esp,
+       (CAST(A.N AS TEXT)||'-'||CAST(A.P AS TEXT)||'-'||CAST(A.K AS TEXT))||' ('||A.Planche||' '||strftime('%d/%m/%Y',A.Date)||')'||x'0a0a'||
+        coalesce(A.Interprétation,'Pas d''interprétation') Analyse_sol,
+       A.☆N ☆N_sol,
+       A.☆P ☆P_sol,
+       A.☆K ☆K_sol,
+       CAST(round(sum(C.N_fert)) AS INTEGER)||'-'||
+       CAST(round(sum(C.P_fert)) AS INTEGER)||'-'||
+       CAST(round(sum(C.K_fert)) AS INTEGER) Apports_NPK,
+       round(sum(C.N_esp*C.Surface)-sum(coalesce(C.N_fert,0))) N_manq,
+       round(sum(C.P_esp*C.Surface)-sum(coalesce(C.P_fert,0))) P_manq,
+       round(sum(C.K_esp*C.Surface)-sum(coalesce(C.K_fert,0))) K_manq,
+       -- C.Fertilisant,
+       C.Notes,
+       C.N_Planche,
+       C.N_espèce
+FROM C_à_fertiliser C
+LEFT JOIN Analyses_de_sol A USING(Analyse)
+GROUP BY C.Ilot,C.Espèce,C.Type,C.Etat,C.Date_MEP,Analyse_sol,C.Notes,C.N_Planche,C.N_espèce
+ORDER BY C.Date_MEP;
+
+CREATE VIEW C_à_fertiliser AS SELECT
+        substr(C.Planche,1,(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car')) Ilot,
+        C.Planche,
+        C.Culture,
+        E.Espèce,
+        coalesce(C.Variété,C.IT_plante) Variété_ou_It_plante,
+        C.Type,
+        C.Etat,
+        coalesce(C.Date_plantation,C.Date_semis) Date_MEP,
+        C.Début_récolte,
+        C.Fin_récolte,
+        (SELECT max(CEP2.Fin_récolte) FROM C_en_place CEP2
+         WHERE (CEP2.Planche=C.Planche)AND --Cultures sur la même planche
+               (CEP2.Début_récolte<coalesce(C.Date_plantation,C.Date_semis)) -- dont la récolte commence avant la MEP de la culture courante
+               ) Pl_libre_le,
+        C.Longueur,
+        C.Longueur*PL.Largeur Surface,
+        E.N N_esp,
+        E.★N ★N_esp,
+        E.P P_esp,
+        E.★P ★P_esp,
+        E.K K_esp,
+        E.★K ★K_esp,
+        -- CAST(round(E.N*C.Longueur*PL.Largeur) AS INTEGER)||'-'||
+        -- CAST(round(E.P*C.Longueur*PL.Largeur) AS INTEGER)||'-'||
+        -- CAST(round(E.K*C.Longueur*PL.Largeur) AS INTEGER) Besoins_NPK,
+        -- (SELECT (CAST(AP.N AS TEXT)||'-'||CAST(AP.P AS TEXT)||'-'||CAST(AP.K AS TEXT))||' ('||AP.Planche||')'||x'0a0a'||coalesce(AP.Interprétation,'Pas d''interprétation')
+        --  FROM Analyse_de_sol_proche(C.Planche) AP) Analyse_sol,
+        (SELECT AP.Analyse FROM Analyse_de_sol_proche(C.Planche) AP) Analyse,
+        (SELECT sum(N) FROM Fertilisations F WHERE F.Culture=C.Culture) N_fert,
+        (SELECT sum(P) FROM Fertilisations F WHERE F.Culture=C.Culture) P_fert,
+        (SELECT sum(K) FROM Fertilisations F WHERE F.Culture=C.Culture) K_fert,
+        (SELECT CF.Fertilisant FROM Cu_Fertilisants CF WHERE CF.Culture=C.Culture) Fertilisant,
+        (SELECT CF.Quantité FROM Cu_Fertilisants CF WHERE CF.Culture=C.Culture) Quantité,
+        C.Notes,
+        PL.Notes N_Planche,
+        E.Notes N_espèce
+FROM Cultures C
+LEFT JOIN ITP I USING (IT_plante)
+LEFT JOIN Planches PL USING (Planche)
+LEFT JOIN Espèces E USING (Espèce)
+WHERE  (E.N+E.P+E.K>0)AND(
+        -- Cultures prévues
+       ((C.Culture IN(SELECT CAV.Culture FROM C_à_venir CAV)) AND
+       (coalesce(C.Date_plantation,C.Date_semis) < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_horizon_fertiliser')||' days')))
+       OR
+       -- Cultures en place dont la récolte n'est pas commencée.
+       ((C.Culture IN(SELECT CEP3.Culture FROM C_en_place CEP3)) AND NOT(coalesce(C.Récolte_faite,'') LIKE 'x%')))
+ORDER BY coalesce(Date_plantation,Date_semis);
+
+CREATE VIEW Fertilisations__Saisies AS SELECT
+       F.ID,
+       F.Date,
+       F.Espèce,
+       F.Culture,
+       F.Fertilisant,
+       F.Quantité,
+       NULL Répartir,
+       F.N,
+       F.P,
+       F.K,
+       C.Planche,
+       C.Variété,
+       F.Notes
+FROM Fertilisations F
+JOIN Cultures C USING(Culture)
+WHERE (F.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='Ferti_historique')||' days'))OR
+      (DATE(F.Date) ISNULL) -- Détection de date incorecte
+ORDER BY F.Date,F.Espèce,F.Culture;
+
 CREATE VIEW ITP__analyse AS SELECT I.IT_plante,
        I.Type_culture,
        I.Déb_semis,
@@ -1050,6 +1174,58 @@ CREATE VIEW Espèces__couverture AS SELECT
     E.Notes
 FROM Espèces E
 WHERE E.A_planifier NOTNULL;
+
+CREATE VIEW Planches__bilan_fert AS SELECT
+       P.Planche,
+       P.Type,
+       P.Surface,
+       count(P.Culture) Nb_cu,
+       group_concat(P.Culture||' - '||P.IT_plante||' - '||P.Etat||' - '||strftime('%d/%m/%Y',P.Date_MEP),x'0a0a') Cultures,
+       CAST(round(min(sum(coalesce(P.N_fert,0))/sum(P.N_esp),
+                      sum(coalesce(P.P_fert,0))/sum(P.P_esp),
+                      sum(coalesce(P.K_fert,0))/sum(P.K_esp))*100) AS INTEGER) Fert_pc,
+       CAST(round(sum(P.N_esp)) AS INTEGER)||'-'||
+       CAST(round(sum(P.P_esp)) AS INTEGER)||'-'||
+       CAST(round(sum(P.K_esp)) AS INTEGER) Besoins_NPK,
+       (CAST(A.N AS TEXT)||'-'||CAST(A.P AS TEXT)||'-'||CAST(A.K AS TEXT))||' ('||A.Planche||' '||strftime('%d/%m/%Y',A.Date)||')'||x'0a0a'||
+        coalesce(A.Interprétation,'Pas d''interprétation') Analyse_sol,
+       -- sum(N_esp) N_esp,
+       CAST(round(sum(P.N_fert)) AS INTEGER)||'-'||
+       CAST(round(sum(P.P_fert)) AS INTEGER)||'-'||
+       CAST(round(sum(P.K_fert)) AS INTEGER) Apports_NPK,
+       -- sum(N_fert) N_fert,
+       round(sum(P.N_esp)-sum(P.N_fert)) N_manq,
+       round(sum(P.P_esp)-sum(P.P_fert)) P_manq,
+       round(sum(P.K_esp)-sum(P.K_fert)) K_manq,
+       P.Notes
+FROM Pl_bilan_fert P
+LEFT JOIN Analyses_de_sol A USING(Analyse)
+GROUP BY P.Planche;
+
+CREATE VIEW Pl_bilan_fert AS SELECT
+       P.Planche,
+       P.Type,
+       P.Longueur*P.Largeur Surface,
+       (SELECT AP.Analyse FROM Analyse_de_sol_proche(P.Planche) AP) Analyse,
+       C.Culture,
+       C.IT_plante,
+       C.Etat,
+       coalesce(C.Date_plantation,C.Date_semis) Date_MEP,
+       E.N*C.Longueur*P.Largeur N_esp,
+       E.P*C.Longueur*P.Largeur P_esp,
+       E.K*C.Longueur*P.Largeur K_esp,
+       sum(F.N) N_fert,
+       sum(F.P) P_fert,
+       sum(F.K) K_fert,
+       P.Notes
+FROM Planches P
+LEFT JOIN Cultures C USING(Planche)
+LEFT JOIN ITP I USING(IT_plante)
+LEFT JOIN Espèces E USING(Espèce)
+LEFT JOIN Fertilisations F USING(Culture)
+WHERE C.Saison=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')
+GROUP BY Culture
+ORDER BY Planche,Date_MEP;
 
 CREATE VIEW R_famille AS
     SELECT RD.ID,
