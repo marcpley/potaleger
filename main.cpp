@@ -538,6 +538,7 @@ void MainWindow::SetMenuIcons() {
     ui->mCuASemerPep->setIcon(QIcon(TablePixmap("Cultures__à_semer_pep","")));
     ui->mCuASemerEP->setIcon(QIcon(TablePixmap("Cultures__à_semer_EP","")));
     ui->mCuAPlanter->setIcon(QIcon(TablePixmap("Cultures__à_planter","")));
+    ui->mCuAIrriguer->setIcon(QIcon(TablePixmap("Cultures__à_irriguer","")));
     ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
     ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));

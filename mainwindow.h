@@ -14,7 +14,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.1b2";
+QString const Version="1.1b3";
 QString const DbVersion="2025-05-14";
 
 class MainWindow : public QMainWindow
@@ -106,6 +106,8 @@ private slots:
     void on_mBilanPlanches_triggered();
 
     void on_mInventaireFert_triggered();
+
+    void on_mCuAIrriguer_triggered();
 
 private:
     void SetEnabledDataMenuEntries(bool b);

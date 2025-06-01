@@ -551,6 +551,7 @@
     <addaction name="separator"/>
     <addaction name="mASemer"/>
     <addaction name="mCuAPlanter"/>
+    <addaction name="mCuAIrriguer"/>
     <addaction name="mCuARecolter"/>
     <addaction name="mCuSaisieRecoltes"/>
     <addaction name="mCuATerminer"/>
@@ -1078,6 +1079,14 @@
    </property>
    <property name="text">
     <string>Inventaire</string>
+   </property>
+  </action>
+  <action name="mCuAIrriguer">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>A irriguer</string>
    </property>
   </action>
  </widget>

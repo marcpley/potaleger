@@ -383,7 +383,8 @@ QColor RowColor(QString sValue, QString sTableName){
     else
         alpha=80;
 
-    if (sTableName=="Cultures__Tempo") {
+    if (sTableName=="Cultures__Tempo" or
+        sTableName=="Cultures__à_irriguer") {
         if (isDarkTheme())
             alpha=40;
         else
@@ -461,7 +462,8 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                rec.value(rec.indexOf("Type")).toString()+" - "+
                rec.value(rec.indexOf("Etat")).toString()+" - "+
                "Semis "+rec.value(rec.indexOf("Date_semis")).toString();
-    else if (TableName=="Cultures__Tempo")
+    else if (TableName=="Cultures__Tempo" or
+             TableName=="Cultures__à_irriguer")
         result=rec.value(rec.indexOf("Planche")).toString()+" - "+
                  rec.value(rec.indexOf("Culture")).toString()+" - "+
                  rec.value(rec.indexOf("Variété_ou_It_plante")).toString()+" - "+
@@ -819,6 +821,10 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Date réelle ou prévue.");
             if (sFieldName=="Début_récolte" or sFieldName=="Fin_récolte")
                 sToolTip+="\n"+QObject::tr("Va être mis à jour lors de la saisie des récoltes.");
+        else if (sFieldName=="Irrig_planche")
+            sToolTip=QObject::tr("Irrigation en place sur la planche.");
+        else if (sFieldName=="Irrig_espèce")
+            sToolTip=QObject::tr("Irrigation nécessaire pour l'espèce cultivée.");
         }
 
     } else if (sTableName.startsWith("Destinations")){
@@ -1289,6 +1295,9 @@ QString ToolTipTable(const QString sTableName) {
             sToolTip=QObject::tr("Cultures non terminées, à semer en place ('Date_plantation' vide), dont le champ 'Semis_fait' est vide et dont la date de semis est proche (paramètre 'C_horizon_semis') ou passée.")+"\n\n";
         else if (sTableName=="Cultures__à_planter")
             sToolTip=QObject::tr("Cultures non terminées, déjà semées (ou à partir de plants), dont le champ 'Plantation_faite' est vide et dont la date de plantation est proche (paramètre 'C_horizon_plantation') ou passée.")+"\n\n";
+        else if (sTableName=="Cultures__à_irriguer")
+            sToolTip=QObject::tr(  "Planches sans irrigation et ayant des cultures qui nécessitent irrigation\n"
+                                   "et planches avec irrigation en place mais pas de culture en ayant besoin (paramètres 'C_Irrig_avant_MEP' et 'C_Irrig_après_MEP').")+"\n\n";
         else if (sTableName=="Cultures__à_récolter")
             sToolTip=QObject::tr("Cultures non terminées, déjà semées/plantées, dont le champ 'Récolte_faite' ne commence pas par 'x' et dont la date de début de récolte est proche (paramètre 'C_horizon_récolte') ou passée.")+"\n\n";
         else if (sTableName=="Cultures__à_terminer")
@@ -1372,7 +1381,7 @@ QString ToolTipTable(const QString sTableName) {
     else if (sTableName=="Cultures__analyse")
         sToolTip=QObject::tr(  "Cultures récoltées, terminées et significatives (champ 'Terminée' différent de 'NS').");
     else if (sTableName=="Cultures__Tempo")
-        sToolTip=QObject::tr(  "Cultures semées ou plantées dans la période.");
+        sToolTip=QObject::tr(  "Planches et leurs cultures semées ou plantées dans la période.");
     else if (sTableName=="Espèces__couverture")
         sToolTip=QObject::tr(   "Comparatif des objectifs de production annuels par espèce avec\n"
                                 "les productions réelles des saisons passées et\n"

@@ -486,8 +486,9 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDialog("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.1</b> - /05/2025<br>"
+                  "<b>Potaléger 1.1</b> - 01/06/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
+                  "- "+tr("<b>Gestion de l'irrigation</b>.")+"<br>"+
                   "- "+tr("Appellation 'Semis sous abris' remplacée par 'Semis pépinière'.")+"<br>"+
                   "- "+tr("Appellation 'Semis direct' remplacée par 'Semis en place'.")+"<br>"+
                   "- "+tr("<b>Fertilisations</b>: besoins NPK, fertilisants, bilan par culture et par planche.")+"<br>"+
@@ -737,13 +738,12 @@ void MainWindow::on_mImport_triggered()
                         bModified=false;
                         for (int col = 0; col < valuesToImport.count(); col++) {
                             if (fieldindexes[col]>-1){//Col exists in table.
+                                if(dataTypes[col]=="REAL")
+                                    valuesToImport[col]=StrReplace(valuesToImport[col],decimalSep,".");
                                 if (choice==0 or choice==2 or choice==5 or//Priority to imported data
                                     w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()=="") {
                                     if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()!=valuesToImport[col]){
-                                        if(dataTypes[col]=="REAL")
-                                            w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),StrReplace(valuesToImport[col],decimalSep,"."));
-                                        else
-                                            w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
+                                        w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
                                         bModified=true;
                                     }
                                 }
@@ -899,6 +899,7 @@ void MainWindow::on_mExport_triggered()
 void MainWindow::on_mFamilles_triggered()
 {
     OpenPotaTab("Familles","Familles",tr("Familles"));
+    //OpenPotaTab("Test","Cultures__à_irriguer2",tr("Cultures__à_irriguer2"));
 }
 
 void MainWindow::on_mEspeces_triggered()
@@ -958,7 +959,6 @@ void MainWindow::on_mPlanches_triggered()
 
 void MainWindow::on_mSuccessionParPlanche_triggered()
 {
-    //OpenPotaTab("SuccPlanches","Successions_par_planche",tr("Succ. planches"));
     if (OpenPotaTab("SuccPlanches","Cultures__Tempo",tr("Succ. planches"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->tv->hideColumn(0);//num_planche, necessary in the view for row painting.
@@ -1092,6 +1092,14 @@ void MainWindow::on_mCuASemerEP_triggered()
 void MainWindow::on_mCuAPlanter_triggered()
 {
     OpenPotaTab("Cultures_a_planter","Cultures__à_planter",tr("A planter"));
+}
+
+void MainWindow::on_mCuAIrriguer_triggered()
+{
+    if (OpenPotaTab("Cultures__a_irriguer","Cultures__à_irriguer",tr("A irriguer"))) {
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//num_planche, necessary in the view for row painting.
+    }
 }
 
 void MainWindow::on_mCuARecolter_triggered()
@@ -1283,5 +1291,7 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
 
     ui->lDBlabel->setFixedWidth(110*arg1.toInt()/10);
 }
+
+
 
 

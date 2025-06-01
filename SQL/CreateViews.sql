@@ -422,7 +422,7 @@ ORDER BY Espèce;
 --   FROM Planches PL;
 
 CREATE VIEW Cultures__Tempo AS SELECT
-    num_planche,
+    dense_rank() OVER (ORDER BY Planche) AS num_planche,
     Planche,
     Culture,
     Variété_ou_It_plante,
@@ -437,27 +437,26 @@ CREATE VIEW Cultures__Tempo AS SELECT
 FROM Cultures__Tempo2;
 
 CREATE VIEW Cultures__Tempo2 AS SELECT
-       dense_rank() OVER (ORDER BY Planche) AS num_planche,
+       -- dense_rank() OVER (ORDER BY Planche) AS num_planche,
        -- row_number() OVER (ORDER BY Planche) AS num_planche2,
        -- rank() OVER (ORDER BY Planche) AS num_planche3,
        C.Planche,
-       lag(Planche) OVER (ORDER BY Planche,coalesce(C.Date_semis, C.Date_plantation)) AS Lag,
+       lag(Planche) OVER (ORDER BY Planche,coalesce(C.Date_plantation,C.Date_semis)) AS Lag,
        C.Culture,
        coalesce(C.Variété,C.IT_plante) Variété_ou_It_plante,
        -- C.Type,
-       -- C.Date_semis,
-       -- C.Date_plantation,
+       coalesce(C.Date_plantation,C.Date_semis) Date_MEP,
        -- C.Début_récolte,
        -- C.Fin_récolte,
-       CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)AS TEXT)
+       CASE WHEN substr(coalesce(C.Date_plantation,C.Date_semis),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)AS TEXT)
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
                  coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
             ELSE '::::::::::' END TEMPO_NP,
-       CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')
+       CASE WHEN substr(coalesce(C.Date_plantation,C.Date_semis),1,4)=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
                  coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
             ELSE '::::::::::' END TEMPO_N,
-       CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)AS TEXT)
+       CASE WHEN substr(coalesce(C.Date_plantation,C.Date_semis),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)AS TEXT)
             THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
                  coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
             ELSE '::::::::::' END TEMPO_NN,
@@ -466,18 +465,19 @@ CREATE VIEW Cultures__Tempo2 AS SELECT
        C.Nb_rangs,
        C.Longueur*PL.Largeur Surface,
        PL.Irrig,
+       E.Irrig Irrig_E,
        C.Notes
   FROM Cultures C
        LEFT JOIN ITP I USING(IT_plante)
        LEFT JOIN Planches PL USING(Planche)
        LEFT JOIN Espèces E USING(Espèce)
  WHERE (C.Planche NOTNULL)AND
-       ((coalesce(C.Date_semis, C.Date_plantation) BETWEEN ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)||'-01-01' AND
+       ((coalesce(C.Date_plantation,C.Date_semis) BETWEEN ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)||'-01-01' AND
                                                            ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)||'-12-31'))--OR
         -- (C.Fin_récolte BETWEEN ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)||'-01-01' AND
         --                        ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)||'-12-31'))
 ORDER BY C.Planche,
-          coalesce(C.Date_semis, C.Date_plantation);
+          coalesce(C.Date_plantation,C.Date_semis);
 
 CREATE VIEW Cultures__non_terminées AS SELECT
         C.Planche,
@@ -875,6 +875,72 @@ JOIN Cultures C USING(Culture)
 WHERE (F.Date>DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='Ferti_historique')||' days'))OR
       (DATE(F.Date) ISNULL) -- Détection de date incorecte
 ORDER BY F.Date,F.Espèce,F.Culture;
+
+CREATE VIEW Cultures__à_irriguer AS SELECT
+    dense_rank() OVER (ORDER BY CaI.Planche) AS num_planche,
+    CaI.Planche,
+    CaI.Culture,
+    CaI.Variété_ou_It_plante,
+    CaI.Irrig_planche,
+    CaI.Irrig_espèce,
+    CaI.TEMPO_NP,
+    (CaI.TEMPO_N  || iif(CaI.Irrig_planche NOTNULL,'x','')) TEMPO_N,
+    CaI.TEMPO_NN,
+    CaI.Saison,
+    CaI.Longueur,
+    CaI.Nb_rangs,
+    CaI.Surface,
+    CaI.Notes
+FROM Cultures__à_irriguer2 CaI
+WHERE  ((CaI.Planche IN (SELECT CaI1.Planche FROM C_à_irriguer CaI1))AND(CaI.Irrig_planche ISNULL))OR
+       ((NOT (CaI.Planche IN (SELECT CaI2.Planche FROM C_à_irriguer CaI2)))AND(CaI.Irrig_planche NOTNULL));
+
+CREATE VIEW Cultures__à_irriguer2 AS SELECT
+       C.Planche,
+       lag(Planche) OVER (ORDER BY Planche,coalesce(C.Date_plantation,C.Date_semis)) AS Lag,
+       C.Culture,
+       coalesce(C.Variété,C.IT_plante) Variété_ou_It_plante,
+       coalesce(C.Date_plantation,C.Date_semis) Date_MEP,
+       CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)AS TEXT)
+            THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
+            ELSE '::::::::::' END TEMPO_NP,
+       CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')
+            THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
+            ELSE '::::::::::' END TEMPO_N,
+       CASE WHEN substr(coalesce(C.Date_semis,C.Date_plantation),1,4)=CAST(((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)AS TEXT)
+            THEN CulTempo(C.Type, C.Date_semis, C.Date_plantation, C.Début_récolte, C.Fin_récolte)||':'||E.Espèce||':'||
+                 coalesce(C.Semis_fait,'')||':'||coalesce(C.Plantation_faite,'')||':'||coalesce(C.Récolte_faite,'')||':'
+            ELSE '::::::::::' END TEMPO_NN,
+       C.Saison,
+       C.Longueur,
+       C.Nb_rangs,
+       C.Longueur*PL.Largeur Surface,
+       PL.Irrig Irrig_planche,
+       E.Irrig Irrig_espèce,
+       C.Notes
+  FROM Cultures C
+       LEFT JOIN ITP I USING(IT_plante)
+       LEFT JOIN Planches PL USING(Planche)
+       LEFT JOIN Espèces E USING(Espèce)
+ WHERE (C.Planche NOTNULL)AND
+       (C.Terminée ISNULL) AND
+       ((coalesce(C.Date_plantation,C.Date_semis) BETWEEN ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')-1)||'-01-01' AND
+                                                          ((SELECT Valeur FROM Params WHERE Paramètre='Année_culture')+1)||'-12-31'))--OR
+ORDER BY C.Planche,
+          coalesce(C.Date_plantation,C.Date_semis);
+
+CREATE VIEW C_à_irriguer AS SELECT
+        C.Planche,
+        C.Culture
+FROM Cultures C
+LEFT JOIN ITP I USING (IT_plante)
+LEFT JOIN Espèces E USING (Espèce)
+WHERE  (C.Terminée ISNULL) AND
+       (E.Irrig NOTNULL) AND
+       (coalesce(C.Date_plantation,C.Date_semis) < DATE('now','+'||(SELECT Valeur FROM Params WHERE Paramètre='C_Irrig_avant_MEP')||' days'))AND
+       (coalesce(C.Date_plantation,C.Date_semis) > DATE('now','-'||(SELECT Valeur FROM Params WHERE Paramètre='C_Irrig_après_MEP')||' days'));
 
 CREATE VIEW ITP__analyse AS SELECT I.IT_plante,
        I.Type_culture,
