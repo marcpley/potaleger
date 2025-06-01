@@ -1579,7 +1579,8 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     QItemSelectionModel *selection = pw->tv->selectionModel();
     QString sFieldName=pw->model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
     QString sTableName=pw->model->tableName();
-
+    QLocale locale;
+    QString decimalSep = QString(locale.decimalPoint());
 
 
     if (!index.data(Qt::EditRole).isNull() and
@@ -1589,6 +1590,11 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         c.setAlpha(150);
     } else if (index.data(Qt::EditRole).toString().startsWith("Err") or
                index.data(Qt::DisplayRole).toString().startsWith("Err")) {
+        c=Qt::red;
+        c.setAlpha(150);
+    } else if (decimalSep!="." and
+               pw->model->dataTypes[index.column()]=="REAL" and
+               index.data(Qt::EditRole).toString().contains(decimalSep)) {
         c=Qt::red;
         c.setAlpha(150);
     } else if (RowColorCol>-1) {
@@ -1644,7 +1650,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
             if(index.data(Qt::EditRole).toDate()>QDate::currentDate())//Date in future
                 ColoText="G";
         } else if(sFieldName=="pH"){
-            if(index.data(Qt::EditRole).toDouble()>8 or index.data(Qt::EditRole).toDouble()<6) //Todo : code métier à mettre ailleurs
+            if(index.data(Qt::EditRole).toDouble()>=8 or index.data(Qt::EditRole).toDouble()<=6) //Todo : code métier à mettre ailleurs
                 ColoText="R";
         } else if(sFieldName.startsWith("★")){
             if(index.data(Qt::EditRole).toString()=="Elevé") //Todo : code métier à mettre ailleurs
@@ -1839,7 +1845,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
 
         if (semis>0){
             //Période de semis
-            if (plant>0) c=cSousAbris; else c=cEnPlace;
+            if (plant>0) c=cPepiniere; else c=cEnPlace;
             if (bSemis) c.setAlpha(255); else  c.setAlpha(100);
             b.setColor(c);
             r2.setTop(r2.bottom()-4);
@@ -1848,7 +1854,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         }
         if (semisF>0){
             //Semis fait, attente plantation
-            if(plant>0) c=cSousAbris;
+            if(plant>0) c=cPepiniere;
             else c=cEnPlace;
             c.setAlpha(100);
             b.setColor(c);

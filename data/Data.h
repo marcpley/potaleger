@@ -17,7 +17,7 @@ const QColor cParam=QColor("#7f7f7f");//Gris
 
 const QColor cCulture=QColor("#00ff00");//Vert
 const QColor cPrevue=QColor();
-const QColor cSousAbris=QColor("#ff6000");//Rouge
+const QColor cPepiniere=QColor("#ff6000");//Rouge
 const QColor cEnPlace=QColor("#76c801");//Vert
 const QColor cRecolte=QColor("#bf00ff");//Violet
 const QColor cATerminer=QColor("#007aff");//Bleu

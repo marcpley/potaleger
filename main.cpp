@@ -189,7 +189,6 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         } else {
             MessageDialog("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
                           sFichier,QStyle::SP_MessageBoxCritical,600);
-            //ui->tbInfoDB->append(tr("Cette BDD n'est pas une BDD Potaléger."));
             dbClose();
             result=false;
         }
@@ -197,7 +196,6 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         if (result and (sVerBDD < "2024-12-30")) {
             MessageDialog("Potaléger "+ui->lVer->text(),tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
                           sFichier,QStyle::SP_MessageBoxCritical,600);
-            //ui->tbInfoDB->append(tr("La version de cette BDD Potaléger est trop ancienne: ")+sVerBDD);
             dbClose();
             result=false;
         }
@@ -296,7 +294,6 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         // if (sVerBDD != ui->lVerBDDAttendue->text()) {
         //     MessageDialog(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
         //                   sFichier,QStyle::SP_MessageBoxCritical,600);
-        //     // ui->tbInfoDB->append(tr("La version de cette BDD est incorrecte: ")+sVerBDD);
         //     dbClose();
         //     return false;
         // }
@@ -386,7 +383,6 @@ void MainWindow::PotaDbClose()
 
     dbClose();
     //userDataEditing=false;
-    //ui->tbInfoDB->clear();
     ui->lDB->clear();
     ui->lDBErr->clear();
 }
@@ -539,8 +535,8 @@ void MainWindow::SetMenuIcons() {
     ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
     ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__couverture","")));
     ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
-    ui->mCuASemerSA->setIcon(QIcon(TablePixmap("Cultures__à_semer_SA","")));
-    ui->mCuASemerD->setIcon(QIcon(TablePixmap("Cultures__à_semer_D","")));
+    ui->mCuASemerPep->setIcon(QIcon(TablePixmap("Cultures__à_semer_pep","")));
+    ui->mCuASemerEP->setIcon(QIcon(TablePixmap("Cultures__à_semer_EP","")));
     ui->mCuAPlanter->setIcon(QIcon(TablePixmap("Cultures__à_planter","")));
     ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
     ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));

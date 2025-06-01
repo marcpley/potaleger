@@ -62,13 +62,13 @@ iif(:date NOT NULL,strftime(''%j'',''2000-''||:date),0)
 QString sItpTempo = QStringLiteral(R"#(
 -- :Type : type_culture
 -- :dXxx nb de jour depuis le début de l'année.
-iif(:Type=''Semis sous abris'',(:dSem-1)||'':''|| -- Attente
+iif(:Type=''Semis pépinière'',(:dSem-1)||'':''|| -- Attente
                                ItpTempoNJPeriode(:dSem,:fSem,:dPlant)||'':''|| -- Durée semis
                                ItpTempoNJInterPe(:dSem,:fSem,:dPlant)||'':''|| -- Semis fait attente plantation
                                ItpTempoNJPeriode(:dPlant,:fPlant,:dRec)||'':''|| -- Durée plantation
                                ItpTempoNJInterPe(:dPlant,:fPlant,:dRec)||'':''|| -- Plantation faite attente récolte
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec), -- Durée récolte
-iif(:Type=''Semis direct''    ,(:dSem-1)||'':''|| -- Attente
+iif(:Type=''Semis en place''    ,(:dSem-1)||'':''|| -- Attente
                                ItpTempoNJPeriode(:dSem,:fSem,:dRec)||'':''||
                                '':''||
                                '':''||
@@ -105,13 +105,13 @@ replace(-julianday(:dDeb)+julianday(:dFin),''.0'','''')
 QString sCulTempo = QStringLiteral(R"#(
 -- :Type : type_culture
 -- :dXxx date.
-iif(:Type=''Semis sous abris'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
+iif(:Type=''Semis pépinière'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
                                ''4:''|| -- Durée semis
                                (CulTempoNJPeriode(:dSem,:dPlant)-4) ||'':''|| -- Semis fait attente plantation
                                ''4:''|| -- Durée plantation
                                (CulTempoNJPeriode(:dPlant,:dRec)-4) ||'':''|| -- Plantation faite attente récolte
                                CulTempoNJPeriode(:dRec,:fRec), -- Durée récolte
-iif(:Type=''Semis direct'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
+iif(:Type=''Semis en place'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01'',:dSem)||'':''|| -- Attente
                            ''4:''|| -- Durée semis
                            ''0:''|| -- Semis fait attente récolte
                            ''0:''||
@@ -195,13 +195,13 @@ QString sRotTempo = QStringLiteral(R"#(
 -- :Type : type_culture
 -- :dXxx nb de jour depuis le début de l'année.
 iif(:Type=''xxx'',:dSem||:fSem, --to force params oder
-iif(:Type=''Semis sous abris'',(:dPlant-1) ||'':''|| -- Attente
+iif(:Type=''Semis pépinière'',(:dPlant-1) ||'':''|| -- Attente
                                '':''|| -- Durée semis
                                '':''|| -- Semis fait attente plantation
                                ItpTempoNJPeriode(:dPlant,:fPlant,:dRec) ||'':''|| -- Durée plantation
                                ItpTempoNJInterPe(:dPlant,:fPlant,:dRec) ||'':''|| -- Plantation faite attente récolte
                                ItpTempoNJPeriode(:dRec,:fRec,:fRec), -- Durée récolte
-iif(:Type=''Semis direct''    ,(:dSem-1) ||'':''|| -- Attente
+iif(:Type=''Semis en place''    ,(:dSem-1) ||'':''|| -- Attente
                                ItpTempoNJPeriode(:dSem,:fSem,:dRec) ||'':''||
                                '':''||
                                '':''||
@@ -292,8 +292,8 @@ SELECT C.Culture,I.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
 FROM Cultures C JOIN ITP I USING(IT_plante)
 WHERE (:Repartir NOTNULL)AND
       ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
-      (DATE(C.Début_récolte,'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_avance_saisie_récolte')||' days') <= coalesce(:Date,DATE('now')))AND
-      (DATE(C.Fin_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_retard_saisie_récolte')||' days') >= coalesce(:Date,DATE('now')))AND
+      (DATE(C.Début_récolte,'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_avance')||' days') <= coalesce(:Date,DATE('now')))AND
+      (DATE(C.Fin_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_prolongation')||' days') >= coalesce(:Date,DATE('now')))AND
       (DATE(coalesce(C.Date_plantation,C.Date_semis),'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_après_MEP')||' days') <= coalesce(:Date,DATE('now')))AND --1.1b1
       ((:Repartir='*')OR
        (C.Planche LIKE :Repartir||'%'))

@@ -561,7 +561,7 @@ ORDER BY    Date_semis,Date_plantation,
             Planche,
             IT_plante;
 
-CREATE VIEW Cultures__à_semer_SA AS SELECT
+CREATE VIEW Cultures__à_semer_pep AS SELECT
         CAST(min(C.Culture)AS INTEGER) Culture, -- Pour servir d'index, colonne à cacher.
         group_concat(C.Planche,x'0a0a') Planches,
         group_concat(C.Culture||' ',x'0a0a') Cultures,
@@ -599,7 +599,7 @@ ORDER BY    Date_semis,Date_plantation,
             Planche,
             IT_plante;
 
-CREATE VIEW Cultures__à_semer_D AS SELECT
+CREATE VIEW Cultures__à_semer_EP AS SELECT
         C.Planche,
         C.Culture,
         C.IT_plante,
@@ -771,7 +771,7 @@ CREATE VIEW Cultures__à_fertiliser AS SELECT
        C.Espèce,
        group_concat(C.Variété_ou_It_plante,x'0a0a') Variétés_ou_It_plante,
        Type,
-       CASE WHEN C.Etat='Prévue' OR C.Etat='Sous abris' THEN 'A venir' ELSE C.Etat END Etat,
+       CASE WHEN C.Etat='Prévue' OR C.Etat='Pépinière' THEN 'A venir' ELSE C.Etat END Etat,
        C.Date_MEP,
        min(C.Début_récolte) Début_récolte,
        max(C.Fin_récolte) Fin_récolte,
@@ -983,7 +983,7 @@ WHERE (C.Terminée ISNULL OR C.Terminée != 'NS')AND
                     C.Fin_récolte,I.Fin_récolte) NOTNULL))
 ORDER BY Culture;
 
-CREATE VIEW C_non_commencées AS --Cultures ni semées (SD ou SSA) ni plantées.
+CREATE VIEW C_non_commencées AS --Cultures ni semées (SEP ou SPep) ni plantées.
     SELECT *
       FROM Cultures
      WHERE Terminée ISNULL AND Semis_fait ISNULL AND Plantation_faite ISNULL
@@ -994,7 +994,7 @@ CREATE VIEW C_à_venir AS --Cultures ni semées (SD) ni plantées.
       FROM Cultures
      WHERE Terminée ISNULL AND
            NOT ( (Semis_fait NOTNULL AND Date_plantation ISNULL) OR-- SD semé
-                 Plantation_faite NOTNULL)-- Plant ou SSA planté
+                 Plantation_faite NOTNULL)-- Plant ou SPep planté
      ORDER BY Planche;
 
 CREATE VIEW C_en_place AS --Cultures semées (SD) ou plantées.
@@ -1002,7 +1002,7 @@ CREATE VIEW C_en_place AS --Cultures semées (SD) ou plantées.
       FROM Cultures
      WHERE Terminée ISNULL AND
            ( (Semis_fait NOTNULL AND Date_plantation ISNULL) OR-- SD semé
-             Plantation_faite NOTNULL)-- Plant ou SSA planté
+             Plantation_faite NOTNULL)-- Plant ou SPep planté
      ORDER BY Planche;
 
 CREATE VIEW C_esp_prod AS SELECT

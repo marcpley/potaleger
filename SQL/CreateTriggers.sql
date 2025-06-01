@@ -50,7 +50,7 @@ BEGIN
                                 WHEN ((length(NEW.D_planif)=4)AND(CAST(NEW.D_planif AS INTEGER) BETWEEN 2000 AND 2100))
                                 THEN    CASE
                                         WHEN (SELECT (ITP.Déb_plantation NOTNULL)AND(ITP.Déb_plantation<ITP.Déb_semis) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
-                                        THEN CAST(CAST(NEW.D_planif AS INTEGER)-1 AS TEXT)||'-01-01' -- Semis sous abris l'année précédent la mise en place.
+                                        THEN CAST(CAST(NEW.D_planif AS INTEGER)-1 AS TEXT)||'-01-01' -- Semis pépinière l'année précédent la mise en place.
                                         ELSE NEW.D_planif||'-01-01' END
                                 ELSE DATE() END);
 
@@ -115,7 +115,7 @@ BEGIN--Code identique à INSERT
                                 WHEN ((length(NEW.D_planif)=4)AND(CAST(NEW.D_planif AS INTEGER) BETWEEN 2000 AND 2100))
                                 THEN    CASE
                                         WHEN (SELECT (ITP.Déb_plantation NOTNULL)AND(ITP.Déb_plantation<ITP.Déb_semis) FROM ITP WHERE ITP.IT_plante=NEW.IT_plante)
-                                        THEN CAST(CAST(NEW.D_planif AS INTEGER)-1 AS TEXT)||'-01-01' -- Semis sous abris l'année précédent la mise en place.
+                                        THEN CAST(CAST(NEW.D_planif AS INTEGER)-1 AS TEXT)||'-01-01' -- Semis pépinière l'année précédent la mise en place.
                                         ELSE NEW.D_planif||'-01-01' END
                                 ELSE DATE() END);
 
@@ -294,7 +294,8 @@ BEGIN
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__à_semer_SA_UPDATE;;
-CREATE TRIGGER Cultures__à_semer_SA_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer_SA
+DROP TRIGGER IF EXISTS Cultures__à_semer_pep_UPDATE;;
+CREATE TRIGGER Cultures__à_semer_pep_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer_pep
 BEGIN
     -- Mise à jour semis sur toutes les cultures groupées.
     UPDATE Cultures SET
@@ -313,7 +314,8 @@ BEGIN
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__à_semer_D_UPDATE;;
-CREATE TRIGGER Cultures__à_semer_D_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer_D
+DROP TRIGGER IF EXISTS Cultures__à_semer_EP_UPDATE;;
+CREATE TRIGGER Cultures__à_semer_EP_UPDATE INSTEAD OF UPDATE ON Cultures__à_semer_EP
 BEGIN
     UPDATE Cultures SET
         Planche=NEW.Planche,

@@ -51,9 +51,9 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?'
-                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis sous abris'
+                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis pépinière'
                                           WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant'
-                                          WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis direct'
+                                          WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis en place'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte'
                                           WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
                        Saison TEXT AS (substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)),
@@ -62,7 +62,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                                           WHEN Récolte_faite NOTNULL THEN 'Récolte' --violet
                                           WHEN Plantation_faite NOTNULL THEN 'En place' --vert
                                           WHEN Semis_fait NOTNULL THEN iif(Date_plantation IS NULL,'En place', --vert
-                                                                                                   'Sous abris') --rouge
+                                                                                                   'Pépinière') --rouge
                                           ELSE 'Prévue'
                                           END),
                        D_planif TEXT,-- Format TEXT pour pouvoir mettre une année simple quand on veut forcer un recalcul de planif.
@@ -177,9 +177,9 @@ CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY COLLATE POTACOLLATION,
 CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
                   Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
                   Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
-                  Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis sous abris'
+                  Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis pépinière'
                                              WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant'
-                                             WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis direct'
+                                             WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis en place'
                                              WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL THEN 'Sans récolte'
                                              WHEN Déb_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
                   Déb_semis TEXT CONSTRAINT 'Déb_semis, ex: 04-01 ou 04-15' CHECK (Déb_semis #FmtPlanif#),

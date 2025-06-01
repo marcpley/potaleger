@@ -275,13 +275,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : ItpTempoNJ('02-01') = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT ItpTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="31:14:15:14:47:31"){
-        qCritical() << "Function failed: ItpTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    if (!q1.exec("SELECT ItpTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="31:14:15:14:47:31"){
+        qCritical() << "Function failed: ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "ItpTempo";
     }
-    qInfo() << "Function ok : ItpTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT CulTempoNJPeriode('2000-01-01','2000-01-31')") or !q1.next() or q1.value(0).toInt()!=30){
@@ -293,13 +293,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : CulTempoNJPeriode('2000-01-01','2000-01-31') = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:4:10:4:11:14"){
-        qCritical() << "Function failed: CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
+    if (!q1.exec("SELECT CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:4:10:4:11:14"){
+        qCritical() << "Function failed: CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "CulTempo";
     }
-    qInfo() << "Function ok : CulTempo('Semis sous abris','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
+    qInfo() << "Function ok : CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
 
     // q1.clear();
     // if (!q1.exec("SELECT ZeroSiErrPlusDe(1000)") or !q1.next() or q1.value(0).toInt()!=0){
@@ -338,13 +338,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT RotTempo('Semis sous abris',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:::14:47:31"){
-        qCritical() << "Function failed: RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    if (!q1.exec("SELECT RotTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:::14:47:31"){
+        qCritical() << "Function failed: RotTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "RotTempo";
     }
-    qInfo() << "Function ok : RotTempo('Semis sous abris','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : RotTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT * FROM RF_trop_proches('xxx')")){

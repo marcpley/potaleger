@@ -543,8 +543,8 @@
       <string>A semer</string>
      </property>
      <addaction name="mCuASemer"/>
-     <addaction name="mCuASemerSA"/>
-     <addaction name="mCuASemerD"/>
+     <addaction name="mCuASemerPep"/>
+     <addaction name="mCuASemerEP"/>
     </widget>
     <addaction name="mCuNonTer"/>
     <addaction name="mCouverture"/>
@@ -764,12 +764,12 @@
     <string>Variétés</string>
    </property>
   </action>
-  <action name="mCuASemerD">
+  <action name="mCuASemerEP">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Semis direct</string>
+    <string>Semis en place</string>
    </property>
   </action>
   <action name="mCuAPlanter">
@@ -1000,12 +1000,12 @@
     <string>Destinations</string>
    </property>
   </action>
-  <action name="mCuASemerSA">
+  <action name="mCuASemerPep">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Semis sous abris</string>
+    <string>Semis pépinière</string>
    </property>
   </action>
   <action name="mCuASemer">

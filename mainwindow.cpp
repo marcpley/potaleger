@@ -12,6 +12,7 @@
 #include "PotaUtils.h"
 #include <QToolButton>
 #include "data/Data.h"
+#include <QLocale>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -38,10 +39,7 @@ MainWindow::~MainWindow()
 //     setWindowTitle("Potaléger");
 //     if (pQuery.ExecShowErr("SELECT * FROM Info_Potaléger"))
 //     {
-//         ui->tbInfoDB->clear();
 //         while (pQuery.next()) {
-//             ui->tbInfoDB->append(pQuery.value(1).toString()+": "+
-//                                  pQuery.value(2).toString());
 //             if (pQuery.value(1).toString()=="Utilisateur")
 //                 setWindowTitle("Potaléger"+iif(pQuery.value(2).isNull(),""," - "+pQuery.value(2).toString()).toString());
 //         }
@@ -49,7 +47,6 @@ MainWindow::~MainWindow()
 //     }
 //     else
 //     {
-//         ui->tbInfoDB->append(tr("Impossible de lire la vue 'Info_Potaléger'."));
 //         return false;
 //     }
 // }
@@ -491,8 +488,11 @@ void MainWindow::on_mWhatSNew_triggered()
                   tr("Evolutions et corrections de bugs"),
                   "<b>Potaléger 1.1</b> - /05/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
-                  "- "+tr("Fertilisations: besoins NPK, fertilisants, bilan par culture et par planche.")+"<br>"+
+                  "- "+tr("Appellation 'Semis sous abris' remplacée par 'Semis pépinière'.")+"<br>"+
+                  "- "+tr("Appellation 'Semis direct' remplacée par 'Semis en place'.")+"<br>"+
+                  "- "+tr("<b>Fertilisations</b>: besoins NPK, fertilisants, bilan par culture et par planche.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Import de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Plus de possibilité de saisir des récoltes avant la date de mise en place de la culture.")+"<br>"+
                   "- "+tr("Infos (min, max, etc) sur une sélection de pourcentages.")+"<br>"+
                   "- "+tr("Bugs minimes sur les fenêtres de dialogue..")+"<br><br>"+
@@ -674,6 +674,8 @@ void MainWindow::on_mImport_triggered()
         int nbCreatedRows=0;
         int nbModifiedRows=0;
         int nbErrors=0;
+        QLocale locale;
+        QString decimalSep = QString(locale.decimalPoint());
         if (choice==5 or choice==6) {//Delete selected lines
             if(w->model->rowCount()>1 and
                 !OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning,600)) {
@@ -738,7 +740,10 @@ void MainWindow::on_mImport_triggered()
                                 if (choice==0 or choice==2 or choice==5 or//Priority to imported data
                                     w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()=="") {
                                     if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()!=valuesToImport[col]){
-                                        w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
+                                        if(dataTypes[col]=="REAL")
+                                            w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),StrReplace(valuesToImport[col],decimalSep,"."));
+                                        else
+                                            w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
                                         bModified=true;
                                     }
                                 }
@@ -761,8 +766,13 @@ void MainWindow::on_mImport_triggered()
                         int row=w->model->rowCount();
                         if (w->model->insertRow(row)){
                             for (int col = 0; col < valuesToImport.count(); col++) {
-                                if (fieldindexes[col]>-1)//Col exists in table.
-                                    w->model->setData(w->model->index(row,fieldindexes[col]),valuesToImport[col]);
+                                if (fieldindexes[col]>-1){//Col exists in table.
+                                    if(dataTypes[col]=="REAL")
+                                        w->model->setData(w->model->index(row,fieldindexes[col]),StrReplace(valuesToImport[col],decimalSep,"."));
+                                    else
+                                        w->model->setData(w->model->index(row,fieldindexes[col]),valuesToImport[col]);
+
+                                }
                             }
                             if (w->model->submitAll()) {
                                 nbCreatedRows++;
@@ -835,6 +845,8 @@ void MainWindow::on_mExport_triggered()
 
             QByteArray data;
             QStringList dataTypes;
+            QLocale locale;
+            QString decimalSep = QString(locale.decimalPoint());
 
             //Header export
             for (int col = 0; col < w->model->columnCount(); ++col) {
@@ -857,7 +869,7 @@ void MainWindow::on_mExport_triggered()
                     for (int col = 0; col < w->model->columnCount(); ++col) {
                         if (col > 0) data.append(";");
                         if (dataTypes[col]=="REAL")
-                            data.append(EscapeCSV(StrReplace(w->model->data(w->model->index(row, col)).toString(),".",",")).toUtf8());//todo param decimal separator
+                            data.append(EscapeCSV(StrReplace(w->model->data(w->model->index(row, col)).toString(),".",decimalSep)).toUtf8());//todo param decimal separator
                         else
                             data.append(EscapeCSV(w->model->data(w->model->index(row, col)).toString()).toUtf8());
                     }
@@ -1064,17 +1076,17 @@ void MainWindow::on_mCuASemer_triggered()
     OpenPotaTab("Cultures_a_semer","Cultures__à_semer",tr("A semer"));
 }
 
-void MainWindow::on_mCuASemerSA_triggered()
+void MainWindow::on_mCuASemerPep_triggered()
 {
-    if (OpenPotaTab("Cultures_a_semer_SA","Cultures__à_semer_SA",tr("A semer (SA)"))) {
+    if (OpenPotaTab("Cultures_a_semer_pep","Cultures__à_semer_pep",tr("A semer (pépinière)"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->tv->hideColumn(0);//Culture, necessary in the view for sow commited celles.
     }
 }
 
-void MainWindow::on_mCuASemerD_triggered()
+void MainWindow::on_mCuASemerEP_triggered()
 {
-    OpenPotaTab("Cultures_a_semer_D","Cultures__à_semer_D",tr("A semer (D)"));
+    OpenPotaTab("Cultures_a_semer_EP","Cultures__à_semer_EP",tr("A semer (en place)"));
 }
 
 void MainWindow::on_mCuAPlanter_triggered()

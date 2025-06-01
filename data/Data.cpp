@@ -158,9 +158,9 @@ int NaturalSortCol(const QString sTableName){
         return 5;//Date_semis
     else if (sTableName=="Cultures__à_semer")
         return 8;//Date_semis
-    else if (sTableName=="Cultures__à_semer_SA")
+    else if (sTableName=="Cultures__à_semer_pep")
         return 7;//Date_semis
-    else if (sTableName=="Cultures__à_semer_D")
+    else if (sTableName=="Cultures__à_semer_EP")
         return 8;//Date_semis
     else if (sTableName=="Cultures__à_planter")
         return 10;//Date_plantation
@@ -195,7 +195,7 @@ QString NoData(const QString sTableName){
     else if (sTableName=="Récoltes__Saisies")
         return QObject::tr("Il n'y a aucune culture à récolter pour le moment.\n\n"
                            "Les récoltes peuvent être saisies avant ou après la période de récolte\n"
-                           "en modifiant les paramètres 'C_avance_saisie_récolte' et 'C_retard_saisie_récolte'.");
+                           "en modifiant les paramètres 'C_récolte_avance' et 'C_récolte_prolongation'.");
     else if (sTableName=="Rotations_détails__Tempo")
         return QObject::tr("Vous devez d'abort saisir au moins une entête de rotation (menu 'Rotations').");
     else
@@ -249,11 +249,11 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Nb_rangs" or
                       sFieldName=="Espacement" or
                       sFieldName=="Notes");
-    } else if (sTableName=="Cultures__à_semer_SA"){
+    } else if (sTableName=="Cultures__à_semer_pep"){
         bReadOnly = !(sFieldName=="Date_semis" or
                       sFieldName=="Semis_fait" or
                       sFieldName=="Notes");
-    } else if (sTableName=="Cultures__à_semer_D" or sTableName=="Cultures__à_semer"){
+    } else if (sTableName=="Cultures__à_semer_EP" or sTableName=="Cultures__à_semer"){
         bReadOnly = !(sFieldName=="Planche" or
                       sFieldName=="Variété" or
                       sFieldName=="Fournisseur" or
@@ -395,8 +395,8 @@ QColor RowColor(QString sValue, QString sTableName){
     } else if (sTableName.startsWith("Cultures")) {
         if (sValue=="Prévue")
             c=cPrevue;
-        else if (sValue=="Sous abris")
-            c=cSousAbris;
+        else if (sValue=="Pépinière")
+            c=cPepiniere;
         else if (sValue=="En place")
             c=cEnPlace;
         else if (sValue=="Récolte")
@@ -450,7 +450,7 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                iif(rec.value(rec.indexOf("Date_semis")).isNull(),
                    rec.value(rec.indexOf("Date_Plantation")).toString(),
                    rec.value(rec.indexOf("Date_semis")).toString()).toString();
-    else if (TableName=="Cultures__à_semer_SA")
+    else if (TableName=="Cultures__à_semer_pep")
         result=iif(!rec.value(rec.indexOf("Cultures")).toString().contains("\n"),
                    rec.value(rec.indexOf("Cultures")).toString().trimmed(),"####").toString()+" - "+
                iif(!rec.value(rec.indexOf("Planches")).toString().contains("\n"),
@@ -954,7 +954,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "Voir infobulle 'Culture'.");
         else if (sFieldName=="Culture")
             sToolTip=QObject::tr(  "Les cultures possibles pour saisir une fertilisation sont celles qui:\n"
-                                   "- Date de mise en place (semis direct ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance_saisie')\n"
+                                   "- Date de mise en place (semis en place ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance_saisie')\n"
                                    "- Début de récolte (Début_récolte) >= date du jour moins délai de saisie de fertilisation (paramètre 'Ferti_retard_saisie')\n\n"
                                    "Le paramètre 'Ferti_avance_saisie' permet de saisir des fertilisations avant la date de mise en place de la culture.\n"
                                    "Le paramètre 'Ferti_retard_saisie' permet de saisir les fertilisation après le début de récolte (Début_récolte).");
@@ -981,7 +981,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire SI ESPACEMENT = 0.");
         else if (sFieldName.startsWith("J_"))
             sToolTip=QObject::tr("Nombre de jours pour...")+"\n"+
-                     QObject::tr("La date de prévue pour les cultures sera le début de période.");
+                     QObject::tr("La date prévue pour les cultures sera le début de période.");
         else if (sFieldName=="Nb_rangs")
             sToolTip=QObject::tr("Nombre de rangs cultivés sur une planche.")+
                                  "\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.")+
@@ -1033,10 +1033,10 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName=="Culture")
             sToolTip=QObject::tr(  "Les cultures possibles pour saisir une récolte sont celles qui:\n"
                                    "- ont des dates de début et fin de récolte (réelles ou prévues)\n"
-                                   "- Début de récolte (Début_récolte) <= date du jour plus avance de saisie de récolte (paramètre 'C_avance_saisie_récolte')\n"
-                                   "- Fin de récolte (Fin_récolte) >= date du jour moins délai de saisie de récolte (paramètre 'C_retard_saisie_récolte')\n\n"
-                                   "Le paramètre 'C_avance_saisie_récolte' permet de saisir des récoltes faites avant leur date prévue.\n"
-                                   "Le paramètre 'C_retard_saisie_récolte' permet de saisir les récoltes après que celles-ci aient été faites.");
+                                   "- Début de récolte (Début_récolte) <= date du jour plus avance de saisie de récolte (paramètre 'C_récolte_avance')\n"
+                                   "- Fin de récolte (Fin_récolte) >= date du jour moins délai de saisie de récolte (paramètre 'C_récolte_prolongation')\n\n"
+                                   "Le paramètre 'C_récolte_avance' permet de saisir des récoltes faites avant leur date prévue.\n"
+                                   "Le paramètre 'C_récolte_prolongation' permet de saisir les récoltes après que celles-ci aient été faites.");
         else if (sFieldName=="Quantité")
             sToolTip=QObject::tr("Quantité récoltée sur la planche (kg).");
         else if (sFieldName=="Répartir")
@@ -1045,7 +1045,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "ou saisir '*' pour répartir sur toutes les cultures possibles.\n"
                                    "Vide: pas de répartition.\n\n"
                                    "La répartition se fait au prorata des longueurs de planche.\n"
-                                   "Attention, la liste des cultures possibles dépend des paramètres 'C_avance_saisie_récolte' et 'C_retard_saisie_récolte'.");
+                                   "Attention, la liste des cultures possibles dépend des paramètres 'C_récolte_avance' et 'C_récolte_prolongation'.");
         else if (sFieldName=="Qté_réc")
             sToolTip=QObject::tr("Quantité totale déja récoltée (kg), à cette date.");
 
@@ -1098,7 +1098,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Numéro unique de la culture\n"
                                  "(pas de remise à zéro tous les ans).");
         else if (sFieldName=="Saison")
-            sToolTip=QObject::tr("Année de la date de plantation ou de semis direct\n"
+            sToolTip=QObject::tr("Année de la date de plantation ou de semis en place\n"
                                  "(mise en place sur la planche de culture).");
         else if (sFieldName=="D_planif")
             sToolTip=QObject::tr("Date de calcul des dates de semis, plantation et récolte (planification).\n"
@@ -1196,21 +1196,21 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                  "(besoin de l'espèce x surface de planches)");
         else if (sFieldName=="C_à_venir")
             sToolTip=QObject::tr(   "Cultures prévues mais pas encore en place sur leur planche.\n"
-                                    "Sont incluses les cultures déjà semées sous abris.");
+                                    "Sont incluses les cultures déjà semées en pépinière.");
         else if (sFieldName=="C_en_place")
-            sToolTip=QObject::tr(   "Cultures en place sur leur planche: semées (semis direct) ou plantées.\n"
-                                    "Ne sont pas incluses les cultures semées sous abris mais non plantées.");
+            sToolTip=QObject::tr(   "Cultures en place sur leur planche: semées en place ou plantées.\n"
+                                    "Ne sont pas incluses les cultures semées en pépinière mais non plantées.");
         else if (sFieldName=="C_non_commencées")
             sToolTip=QObject::tr(   "Cultures prévues mais ni semées ni plantées.");
          else if (sFieldName=="Date_MEP")
-             sToolTip=QObject::tr("Date de mise en place sur la planche de culture: date de semis (direct) ou de plantation.");
+             sToolTip=QObject::tr("Date de mise en place sur la planche de culture: date de semis (en place) ou de plantation.");
         // else if (sFieldName=="Libre_le")
         //     sToolTip=QObject::tr("Plus grande date de fin de récolte parmis les cultures en place.");
         else if (sFieldName=="Fert_pc")
             sToolTip=QObject::tr(  "Pourcentage de fertilisation déjà effectué pour l'élément N, P ou K (le plus déficitaire).");
         else if (sFieldName=="Nb_cu_AV")
             sToolTip=QObject::tr(  "Nombre de cultures à venir (AV) sur la planche.\n"
-                                   "Ces cultures ne sont pour le moment ni semées (semis direct) ni plantées.");
+                                   "Ces cultures ne sont pour le moment ni semées (semis en place) ni plantées.");
         else if (sFieldName=="Nb_cu_EP")
             sToolTip=QObject::tr(  "Nombre de cultures en place (EP) sur la planche.\n"
                                    "Ces cultures ne sont pas terminées.");
@@ -1222,7 +1222,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr(  "Nombre de cultures terminées et significatives (champ Terminée différent de 'NS').");
         else if (sFieldName.startsWith("Prod_N"))
             sToolTip=QObject::tr(  "Somme des productions (réelles ou possibles) des cultures de la saison (kg).")+"\n"+
-                     QObject::tr(  "Saison = année de mise en place (plantation ou semis direct), la récolte peut se terminer l'année suivante.")+"\n"+
+                     QObject::tr(  "Saison = année de mise en place (plantation ou semis en place), la récolte peut se terminer l'année suivante.")+"\n"+
                      QObject::tr(  "Production réelle (somme des récoltes) pour les cultures terminées.")+"\n"+
                      QObject::tr(  "Production possible (rendement de l'espèce x surface de la culture) pour les cultures non terminées.");
         else if (sFieldName=="Pl_libre_le")
@@ -1283,10 +1283,10 @@ QString ToolTipTable(const QString sTableName) {
             sToolTip=QObject::tr("Cultures dont le champ 'Terminé' est vide.")+"\n\n";
         else if (sTableName=="Cultures__à_semer")
             sToolTip=QObject::tr("Cultures non terminées dont le champ 'Semis_fait' est vide et dont la date de semis est proche (paramètre 'C_horizon_semis') ou passée.")+"\n\n";
-        else if (sTableName=="Cultures__à_semer_SA")
-            sToolTip=QObject::tr("Cultures non terminées, en semis sous abris ('Date_plantation' non vide), dont le champ 'Semis_fait' est vide et dont la date de semis est proche (paramètre 'C_horizon_semis') ou passée.")+"\n\n";
-        else if (sTableName=="Cultures__à_semer_D")
-            sToolTip=QObject::tr("Cultures non terminées, en semis direct ('Date_plantation' vide), dont le champ 'Semis_fait' est vide et dont la date de semis est proche (paramètre 'C_horizon_semis') ou passée.")+"\n\n";
+        else if (sTableName=="Cultures__à_semer_pep")
+            sToolTip=QObject::tr("Cultures non terminées, semis en pépinière ('Date_plantation' non vide), dont le champ 'Semis_fait' est vide et dont la date de semis est proche (paramètre 'C_horizon_semis') ou passée.")+"\n\n";
+        else if (sTableName=="Cultures__à_semer_EP")
+            sToolTip=QObject::tr("Cultures non terminées, à semer en place ('Date_plantation' vide), dont le champ 'Semis_fait' est vide et dont la date de semis est proche (paramètre 'C_horizon_semis') ou passée.")+"\n\n";
         else if (sTableName=="Cultures__à_planter")
             sToolTip=QObject::tr("Cultures non terminées, déjà semées (ou à partir de plants), dont le champ 'Plantation_faite' est vide et dont la date de plantation est proche (paramètre 'C_horizon_plantation') ou passée.")+"\n\n";
         else if (sTableName=="Cultures__à_récolter")
