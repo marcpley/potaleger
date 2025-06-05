@@ -64,5 +64,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-           name: potaleger0100windows
+           name: potaleger01windows
            path: artifact
