@@ -186,7 +186,7 @@ QString NoData(const QString sTableName){
     else if (sTableName=="Fertilisations__Saisies")
         return QObject::tr("Il n'y a aucune culture à fertiliser pour le moment.\n\n"
                            "Les fertilisations peuvent être saisies avant la mise en place de la culture sur la planche et jusqu'au début de récolte\n"
-                           "en modifiant les paramètres 'Ferti_avance_saisie' et 'Ferti_retard_saisie'.");
+                           "en modifiant les paramètres 'Ferti_avance' et 'Ferti_retard'.");
     else if (sTableName=="ITP__Tempo")
         return QObject::tr("Vous devez d'abort saisir au moins une espèce de plante (menu 'Espèces') avant de saisir des itinéraires techniques.");
     else if (sTableName=="Espèces__manquantes")
@@ -960,19 +960,20 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "Voir infobulle 'Culture'.");
         else if (sFieldName=="Culture")
             sToolTip=QObject::tr(  "Les cultures possibles pour saisir une fertilisation sont celles qui:\n"
-                                   "- Date de mise en place (semis en place ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance_saisie')\n"
-                                   "- Début de récolte (Début_récolte) >= date du jour moins délai de saisie de fertilisation (paramètre 'Ferti_retard_saisie')\n\n"
-                                   "Le paramètre 'Ferti_avance_saisie' permet de saisir des fertilisations avant la date de mise en place de la culture.\n"
-                                   "Le paramètre 'Ferti_retard_saisie' permet de saisir les fertilisation après le début de récolte (Début_récolte).");
+                                   "- Date de mise en place (semis en place ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance')\n"
+                                   "- Début de récolte (Début_récolte) >= date du jour moins délai de saisie de fertilisation (paramètre 'Ferti_retard')\n\n"
+                                   "Le paramètre 'Ferti_avance' permet de saisir des fertilisations avant la date de mise en place de la culture.\n"
+                                   "Le paramètre 'Ferti_retard' permet de saisir les fertilisation après le début de récolte (Début_récolte).");
         else if (sFieldName=="Quantité")
             sToolTip=QObject::tr("Quantité apportée sur la planche (kg).");
         else if (sFieldName=="Répartir")
             sToolTip=QObject::tr(  "Pour répartir la quantité apporté sur plusieurs cultures de l'espèce sélectionnée,\n"
                                    "saisir le début du nom des planches concernées\n"
-                                   "ou saisir '*' pour répartir sur toutes les cultures possibles.\n"
+                                   "ou saisir '*' pour répartir sur toutes les cultures possibles pour l'espèce sélectionnée.\n"
+                                   "Si pas d'espèce sélectionnée, la répartition se fait sur TOUTES les cultures possible.\n"
                                    "Vide: pas de répartition.\n\n"
                                    "La répartition se fait au prorata des surfaces de planche.\n"
-                                   "Attention, la liste des cultures possibles dépend des paramètres 'Ferti_avance_saisie' et 'Ferti_retard_saisie'.");
+                                   "Attention, la liste des cultures possibles (en période de fertilisation) dépend des paramètres 'Ferti_avance' et 'Ferti_retard'.");
         else if (sFieldName=="N")
             sToolTip=QObject::tr(Apport).arg(QObject::tr("Azote").toLower()).arg("N");
     } else if (sTableName=="Fournisseurs"){
@@ -1319,7 +1320,7 @@ QString ToolTipTable(const QString sTableName) {
         sToolTip=QObject::tr("Espèces ayant une certaine proximité phylogénétique.\nPermet de d'enregistrer l'intervale de temps minimum entre 2 cultures d'une même famille.");
     else if (sTableName=="Fertilisants")
         sToolTip=QObject::tr("Engrais, ammendements et paillages pour la fertilisation des planches de culture.\nLes engrais vert ne sont pas à saisir ici, ils sont gérés comme les autres cultures.");
-    else if (sTableName=="Fertilisants__Saisies")
+    else if (sTableName=="Fertilisations__Saisies")
         sToolTip=QObject::tr("Quantités de fertilisant apportés par culture.");
     else if (sTableName=="Fournisseurs")
         sToolTip=QObject::tr("Fournisseurs des semences.");

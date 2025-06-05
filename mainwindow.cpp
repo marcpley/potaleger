@@ -493,6 +493,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Appellation 'Semis direct' remplacée par 'Semis en place'.")+"<br>"+
                   "- "+tr("<b>Fertilisations</b>: besoins NPK, fertilisants, bilan par culture et par planche.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Copier/Coller de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Import de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Plus de possibilité de saisir des récoltes avant la date de mise en place de la culture.")+"<br>"+
                   "- "+tr("Infos (min, max, etc) sur une sélection de pourcentages.")+"<br>"+

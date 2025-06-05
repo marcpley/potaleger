@@ -461,6 +461,7 @@ DROP TRIGGER IF EXISTS Fertilisations__Saisies_INSERT;;
 CREATE TRIGGER Fertilisations__Saisies_INSERT INSTEAD OF INSERT ON Fertilisations__Saisies
 BEGIN
     SELECT RAISE(ABORT,'NOT NULL constraint failed Fertilisations.Culture/Répartir unable to fetch row') WHERE (NEW.Culture ISNULL)AND(NEW.Répartir ISNULL);
+    SELECT RAISE(ABORT,'Culture et Répartir non NULL') WHERE (NEW.Culture NOTNULL)AND(NEW.Répartir NOTNULL);
     --Saisie d'un Fertilisations pour une culture unique0
     INSERT INTO Fertilisations (Date,
                                 Espèce,
@@ -493,7 +494,7 @@ BEGIN
                                 N,P,K,
                                 Notes)
     SELECT coalesce(NEW.Date,DATE('now')),
-            NEW.Espèce,
+            C.Espèce, -- Si pas d'espèce saisie, répartition sur TOUTES les cultures.
             C.Culture,
             NEW.Fertilisant,
             round(NEW.Quantité/(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
@@ -513,6 +514,7 @@ END;;
 DROP TRIGGER IF EXISTS Fertilisations__Saisies_UPDATE;;
 CREATE TRIGGER Fertilisations__Saisies_UPDATE INSTEAD OF UPDATE ON Fertilisations__Saisies
 BEGIN
+    SELECT RAISE(ABORT,'Culture et Répartir non NULL') WHERE (NEW.Culture NOTNULL)AND(NEW.Répartir NOTNULL);
     --Mise à jour de la ligne fertilisation si pas de répartition.
     UPDATE Fertilisations SET
            Date=coalesce(NEW.Date,DATE('now')),
@@ -539,7 +541,7 @@ BEGIN
                                  N,P,K,
                                  Notes)
      SELECT coalesce(NEW.Date,DATE('now')),
-            NEW.Espèce,
+            C.Espèce, -- Si pas d'espèce saisie, répartition sur TOUTES les cultures.
             C.Culture,
             NEW.Fertilisant,
             round(NEW.Quantité/(SELECT sum(Surface) FROM Repartir_Fertilisation_sur(NEW.Répartir,NEW.Espèce,NEW.Date))*C.Surface,3),
@@ -724,6 +726,7 @@ DROP TRIGGER IF EXISTS Récoltes__Saisies_INSERT;;
 CREATE TRIGGER Récoltes__Saisies_INSERT INSTEAD OF INSERT ON Récoltes__Saisies
 BEGIN
     SELECT RAISE(ABORT,'NOT NULL constraint failed Récoltes.Culture/Répartir unable to fetch row') WHERE (NEW.Culture ISNULL)AND(NEW.Répartir ISNULL);
+    SELECT RAISE(ABORT,'Culture et Répartir non NULL') WHERE (NEW.Culture NOTNULL)AND(NEW.Répartir NOTNULL);
     --Saisie d'un récolte pour une culture unique0
     INSERT INTO Récoltes (Date,
                           Espèce,
@@ -755,6 +758,7 @@ END;;
 DROP TRIGGER IF EXISTS Récoltes__Saisies_UPDATE;;
 CREATE TRIGGER Récoltes__Saisies_UPDATE INSTEAD OF UPDATE ON Récoltes__Saisies
 BEGIN
+    SELECT RAISE(ABORT,'Culture et Répartir non NULL') WHERE (NEW.Culture NOTNULL)AND(NEW.Répartir NOTNULL);
     --Mise à jour de la ligne récolte si pas de répartition.
     UPDATE Récoltes SET
         Date=coalesce(NEW.Date,(SELECT min(Début_récolte,DATE('now')) FROM Cultures WHERE Culture=NEW.Culture),DATE('now')),

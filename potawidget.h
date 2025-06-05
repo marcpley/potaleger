@@ -237,7 +237,8 @@ private:
         QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
         if (selectedIndexes.isEmpty()) return;
 
-        dynamic_cast<PotaTableModel*>(model())->copiedCells.clear();
+        PotaTableModel *m = dynamic_cast<PotaTableModel*>(model());
+        m->copiedCells.clear();
         QApplication::clipboard()->setText("");
 
         // Déterminer le rectangle englobant
@@ -256,13 +257,18 @@ private:
         // Créer une grille pour stocker les valeurs copiées
         QString placeholder = "erbg-Ds45";
         QVector<QVector<QString>> clipboardGrid(maxRow - minRow + 1, QVector<QString>(maxCol - minCol + 1, placeholder));
+        QLocale locale;
+        QString decimalSep = QString(locale.decimalPoint());
 
         // Remplir la grille avec les données des cellules sélectionnées
         for (const QModelIndex &index : selectedIndexes) {
             int row = index.row() - minRow;
             int col = index.column() - minCol;
-            clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","sdff+54rg");
-            dynamic_cast<PotaTableModel*>(model())->copiedCells.insert(index);
+            if (m->dataTypes[index.column()]=="REAL")
+                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","sdff+54rg").replace(".",decimalSep).replace("%","");
+            else
+                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","sdff+54rg");
+            m->copiedCells.insert(index);
         }
 
         // Convertir la grille en texte formaté pour le presse-papier
@@ -313,6 +319,9 @@ private:
         QStringList formats = {"yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "yy-MM-dd", "MM-dd-yyyy"};
         QDate date;
         bool noCentury=false;
+        QLocale locale;
+        QString decimalSep = QString(locale.decimalPoint());
+
         //Loop on selected cells for pasting
         for (int iSel=0;iSel<SelectedCount;iSel++)
         {
@@ -346,10 +355,10 @@ private:
                                 else
                                     m->setData(index,date.toString("yyyy-MM-dd"), Qt::EditRole);
                             }
+                        } else if (m->dataTypes[index.column()]=="REAL"){
+                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n").replace(decimalSep,"."), Qt::EditRole);
                         } else {
                             m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::EditRole);
-                            // if (!m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::EditRole))
-                            //     m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::DisplayRole);
                         }
                     }
                 }

@@ -329,8 +329,8 @@ JOIN ITP I USING(IT_plante)
 JOIN Planches P USING(Planche)
 WHERE (:Repartir NOTNULL)AND
       ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
-      (DATE(coalesce(C.Date_plantation,C.Date_semis),'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_avance_saisie')||' days') <= coalesce(:Date,DATE('now')))AND
-      (DATE(C.Début_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_retard_saisie')||' days') >= coalesce(:Date,DATE('now')))AND
+      (DATE(coalesce(C.Date_plantation,C.Date_semis),'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_avance')||' days') <= coalesce(:Date,DATE('now')))AND
+      (DATE(C.Début_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_retard')||' days') >= coalesce(:Date,DATE('now')))AND
       ((:Repartir='*')OR
        (C.Planche LIKE :Repartir||'%'))
 )#");
