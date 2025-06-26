@@ -14,8 +14,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.1";
-QString const DbVersion="2025-05-14";
+QString const Version="1.1.1b3";
+QString const DbVersion="2025-06-22";
 
 class MainWindow : public QMainWindow
 {
@@ -55,7 +55,8 @@ private slots:
     void on_mCreateEmptyDB_triggered();
 
     void on_mFamilles_triggered();
-    void on_mEspeces_triggered();
+    void on_mEspecesA_triggered();
+    void on_mEspecesV_triggered();
     void on_mVarietes_triggered();
     //void on_mApports_triggered();
     void on_mFertilisants_triggered();
@@ -76,7 +77,7 @@ private slots:
     void on_mCuSaisieRecoltes_triggered();
     void on_mCuATerminer_triggered();
     void on_mCuToutes_triggered();
-    void on_mAnaITP_triggered();
+    void on_mAnaITPA_triggered();
     void on_mAnaCultures_triggered();
     void on_mITPTempo_triggered();
     void on_mCreerCultures_triggered();
@@ -98,22 +99,23 @@ private slots:
     void on_mNotes_triggered();
     void on_mWhatSNew_triggered();
     void on_mAnalysesSol_triggered();
-
+    void on_mRequeteSQL_triggered();
     void on_mCuAFertiliser_triggered();
-
     void on_mFertilisations_triggered();
-
     void on_mBilanPlanches_triggered();
-
     void on_mInventaireFert_triggered();
-
     void on_mCuAIrriguer_triggered();
+    void on_mCuVivaces_triggered();
+    void on_mPlanchesDeficit_triggered();
+    void on_mAnaITPV_triggered();
+
 
 private:
     void SetEnabledDataMenuEntries(bool b);
     // bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
     void MessageDialog(const QString &titre, const QString &message, const QString &message2 = "", QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=350);
+    QString QueryDialog(const QString &titre, const QString &message);
     bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=350);
     int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=350);
     bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType = QStyle::SP_CustomBase, const int MinWidth=350);

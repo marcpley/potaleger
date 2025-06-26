@@ -43,7 +43,7 @@ QString sDDL20250325 = QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 UPDATE Cultures SET Récolte_faite='x '||Récolte_faite
-WHERE Récolte_faite NOTNULL AND (Récolte_faite NOT LIKE 'x%');
+WHERE Récolte_faite NOTNULL AND (coalesce(Récolte_faite,'') NOT LIKE 'x%');
 
 UPDATE Cultures SET Récolte_faite=iif(Récolte_com LIKE 'x%','-'||substr(Récolte_com,2),Récolte_com)
 WHERE Récolte_com NOTNULL AND Récolte_faite ISNULL;
@@ -111,6 +111,45 @@ INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de prêle',
 INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin d’ortie','Engrais','Biostimulant azoté, stimulation végétative, faible NPK');
 INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Tourteau de ricin','Engrais','Organique lent, riche en N, répulsif naturel (nématicide)');
 INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Urine stockée','Engrais','Source d’azote minéral rapidement assimilable');
+
+COMMIT TRANSACTION;
+)#");
+
+QString sDDL20250615 = QStringLiteral(R"#(
+BEGIN TRANSACTION;
+
+-- ALTER TABLE Espèces ADD COLUMN Vivace BOOL;
+-- ALTER TABLE Espèces ADD COLUMN Favorable TEXT;
+-- ALTER TABLE Espèces ADD COLUMN Défavorable TEXT;
+-- ALTER TABLE Espèces ADD COLUMN Taille TEXT;
+
+INSERT INTO Espèces (Espèce,Notes)
+SELECT 'Inconnue','A supprimer après mise à jour des variétés.' WHERE (SELECT count() FROM Espèces WHERE Espèce='Inconnue')=0;
+
+UPDATE Variétés SET Espèce='Inconnue' WHERE Espèce ISNULL;
+
+DELETE FROM Espèces WHERE (Espèce='Inconnue')AND((SELECT count(*) FROM Variétés C WHERE C.Espèce='Inconnue')=0);
+
+COMMIT TRANSACTION;
+)#");
+
+QString sDDL20250622 = QStringLiteral(R"#(
+BEGIN TRANSACTION;
+
+INSERT INTO Espèces (Espèce,Notes)
+SELECT 'Inconnue','A supprimer après mise à jour des variétés.' WHERE (SELECT count() FROM Espèces WHERE Espèce='Inconnue')=0;
+
+UPDATE Variétés SET Espèce='Inconnue' WHERE Espèce ISNULL;
+
+ALTER TABLE Cultures ADD COLUMN Espèce TEXT;
+
+UPDATE Cultures SET Espèce=(SELECT V.Espèce FROM Variétés V WHERE V.Variété=Cultures.Variété) WHERE Espèce ISNULL;
+UPDATE Cultures SET Espèce=(SELECT I.Espèce FROM ITP I WHERE I.IT_plante=Cultures.IT_plante) WHERE Espèce ISNULL;
+UPDATE Cultures SET Espèce='Inconnue' WHERE Espèce ISNULL;
+
+DELETE FROM Espèces WHERE (Espèce='Inconnue')AND
+                          ((SELECT count(*) FROM Cultures C WHERE C.Espèce='Inconnue')=0)AND
+                          ((SELECT count(*) FROM Variétés V WHERE V.Espèce='Inconnue')=0);
 
 COMMIT TRANSACTION;
 )#");

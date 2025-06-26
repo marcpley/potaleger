@@ -55,12 +55,17 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
 {
     //Recherche parmis les onglets existants.
     for (int i = 0; i < ui->tabWidget->count(); i++) {
-        if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName ) {//Widget Onglet Data
+        if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName ) {
             ui->tabWidget->setCurrentIndex(i);
-            PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-            if (!wc->pbCommit->isEnabled())
-                wc->pbRefreshClick();
-            break;
+            if (sTableName=="UserSQL") {
+                ClosePotaTab(ui->tabWidget->currentWidget());
+                ui->tabWidget->setCurrentIndex(fmax(i-1,0));
+            } else {
+                PotaWidget *wc=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+                if (!wc->pbCommit->isEnabled())
+                    wc->pbRefreshClick();
+                break;
+            }
         }
     }
     if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName) {
@@ -110,7 +115,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             }
 
             if(w->model->rowCount()==0) {
-                if (bEdit and(FkFilter(&db,w->model->RealTableName(),"",w->model->index(0,0),true)!="NoFk")){
+                if (bEdit and(FkFilter(&db,w->model->RealTableName(),"","",w->model->index(0,0),true)!="NoFk")){
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName().replace("_"," ").toLower()));
                 } else {
                     SetColoredText(ui->lDBErr,"","");
@@ -273,6 +278,8 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
                     settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->columnWidth(i));
             }
         settings.endGroup();
+
+        settings.setValue(w->model->tableName()+"-pageFilter",w->cbPageFilter->currentIndex());
 
         if (w->model->tableName()=="Params") {
             PotaQuery pQuery(db);
@@ -486,18 +493,30 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDialog("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.1</b> - 01/06/2025<br>"
+                  "<b>Potaléger 1.1.1</b> - 01/07/2025<br>"
+                  "<u>"+tr("Evolutions")+" :</u><br>"+
+                  "- "+tr("Culture de <b>vivaces</b>.")+"<br>"+
+                  "- "+tr("Planches en déficit de fertilisation.")+"<br>"+
+                  "- "+tr("Bilan fertilisation planche pour les saisons passées.")+"<br>"+
+                  "- "+tr("Requête SQL utilisateur (SELECT uniquement).")+"<br>"+
+                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Cultures de la dernière année d'une rotation non planifiées l'année N+1.")+"<br>"+
+                  "- "+tr("Choix de l'année de replanification d'une culture (en forçant une année dans 'D_planif').")+"<br>"+
+                  "- "+tr("Affichage du nombre de lignes fonctionne (à coté du bouton 'Filtrer').")+"<br>"+
+                  "<br>"+
+                  "<b>Potaléger 1.1</b> - 06/06/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Gestion de l'irrigation</b>.")+"<br>"+
                   "- "+tr("Appellation 'Semis sous abris' remplacée par 'Semis pépinière'.")+"<br>"+
                   "- "+tr("Appellation 'Semis direct' remplacée par 'Semis en place'.")+"<br>"+
-                  "- "+tr("<b>Fertilisations</b>: besoins NPK, fertilisants, bilan par culture et par planche.")+"<br>"+
+                  "- "+tr("<b>Fertilisations</b>: besoins NPK, fertilisants, bilan par culture et par planche pour la saison courante.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Copier/Coller de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Import de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Plus de possibilité de saisir des récoltes avant la date de mise en place de la culture.")+"<br>"+
                   "- "+tr("Infos (min, max, etc) sur une sélection de pourcentages.")+"<br>"+
-                  "- "+tr("Bugs minimes sur les fenêtres de dialogue..")+"<br><br>"+
+                  "- "+tr("Bugs minimes sur les fenêtres de dialogue..")+"<br>"+
+                  "<br>"+
                   "<b>Potaléger 1.02</b> - 13/05/2025<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Cultures à planter: contient les 'Semis fait' non nuls (et pas seulement commençant par 'x').")+"<br>"+
@@ -505,7 +524,8 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Cultures à terminer: contient les 'Semis fait'/'Plantation faite'/'Récolte faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   "- "+tr("Planification: les rotations sont maintenant correctement appliquées.")+"<br>"+
                   "- "+tr("Correction itinéraires techniques (création nouvelle BDD): navet.")+"<br>"+
-                  "- "+tr("Amélioration de l'aide en ligne: saison et production.")+"<br><br>"+
+                  "- "+tr("Amélioration de l'aide en ligne: saison et production.")+"<br>"+
+                  "<br>"+
                   "<b>Potaléger 1.0</b> - 16/04/2025<br>"+
                   "- "+tr("Données de base: Espèces, itinéraires techniques, variétés...")+"<br>"+
                   "- "+tr("Plans de rotation et planification des cultures.")+"<br>"+
@@ -903,14 +923,33 @@ void MainWindow::on_mFamilles_triggered()
     //OpenPotaTab("Test","Cultures__à_irriguer2",tr("Cultures__à_irriguer2"));
 }
 
-void MainWindow::on_mEspeces_triggered()
+void MainWindow::on_mEspecesA_triggered()
 {
-    OpenPotaTab("Especes","Espèces",tr("Espèces"));
+    OpenPotaTab("EspecesA","Espèces__a",tr("Espèces an."));
+}
+
+void MainWindow::on_mEspecesV_triggered()
+{
+    OpenPotaTab("EspecesV","Espèces__v",tr("Espèces vi."));
 }
 
 void MainWindow::on_mVarietes_triggered()
 {
-    OpenPotaTab("Varietes","Variétés",tr("Variétés"));
+    if (OpenPotaTab("Varietes","Variétés",tr("Variétés"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Variétés-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
 }
 
 // void MainWindow::on_mApports_triggered()
@@ -925,7 +964,23 @@ void MainWindow::on_mFournisseurs_triggered()
 
 void MainWindow::on_mITPTempo_triggered()
 {
-    OpenPotaTab("ITP_tempo","ITP__Tempo",tr("ITP"));
+    if (OpenPotaTab("ITP_tempo","ITP__Tempo",tr("ITP"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Pour"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Génériques"));
+        w->pageFilterFilters.append("(Espèce ISNULL)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("ITP__Tempo-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
 }
 
 void MainWindow::on_mNotes_triggered()
@@ -1033,12 +1088,12 @@ void MainWindow::on_mCreerCultures_triggered()
         bool result;
 
         if (choice==0)
-            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
-                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
+            result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
+                                       "SELECT Espèce,IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
                                        "FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')");
         else
-            result=pQuery.ExecShowErr("INSERT INTO Cultures (IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
-                                       "SELECT IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
+            result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
+                                       "SELECT Espèce,IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
                                        "FROM Cult_planif");
         if (result) {
             int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
@@ -1064,17 +1119,61 @@ void MainWindow::on_mSemences_triggered()
 
 void MainWindow::on_mCuNonTer_triggered()
 {
-    OpenPotaTab("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"));
+    if (OpenPotaTab("Cultures_non_terminees","Cultures__non_terminées",tr("Non terminées"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures__non_terminées-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    }
 }
 
 void MainWindow::on_mCouverture_triggered()
 {
-     OpenPotaTab("Especes__couverture","Espèces__couverture",tr("Couverture obj."));
+    if (OpenPotaTab("Especes__couverture","Espèces__couverture",tr("Couverture obj."))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//Saison.
+        w->lPageFilter->setText(tr("Saison"));
+        PotaQuery query(db);
+        int saison,smin,smax;
+        saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
+        smin=query.Selec0ShowErr("SELECT min(Saison) FROM Espèces__couverture").toInt();
+        smax=query.Selec0ShowErr("SELECT max(Saison) FROM Espèces__couverture").toInt();
+        for (int i = smin; i <= smax; ++i) {
+            w->cbPageFilter->addItem(str(i));
+            w->pageFilterFilters.append("Saison='"+str(i)+"'");
+        }
+        w->cbPageFilter->setCurrentText(str(saison));
+        w->pageFilterFrame->setVisible(true);
+        w->pbFilterClick(false);
+    };
 }
 
 void MainWindow::on_mCuASemer_triggered()
 {
-    OpenPotaTab("Cultures_a_semer","Cultures__à_semer",tr("A semer"));
+    if (OpenPotaTab("Cultures_a_semer","Cultures__à_semer",tr("A semer"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures__à_semer-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
 }
 
 void MainWindow::on_mCuASemerPep_triggered()
@@ -1092,7 +1191,21 @@ void MainWindow::on_mCuASemerEP_triggered()
 
 void MainWindow::on_mCuAPlanter_triggered()
 {
-    OpenPotaTab("Cultures_a_planter","Cultures__à_planter",tr("A planter"));
+    if (OpenPotaTab("Cultures_a_planter","Cultures__à_planter",tr("A planter"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures__à_planter-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
 }
 
 void MainWindow::on_mCuAIrriguer_triggered()
@@ -1105,7 +1218,21 @@ void MainWindow::on_mCuAIrriguer_triggered()
 
 void MainWindow::on_mCuARecolter_triggered()
 {
-    OpenPotaTab("Cultures_a_recolter","Cultures__à_récolter",tr("A récolter"));
+    if (OpenPotaTab("Cultures_a_recolter","Cultures__à_récolter",tr("A récolter"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures__à_récolter-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
 }
 
 void MainWindow::on_mCuSaisieRecoltes_triggered()
@@ -1123,9 +1250,40 @@ void MainWindow::on_mCuATerminer_triggered()
     OpenPotaTab("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"));
 }
 
+void MainWindow::on_mCuVivaces_triggered()
+{
+    if (OpenPotaTab("Cultures_vivaces","Cultures__vivaces",tr("Vivaces"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Non ter."));
+        w->pageFilterFilters.append("(Terminée='v')OR(Terminée='V')");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures__vivaces-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
+}
+
 void MainWindow::on_mCuToutes_triggered()
 {
-    OpenPotaTab("Cultures","Cultures",tr("Cultures"));
+    if (OpenPotaTab("Cultures","Cultures",tr("Cultures"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures-pageFilter").toInt());
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+        w->pageFilterFrame->setVisible(true);
+    };
 }
 
 // Menu Fertilisation
@@ -1161,7 +1319,28 @@ void MainWindow::on_mFertilisations_triggered()
 
 void MainWindow::on_mBilanPlanches_triggered()
 {
-    OpenPotaTab( "Planches__bilan_fert","Planches__bilan_fert",tr("Bilan fert."));
+    if (OpenPotaTab( "Planches__bilan_fert","Planches__bilan_fert",tr("Bilan fert."))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->tv->hideColumn(0);//Saison.
+        w->lPageFilter->setText(tr("Saison"));
+        PotaQuery query(db);
+        int saison,smin,smax;
+        saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
+        smin=query.Selec0ShowErr("SELECT min(Saison) FROM Planches__bilan_fert").toInt();
+        smax=query.Selec0ShowErr("SELECT max(Saison) FROM Planches__bilan_fert").toInt();
+        for (int i = smin; i <= smax; ++i) {
+            w->cbPageFilter->addItem(str(i));
+            w->pageFilterFilters.append("Saison='"+str(i)+"'");
+        }
+        w->cbPageFilter->setCurrentText(str(saison));
+        w->pageFilterFrame->setVisible(true);
+        w->pbFilterClick(false);
+    };
+}
+
+void MainWindow::on_mPlanchesDeficit_triggered()
+{
+    OpenPotaTab( "Planches__deficit_fert","Planches__deficit_fert",tr("Déficit"));
 }
 
 //Menu Stock
@@ -1187,9 +1366,14 @@ void MainWindow::on_mInventaire_triggered()
 
 //Menu Analyses
 
-void MainWindow::on_mAnaITP_triggered()
+void MainWindow::on_mAnaITPA_triggered()
 {
-    OpenPotaTab("ITP_analyse","ITP__analyse",tr("Analyse IT"));
+    OpenPotaTab("ITP_analyse_a","ITP__analyse_a",tr("Analyse IT"));
+}
+
+void MainWindow::on_mAnaITPV_triggered()
+{
+    OpenPotaTab("ITP_analyse_v","ITP__analyse_v",tr("Analyse IT"));
 }
 
 void MainWindow::on_mAnaCultures_triggered()
@@ -1200,6 +1384,23 @@ void MainWindow::on_mAnaCultures_triggered()
 void MainWindow::on_mIncDatesCultures_triggered()
 {
     OpenPotaTab("Cultures_inc_dates","Cultures__inc_dates",tr("Inc. dates cultures"));
+}
+
+void MainWindow::on_mRequeteSQL_triggered()
+{
+    QString sQuery=QueryDialog(tr("Requête SQL"),tr("Saisissez une requête SQL du type:")+"\n"
+                               "SELECT C.Culture,C.Planche,C.Saison,C.Longueur*P.Largeur Surface\n"
+                               "FROM Cultures C\n"
+                               "LEFT JOIN Planches P USING(Planche)"
+                               "WHERE C.Saison=2024;\n\n"+
+                               tr("Cette requête sera enregistrée et utilisable sur cet ordinateur uniquement."));
+    if (sQuery!="") {
+        PotaQuery pQuery(db);
+        pQuery.ExecShowErr("DROP VIEW UserSQL;");
+        pQuery.ExecShowErr("CREATE VIEW UserSQL AS "+sQuery);
+
+        OpenPotaTab("SQLQuery","UserSQL",tr("Requête SQL"));
+    }
 }
 
 // Local params
@@ -1292,7 +1493,6 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
 
     ui->lDBlabel->setFixedWidth(110*arg1.toInt()/10);
 }
-
 
 
 

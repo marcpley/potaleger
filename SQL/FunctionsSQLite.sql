@@ -1,7 +1,15 @@
-QString sTest = QStringLiteral(R"#(
-''a '' || :a || '' b '' || :b
+
+// Math
+
+QString sCeil = QStringLiteral(R"#(
+iif(:Valeur>0,CAST(:Valeur+1 AS INTEGER),CAST(:Valeur AS INTEGER))
 )#");
 
+QString sFloor = QStringLiteral(R"#(
+iif(:Valeur>0,CAST(:Valeur AS INTEGER),CAST(:Valeur-1 AS INTEGER))
+)#");
+
+// Potaléger
 
 QString sPlanifCultureCalcDate = QStringLiteral(R"#(
 -- :D_min (YYYY-MM-DD)
@@ -96,6 +104,26 @@ iif(:Type=''Sans récolte''    ,(:dSem-1)||'':''|| -- Attente
 -- out : 15:15:15:15:15:15
 )#");
 
+QString sCul_Espece = QStringLiteral(R"#(
+-- SELECT C.Culture Cu, -- Impossible de garder le nom original, erreur "duplicate column name: Culture"
+--        coalesce(V.Espèce,I.Espèce) Espèce,
+--        C.Variété,
+--        C.Saison,
+--        (SELECT E.Vivace FROM Espèces E WHERE E.Espèce=coalesce(V.Espèce,I.Espèce)) Vivace,
+--        C.Planche,
+--        C.Date_semis,
+--        C.Date_plantation,
+--        C.Début_récolte,
+--        C.Fin_récolte,
+--        -- C.Récolte_faite,
+--        C.Terminée,
+--        C.Longueur
+-- FROM Cultures C
+-- LEFT JOIN ITP I USING(IT_plante)
+-- LEFT JOIN Variétés V USING(Variété)
+-- WHERE (:Culture ISNULL)OR(C.Culture=:Culture)
+)#");
+
 QString sCulTempoNJPeriode = QStringLiteral(R"#(
 -- :dDeb :dFin date (YYYY-MM-DD)
 replace(-julianday(:dDeb)+julianday(:dFin),''.0'','''')
@@ -139,10 +167,6 @@ iif(:Type=''Sans récolte'',CulTempoNJPeriode(strftime(''%Y'',:dSem)||''-01-01''
 -- out : 15:15:15:15:15:15
 )#");
 
-QString sZeroSiErrPlusDe = QStringLiteral(R"#(
--- iif(:err BETWEEN 0 AND 150, :err,0)
-)#");
-
 QString sCulIncDate = QStringLiteral(R"#(
 -- :a : Année de semis ou plantation de la culture (YYYY)
 -- :c : date de la culture (YYYY-MM-DD)
@@ -150,8 +174,6 @@ QString sCulIncDate = QStringLiteral(R"#(
 -- :test : 'D' ou 'F'
 -- :tol : nb de jour de tolérance de sortie de la période.
 iif((:a NOTNULL)AND(:i0 NOTNULL)AND(:c NOTNULL)AND(:i NOTNULL),
-    -- iif(:test=''D'',ZeroSiErrPlusDe(julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,-max(:tol,0)||'' days''))-julianday(:c)),
-    --                 ZeroSiErrPlusDe(julianday(:c)-julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,max(:tol,0)||'' days'')))),
     iif(:test=''D'',julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,-max(:tol,0)||'' days''))-julianday(:c),
                     julianday(:c)-julianday(DATE(iif(:i<:i0,:a+1,:a)||''-''||:i,max(:tol,0)||'' days''))),
 0)
@@ -171,6 +193,24 @@ iif(CulIncDate(:annee,:i0,:cDRec,:iDRec,''D'',   (SELECT Valeur FROM Params WHER
 iif(CulIncDate(:annee,:i0,:cFRec,:iFRec,''F'',   (SELECT Valeur FROM Params WHERE Paramètre=''Tolérance_R_récolte''))>0,   ''Récolte trop tard'',
 NULL))))))
 -- out : Texte qui dit où est l'incohérence.
+)#");
+
+QString sCulNbRecoltesTheo = QStringLiteral(R"#(
+-- :Ter Cultures.Terminée
+-- :fRec date de fin de récolte de la culture (prochaine ou dernière si culture terminée)
+-- :NbJRec nb de jour de récolte de l'ITP.
+-- :Rec1 date de la 1ère récolte.
+iif(coalesce(:Ter,'''') NOT LIKE ''v%'', --OR(:fRec=:Culture),
+    1, -- Culture d'une espèce annuelle.
+    ceil2((julianday(min(:fRec,DATE(''now'',''+''||:NbJRec||'' days'')))- --fonction native ceil pas reconnue.
+          julianday(:Rec1))/365))
+-- out : nb de récoltes théorique pour cette culture.
+)#");
+
+QString sCulTer = QStringLiteral(R"#(
+-- :Ter
+(:Ter NOTNULL)AND(:Ter!=''v'')AND(:Ter!=''V'')
+-- out : vrai ou faux.
 )#");
 
 QString sRotDecalDateMeP = QStringLiteral(R"#(
@@ -288,10 +328,10 @@ iif(:dPeriode ISNULL,NULL,
 )#");
 
 QString sRepartir_Recolte_sur = QStringLiteral(R"#(
-SELECT C.Culture,I.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
-FROM Cultures C JOIN ITP I USING(IT_plante)
+SELECT C.Culture,C.Espèce,C.Longueur,C.Début_récolte,C.Fin_récolte
+FROM Cultures C
 WHERE (:Repartir NOTNULL)AND
-      ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
+      ((:Espece ISNULL)OR(C.Espèce=:Espece))AND
       (DATE(C.Début_récolte,'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_avance')||' days') <= coalesce(:Date,DATE('now')))AND
       (DATE(C.Fin_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_prolongation')||' days') >= coalesce(:Date,DATE('now')))AND
       (DATE(coalesce(C.Date_plantation,C.Date_semis),'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_après_MEP')||' days') <= coalesce(:Date,DATE('now')))AND --1.1b1
@@ -300,35 +340,44 @@ WHERE (:Repartir NOTNULL)AND
 )#");
 
 QString sAnalyse_de_sol_proche = QStringLiteral(R"#(
-SELECT 1 Proximité,*
-FROM Analyses_de_sol
-WHERE Planche=:Pl
-UNION
-SELECT 2 Proximité,*
-FROM Analyses_de_sol
-WHERE (:Pl LIKE substr(Planche,-1,-100)||'%')AND(length(Planche)>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
-UNION
-SELECT 3 Proximité,*
-FROM Analyses_de_sol
-WHERE (:Pl LIKE substr(Planche,-2,-100)||'%')AND(length(Planche)-1>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
-UNION
-SELECT 4 Proximité,*
-FROM Analyses_de_sol
-WHERE (:Pl LIKE substr(Planche,-3,-100)||'%')AND(length(Planche)-2>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
-UNION
-SELECT 5 Proximité,*
-FROM Analyses_de_sol
-WHERE (:Pl LIKE substr(Planche,-4,-100)||'%')AND(length(Planche)-3>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
-ORDER BY Proximité,Date DESC
+-- SELECT 1 Proximité,* -- Trés lent !
+-- FROM Analyses_de_sol
+-- WHERE Planche=:Pl
+-- UNION
+-- SELECT 2 Proximité,*
+-- FROM Analyses_de_sol
+-- WHERE (:Pl LIKE substr(Planche,-1,-100)||'%')AND(length(Planche)>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+-- UNION
+-- SELECT 3 Proximité,*
+-- FROM Analyses_de_sol
+-- WHERE (:Pl LIKE substr(Planche,-2,-100)||'%')AND(length(Planche)-1>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+-- UNION
+-- SELECT 4 Proximité,*
+-- FROM Analyses_de_sol
+-- WHERE (:Pl LIKE substr(Planche,-3,-100)||'%')AND(length(Planche)-2>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+-- UNION
+-- SELECT 5 Proximité,*
+-- FROM Analyses_de_sol
+-- WHERE (:Pl LIKE substr(Planche,-4,-100)||'%')AND(length(Planche)-3>(SELECT Valeur FROM Params WHERE Paramètre='Ilot_nb_car'))
+-- ORDER BY Proximité,Date DESC
+)#");
+
+QString sRecoltes_cul = QStringLiteral(R"#(
+SELECT R.Date,R.Quantité
+FROM Récoltes R
+WHERE (R.Culture=:Culture)AND
+      ((coalesce(:Ter,'') NOT LIKE 'v%')OR(:dRec ISNULL)OR(:fRec ISNULL)OR -- Toutes les récoltes pour les annuelles.
+        -- Récolte de l'année pour les vivaces.
+       ((R.Date >= DATE(:dRec,'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_avance')||' days'))AND
+        (R.Date <= DATE(:fRec,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_prolongation')||' days'))))
 )#");
 
 QString sRepartir_Fertilisation_sur = QStringLiteral(R"#(
-SELECT C.Culture,I.Espèce,C.Longueur*P.Largeur Surface,C.Début_récolte,C.Fin_récolte
+SELECT C.Culture,C.Espèce,C.Longueur*P.Largeur Surface,C.Début_récolte,C.Fin_récolte
 FROM Cultures C
-JOIN ITP I USING(IT_plante)
 JOIN Planches P USING(Planche)
 WHERE (:Repartir NOTNULL)AND
-      ((:Espece ISNULL)OR(I.Espèce=:Espece))AND
+      ((:Espece ISNULL)OR(C.Espèce=:Espece))AND
       (DATE(coalesce(C.Date_plantation,C.Date_semis),'-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_avance')||' days') <= coalesce(:Date,DATE('now')))AND
       (DATE(C.Début_récolte,'+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_retard')||' days') >= coalesce(:Date,DATE('now')))AND
       ((:Repartir='*')OR

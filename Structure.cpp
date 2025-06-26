@@ -176,6 +176,21 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-05-14 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-05-14";
         }
+        if (bResult and(sDBVersion == "2025-05-14")) { //Views update.
+            sResult.append(sDBVersion+" -> 2025-06-08 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-06-08";
+        }
+        if (bResult and(sDBVersion == "2025-06-08")) { //Adding field: Espèces.Vivace.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = query->ExecMultiShowErr(sDDL20250622,";",ui->progressBar) and
+                      query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar) and
+                      query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar);
+            sResult.append(sDBVersion+" -> 2025-06-22 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-06-22";
+        }
+
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);

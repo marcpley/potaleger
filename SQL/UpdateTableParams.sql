@@ -49,6 +49,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Fertilisation', 'Ferti_coef_Na', 'Coefficient de disponibilité du sodium', '75', '%'),
             ('Fertilisation', 'Ferti_coef_S',  'Coefficient de disponibilité du soufre (suit souvent le cycle de l’azote et est très lié à la MO)', '70', '%'),
             ('Fertilisation', 'Ferti_coef_Si', 'Coefficient de disponibilité du silicium', '60', '%'),
+            ('Fertilisation', 'Déficit_fert', 'Seuil en dessous duquel la planche est concidérée en déficit de fertilisation', '50', '%'),
             ('Analyses', 'Tolérance_A_semis', 'Date de semis incohérente si elle est avant la période prévue, avance de plus de', '30', 'jours'),
             ('Analyses', 'Tolérance_R_semis', 'Date de semis incohérente si elle est après la période prévue, retard de plus de', '30', 'jours'),
             ('Analyses', 'Tolérance_A_plantation', 'Date de plantation incohérente si elle est avant la période prévue, avance de plus de', '30', 'jours'),

@@ -489,6 +489,7 @@ public:
     QLabel *lSelect;
     QHBoxLayout *filterLayout;
     QHBoxLayout *findLayout;
+    QHBoxLayout *pageFilterLayout;
     QHBoxLayout *ffLayout;
     QHBoxLayout *ltb;
     QVBoxLayout *lw;
@@ -508,6 +509,11 @@ public:
     QPushButton *pbFindFirst;
     QPushButton *pbFindNext;
     QPushButton *pbFindPrev;
+
+    QFrame * pageFilterFrame;
+    QLabel *lPageFilter;
+    QComboBox *cbPageFilter;
+    QStringList pageFilterFilters;
 
     QLabel *lErr;
     QAction *mEditNotes;
@@ -534,7 +540,10 @@ private:
     void SetFilterTypeCombo(QString sDataType);
     int iPositionCol=-1;
     QString sPositionRow="";
-    QString sPositionRow2="";
+    QString sPositionRowPrev="";
+    QString sPositionRowNext="";
+    QString sPositionRow3="";
+    QString sPositionRow4="";
     void FindFrom(int row, int column, bool Backward);
 
 private slots:
@@ -548,6 +557,7 @@ private slots:
     void leFilterReturnPressed();
     void leFindReturnPressed();
     void leFindTextEdited(const QString &text);
+    void cbPageFilterChanged();
     void showContextMenu(const QPoint& pos);
     void hDefColWidth();
     void hEditNotes(const QModelIndex index);

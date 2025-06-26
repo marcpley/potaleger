@@ -8,7 +8,7 @@ QString sDDLTables = QStringLiteral(R"#(
 --                       Poids_m² REAL,
 --                       Notes TEXT) WITHOUT ROWID;
 
-CREATE TABLE Analyses_de_sol (Analyse INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE Analyses_de_sol (Analyse TEXT PRIMARY KEY COLLATE POTACOLLATION,
                            Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
                            Date DATE NOT NULL,
                            Sable_grossier REAL,
@@ -35,7 +35,7 @@ CREATE TABLE Analyses_de_sol (Analyse INTEGER PRIMARY KEY AUTOINCREMENT,
                            Interprétation TEXT,
                            Référence TEXT COLLATE POTACOLLATION,
                            Organisme TEXT COLLATE POTACOLLATION,
-                           Notes TEXT);
+                           Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                        Date DATE NOT NULL, -- DEFAULT (DATE('now'))
@@ -46,24 +46,40 @@ CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                        Notes TEXT);
 
 CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
                        IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?'
+                                          WHEN Terminée LIKE 'v%' THEN 'Vivace'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis pépinière'
                                           WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant'
                                           WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis en place'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte'
                                           WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
-                       Saison TEXT AS (substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)),
-                       Etat TEXT AS (CASE WHEN Terminée NOTNULL THEN 'Terminée' --gris
-                                          WHEN Récolte_faite LIKE 'x%' THEN 'A terminer' --bleu
-                                          WHEN Récolte_faite NOTNULL THEN 'Récolte' --violet
-                                          WHEN Plantation_faite NOTNULL THEN 'En place' --vert
-                                          WHEN Semis_fait NOTNULL THEN iif(Date_plantation IS NULL,'En place', --vert
-                                                                                                   'Pépinière') --rouge
-                                          ELSE 'Prévue'
+                       Saison TEXT AS (CASE WHEN coalesce(Terminée,'') NOT LIKE 'v%' -- Anuelle
+                                            THEN substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)
+                                            ELSE substr(coalesce(Début_récolte,Date_plantation,Date_semis,Fin_récolte),1,4) -- Vivace
+                                            END),
+                       Etat TEXT AS (CASE WHEN coalesce(Terminée,'') NOT LIKE 'v%' -- Anuelle
+                                          THEN (CASE WHEN Terminée NOTNULL THEN 'Terminée' --gris
+                                                     WHEN Récolte_faite LIKE 'x%' THEN 'A terminer' --bleu
+                                                     WHEN Récolte_faite NOTNULL THEN 'Récolte' --violet
+                                                     WHEN Plantation_faite NOTNULL THEN 'En place' --vert
+                                                     WHEN Semis_fait NOTNULL THEN iif(Date_plantation IS NULL,'En place', --vert
+                                                                                                              'Pépinière') --rouge
+                                                     ELSE 'Prévue'
+                                                     END)
+                                          -- Vivace
+                                          ELSE (CASE WHEN (Terminée != 'v')AND(Terminée != 'V') THEN 'Terminée' --gris
+                                                     WHEN Récolte_faite LIKE 'x%' THEN 'En place' --vert
+                                                     WHEN Récolte_faite NOTNULL THEN 'Récolte' --violet
+                                                     WHEN Plantation_faite NOTNULL THEN 'En place' --vert
+                                                     WHEN Semis_fait NOTNULL THEN iif(Date_plantation IS NULL,'En place', --vert
+                                                                                                              'Pépinière') --rouge
+                                                     ELSE 'Prévue'
+                                                     END)
                                           END),
                        D_planif TEXT,-- Format TEXT pour pouvoir mettre une année simple quand on veut forcer un recalcul de planif.
                        Date_semis DATE,
@@ -78,6 +94,7 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Longueur REAL,
                        Nb_rangs REAL,
                        Espacement REAL,
+                       A_faire TEXT,
                        Notes TEXT);
 
 CREATE TABLE Cu_Fertilisants (Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
@@ -103,11 +120,12 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY COLLATE POTACOLLATION,
                       T_germ TEXT,
                       Levée REAL,
                       Irrig TEXT COLLATE POTACOLLATION,
-                      Date_inv DATE,
-                      Inventaire REAL,
-                      Prix_kg REAL,
                       Conservation BOOL,
                       A_planifier BOOL DEFAULT ('x'),
+                      Vivace BOOL,
+                      Favorable TEXT,
+                      Défavorable TEXT,
+                      Taille TEXT,
                       Obj_annuel REAL,
                       N REAL,
                       ★N TEXT AS (CASE WHEN N > 10 THEN 'Elevé' WHEN N < 5 THEN 'Faible' WHEN N NOTNULL THEN 'Moyen' END),
@@ -115,6 +133,9 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY COLLATE POTACOLLATION,
                       ★P TEXT AS (CASE WHEN P > 5 THEN 'Elevé' WHEN P < 2.55 THEN 'Faible' WHEN P NOTNULL THEN 'Moyen' END),
                       K REAL,
                       ★K TEXT AS (CASE WHEN K > 12 THEN 'Elevé' WHEN K < 7 THEN 'Faible' WHEN K NOTNULL THEN 'Moyen' END),
+                      Date_inv DATE,
+                      Inventaire REAL,
+                      Prix_kg REAL,
                       Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Familles (Famille TEXT PRIMARY KEY COLLATE POTACOLLATION,
@@ -172,11 +193,12 @@ CREATE TABLE Fertilisations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
 CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY COLLATE POTACOLLATION,
                            Type TEXT COLLATE POTACOLLATION,
                            Priorité INTEGER,
+                           Adresse TEXT COLLATE POTACOLLATION,
                            Site_web TEXT,
                            Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                  Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+                  Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE COLLATE POTACOLLATION,
                   Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                   Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis pépinière'
                                              WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant'
@@ -210,7 +232,9 @@ CREATE TABLE Planches (Planche TEXT PRIMARY KEY COLLATE POTACOLLATION,
                        Largeur REAL,
                        Irrig TEXT COLLATE POTACOLLATION,
                        Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE COLLATE POTACOLLATION,
-                       Année INTEGER, Notes TEXT) WITHOUT ROWID;
+                       Année INTEGER,
+                       Analyse TEXT REFERENCES Analyses_de_sol (Analyse) ON DELETE SET NULL ON UPDATE CASCADE,
+                       Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Rotations (Rotation TEXT PRIMARY KEY COLLATE POTACOLLATION,
                         Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
@@ -238,11 +262,15 @@ CREATE TABLE Récoltes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
 --                             Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Variétés (Variété TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
                        Nb_graines_g REAL,
                        Qté_stock REAL,
                        Qté_cde REAL,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Déb_récolte TEXT CONSTRAINT 'Déb_récolte, ex: 08-01 ou 08-15' CHECK (Déb_récolte #FmtPlanif#),
+                       Fin_récolte TEXT CONSTRAINT 'Fin_récolte, ex: 10-01 ou 10-15' CHECK (Fin_récolte #FmtPlanif#),
+                       PJ INTEGER,
+                       IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Notes TEXT) WITHOUT ROWID;
 
 -- COMMIT TRANSACTION;

@@ -46,11 +46,23 @@ bool registerScalarFunctions(QSqlDatabase *db) {
     //return true;
     PotaQuery q1(*db);
 
-    // if (!q1.exec("SELECT define('SumTest', '? + ?')")){
-    //     qCritical() << "Failed to register function 'Somme': "<< q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return false;
-    // }
+    // Math (non testées)
+
+    q1.clear();
+    if (!q1.exec("SELECT define('ceil2','"+RemoveComment(sCeil,"--")+"')")){
+        qCritical() << "Failed to register function 'ceil2': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    q1.clear();
+    if (!q1.exec("SELECT define('floor2','"+RemoveComment(sFloor,"--")+"')")){
+        qCritical() << "Failed to register function 'floor2': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    //Potaléger
 
     q1.clear();
     if (!q1.exec("SELECT define('PlanifCultureCalcDate','"+RemoveComment(sPlanifCultureCalcDate,"--")+"')")){
@@ -95,6 +107,13 @@ bool registerScalarFunctions(QSqlDatabase *db) {
     }
 
     q1.clear();
+    if (!q1.exec("SELECT define('CulNbRecoltesTheo','"+RemoveComment(sCulNbRecoltesTheo,"--")+"')")){
+        qCritical() << "Failed to register function 'CulNbRecoltesTheo': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    q1.clear();
     if (!q1.exec("SELECT define('CulTempoNJPeriode','"+RemoveComment(sCulTempoNJPeriode,"--")+"')")){
         qCritical() << "Failed to register function 'CulTempoNJPeriode': "<< q1.lastError();
         qCritical() << q1.lastQuery();
@@ -108,12 +127,12 @@ bool registerScalarFunctions(QSqlDatabase *db) {
         return false;
     }
 
-    // q1.clear();
-    // if (!q1.exec("SELECT define('ZeroSiErrPlusDe','"+RemoveComment(sZeroSiErrPlusDe,"--")+"')")){
-    //     qCritical() << "Failed to register function 'ZeroSiErrPlusDe': "<< q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return false;
-    // }
+    q1.clear();
+    if (!q1.exec("SELECT define('CulTer','"+RemoveComment(sCulTer,"--")+"')")){
+        qCritical() << "Failed to register function 'CulTer': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
 
     q1.clear();
     if (!q1.exec("SELECT define('CulIncDate','"+RemoveComment(sCulIncDate,"--")+"')")){
@@ -162,6 +181,14 @@ bool registerTableValuedFunctions(QSqlDatabase *db) {
     //return true;
     PotaQuery q1(*db);
 
+    // q1.exec("DROP TABLE IF EXISTS Cul_Espece");
+    // q1.clear();
+    // if (!q1.exec("CREATE VIRTUAL TABLE Cul_Espece USING define(("+RemoveComment(sCul_Espece,"--")+"))")){
+    //     qCritical() << "Failed to register function 'Cul_Espece': "<< q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return false;
+    // }
+
     q1.exec("DROP TABLE IF EXISTS RF_trop_proches");
     q1.clear();
     if (!q1.exec("CREATE VIRTUAL TABLE RF_trop_proches USING define(("+RemoveComment(sRF_trop_proches,"--")+"))")){
@@ -194,10 +221,18 @@ bool registerTableValuedFunctions(QSqlDatabase *db) {
         return false;
     }
 
-    q1.exec("DROP TABLE IF EXISTS Analyse_de_sol_proche");
+    // q1.exec("DROP TABLE IF EXISTS Analyse_de_sol_proche");
+    // q1.clear();
+    // if (!q1.exec("CREATE VIRTUAL TABLE Analyse_de_sol_proche USING define(("+RemoveComment(sAnalyse_de_sol_proche,"--")+"))")){
+    //     qCritical() << "Failed to register function 'Analyse_de_sol_proche': "<< q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return false;
+    // }
+
+    q1.exec("DROP TABLE IF EXISTS Recoltes_cul");
     q1.clear();
-    if (!q1.exec("CREATE VIRTUAL TABLE Analyse_de_sol_proche USING define(("+RemoveComment(sAnalyse_de_sol_proche,"--")+"))")){
-        qCritical() << "Failed to register function 'Analyse_de_sol_proche': "<< q1.lastError();
+    if (!q1.exec("CREATE VIRTUAL TABLE Recoltes_cul USING define(("+RemoveComment(sRecoltes_cul,"--")+"))")){
+        qCritical() << "Failed to register function 'Recoltes_cul': "<< q1.lastError();
         qCritical() << q1.lastQuery();
         return false;
     }
@@ -283,6 +318,24 @@ QString testCustomFunctions(QSqlDatabase *db) {
     }
     qInfo() << "Function ok : ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
 
+    // q1.clear();
+    // if (!q1.exec("SELECT Espèce FROM Cul_Espece(1)")){
+    //     qCritical() << "Function failed: Cul_Espece(1)";
+    //     qCritical() << q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return "Cul_Espece";
+    // }
+    // qInfo() << "Function ok : Cul_Espece(1)";
+
+    q1.clear();
+    if (!q1.exec("SELECT CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31')") or !q1.next() or q1.value(0).toInt()!=4){
+        qCritical() << "Function failed: CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31') = " << q1.value(0).toInt();
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "CulNbRecoltesTheo";
+    }
+    qInfo() << "Function ok : CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31') = " << q1.value(0).toInt();
+
     q1.clear();
     if (!q1.exec("SELECT CulTempoNJPeriode('2000-01-01','2000-01-31')") or !q1.next() or q1.value(0).toInt()!=30){
         qCritical() << "Function failed: CulTempoNJPeriode(''2000-01-01','2000-01-31') = " << q1.value(0).toInt();
@@ -301,14 +354,14 @@ QString testCustomFunctions(QSqlDatabase *db) {
     }
     qInfo() << "Function ok : CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
 
-    // q1.clear();
-    // if (!q1.exec("SELECT ZeroSiErrPlusDe(1000)") or !q1.next() or q1.value(0).toInt()!=0){
-    //     qCritical() << "Function failed: ZeroSiErrPlusDe(...) = " << q1.value(0).toString();
-    //     qCritical() << q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return "ZeroSiErrPlusDe";
-    // }
-    // qInfo() << "Function ok : ZeroSiErrPlusDe(1000) = " << q1.value(0).toString();
+    q1.clear();
+    if (!q1.exec("SELECT CulTer('v')") or !q1.next() or q1.value(0).toBool()!=false){
+        qCritical() << "Function failed: CulTer('v') = " << q1.value(0).toString();
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "CulTer";
+    }
+    qInfo() << "Function ok : CulTer('v') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT CulIncDate('2000','02-01','2000-01-30','02-01','D',1)") or !q1.next() or q1.value(0).toInt()!=1){
@@ -391,14 +444,23 @@ QString testCustomFunctions(QSqlDatabase *db) {
     }
     qInfo() << "Function ok : Repartir_Recolte_sur('xxx','xxx','2000-01-01')";
 
+    // q1.clear();
+    // if (!q1.exec("SELECT * FROM Analyse_de_sol_proche('xxx')")){
+    //     qCritical() << "Function failed: Analyse_de_sol_proche('xxx')";
+    //     qCritical() << q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return "Analyse_de_sol_proche";
+    // }
+    // qInfo() << "Function ok : Analyse_de_sol_proche('xxx')";
+
     q1.clear();
-    if (!q1.exec("SELECT * FROM Analyse_de_sol_proche('xxx')")){
-        qCritical() << "Function failed: Analyse_de_sol_proche('xxx')";
+    if (!q1.exec("SELECT * FROM Recoltes_cul(1,'v ','2000-05-01','2000-08-01')")){
+        qCritical() << "Function failed: Recoltes_cul(1,'v ','2000-05-01','2000-08-01')";
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
-        return "Analyse_de_sol_proche";
+        return "Recoltes_cul";
     }
-    qInfo() << "Function ok : Analyse_de_sol_proche('xxx')";
+    qInfo() << "Function ok : Recoltes_cul(1,'v ','2000-05-01','2000-08-01')";
 
     q1.clear();
     if (!q1.exec("SELECT * FROM Repartir_Fertilisation_sur('xxx','xxx','2000-01-01')")){

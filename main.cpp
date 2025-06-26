@@ -192,6 +192,16 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             dbClose();
             result=false;
         }
+        // } else  if(OkCancelDialog("Potaléger "+ui->lVer->text(),
+        //                           tr("Cette BDD ne semble pas être une BDD %1.").arg("Potaléger")+"\n"+
+        //                           sFichier+"\n\n"+
+        //                           tr("Tenter quand même de la mettre à jour ?"),QStyle::SP_MessageBoxCritical,600)) {
+        //     sVerBDD=DbVersion;
+        //     bUpdate=true;
+        // } else {
+        //     dbClose();
+        //     result=false;
+        // }
 
         if (result and (sVerBDD < "2024-12-30")) {
             MessageDialog("Potaléger "+ui->lVer->text(),tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
@@ -305,6 +315,12 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         result=false;
     }
 
+    // if (result and !pQuery.ExecMultiShowErr("CREATE TEMP TABLE LocParams (Paramètre TEXT PRIMARY KEY, Valeur TEXT);"
+    //                                         "INSERT INTO LocParams VALUES ('Saison',(SELECT Valeur FROM Params WHERE Paramètre='Année_culture'))",";",nullptr)) {
+    //     dbClose();
+    //     result=false;
+    // }
+
     if (result) {
         setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
 
@@ -312,6 +328,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         SetEnabledDataMenuEntries(true);
         ui->lDBErr->clear();
     }
+
 
     //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
@@ -512,7 +529,8 @@ void MainWindow::SetMenuIcons() {
     ui->mNotes->setIcon(QIcon(TablePixmap("Notes","T")));
 
     ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
-    ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","T")));
+    ui->mEspecesA->setIcon(QIcon(TablePixmap("Espèces","T")));
+    ui->mEspecesV->setIcon(QIcon(TablePixmap("Espèces","T")));
     ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
     //ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
     ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
@@ -542,6 +560,7 @@ void MainWindow::SetMenuIcons() {
     ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
     ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
+    ui->mCuVivaces->setIcon(QIcon(TablePixmap("Cultures__vivaces","")));
     ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
 
     ui->mAnalysesSol->setIcon(QIcon(TablePixmap("Analyses_de_sol","T")));
@@ -550,15 +569,17 @@ void MainWindow::SetMenuIcons() {
     ui->mCuAFertiliser->setIcon(QIcon(TablePixmap("Cultures__à_fertiliser","")));
     ui->mFertilisations->setIcon(QIcon(TablePixmap("Fertilisations__Saisies","T")));
     ui->mBilanPlanches->setIcon(QIcon(TablePixmap("Planches__bilan_fert","")));
+    ui->mPlanchesDeficit->setIcon(QIcon(TablePixmap("Planches__deficit_fert","")));
 
     ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
     ui->mEsSaisieSorties->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
     ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
 
-    ui->mAnaITP->setIcon(QIcon(TablePixmap("ITP__analyse","")));
+    ui->mAnaITPA->setIcon(QIcon(TablePixmap("ITP__analyse_a","")));
+    ui->mAnaITPV->setIcon(QIcon(TablePixmap("ITP__analyse_v","")));
     ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__analyse","")));
     ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
-    ui->mAnaDestinations->setIcon(QIcon(TablePixmap("Destinations__conso","")));
+    ui->mRequeteSQL->setIcon(QIcon(TablePixmap("","")));
 }
 
 void MainWindow::showIfDdOpen() {

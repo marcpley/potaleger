@@ -143,6 +143,19 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbFindPrev->setToolTip("Ctrl + F4");
     connect(pbFindPrev, &QPushButton::clicked,this,&PotaWidget::pbFindPrevClick);
 
+    //Page filter tool
+    pageFilterFrame = new QFrame(this);
+    pageFilterFrame->setFrameShape(QFrame::NoFrame);
+    pageFilterFrame->setBackgroundRole(QPalette::Midlight);
+    pageFilterFrame->setAutoFillBackground(true);
+    pageFilterFrame->setVisible(false);
+    lPageFilter = new QLabel(this);
+    lPageFilter->setText("...");
+    cbPageFilter = new QComboBox(this);
+    connect(cbPageFilter, &QComboBox::currentIndexChanged,this, &PotaWidget::cbPageFilterChanged);
+    //cbPageFilter->setFixedHeight(26);
+
+
     ffFrame = new QFrame(this);
     ffFrame->setVisible(true);
 
@@ -245,13 +258,24 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     findLayout->addWidget(pbFindPrev);
     findFrame->setLayout(findLayout);
 
+    //PageFilter layout
+    pageFilterLayout = new QHBoxLayout(this);
+    pageFilterLayout->setSizeConstraint(QLayout::SetFixedSize);
+    pageFilterLayout->setContentsMargins(5,3,5,3);
+    pageFilterLayout->setSpacing(5);
+    pageFilterLayout->addWidget(lPageFilter);
+    pageFilterLayout->addWidget(cbPageFilter);
+    pageFilterFrame->setLayout(pageFilterLayout);
+
     //Filter find layout
     ffLayout = new QHBoxLayout(this);
     ffLayout->setSizeConstraint(QLayout::SetFixedSize);
     ffLayout->setContentsMargins(0,0,0,0);
     ffLayout->addWidget(filterFrame);
-    ffLayout->addSpacing(10);
+    ffLayout->addSpacing(5);
     ffLayout->addWidget(findFrame);
+    ffLayout->addSpacing(5);
+    ffLayout->addWidget(pageFilterFrame);
     ffFrame->setLayout(ffLayout);
 
     //Main layout
@@ -294,7 +318,8 @@ void PotaWidget::Init(QString TableName)
 
         if (localColumnIndex>-1){
             model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
-            model->relationModel(localColumnIndex)->setFilter(FkFilter(model->db,model->RealTableName(),localColumn,model->index(0,0)));
+            model->relationModel(localColumnIndex)->setFilter(FkFilter(model->db,model->RealTableName(),localColumn,"",model->index(0,0)));
+            model->relationModel(localColumnIndex)->setSort(model->relationModel(localColumnIndex)->fieldIndex(FkSortCol(model->RealTableName(),localColumn)),Qt::SortOrder::AscendingOrder);
         }
     }
 
@@ -583,7 +608,7 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
             }
             // editNotes->setFixedSize(min(maxWidth+50,400),
             //                         min(lines.count()*22+5,200));
-            EditNotesWidth = min(maxWidth+50,400);
+            EditNotesWidth = min((maxWidth*1.2)+50,400);
             EditNotesHeight = min((lines.count()+returns)*22+5,200);
         }
         x=min(x,tv->width()-EditNotesWidth-20);
@@ -601,42 +626,49 @@ void PotaWidget::PositionSave() {
 
     //Normal row to retreive.
     sPositionRow="";
+    sPositionRowPrev="";
+    sPositionRowNext="";
     int iStart=iif(tv->isColumnHidden(0),1,0).toInt();
-    for (int i=iStart;i<iStart+3;i++)
+    for (int i=iStart;i<iStart+3;i++) {
         sPositionRow+=model->index(tv->selectionModel()->currentIndex().row(),i).data(Qt::DisplayRole).toString();
+        if (tv->selectionModel()->currentIndex().row()>0)
+            sPositionRowPrev+=model->index(tv->selectionModel()->currentIndex().row()-1,i).data(Qt::DisplayRole).toString();
+        if (tv->selectionModel()->currentIndex().row()<tv->model()->rowCount()-1)
+            sPositionRowNext+=model->index(tv->selectionModel()->currentIndex().row()+1,i).data(Qt::DisplayRole).toString();
+    }
 
-    //Alternative row to retreive if normal row desapear.
-    sPositionRow2="";
-    for (int i=iStart;i<iStart+3;i++)
-        sPositionRow2+=model->index(tv->selectionModel()->currentIndex().row()+1,i).data(Qt::DisplayRole).toString();
     qDebug() << "PositionSave: " << sPositionRow;
 }
 
 void PotaWidget::PositionRestore() {
     int iStart=iif(tv->isColumnHidden(0),1,0).toInt();
+    int rowRestore=-1;
     int row2=-1;
+    int row3=-1;
     for (int row=0;row<model->rowCount();row++) {
         if (sPositionRow==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
                           model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
                           model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
-            //Normal row retreived.
-            //tv->selectionModel()->setCurrentIndex(model->index(row,iPositionCol),QItemSelectionModel::Current);
-            tv->setCurrentIndex(model->index(row,iPositionCol));
-            row2=-1;
-            qDebug() << "PositionRestore: normal";
+            //Normal row retreived with 3 1st columns
+            rowRestore=row;
             break;
-        }
-        if (sPositionRow2==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
-                           model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
-                           model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
-            row2=row;
+        } else if (sPositionRowNext==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
+                                     model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
+                                     model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
+            rowRestore=row;
+            break;
+        } else if (sPositionRowPrev==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
+                                     model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
+                                     model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
+            rowRestore=row;
+        } else if (sPositionRow.contains(model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
+                                         model->index(row,iStart+1).data(Qt::DisplayRole).toString())) {
+            rowRestore=row;
         }
     }
-    if (row2>-1) {
-        //Normal row not in the the new row set.
-        tv->setCurrentIndex(model->index(row2,iPositionCol));
-        qDebug() << "PositionRestore: alternative";
-    }
+    if (rowRestore>-1)
+        tv->setCurrentIndex(model->index(rowRestore,iPositionCol));
+
     lRowSummary->setText(RowSummary(model->tableName(),model->record(tv->currentIndex().row())));
     lSelect->setText("");
 }
@@ -671,17 +703,27 @@ void PotaWidget::RefreshHorizontalHeader() {
                 if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()!="TEMPO")
                     phv->setSectionResizeMode(i, QHeaderView::Fixed);
             }
-        } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Prod_N")) {
+        // } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Prod_N")) {
+        //     delegate->PaintedColsTypes[i]="TitleRed";
+        //     if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_Nm1")
+        //         delegate->PaintedColsTitles[i]=str(saison-1);
+        //     else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_N")
+        //         delegate->PaintedColsTitles[i]=str(saison);
+        //     else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_Np1")
+        //         delegate->PaintedColsTitles[i]=str(saison+1);
+        } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Fert_N")) {
             delegate->PaintedColsTypes[i]="TitleRed";
-            if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_Nm1")
+            if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Fert_Nm1_pc")
                 delegate->PaintedColsTitles[i]=str(saison-1);
-            else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_N")
+            else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Fert_Nm2_pc")
+                delegate->PaintedColsTitles[i]=str(saison-2);
+            else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Fert_Nm3_pc")
+                delegate->PaintedColsTitles[i]=str(saison-3);
+            else
                 delegate->PaintedColsTitles[i]=str(saison);
-            else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Prod_Np1")
-                delegate->PaintedColsTitles[i]=str(saison+1);
-        } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Couv_N")) {
-            delegate->PaintedColsTypes[i]="Title";
-            delegate->PaintedColsTitles[i]="Couv";
+        // } else if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("Couv_N")) {
+        //     delegate->PaintedColsTypes[i]="Title";
+        //     delegate->PaintedColsTitles[i]="Couv";
         }
     }
 }
@@ -713,6 +755,7 @@ void PotaWidget::SetSizes() {
     pbFindFirst->setFixedWidth(40*UserFont/10);
     pbFindNext->setFixedWidth(70*UserFont/10);
     pbFindPrev->setFixedWidth(70*UserFont/10);
+    cbPageFilter->setFixedWidth(80*UserFont/10);
     tv->horizontalHeader()->setMinimumHeight(24*UserFont/10);
     tv->horizontalHeader()->setMaximumHeight(24*UserFont/10);
     tv->verticalHeader()->setDefaultSectionSize(0);//Mini.
@@ -820,6 +863,7 @@ void PotaWidget::dataChanged(const QModelIndex &topLeft)//,const QModelIndex &bo
     pbCommit->setEnabled(true);
     pbRollback->setEnabled(true);
     pbFilter->setEnabled(false);
+    cbPageFilter->setEnabled(false);
     twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
 
     if (!topLeft.data(Qt::EditRole).isNull() and
@@ -1040,6 +1084,16 @@ void PotaWidget::pbFilterClick(bool checked)
         pbFilter->setText(tr("Filtrer"));
     }
 
+    if (pageFilterFrame->isVisible()) {
+        QString pageFilter;
+        //pageFilter=pageFilterField+" = '"+cbPageFilter->currentText()+"'";
+        pageFilter=pageFilterFilters[cbPageFilter->currentIndex()];
+        if (filter.isEmpty())
+            filter=pageFilter;
+        else
+            filter="("+filter+")AND("+pageFilter+")";
+    }
+
     tv->setFocus();
 
     bUserCurrChanged=false;
@@ -1151,6 +1205,11 @@ void PotaWidget::pbFindPrevClick(){
     FindFrom(tv->selectionModel()->currentIndex().row(),tv->selectionModel()->currentIndex().column()-1,true);
 }
 
+void PotaWidget::cbPageFilterChanged(){
+    if (pageFilterFrame->isVisible())
+        pbFilterClick(pbFilter->isChecked());
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //                           PotaTableModel
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1190,7 +1249,7 @@ bool PotaTableModel::select()  {
         //copiedCells.clear(); Danger
     }
 
-    QString sQuery="SELECT * FROM "+tableName();
+    QString sQuery="SELECT * FROM "+tableName()+" TN";
 
     if (filter().toStdString()!="") {//Add filter
         sQuery+=" WHERE "+filter();
@@ -1203,7 +1262,7 @@ bool PotaTableModel::select()  {
 
     PotaQuery query(*db);
     if (!bBatch) {
-        query.ExecShowErr("SELECT COUNT(*) FROM "+tableName()+
+        query.ExecShowErr("SELECT COUNT(*) FROM "+tableName()+" TN"+
                                iif(filter().toStdString()!=""," WHERE "+filter(),"").toString());
         int totalRows = 0;
         if (query.next())
@@ -1238,6 +1297,7 @@ bool PotaTableModel::select()  {
     // timer->deleteLater();
 
     if (!bBatch) {
+        qInfo() << str(rowCount())+" "+tr("lignes");//Line necessary to make work lFilterResult->setText(...), don't know why!
         dynamic_cast<PotaWidget*>(parent())->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
         AppBusy(false,progressBar);
     }
@@ -1322,6 +1382,7 @@ bool PotaTableModel::SubmitAllShowErr() {
         pw->pbCommit->setEnabled(false);
         pw->pbRollback->setEnabled(false);
         pw->pbFilter->setEnabled(true);
+        pw->cbPageFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
         //dbSuspend(db,true,true,label);
         return true;
@@ -1345,6 +1406,7 @@ bool PotaTableModel::RevertAllShowErr() {
         pw->pbCommit->setEnabled(false);
         pw->pbRollback->setEnabled(false);
         pw->pbFilter->setEnabled(true);
+        pw->cbPageFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
         //dbSuspend(db,true,true,label);
         return true;
@@ -1372,6 +1434,7 @@ bool PotaTableModel::InsertRowShowErr()
             pw->pbCommit->setEnabled(true);
             pw->pbRollback->setEnabled(true);
             pw->pbFilter->setEnabled(false);
+            pw->cbPageFilter->setEnabled(false);
             pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
         } else {
             SetColoredText(pw->lErr,"insertRows(x,y)","Err");
@@ -1385,6 +1448,7 @@ bool PotaTableModel::InsertRowShowErr()
         pw->pbCommit->setEnabled(true);
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
+        pw->cbPageFilter->setEnabled(false);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
     } else {
         SetColoredText(pw->lErr,"insertRows(x,y)","Err");
@@ -1408,6 +1472,7 @@ bool PotaTableModel::DeleteRowShowErr()
         pw->pbCommit->setEnabled(true);
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
+        pw->cbPageFilter->setEnabled(false);
         pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
         return true;
     }
@@ -1990,10 +2055,15 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
     QString sComboField=ComboField(model->RealTableName(),sFieldName);
     if (model->relation(index.column()).isValid()) {
         //Create QComboBox for relational columns
+        PotaWidget* pw = dynamic_cast<PotaWidget*>(this->parent());
         QComboBox *comboBox = new QComboBox(parent);
         QSqlTableModel *relationModel = model->relationModel(index.column());
         int relationIndex = relationModel->fieldIndex(model->relation(index.column()).displayColumn());
-        QString filter=FkFilter(model->db,model->RealTableName(),sFieldName,index);
+        QString filter;
+        if (pw->pageFilterFilters.count()>0)
+            filter=FkFilter(model->db,model->RealTableName(),sFieldName,pw->pageFilterFilters[pw->cbPageFilter->currentIndex()],index);
+        else
+            filter=FkFilter(model->db,model->RealTableName(),sFieldName,"",index);
         if (filter!="") {
             //dbSuspend(model->db,false,true,model->label);
             model->relationModel(index.column())->setFilter(filter);

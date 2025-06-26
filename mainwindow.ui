@@ -504,7 +504,8 @@
      <string>Données de base</string>
     </property>
     <addaction name="mFamilles"/>
-    <addaction name="mEspeces"/>
+    <addaction name="mEspecesA"/>
+    <addaction name="mEspecesV"/>
     <addaction name="mFournisseurs"/>
     <addaction name="mVarietes"/>
     <addaction name="mITP"/>
@@ -555,6 +556,7 @@
     <addaction name="mCuARecolter"/>
     <addaction name="mCuSaisieRecoltes"/>
     <addaction name="mCuATerminer"/>
+    <addaction name="mCuVivaces"/>
     <addaction name="separator"/>
     <addaction name="mCuToutes"/>
    </widget>
@@ -562,9 +564,11 @@
     <property name="title">
      <string>Analyses</string>
     </property>
-    <addaction name="mAnaITP"/>
+    <addaction name="mAnaITPA"/>
+    <addaction name="mAnaITPV"/>
     <addaction name="mAnaCultures"/>
     <addaction name="mIncDatesCultures"/>
+    <addaction name="mRequeteSQL"/>
    </widget>
    <widget class="QMenu" name="mEdition">
     <property name="title">
@@ -595,6 +599,7 @@
     <addaction name="mCuAFertiliser"/>
     <addaction name="mFertilisations"/>
     <addaction name="mBilanPlanches"/>
+    <addaction name="mPlanchesDeficit"/>
    </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
@@ -622,12 +627,12 @@
     <string>Familles botaniques</string>
    </property>
   </action>
-  <action name="mEspeces">
+  <action name="mEspecesA">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Espèces</string>
+    <string>Espèces annuelles</string>
    </property>
   </action>
   <action name="mFournisseurs">
@@ -813,12 +818,12 @@
     <string>Toutes les cultures</string>
    </property>
   </action>
-  <action name="mAnaITP">
+  <action name="mAnaITPA">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Itinéraires techniques</string>
+    <string>Itinéraires techniques annuelles</string>
    </property>
   </action>
   <action name="mAnaCultures">
@@ -826,7 +831,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Cultures</string>
+    <string>Cultures annuelles</string>
    </property>
   </action>
   <action name="mCuNonTer">
@@ -993,14 +998,6 @@
     <string>Inventaire</string>
    </property>
   </action>
-  <action name="mAnaDestinations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Destinations</string>
-   </property>
-  </action>
   <action name="mCuASemerPep">
    <property name="enabled">
     <bool>false</bool>
@@ -1087,6 +1084,46 @@
    </property>
    <property name="text">
     <string>A irriguer</string>
+   </property>
+  </action>
+  <action name="mRequeteSQL">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Requête SQL</string>
+   </property>
+  </action>
+  <action name="mPlanchesDeficit">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Planches en déficit</string>
+   </property>
+  </action>
+  <action name="mAnaITPV">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Itinéraires techniques vivaces</string>
+   </property>
+  </action>
+  <action name="mEspecesV">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Espèces vivaces</string>
+   </property>
+  </action>
+  <action name="mCuVivaces">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Vivaces</string>
    </property>
   </action>
  </widget>
