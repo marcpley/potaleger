@@ -946,9 +946,9 @@ void MainWindow::on_mVarietes_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Variétés-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
@@ -977,9 +977,9 @@ void MainWindow::on_mITPTempo_triggered()
         w->pageFilterFilters.append("(Espèce ISNULL)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("ITP__Tempo-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
@@ -1130,9 +1130,9 @@ void MainWindow::on_mCuNonTer_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures__non_terminées-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     }
 }
 
@@ -1170,9 +1170,9 @@ void MainWindow::on_mCuASemer_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures__à_semer-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
@@ -1202,9 +1202,9 @@ void MainWindow::on_mCuAPlanter_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures__à_planter-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
@@ -1229,9 +1229,9 @@ void MainWindow::on_mCuARecolter_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures__à_récolter-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
@@ -1261,9 +1261,9 @@ void MainWindow::on_mCuVivaces_triggered()
         w->pageFilterFilters.append("(Terminée='v')OR(Terminée='V')");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures__vivaces-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
@@ -1280,9 +1280,9 @@ void MainWindow::on_mCuToutes_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
         if (w->cbPageFilter->currentIndex()>0)
             w->pbFilterClick(false);
-        w->pageFilterFrame->setVisible(true);
     };
 }
 
