@@ -18,6 +18,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Général', 'Combo_Destinations_Type', 'Types de destination, séparés par des ''|'' (vide pour texte libre)', 'Magasin|Particulier|Autre', NULL),
             ('Assolement', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production.\nEx: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
             ('Assolement', 'Combo_Planches_Type', 'Types de planche, séparés par des ''|'' (vide pour texte libre)', 'Extérieur|Serre', NULL),
+            ('Assolement', 'Largeur_planches', 'Largeur de planche par défaut', 0.8,'m'),
             ('Irrigation', 'Combo_Planches_Irrig', 'Types d''irrigation des planches, séparés par des ''|'' (vide pour texte libre)', 'GàG|Asp', NULL),
             ('Irrigation', 'Combo_Espèces_Irrig', 'Types d''irrigation, séparés par des ''|'' (vide pour texte libre)', 'GàG|Asp', NULL),
             ('Irrigation', 'C_Irrig_avant_MEP', 'Voir les cultures à irriguer dont la date de mise en place est dans moins de', '15', 'jours'),

@@ -141,6 +141,9 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFiel
                     filter="(Vivace ISNULL)";
                 else if ((sFieldName=="Espèce")and sPageFilter.contains("Vivace NOTNULL"))
                     filter="(Vivace NOTNULL)";
+            } else if (sTableName=="Planches") {
+                if (sFieldName=="Rotation")
+                    filter="Type_planche='"+StrReplace(index.siblingAtColumn(model->fieldIndex("Type")).data().toString(),"'","''")+"'";
             } else if (sTableName=="Récoltes") {
                 if (sFieldName=="Culture")
                     filter="Culture IN (SELECT Culture FROM Repartir_Recolte_sur('*','"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"',"+
@@ -904,24 +907,30 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
 
     } else if (sTableName.startsWith("Espèces")){
         const char* valRef="Valeurs de référence: %1.";
-        if (sFieldName=="Dose_semis")
+        if (sFieldName=="Densité")
+            sToolTip=QObject::tr("Nombre de plants par m² si l'espèce est seule sur la planche.\n"
+                                 "Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.");
+        else if (sFieldName=="Dose_semis")
             sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Valeur par défaut pour les itinéraires techniques.");
         else if (sFieldName=="Nb_graines_g")
             sToolTip=QObject::tr("Nombre de graines par gramme.")+"\n"+QObject::tr("Valeur par défaut pour les variétés.");
         else if (sFieldName=="Irrig")
             sToolTip=QObject::tr("Irrigation nécessaire (paramétre 'Combo_Espèces_Irrig').");
         else if (sFieldName=="N")
-            sToolTip=QObject::tr("Besoin en %1 (g/m²).").arg("Azote").toLower();
+            sToolTip=QObject::tr("Besoin en %1 (g/m²).\n"
+                                 "Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.").arg("Azote").toLower();
         else if (sFieldName=="★N")
             sToolTip=QObject::tr("Besoin qualitatif en %1.").arg("Azote").toLower()+"\n"+
                      QObject::tr(valRef).arg("5 < N < 10");
         else if (sFieldName=="P")
-            sToolTip=QObject::tr("Besoin en phosphore (g/m²).");
+            sToolTip=QObject::tr("Besoin en %1 (g/m²).\n"
+                                 "Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.").arg("Phosphore").toLower();
         else if (sFieldName=="★P")
             sToolTip=QObject::tr("Besoin qualitatif en %1.").arg("Phosphore").toLower()+"\n"+
                      QObject::tr(valRef).arg("2.5 < P < 5");
         else if (sFieldName=="K")
-            sToolTip=QObject::tr("Besoin en potassium (g/m²).");
+            sToolTip=QObject::tr("Besoin en %1 (g/m²).\n"
+                                 "Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.").arg("Potassium").toLower();
         else if (sFieldName=="★K")
             sToolTip=QObject::tr("Besoin qualitatif en %1.").arg("Potassium").toLower()+"\n"+
                      QObject::tr(valRef).arg("7 < K < 12");
@@ -1145,8 +1154,10 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         //Champs existant dans plusieurs tables
         if (sFieldName=="")
             sToolTip=QObject::tr("");
+        else if (sFieldName=="Densité_pc")
+            sToolTip=QObject::tr("Densité réelle, relative à la densité de référence noté sur l'espèce.");
         else if (sFieldName=="Espacement")
-            sToolTip=QObject::tr("Espacement entre 2 plants dans un rang de culture (cm)")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
+            sToolTip=QObject::tr("Espacement entre 2 plants dans un rang de culture (cm), après éclairecicement éventuel.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         else if (sFieldName=="IT_plante")
             sToolTip=QObject::tr("Itinéraire technique: une espèce de plante et une manière de la cultiver.\n"
                                  "Sur une variété, vous pouvez sélectionner parmis les IT de l'espèce concernée ou parmis les IT qui n'ont pas d'espèce.\n"
@@ -1247,7 +1258,8 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName.startsWith("Déb_") or sFieldName.startsWith("Fin_"))
             sToolTip=QObject::tr("Début de mois (ex: 04-01 pour début avril)\nou milieu du mois (ex: 04-15 pour mi-avril).");
         else if (sFieldName=="Nb_graines_trou")
-            sToolTip=QObject::tr("Nombre de graines par trou.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
+            sToolTip=QObject::tr("Nombre de graines par trou.\n"
+                                 "Si semis en ligne continue avec éclaircissement, saisir 4 graines pour un éclaircissement de 75%.")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire.");
         //Planches
         else if (sFieldName=="Largeur")
             sToolTip=QObject::tr("Largeur de la planche (m).");
@@ -1280,7 +1292,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr("Sommes des fertilisations (Azote - Phosphore - Potassium) déjà faites sur les planches (g).");
         else if (sFieldName=="Besoins_NPK")
             sToolTip=QObject::tr("Besoins en Azote - Phosphore - Potassium, pour les planches (g).\n"
-                                 "(besoin de l'espèce x surface de planches)");
+                                 "Besoin de l'espèce x densité réelle x surface de planche.");
         else if (sFieldName=="Couv_prév_pc")
             sToolTip=QObject::tr(  "Quantitées prévues (rendement x surface) par rapport aux objectifs.");
         else if (sFieldName=="Couv_réc_pc")

@@ -184,14 +184,14 @@ BEGIN--Code identique à INSERT
     DELETE FROM Params WHERE Paramètre LIKE 'temp_%';
 END;;
 
-DROP TRIGGER IF EXISTS Cultures_UPDATE_Espacement;;
-CREATE TRIGGER Cultures_UPDATE_Espacement AFTER UPDATE ON Cultures
-          WHEN (NEW.Espacement ISNULL OR NEW.Espacement='?') AND (NEW.IT_plante NOTNULL)
+DROP TRIGGER IF EXISTS Cultures_INSERT_Longueur;;
+CREATE TRIGGER Cultures_INSERT_Longueur AFTER INSERT ON Cultures
+          WHEN (NEW.Longueur ISNULL OR NEW.Longueur='?') AND (NEW.Planche NOTNULL)
 BEGIN
     UPDATE Cultures
-       SET Espacement=coalesce( (SELECT Espacement
-                                   FROM ITP I
-                                  WHERE I.IT_plante=NEW.IT_plante), 0)
+       SET Longueur=coalesce( (SELECT Longueur
+                                 FROM Planches P
+                                WHERE P.Planche=NEW.Planche), 0)
      WHERE Culture=NEW.Culture;
 END;;
 
@@ -203,6 +203,39 @@ BEGIN
        SET Longueur=coalesce( (SELECT Longueur
                                  FROM Planches P
                                 WHERE P.Planche=NEW.Planche), 0)
+     WHERE Culture=NEW.Culture;
+END;;
+
+DROP TRIGGER IF EXISTS Cultures_INSERT_Espacement;;
+CREATE TRIGGER Cultures_INSERT_Espacement AFTER INSERT ON Cultures
+          WHEN (NEW.Espacement ISNULL OR NEW.Espacement='?') AND (NEW.IT_plante NOTNULL)
+BEGIN
+    UPDATE Cultures
+       SET Espacement=coalesce( (SELECT Espacement
+                                   FROM ITP I
+                                  WHERE I.IT_plante=NEW.IT_plante), 0)
+     WHERE Culture=NEW.Culture;
+END;;
+
+DROP TRIGGER IF EXISTS Cultures_UPDATE_Espacement;;
+CREATE TRIGGER Cultures_UPDATE_Espacement AFTER UPDATE ON Cultures
+          WHEN (NEW.Espacement ISNULL OR NEW.Espacement='?') AND (NEW.IT_plante NOTNULL)
+BEGIN
+    UPDATE Cultures
+       SET Espacement=coalesce( (SELECT Espacement
+                                   FROM ITP I
+                                  WHERE I.IT_plante=NEW.IT_plante), 0)
+     WHERE Culture=NEW.Culture;
+END;;
+
+DROP TRIGGER IF EXISTS Cultures_INSERT_Nb_rangs;;
+CREATE TRIGGER Cultures_INSERT_Nb_rangs AFTER INSERT ON Cultures
+          WHEN (NEW.Nb_rangs ISNULL OR NEW.Nb_rangs='?') AND (NEW.IT_plante NOTNULL)
+BEGIN
+    UPDATE Cultures
+       SET Nb_rangs=coalesce( (SELECT Nb_rangs
+                                 FROM ITP I
+                                WHERE I.IT_plante=NEW.IT_plante), 0)
      WHERE Culture=NEW.Culture;
 END;;
 
@@ -483,6 +516,7 @@ BEGIN
        Niveau,
        Favorable,
        Défavorable,
+       Densité,
        Dose_semis,
        Nb_graines_g,
        FG,
@@ -504,6 +538,7 @@ BEGIN
        NEW.Niveau,
        NEW.Favorable,
        NEW.Défavorable,
+       NEW.Densité,
        NEW.Dose_semis,
        NEW.Nb_graines_g,
        NEW.FG,
@@ -530,6 +565,7 @@ BEGIN
         Niveau=NEW.Niveau,
         Favorable=NEW.Favorable,
         Défavorable=NEW.Défavorable,
+        Densité=NEW.Densité,
         Dose_semis=NEW.Dose_semis,
         Nb_graines_g=NEW.Nb_graines_g,
         FG=NEW.FG,
@@ -859,6 +895,24 @@ BEGIN
     UPDATE Notes SET
         Date_modif=DATE('now')
     WHERE (ID=NEW.ID)AND(SELECT Valeur!='Oui' FROM Params WHERE Paramètre='Notes_Modif_dates');
+END;;
+
+DROP TRIGGER IF EXISTS Planches_INSERT_Largeur;;
+CREATE TRIGGER Planches_INSERT_Largeur AFTER INSERT ON Planches
+          WHEN (NEW.Largeur ISNULL OR NEW.Largeur='?') AND (SELECT Valeur NOTNULL FROM Params WHERE Paramètre='Largeur_planches')
+BEGIN
+    UPDATE Planches
+       SET Largeur=(SELECT Valeur FROM Params WHERE Paramètre='Largeur_planches')
+     WHERE Planche=NEW.Planche;
+END;;
+
+DROP TRIGGER IF EXISTS Planches_UPDATE_Largeur;;
+CREATE TRIGGER Planches_UPDATE_Largeur AFTER UPDATE ON Planches
+          WHEN (NEW.Largeur ISNULL OR NEW.Largeur='?') AND (SELECT Valeur NOTNULL FROM Params WHERE Paramètre='Largeur_planches')
+BEGIN
+    UPDATE Planches
+       SET Largeur=(SELECT Valeur FROM Params WHERE Paramètre='Largeur_planches')
+     WHERE Planche=NEW.Planche;
 END;;
 
 DROP TRIGGER IF EXISTS "Rotations_détails_INSERT";;

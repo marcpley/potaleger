@@ -493,9 +493,9 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDialog("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.1.1</b> - 01/07/2025<br>"
+                  "<b>Potaléger 1.2</b> - 01/07/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
-                  "- "+tr("Culture de <b>vivaces</b>.")+"<br>"+
+                  "- "+tr("<b>Culture de vivaces</b>.")+"<br>"+
                   "- "+tr("Planches en déficit de fertilisation.")+"<br>"+
                   "- "+tr("Bilan fertilisation planche pour les saisons passées.")+"<br>"+
                   "- "+tr("Requête SQL utilisateur (SELECT uniquement).")+"<br>"+
