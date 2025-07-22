@@ -19,7 +19,7 @@ jobs:
             dir: '${{ env.DIR }}'
             aqtversion: '==3.1.*'
             target: 'desktop'
-            arch: 'win64_mingw81'
+            arch: 'win64_mingw1310_64'
             tools: 'tools_mingw1310'
 
       - name: Check MinGW Version
