@@ -110,10 +110,14 @@ QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
         }
     }
 
-    if (result=="" and//Unknow view field.
-        ViewFieldIsDate(FieldName))
-        return "DATE";
-    else
+    if (result=="") {//Unknow view field.
+        //ViewFieldIsDate(FieldName,Data)
+        QString sData=query.Selec0ShowErr("SELECT "+FieldName+" FROM "+TableName+" WHERE "+FieldName+" NOTNULL").toString();
+        if(!sData.isEmpty() and sData.length()==10 and sData[4]=='-' and sData[7]=='-')
+            return "DATE";
+        else
+            return "";
+    } else
         return result;
 }
 

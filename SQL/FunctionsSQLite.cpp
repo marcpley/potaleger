@@ -310,22 +310,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : ItpTempoNJ('02-01') = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT ItpTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="31:14:15:14:47:31"){
+    if (!q1.exec("SELECT ItpTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="31:14:14:14:47:31"){
         qCritical() << "Function failed: ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "ItpTempo";
     }
     qInfo() << "Function ok : ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
-
-    // q1.clear();
-    // if (!q1.exec("SELECT Espèce FROM Cul_Espece(1)")){
-    //     qCritical() << "Function failed: Cul_Espece(1)";
-    //     qCritical() << q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return "Cul_Espece";
-    // }
-    // qInfo() << "Function ok : Cul_Espece(1)";
 
     q1.clear();
     if (!q1.exec("SELECT CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31')") or !q1.next() or q1.value(0).toInt()!=4){
@@ -391,7 +382,7 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT RotTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="60:::14:47:31"){
+    if (!q1.exec("SELECT RotTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="59:::14:47:31"){
         qCritical() << "Function failed: RotTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();

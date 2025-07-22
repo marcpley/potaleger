@@ -1,3 +1,4 @@
+#include "Dialogs.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtSql/QSqlDatabase>
@@ -184,9 +185,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult = query->ExecMultiShowErr(sDDL20250622,";",ui->progressBar) and
-                      query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar) and
-                      query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar);
+            bResult = query->ExecMultiShowErr(sDDL20250622,";",ui->progressBar);
             sResult.append(sDBVersion+" -> 2025-06-22 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-06-22";
         }
@@ -337,18 +336,18 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     if (bResult) {
         if (sDBVersion == DbVersion) {
             if (!bNew)
-                MessageDialog("Potaléger "+ui->lVer->text(),tr("Mise à jour réussie."),
-                                  sResult,QStyle::SP_MessageBoxInformation);
+                MessageDlg("Potaléger "+ui->lVer->text(),tr("Mise à jour réussie."),
+                           sResult,QStyle::SP_MessageBoxInformation);
             return true;
         }
         else {
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("Version de BDD inconnue:")+sDBVersion,
-                          sResult,QStyle::SP_MessageBoxCritical);
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("Version de BDD inconnue:")+sDBVersion,
+                       sResult,QStyle::SP_MessageBoxCritical);
             return false;
         }
     } else {
-        MessageDialog("Potaléger "+ui->lVer->text(),tr("Echec de la mise à jour."),
-                          sResult,QStyle::SP_MessageBoxCritical);
+        MessageDlg("Potaléger "+ui->lVer->text(),tr("Echec de la mise à jour."),
+                   sResult,QStyle::SP_MessageBoxCritical);
         return false;
     }
 }

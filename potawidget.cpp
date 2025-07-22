@@ -1,4 +1,5 @@
 #include "potawidget.h"
+#include "Dialogs.h"
 #include "data/Data.h"
 #include "qapplication.h"
 #include "qheaderview.h"
@@ -12,7 +13,6 @@
 #include <Qt>
 #include <QLabel>
 #include "PotaUtils.h"
-//#include "qtimer.h"
 
 
 PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
@@ -70,8 +70,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
     //Add delete rows
     sbInsertRows = new QSpinBox(this);
-    sbInsertRows->setFixedHeight(26);
-    sbInsertRows->setMinimum(0);
+    sbInsertRows->setMinimum(1);
     sbInsertRows->setValue(1);
     sbInsertRows->setEnabled(false);
     sbInsertRows->setVisible(false);
@@ -79,11 +78,21 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbInsertRow = new QToolButton(this);
     pbInsertRow->setIcon(QIcon(":/images/insert_row.svg"));
     pbInsertRow->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_Insert));
-    pbInsertRow->setToolTip(tr("Ajouter des lignes.\nSi le nombre de ligne à ajouter en mis à 0, l'enregistrement courant sera dupliqué.")+"\n"+
+    pbInsertRow->setToolTip(tr("Ajouter des lignes.")+"\n"+
                                "Ctrl + Insert");
     connect(pbInsertRow, &QToolButton::released, this, &PotaWidget::pbInsertRowClick);
     pbInsertRow->setEnabled(false);
     pbInsertRow->setVisible(false);
+
+    pbDuplicRow = new QToolButton(this);
+    pbDuplicRow->setIcon(QIcon(":/images/duplicate_row.svg"));
+    pbDuplicRow->setShortcut( QKeySequence(Qt::CTRL | Qt::Key_D));
+    pbDuplicRow->setToolTip(tr("Dupliquer la ligne courante.")+"\n"+
+                               "Ctrl + D");
+    connect(pbDuplicRow, &QToolButton::released, this, &PotaWidget::pbDuplicRowClick);
+    pbDuplicRow->setEnabled(false);
+    pbDuplicRow->setVisible(false);
+
 
     pbDeleteRow = new QToolButton(this);
     pbDeleteRow->setIcon(QIcon(":/images/delete_row.svg"));
@@ -226,6 +235,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     ltb->addSpacing(10);
     ltb->addWidget(sbInsertRows);
     ltb->addWidget(pbInsertRow);
+    ltb->addWidget(pbDuplicRow);
     ltb->addSpacing(5);
     ltb->addWidget(pbDeleteRow);
     ltb->addSpacing(10);
@@ -351,8 +361,9 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
     if (bUserCurrChanged){
         tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
 
-        pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
         sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
         pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
 
         if (cur.row()>-1)
@@ -545,7 +556,7 @@ void PotaWidget::hEditNotes(const QModelIndex index) {
                 qDebug() << save;
                 editNotes->setPlainText(save);
                 editNotes->setReadOnly(false);
-                //MessageDialog(tr("Les balises HTML (<b>, <br>, etc) ne sont pas accéptées.")); todo: reactivate this.
+                MessageDlg(tr("Editeur"),tr("Les balises HTML ne sont pas accéptées."));
             } else {
                 if (save!=model->data(index).toString())
                     model->setData(index,save);
@@ -643,8 +654,6 @@ void PotaWidget::PositionSave() {
 void PotaWidget::PositionRestore() {
     int iStart=iif(tv->isColumnHidden(0),1,0).toInt();
     int rowRestore=-1;
-    int row2=-1;
-    int row3=-1;
     for (int row=0;row<model->rowCount();row++) {
         if (sPositionRow==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
                           model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
@@ -739,10 +748,12 @@ void PotaWidget::SetSizes() {
     pbCommit->setIconSize(QSize(ButtonSize,ButtonSize));
     pbRollback->setFixedSize(ButtonSize,ButtonSize);
     pbRollback->setIconSize(QSize(ButtonSize,ButtonSize));
-    sbInsertRows->setFixedSize(1.4*ButtonSize,ButtonSize);
+    sbInsertRows->setFixedSize(1.5*ButtonSize,1.1*ButtonSize);
     //sbInsertRows->setIconSize(QSize(ButtonSize,ButtonSize));
     pbInsertRow->setFixedSize(ButtonSize,ButtonSize);
     pbInsertRow->setIconSize(QSize(ButtonSize,ButtonSize));
+    pbDuplicRow->setFixedSize(ButtonSize,ButtonSize);
+    pbDuplicRow->setIconSize(QSize(ButtonSize,ButtonSize));
     pbDeleteRow->setFixedSize(ButtonSize,ButtonSize);
     pbDeleteRow->setIconSize(QSize(ButtonSize,ButtonSize));
 
@@ -864,7 +875,7 @@ void PotaWidget::dataChanged(const QModelIndex &topLeft)//,const QModelIndex &bo
     pbRollback->setEnabled(true);
     pbFilter->setEnabled(false);
     cbPageFilter->setEnabled(false);
-    twParent->setTabIcon(twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
+    twParent->setTabIcon(twParent->indexOf(this),QIcon(":/images/toCommit.svg"));
 
     if (!topLeft.data(Qt::EditRole).isNull() and
         (topLeft.data(Qt::EditRole) == ""))
@@ -907,6 +918,7 @@ void PotaWidget::pbEditClick(){
         pbRollback->setVisible(true);
         sbInsertRows->setVisible(true);
         pbInsertRow->setVisible(true);
+        pbDuplicRow->setVisible(true);
         pbDeleteRow->setVisible(true);
         model->nonEditableColumns.clear();
         for (int i=0; i<model->columnCount();i++) {
@@ -928,13 +940,14 @@ void PotaWidget::pbEditClick(){
             pbRollback->setVisible(false);
             sbInsertRows->setVisible(false);
             pbInsertRow->setVisible(false);
+            pbDuplicRow->setVisible(false);
             pbDeleteRow->setVisible(false);
             model->nonEditableColumns.clear();
             for (int i=0; i<model->columnCount();i++){
                 model->nonEditableColumns.insert(i);
             }
             pbEdit->setIcon(QIcon(":/images/edit.svg"));
-            twParent->setTabIcon(twParent->currentIndex(),QIcon(""));
+            twParent->setTabIcon(twParent->indexOf(this),QIcon(""));
             model->tempTableName="";
         }
     }
@@ -953,8 +966,9 @@ void PotaWidget::pbCommitClick()
     PositionSave();
     if (model->SubmitAllShowErr())
         PositionRestore();
-    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
     AppBusy(false);
     bUserCurrChanged=true;
@@ -968,8 +982,9 @@ void PotaWidget::pbRollbackClick()
         //model->modifiedCells.clear();
         PositionRestore();
     }
-    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
     bUserCurrChanged=true;
 }
@@ -977,6 +992,14 @@ void PotaWidget::pbRollbackClick()
 void PotaWidget::pbInsertRowClick()
 {
     model->InsertRowShowErr();
+    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+
+    tv->setFocus();
+}
+
+void PotaWidget::pbDuplicRowClick()
+{
+    model->DuplicRowShowErr();
     pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
 
     tv->setFocus();
@@ -1316,7 +1339,7 @@ bool PotaTableModel::select()  {
                       "WHERE "+sPrimaryKey+"=:pk");
         for (int i=0;i<rowCount();i++) {
             progressBar->setValue(i);
-            query.bindValue(":pk",StrReplace(data(index(i,jPrimaryKey)).toString(),"'","''"));
+            query.bindValue(":pk",StrReplace(data(index(i,jPrimaryKey),Qt::EditRole).toString(),"'","''"));
             query.exec();
             query.next();
             //if (i==0)
@@ -1383,7 +1406,7 @@ bool PotaTableModel::SubmitAllShowErr() {
         pw->pbRollback->setEnabled(false);
         pw->pbFilter->setEnabled(true);
         pw->cbPageFilter->setEnabled(true);
-        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
+        pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(""));
         //dbSuspend(db,true,true,label);
         return true;
     } else {
@@ -1407,7 +1430,7 @@ bool PotaTableModel::RevertAllShowErr() {
         pw->pbRollback->setEnabled(false);
         pw->pbFilter->setEnabled(true);
         pw->cbPageFilter->setEnabled(true);
-        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(""));
+        pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(""));
         //dbSuspend(db,true,true,label);
         return true;
     } else {
@@ -1421,26 +1444,7 @@ bool PotaTableModel::RevertAllShowErr() {
 bool PotaTableModel::InsertRowShowErr()
 {
     PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
-    if (pw->sbInsertRows->value()==0){//Duplicate selected row
-        int sourcerow=pw->tv->currentIndex().row();
-        if (insertRows(sourcerow+1,1)) {
-            for (int col = 0; col < pw->model->columnCount(); ++col) {
-                QModelIndex sourceIndex=pw->model->index(sourcerow, col);
-                QModelIndex destIndex=pw->model->index(sourcerow+1, col);
-                pw->model->setData(destIndex, pw->model->data(sourceIndex));
-            }
-            rowsToInsert.insert(sourcerow+1);
-            pw->tv->setCurrentIndex(index(sourcerow+1,iif(pw->tv->isColumnHidden(0),1,0).toInt()));
-            pw->pbCommit->setEnabled(true);
-            pw->pbRollback->setEnabled(true);
-            pw->pbFilter->setEnabled(false);
-            pw->cbPageFilter->setEnabled(false);
-            pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
-        } else {
-            SetColoredText(pw->lErr,"insertRows(x,y)","Err");
-            return false;
-        }
-    } else if (insertRows(pw->tv->currentIndex().row()+1,//Create blank new rows
+    if (insertRows(pw->tv->currentIndex().row()+1,//Create blank new rows
                    pw->sbInsertRows->value())) {
         for (int i=0;i<pw->sbInsertRows->value();i++)
             rowsToInsert.insert(i+pw->tv->currentIndex().row()+1);
@@ -1449,7 +1453,33 @@ bool PotaTableModel::InsertRowShowErr()
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
         pw->cbPageFilter->setEnabled(false);
-        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
+        pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(":/images/toCommit.svg"));
+    } else {
+        SetColoredText(pw->lErr,"insertRows(x,y)","Err");
+        return false;
+    }
+    return true;
+}
+
+bool PotaTableModel::DuplicRowShowErr()
+{
+    PotaWidget *pw = dynamic_cast<PotaWidget*>(parent());
+    int sourcerow=pw->tv->currentIndex().row();
+    if (insertRows(sourcerow+1,pw->sbInsertRows->value())) {
+        for (int i=0;i<pw->sbInsertRows->value();i++) {
+            for (int col = 0; col < pw->model->columnCount(); ++col) {
+                QModelIndex sourceIndex=pw->model->index(sourcerow, col);
+                QModelIndex destIndex=pw->model->index(sourcerow+1+i, col);
+                pw->model->setData(destIndex, pw->model->data(sourceIndex,Qt::EditRole));
+            }
+            rowsToInsert.insert(sourcerow+1);
+        }
+        pw->tv->setCurrentIndex(index(sourcerow+1,iif(pw->tv->isColumnHidden(0),1,0).toInt()));
+        pw->pbCommit->setEnabled(true);
+        pw->pbRollback->setEnabled(true);
+        pw->pbFilter->setEnabled(false);
+        pw->cbPageFilter->setEnabled(false);
+        pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(":/images/toCommit.svg"));
     } else {
         SetColoredText(pw->lErr,"insertRows(x,y)","Err");
         return false;
@@ -1473,7 +1503,7 @@ bool PotaTableModel::DeleteRowShowErr()
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
         pw->cbPageFilter->setEnabled(false);
-        pw->twParent->setTabIcon(pw->twParent->currentIndex(),QIcon(":/images/toCommit.svg"));
+        pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(":/images/toCommit.svg"));
         return true;
     }
     return false;
@@ -1653,10 +1683,17 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         //Hightlight not null empty value. They are not normal, it causes SQL failure.
         c=Qt::red;
         c.setAlpha(150);
-    } else if (index.data(Qt::EditRole).toString().startsWith("Err") or
-               index.data(Qt::DisplayRole).toString().startsWith("Err")) {
+    // } else if (index.data(Qt::EditRole).toString().startsWith("Err") or
+    //            index.data(Qt::DisplayRole).toString().startsWith("Err")) {
+    //     c=Qt::red;
+    //     c.setAlpha(150);
+    } else if (index.data(Qt::EditRole).toString().endsWith("!") or
+               index.data(Qt::DisplayRole).toString().endsWith("!")) {
         c=Qt::red;
         c.setAlpha(150);
+    } else if (index.data(Qt::EditRole).toString().startsWith(".")) {
+        c=Qt::gray;
+        c.setAlpha(50);
     } else if (decimalSep!="." and
                pw->model->dataTypes[index.column()]=="REAL" and
                index.data(Qt::EditRole).toString().contains(decimalSep)) {
@@ -1853,6 +1890,7 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
 
     double const coef=1;
     QBrush b;
+    QLinearGradient gradient;
     b.setStyle(Qt::SolidPattern);
     QColor c;
     QRect r1,r2;
@@ -1885,10 +1923,10 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
     if (ql.count()>=6) {
         int const attente=ql[0].toInt()*coef;
         int const semis=ql[1].toInt()*coef;
-        int const semisF=ql[2].toInt()*coef;
-        int const plant=ql[3].toInt()*coef;
-        int const plantF=ql[4].toInt()*coef;
-        int const recolte=ql[5].toInt()*coef;
+        int semisF=ql[2].toInt()*coef;
+        int plant=ql[3].toInt()*coef;
+        int plantF=ql[4].toInt()*coef;
+        int recolte=ql[5].toInt()*coef;
         if (ql.count()>6) {
             t=ql[6];
             xt=option.rect.left()+attente+semis+semisF+plant+3;
@@ -1897,11 +1935,33 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         bool bPlant=true;
         bool bDRec=true;
         bool bFRec=true;
-        if (ql.count()>9) {
+        bool bTer=false;
+        bool bDeperisementPep=false;
+        bool bDeperisementEP=false;
+        if (ql.count()>10) {
             bSemis=!ql[7].isEmpty();
             bPlant=!ql[8].isEmpty();
             bDRec=!ql[9].isEmpty();
             bFRec=ql[9].startsWith('x');
+            bTer=!ql[10].isEmpty();
+            if(bTer and recolte>0){
+                //détection des échecs de culture.
+                if(semis>0 and plant>0) { //Semis pépinière
+                    if(!bDRec and !bFRec) recolte=0;
+                    if(bSemis and !bPlant) plantF=0;
+                    if(bSemis and !bPlant and !bDRec and !bFRec) bDeperisementPep=true;
+                    if(bSemis and bPlant and !bDRec and !bFRec) bDeperisementEP=true;
+                    if(!bSemis) semisF=0;
+                } else if (semis>0) { //Semis en place
+                    if(!bDRec and !bFRec) recolte=0;
+                    if(!bSemis) plantF=0;
+                    else if(!bDRec and !bFRec) bDeperisementEP=true;
+                } else if (plant>0) { //Plant
+                    if(!bDRec and !bFRec) recolte=0;
+                    if(!bPlant) plantF=0;
+                    else if(!bDRec and !bFRec) bDeperisementEP=true;
+                }
+            }
         }
 
         r2.setBottom(option.rect.bottom()-2);
@@ -1919,14 +1979,25 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         }
         if (semisF>0){
             //Semis fait, attente plantation
-            if(plant>0) c=cPepiniere;
-            else c=cEnPlace;
-            c.setAlpha(100);
-            b.setColor(c);
+            if(plant>0) c=cPepiniere; else c=cEnPlace;
             r2.setTop(r2.bottom()-4);
             r2.setLeft(r2.left()+r2.width());
             r2.setWidth(semisF);
-            painter->fillRect(r2,b);
+            if (bDeperisementPep) {
+                //Gradient pour marquer le dépérissement du semis.
+                gradient.setStart(r2.left(), r2.top());
+                gradient.setFinalStop(r2.right(), r2.top());
+                c.setAlpha(100);
+                gradient.setColorAt(0, c); // couleur de départ
+                c.setAlpha(0);
+                gradient.setColorAt(1, c);
+                painter->fillRect(r2,gradient);
+                plant=0;
+            } else {
+                c.setAlpha(100);
+                b.setColor(c);
+                painter->fillRect(r2,b);
+            }
         }
         if (plant>0) {
             //Période de plantation
@@ -1939,14 +2010,25 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
             painter->fillRect(r2,b);
         }
         if (plantF>0){
-            //Plantation faite, attente récolte
+            //Semis en place ou plantation faite, attente récolte
             c=cEnPlace;
-            c.setAlpha(150);
-            b.setColor(c);
             r2.setTop(r2.bottom()-10);
             r2.setLeft(r2.left()+r2.width());
             r2.setWidth(plantF);
-            painter->fillRect(r2,b);
+            if (bDeperisementEP) {
+                //Gradient pour marquer le dépérissement de la culture
+                gradient.setStart(r2.left(), r2.top());
+                gradient.setFinalStop(r2.right(), r2.top());
+                c.setAlpha(150);
+                gradient.setColorAt(0, c); // couleur de départ
+                c.setAlpha(0);
+                gradient.setColorAt(1, c);
+                painter->fillRect(r2,gradient);
+            } else {
+                c.setAlpha(150);
+                b.setColor(c);
+                painter->fillRect(r2,b);
+            }
         }
         if (recolte>0 or bDRec or bFRec){
             //Période de récolte
@@ -1980,9 +2062,9 @@ void PotaItemDelegate::paintTempo(QPainter *painter, const QStyleOptionViewItem 
         left=option.rect.left()+round(QDate::currentDate().dayOfYear()*coef);
         int r1w=1;
 
-        if (ql.count()>10) {
+        if (ql.count()>11) {
             //Blue indicator for water.
-            QString tDrop=ql[10];
+            QString tDrop=ql[11];
             if (!tDrop.isEmpty()) {
                 painter->save();
                 QColor waterDropColor(0, 122, 255);
@@ -2064,11 +2146,9 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             filter=FkFilter(model->db,model->RealTableName(),sFieldName,pw->pageFilterFilters[pw->cbPageFilter->currentIndex()],index);
         else
             filter=FkFilter(model->db,model->RealTableName(),sFieldName,"",index);
-        if (filter!="") {
-            //dbSuspend(model->db,false,true,model->label);
-            model->relationModel(index.column())->setFilter(filter);
-            //dbSuspend(model->db,true,true,model->label);
-        }
+        //if (filter!="") {
+        model->relationModel(index.column())->setFilter(filter);
+        //}
         comboBox->addItem("", QVariant()); // Option for setting a NULL
         for (int i = 0; i < relationModel->rowCount(); ++i) {
             QString value = relationModel->record(i).value(relationIndex).toString();
@@ -2101,7 +2181,10 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         QDateEdit *dateEdit = new QDateEdit(parent);
         dateEdit->setButtonSymbols(QAbstractSpinBox::NoButtons);
         //dateEdit->setDisplayFormat("yyyy-MM-dd");
-        dateEdit->setDate(QDate::currentDate());
+        if(model->data(index,Qt::EditRole).isNull())
+            dateEdit->setDate(QDate::currentDate());
+        else
+            dateEdit->setDate(model->data(index,Qt::EditRole).toDate());
         return dateEdit;
     }
     return QStyledItemDelegate::createEditor(parent, option, index); // Standard editor

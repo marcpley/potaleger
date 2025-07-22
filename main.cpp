@@ -1,3 +1,4 @@
+#include "Dialogs.h"
 #include "data/Data.h"
 #include "mainwindow.h"
 #include "qdir.h"
@@ -187,7 +188,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             pQuery.next();
             sVerBDD = pQuery.value(0).toString();
         } else {
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
                           sFichier,QStyle::SP_MessageBoxCritical,600);
             dbClose();
             result=false;
@@ -204,14 +205,14 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         // }
 
         if (result and (sVerBDD < "2024-12-30")) {
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
                           sFichier,QStyle::SP_MessageBoxCritical,600);
             dbClose();
             result=false;
         }
 
         if (result and (sVerBDD > DbVersion)) {
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
                              "certains onglets peuvent ne pas fonctionner.").arg("récente")+"\n\n"+
                           sFichier+"\n"+
                           tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
@@ -230,11 +231,11 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                                QStyle::SP_MessageBoxQuestion,600)) {   //Mettre à jour la BDD.
                 //Delete previous backup file.
                 QFile FileInfo;
-                QString FileName=ui->lDB->text();
+                QString FileName=ui->lDB->text(); //Pourquoi pas sFichier ?
                 FileInfo.setFileName(FileName+"-backup");
                 if (FileInfo.exists()) {
                     if (!FileInfo.remove()) {
-                        MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
+                        MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                           FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
                         dbClose();
                         result=false;
@@ -244,7 +245,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                     //Backup.
                     FileInfo.setFileName(FileName);
                     if (!FileInfo.copy(FileName+"-backup"))  {
-                        MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
+                        MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                                           FileName+"\n"+
                                           tr("vers le fichier")+"\n"+
                                           FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
@@ -260,7 +261,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         //Delete backup file.
                         FileInfo.setFileName(FileName+"-backup");
                         if (!FileInfo.remove()) {
-                            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
+                            MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                               FileName+"-backup","",QStyle::SP_MessageBoxWarning,600);
                         }
                     } else {
@@ -276,11 +277,11 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         FileInfo.remove();
                         FileInfo.setFileName(FileName+"-backup");
                         if (FileInfo.copy(FileName))
-                            MessageDialog("Potaléger "+ui->lVer->text(),tr("Le fichier")+"\n"+
+                            MessageDlg("Potaléger "+ui->lVer->text(),tr("Le fichier")+"\n"+
                                               FileName+"\n"+
                                               tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation,600);
                         else
-                            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
+                            MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                                               FileName+"-backup\n"+
                                               tr("vers le fichier")+"\n"+
                                               FileName,"",QStyle::SP_MessageBoxCritical,600);
@@ -289,7 +290,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                     }
                 }
             } else {
-                MessageDialog("Potaléger "+ui->lVer->text(),
+                MessageDlg("Potaléger "+ui->lVer->text(),
                               tr("La version de cette BDD est trop %1, vous ne pouvez pas\n"
                                  "la modifier et certains onglets peuvent ne pas fonctionner.").arg("ancienne")+"\n\n"+
                               sFichier+"\n"+
@@ -302,7 +303,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         }
 
         // if (sVerBDD != ui->lVerBDDAttendue->text()) {
-        //     MessageDialog(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
+        //     MessageDlg(tr("La version de cette BDD est incorrecte: ")+sVerBDD,
         //                   sFichier,QStyle::SP_MessageBoxCritical,600);
         //     dbClose();
         //     return false;
@@ -560,6 +561,7 @@ void MainWindow::SetMenuIcons() {
     ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
     ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
+    ui->mCuAFaire->setIcon(QIcon(TablePixmap("Cultures__A_faire","")));
     ui->mCuVivaces->setIcon(QIcon(TablePixmap("Cultures__vivaces","")));
     ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
 

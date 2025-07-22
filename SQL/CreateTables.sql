@@ -51,13 +51,15 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
-                       Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates ?'
+                       Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates !'
                                           WHEN Terminée LIKE 'v%' THEN 'Vivace'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis pépinière'
                                           WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant'
                                           WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis en place'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte'
-                                          WHEN Date_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                                          WHEN Date_semis NOTNULL THEN 'Engrais vert'
+                                          WHEN Début_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Vivace'
+                                          ELSE '?' END),
                        Saison TEXT AS (CASE WHEN coalesce(Terminée,'') NOT LIKE 'v%' -- Anuelle
                                             THEN substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)
                                             ELSE substr(coalesce(Début_récolte,Date_plantation,Date_semis,Fin_récolte),1,4) -- Vivace
@@ -204,7 +206,9 @@ CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
                                              WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant'
                                              WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis en place'
                                              WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL THEN 'Sans récolte'
-                                             WHEN Déb_semis NOTNULL THEN 'Engrais vert' ELSE '?' END),
+                                             WHEN Déb_semis NOTNULL THEN 'Engrais vert'
+                                             WHEN Déb_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Vivace'
+                                             ELSE '?' END),
                   Déb_semis TEXT CONSTRAINT 'Déb_semis, ex: 04-01 ou 04-15' CHECK (Déb_semis #FmtPlanif#),
                   Fin_semis TEXT CONSTRAINT 'Fin_semis, ex: 05-01 ou 05-15' CHECK (Fin_semis  #FmtPlanif#),
                   Déb_plantation TEXT CONSTRAINT 'Déb_plantation, ex: 05-01 ou 05-15' CHECK (Déb_plantation  #FmtPlanif#),

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "Dialogs.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QStackedLayout>
@@ -32,26 +33,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// bool MainWindow::PotaBDDInfo()
-// {
-//     PotaQuery pQuery(db);
-//     pQuery.lErr = ui->lDBErr;
-//     setWindowTitle("Potaléger");
-//     if (pQuery.ExecShowErr("SELECT * FROM Info_Potaléger"))
-//     {
-//         while (pQuery.next()) {
-//             if (pQuery.value(1).toString()=="Utilisateur")
-//                 setWindowTitle("Potaléger"+iif(pQuery.value(2).isNull(),""," - "+pQuery.value(2).toString()).toString());
-//         }
-//         return true;
-//     }
-//     else
-//     {
-//         return false;
-//     }
-// }
-
-bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, QString const sTitre)
+bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, QString const sTitre, QString const sDesc)
 {
     //Recherche parmis les onglets existants.
     for (int i = 0; i < ui->tabWidget->count(); i++) {
@@ -103,6 +85,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 w->sbInsertRows->setPalette(palette);
                 w->sbInsertRows->setEnabled(true);
                 w->pbInsertRow->setEnabled(true);
+                w->pbDuplicRow->setEnabled(true);
                 w->bAllowInsert=true;
                 w->pbDeleteRow->setEnabled(true);
                 w->bAllowDelete=true;
@@ -119,7 +102,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName().replace("_"," ").toLower()));
                 } else {
                     SetColoredText(ui->lDBErr,"","");
-                    MessageDialog(windowTitle(),sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
+                    MessageDlg(windowTitle(),sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
                     w->deleteLater();
                     return false;
                 }
@@ -188,7 +171,10 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             //                                        "margin-top: 2px;"
             //                                        "}");
 
-            ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(w->model->tableName()));
+            if (!sDesc.isEmpty())
+                ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),sDesc);
+            else
+                ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(w->model->tableName()));
 
             //Tab user settings
             QSettings settings("greli.net", "Potaléger");
@@ -284,6 +270,9 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         if (w->model->tableName()=="Params") {
             PotaQuery pQuery(db);
             setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
+        } else if (w->model->tableName()=="Cultures__A_faire") {
+            PotaQuery pQuery(db);
+            pQuery.ExecShowErr("UPDATE Cultures SET A_faire=NULL WHERE A_faire='.'");
         }
 
         if (ui->tabWidget->count()<3) {//Fermeture du dernier onglet data ouvert.
@@ -356,7 +345,8 @@ void MainWindow::on_mUpdateSchema_triggered()
                        tr("En cas d'échec, votre BDD sera remise dans son état initial."),QStyle::SP_MessageBoxQuestion,600)){
         QString sFileName=ui->lDB->text();
         PotaDbClose();
-        PotaDbOpen(sFileName,"",true);
+        if(!PotaDbOpen(sFileName,"",true))
+            PotaDbOpen(sFileName, "",false);
     }
 }
 
@@ -366,7 +356,7 @@ void MainWindow::on_mCopyBDD_triggered()
     QFileInfo FileInfo,FileInfoVerif;
     FileInfo.setFile(ui->lDB->text());
     if (!FileInfo.exists()) {
-        MessageDialog("Potaléger "+ui->lVer->text(),tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),"",QStyle::SP_MessageBoxCritical);
+        MessageDlg("Potaléger "+ui->lVer->text(),tr("Le fichier de BDD n'existe pas.")+"\n"+ui->lDB->text(),"",QStyle::SP_MessageBoxCritical);
         return;
     }
 
@@ -385,7 +375,7 @@ void MainWindow::on_mCopyBDD_triggered()
             FileInfo2.setFileName(sFileName);
             if (!FileInfo2.remove())
             {
-                MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
+                MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             };
@@ -400,7 +390,7 @@ void MainWindow::on_mCopyBDD_triggered()
             //FileInfo3.setFileTime(FileInfo.lastModified(),QFileDevice::FileAccessTime);
         }
         else
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                           sFileNameSave+"\n"+
                           tr("vers le fichier")+"\n"+
                           sFileName,"",QStyle::SP_MessageBoxCritical);
@@ -454,7 +444,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
             FileInfo2.setFileName(sFileName);
             if (!FileInfo2.remove())
             {
-                MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
+                MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             };
@@ -464,7 +454,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
         PotaDbClose();
 
         if (!PotaDbOpen(sFileName,iif(bEmpty,"New","NewWithBaseData").toString(),false)) {
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de créer la BDD %1").arg(sEmpty)+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
             dbClose();
             PotaDbOpen(sFileNameSave,"",false);
@@ -474,7 +464,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
 
 void MainWindow::on_mAbout_triggered()
 {
-    MessageDialog("Potaléger "+ui->lVer->text(),
+    MessageDlg("Potaléger "+ui->lVer->text(),
                   "Auteur: Marc Pleysier<br>"
                   "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
                   "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
@@ -483,6 +473,7 @@ void MainWindow::on_mAbout_triggered()
                   "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
                   "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
+                  "ExprTK <a href=\"https://github.com/ArashPartow/exprtk/\">github.com/ArashPartow/exprtk</a><br>"
                   "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a>, merci Silvère !<br>"
                   "IA: ChatGPT, Mistral et Copilot<br>"
                   "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
@@ -491,20 +482,25 @@ void MainWindow::on_mAbout_triggered()
 
 void MainWindow::on_mWhatSNew_triggered()
 {
-    MessageDialog("Potaléger "+ui->lVer->text(),
+    MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.2</b> - 01/07/2025<br>"
+                  "<b>Potaléger 1.20</b> - 01/07/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Culture de vivaces</b>.")+"<br>"+
+                  "- "+tr("Fonction calculatrice dans les cellules numériques.")+"<br>"+
+                  "- "+tr("Alerte visuelle (cellule en rouge) si le contenu se termine par un '!'.")+"<br>"+
+                  "- "+tr("Champ 'A faire' sur les cultures et nouvel onglet des cultures ayant quelque chose à faire.")+"<br>"+
+                  "- "+tr("Amélioration visu graphique des cultures (dépérissement).")+"<br>"+
+                  "- "+tr("La planification prend en compte le décalage de l'opération précédente par rapport au début de période de l'ITP.")+"<br>"+
                   "- "+tr("Planches en déficit de fertilisation.")+"<br>"+
                   "- "+tr("Bilan fertilisation planche pour les saisons passées.")+"<br>"+
-                  "- "+tr("Requête SQL utilisateur (SELECT uniquement).")+"<br>"+
+                  "- "+tr("Requête SQL utilisateur (SELECT uniquement), permet par exemple de faire un export vers une plateforme de distribution.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Cultures de la dernière année d'une rotation non planifiées l'année N+1.")+"<br>"+
                   "- "+tr("Choix de l'année de replanification d'une culture (en forçant une année dans 'D_planif').")+"<br>"+
                   "- "+tr("Affichage du nombre de lignes fonctionne (à coté du bouton 'Filtrer').")+"<br>"+
                   "<br>"+
-                  "<b>Potaléger 1.1</b> - 06/06/2025<br>"
+                  "<b>Potaléger 1.10</b> - 06/06/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Gestion de l'irrigation</b>.")+"<br>"+
                   "- "+tr("Appellation 'Semis sous abris' remplacée par 'Semis pépinière'.")+"<br>"+
@@ -557,6 +553,8 @@ void MainWindow::on_mParam_triggered()
         w->sbInsertRows->setVisible(false);
         w->pbInsertRow->setEnabled(false);
         w->pbInsertRow->setVisible(false);
+        w->pbDuplicRow->setEnabled(false);
+        w->pbDuplicRow->setVisible(false);
         w->bAllowInsert=false;
         w->pbDeleteRow->setEnabled(false);
         w->pbDeleteRow->setVisible(false);
@@ -597,7 +595,7 @@ void MainWindow::on_mImport_triggered()
 
         QFile FileImport(sFileName);
         if (!FileImport.open(QIODevice::ReadOnly)) {
-            MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible d'ouvrir le fichier")+"\n"+
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible d'ouvrir le fichier")+"\n"+
                               sFileName,"",QStyle::SP_MessageBoxCritical);
             return;
         }
@@ -632,16 +630,16 @@ void MainWindow::on_mImport_triggered()
 
         int choice=-1;
         if (info.isEmpty()) {
-            MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
+            MessageDlg("Potaléger "+ui->lVer->text(),QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
                               .arg(FileInfoVerif.fileName())
                               .arg(w->lTabTitle->text().trimmed()),"",QStyle::SP_MessageBoxWarning);
             return;
         // } else if (primaryFieldImport==-1) {
         //     TypeImport=4; //Append only
-        //     MessageDialog(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+        //     MessageDlg(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
         //     return;
         } else if (lines.count()<2) {
-            MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            MessageDlg("Potaléger "+ui->lVer->text(),QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
             return;
         } else {
             //Concat lines for each records.
@@ -677,7 +675,7 @@ void MainWindow::on_mImport_triggered()
         }
 
         if (primaryFieldImport==-1 and choice!=4) {
-            MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("Champ %1 non trouvée dans le fichier %2.\nSeul l'ajout de ligne est éventuellement possible.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+            MessageDlg("Potaléger "+ui->lVer->text(),QObject::tr("Champ %1 non trouvée dans le fichier %2.\nSeul l'ajout de ligne est éventuellement possible.").arg(w->model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
             return;
         }
 
@@ -747,7 +745,7 @@ void MainWindow::on_mImport_triggered()
                 if(primaryFieldImport>-1 and valuesToImport.count()>primaryFieldImport and !valuesToImport[primaryFieldImport].isEmpty()){
                     //Search existing record
                     for (int i=0;i<w->model->rowCount();i++) {
-                        if (w->model->data(w->model->index(i,0)).toString()==valuesToImport[primaryFieldImport]){
+                        if (w->model->data(w->model->index(i,0),Qt::EditRole).toString()==valuesToImport[primaryFieldImport]){
                             recordToUpdate=i;
                             break;
                         }
@@ -762,8 +760,8 @@ void MainWindow::on_mImport_triggered()
                                 if(dataTypes[col]=="REAL")
                                     valuesToImport[col]=StrReplace(valuesToImport[col],decimalSep,".");
                                 if (choice==0 or choice==2 or choice==5 or//Priority to imported data
-                                    w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()=="") {
-                                    if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col])).toString()!=valuesToImport[col]){
+                                    w->model->data(w->model->index(recordToUpdate,fieldindexes[col]),Qt::EditRole).toString()=="") {
+                                    if (w->model->data(w->model->index(recordToUpdate,fieldindexes[col]),Qt::EditRole).toString()!=valuesToImport[col]){
                                         w->model->setData(w->model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
                                         bModified=true;
                                     }
@@ -817,7 +815,7 @@ void MainWindow::on_mImport_triggered()
 
         //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
 
-        MessageDialog("Potaléger "+ui->lVer->text(),QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
+        MessageDlg("Potaléger "+ui->lVer->text(),QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
                       QObject::tr("%1 lignes créées").arg(nbCreatedRows)+"\n"+
                       QObject::tr("%1 lignes modifiées").arg(nbModifiedRows)+"\n"+
                       QObject::tr("%1 erreurs").arg(nbErrors));
@@ -848,7 +846,7 @@ void MainWindow::on_mExport_triggered()
             if (FileInfoVerif.exists()) {
                 FileInfo2.setFileName(sFileName);
                 if (!FileInfo2.remove()) {
-                    MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
+                    MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
                                       sFileName,"",QStyle::SP_MessageBoxCritical);
                     return;
                 }
@@ -859,7 +857,7 @@ void MainWindow::on_mExport_triggered()
             //Export
             QFile FileExport(sFileName);
             if (!FileExport.open(QIODevice::WriteOnly)) {// | QIODevice::Text
-                MessageDialog("Potaléger "+ui->lVer->text(),tr("Impossible de créer le fichier")+"\n"+
+                MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de créer le fichier")+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxCritical);
                 return;
             }
@@ -890,9 +888,9 @@ void MainWindow::on_mExport_triggered()
                     for (int col = 0; col < w->model->columnCount(); ++col) {
                         if (col > 0) data.append(";");
                         if (dataTypes[col]=="REAL")
-                            data.append(EscapeCSV(StrReplace(w->model->data(w->model->index(row, col)).toString(),".",decimalSep)).toUtf8());//todo param decimal separator
+                            data.append(EscapeCSV(StrReplace(w->model->data(w->model->index(row, col),Qt::EditRole).toString(),".",decimalSep)).toUtf8());
                         else
-                            data.append(EscapeCSV(w->model->data(w->model->index(row, col)).toString()).toUtf8());
+                            data.append(EscapeCSV(w->model->data(w->model->index(row, col),Qt::EditRole).toString()).toUtf8());
                     }
                     data.append("\n");
                     if (FileExport.write(data)!=-1)
@@ -906,10 +904,10 @@ void MainWindow::on_mExport_triggered()
             }
 
             if (exportedRow==totalRow) {
-                MessageDialog("Potaléger "+ui->lVer->text(),tr("%1 lignes exportées vers le fichier").arg(str(totalRow))+"\n"+
+                MessageDlg("Potaléger "+ui->lVer->text(),tr("%1 lignes exportées vers le fichier").arg(str(totalRow))+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxInformation);
             } else
-                MessageDialog("Potaléger "+ui->lVer->text(),tr("%1 sur %2 lignes exportées vers le fichier").arg(str(exportedRow)).arg(str(totalRow))+"\n"+
+                MessageDlg("Potaléger "+ui->lVer->text(),tr("%1 sur %2 lignes exportées vers le fichier").arg(str(exportedRow)).arg(str(totalRow))+"\n"+
                                   sFileName,"",QStyle::SP_MessageBoxWarning);
         }
     }
@@ -1049,7 +1047,7 @@ void MainWindow::on_mCreerCultures_triggered()
     pQuery.lErr=ui->lDBErr;
     int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif").toInt();
     if (NbCultPlanif==0) {
-        MessageDialog(windowTitle(),tr("Aucune culture à planifier:")+"\n\n"+
+        MessageDlg(windowTitle(),tr("Aucune culture à planifier:")+"\n\n"+
                           tr("- Créez des rotations")+"\n"+
                           tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
         return;
@@ -1099,13 +1097,13 @@ void MainWindow::on_mCreerCultures_triggered()
             int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
             int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
             if (IdCult3>IdCult2 and IdCult2>IdCult1)
-                MessageDialog(windowTitle(),tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
+                MessageDlg(windowTitle(),tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanif)+"\n\n"+
                                   tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3),"",QStyle::SP_MessageBoxInformation);
             else
-                MessageDialog(windowTitle(),tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
+                MessageDlg(windowTitle(),tr("%1 culture créée sur %2 cultures prévues.").arg("0").arg(NbCultPlanif),"",QStyle::SP_MessageBoxWarning);
         }
         else
-            MessageDialog(windowTitle(),tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
+            MessageDlg(windowTitle(),tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
 
     }
 }
@@ -1250,6 +1248,25 @@ void MainWindow::on_mCuATerminer_triggered()
     OpenPotaTab("Cultures_a_terminer","Cultures__à_terminer",tr("A terminer"));
 }
 
+void MainWindow::on_mCuAFaire_triggered()
+{
+    if (OpenPotaTab("Cultures_A_faire","Cultures__A_faire",tr("A faire"))){
+        PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+        w->lPageFilter->setText(tr("Voir"));
+        w->cbPageFilter->addItem(tr("Toutes"));
+        w->pageFilterFilters.append("TRUE");
+        w->cbPageFilter->addItem(tr("Annuelles"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        w->cbPageFilter->addItem(tr("Vivaces"));
+        w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+        QSettings settings("greli.net", "Potaléger");
+        w->cbPageFilter->setCurrentIndex(settings.value("Cultures__A_faire-pageFilter").toInt());
+        w->pageFilterFrame->setVisible(true);
+        if (w->cbPageFilter->currentIndex()>0)
+            w->pbFilterClick(false);
+    };
+}
+
 void MainWindow::on_mCuVivaces_triggered()
 {
     if (OpenPotaTab("Cultures_vivaces","Cultures__vivaces",tr("Vivaces"))){
@@ -1392,14 +1409,19 @@ void MainWindow::on_mRequeteSQL_triggered()
                                "SELECT C.Culture,C.Planche,C.Saison,C.Longueur*P.Largeur Surface\n"
                                "FROM Cultures C\n"
                                "LEFT JOIN Planches P USING(Planche)"
-                               "WHERE C.Saison=2024;\n\n"+
-                               tr("Cette requête sera enregistrée et utilisable sur cet ordinateur uniquement."));
-    if (sQuery!="") {
+                               "WHERE C.Saison=2024;\n"+
+                               tr("Titre")+";\n"+tr("Description")+";\n\n"+
+                               tr("Cette requête sera enregistrée et utilisable sur cet ordinateur uniquement."),db);
+    QStringList values=sQuery.split(";\n");
+    if (values.count()>0 and values[0]!="") {
         PotaQuery pQuery(db);
         pQuery.ExecShowErr("DROP VIEW UserSQL;");
-        pQuery.ExecShowErr("CREATE VIEW UserSQL AS "+sQuery);
-
-        OpenPotaTab("SQLQuery","UserSQL",tr("Requête SQL"));
+        pQuery.ExecShowErr("CREATE VIEW UserSQL AS "+values[0]);
+        QString sTitre=tr("Requête SQL");
+        QString sDesc="";
+        if(values.count()>1) sTitre=iif(values[1][0]=="\n",values[1].mid(1),values[1]).toString();
+        if(values.count()>2) sDesc=iif(values[2][0]=="\n",values[2].mid(1),values[2]).toString();
+        OpenPotaTab("SQLQuery","UserSQL",sTitre,sDesc);
     }
 }
 
@@ -1493,6 +1515,5 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
 
     ui->lDBlabel->setFixedWidth(110*arg1.toInt()/10);
 }
-
 
 

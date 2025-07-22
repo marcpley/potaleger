@@ -556,6 +556,7 @@
     <addaction name="mCuARecolter"/>
     <addaction name="mCuSaisieRecoltes"/>
     <addaction name="mCuATerminer"/>
+    <addaction name="mCuAFaire"/>
     <addaction name="mCuVivaces"/>
     <addaction name="separator"/>
     <addaction name="mCuToutes"/>
@@ -1124,6 +1125,14 @@
    </property>
    <property name="text">
     <string>Vivaces</string>
+   </property>
+  </action>
+  <action name="mCuAFaire">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Trucs à faire</string>
    </property>
   </action>
  </widget>

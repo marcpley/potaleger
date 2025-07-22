@@ -23,6 +23,7 @@
 #include <QSqlRecord>
 #include <QLabel>
 #include "qsqlerror.h"
+#include "extra/exprtk.hpp"
 
 class PotaTableModel: public QSqlRelationalTableModel
 {
@@ -54,6 +55,7 @@ public:
     bool SubmitAllShowErr();
     bool RevertAllShowErr();
     bool InsertRowShowErr();
+    bool DuplicRowShowErr();
     bool DeleteRowShowErr();
 
     Qt::ItemFlags flags(const QModelIndex &index) const override {
@@ -92,38 +94,20 @@ public:
             return font;
         }
         if (role==Qt::DisplayRole and !data(index,Qt::EditRole).isNull()) {
-            // Because model->select() is overriden, the code below isn't necessary.
-            // QString columnName = headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString();
-            // if (modifiedRows.contains(index.row()) and  generatedColumns.contains(columnName)) {
-            //     PotaQuery query;
-            //     QString primaryKey=PrimaryKeyFieldName(RealTableName());
-            //     QVariant primaryKeyValue = record(index.row()).value(primaryKey);
-
-            //     // Construire une requête pour lire directement la colonne générée
-            //     query.prepare(QString("SELECT %1 FROM %2 WHERE %3 = :key")
-            //                       .arg(columnName)
-            //                       .arg(tableName())
-            //                       .arg(primaryKey));
-            //     query.bindValue(":key", primaryKeyValue);
-
-            //     if (query.exec() && query.next()) {
-            //         return query.value(0).toString()+"(q)";
-            //     }
-            // }
-
-
             if (dateColumns.contains(index.column())) {// #DateFormat
                 if (data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy").isEmpty())
-                    return "Err:"+data(index,Qt::EditRole).toString(); //Not date format
+                    return data(index,Qt::EditRole).toString()+"!"; //Not date format
                 else
                     return data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy");
             } else if (moneyColumns.contains(index.column())) {
                 if (data(index,Qt::EditRole).toFloat()==0 and data(index,Qt::EditRole).toString()!="0")
-                    return "Err:"+data(index,Qt::EditRole).toString(); //Not number format
+                    return data(index,Qt::EditRole).toString()+"!"; //Not number format
                 else
                     return QString::number(data(index,Qt::EditRole).toFloat(),'f', 2);
             } else if (StrLast(headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString(),3)=="_pc") {
                 return data(index,Qt::EditRole).toString()+"%";
+            } else if (data(index,Qt::EditRole).toString().startsWith(".")) {//Invisible data
+                return QVariant();
             }
         }
         if (role == Qt::TextAlignmentRole) {
@@ -132,18 +116,17 @@ public:
                 return Qt::AlignRight;
             }
         }
+
         return QSqlRelationalTableModel::data(index, role);
     }
 
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override {
         if (role == Qt::EditRole) {
-            if (QSqlRelationalTableModel::data(index, role).toString() != value.toString() and
-                !nonEditableColumns.contains(index.column())) {
-                //modifiedCells.insert(index);
-                //modifiedRows.insert(index.row());
-                if (copiedCells.contains(index))
-                    copiedCells.clear();//The cell must be shown as modified before copied.
-            }
+            // if (QSqlRelationalTableModel::data(index, role).toString() != value.toString() and
+            //     !nonEditableColumns.contains(index.column())) {
+            //     if (copiedCells.contains(index))
+            //         copiedCells.clear();//The cell must be shown as modified before copied.
+            // }
             if (relation(index.column()).isValid()) {
                 //Column with FK. #FKnull
                 QVariant currentValue = QSqlTableModel::data(index, role);
@@ -161,6 +144,24 @@ public:
                 QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
                 if (date.isValid()) {
                     return QSqlRelationalTableModel::setData(index, date, role);
+                }
+            } else if (value.toString().startsWith("=") and
+                       (dataTypes[index.column()]=="REAL" or dataTypes[index.column()]=="INTEGER")) {
+                typedef exprtk::expression<double> expression_t;
+                typedef exprtk::parser<double> parser_t;
+                std::string expr = value.toString().mid(1).trimmed().toStdString();
+                expression_t expression;
+                parser_t parser;
+                if (parser.compile(expr, expression)) {
+                    QString result;
+                    if (dataTypes[index.column()]=="INTEGER")
+                        result=QString::number(std::round(expression.value()));
+                    else
+                        result=QString::number(expression.value());
+                    QLocale locale;
+                    QString decimalSep = QString(locale.decimalPoint());
+                    result.replace(decimalSep,".");
+                    return QSqlRelationalTableModel::setData(index, result, role);
                 }
             }
 
@@ -196,7 +197,7 @@ public:
 
     void revertAll()  {
         QSqlRelationalTableModel::revertAll();
-        QApplication::clipboard()->setText("");
+        // QApplication::clipboard()->setText("");
         rowsToRemove.clear();
         rowsToInsert.clear();
     }
@@ -230,7 +231,7 @@ protected:
 
 private:
     void copySelectionToClipboard() {
-        QClipboard *clipboard = QApplication::clipboard();
+        // QClipboard *clipboard = QApplication::clipboard();
         QItemSelectionModel *selectionModel = this->selectionModel();
         if (!selectionModel || !selectionModel->hasSelection()) return;
 
@@ -255,8 +256,7 @@ private:
         }
 
         // Créer une grille pour stocker les valeurs copiées
-        QString placeholder = "erbg-Ds45";
-        QVector<QVector<QString>> clipboardGrid(maxRow - minRow + 1, QVector<QString>(maxCol - minCol + 1, placeholder));
+        QVector<QVector<QString>> clipboardGrid(maxRow - minRow + 1, QVector<QString>(maxCol - minCol + 1, ""));
         QLocale locale;
         QString decimalSep = QString(locale.decimalPoint());
 
@@ -265,9 +265,9 @@ private:
             int row = index.row() - minRow;
             int col = index.column() - minCol;
             if (m->dataTypes[index.column()]=="REAL")
-                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","sdff+54rg").replace(".",decimalSep).replace("%","");
+                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","\\n").replace(".",decimalSep).replace("%",""); //sdff+54rg
             else
-                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","sdff+54rg");
+                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","\\n"); //sdff+54rg
             m->copiedCells.insert(index);
         }
 
@@ -279,7 +279,7 @@ private:
         clipboardText.chop(1); // Supprimer le dernier saut de ligne
 
         // Copier le texte formaté dans le presse-papier
-        clipboard->setText(clipboardText);
+        QApplication::clipboard()->setText(clipboardText);
 
     }
 
@@ -289,8 +289,8 @@ private:
     }
 
     void pasteFromClipboard() {
-        QClipboard *clipboard = QApplication::clipboard();
-        QString clipboardText = clipboard->text();
+        // QClipboard *clipboard = QApplication::clipboard();
+        QString clipboardText = QApplication::clipboard()->text();
         if (clipboardText.isEmpty()) return;
 
         QItemSelectionModel *selectionModel = this->selectionModel();
@@ -337,7 +337,7 @@ private:
                                                               selectedIndexes.value(iSel).column()+jCB);
                     //qDebug() << "clipboardData[iCB][jCB] : "+clipboardData[iCB][jCB];
                     if (index.isValid() and
-                        (clipboardData[iCB][jCB] != "erbg-Ds45") and (!clipboardData[iCB][jCB].isEmpty()) and
+                        (!clipboardData[iCB][jCB].isEmpty()) and
                         !m->nonEditableColumns.contains(index.column())) {
                         if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString())=="DATE") {
                             for (const QString &format : formats) {
@@ -356,9 +356,9 @@ private:
                                     m->setData(index,date.toString("yyyy-MM-dd"), Qt::EditRole);
                             }
                         } else if (m->dataTypes[index.column()]=="REAL"){
-                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n").replace(decimalSep,"."), Qt::EditRole);
+                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"\\n","\n").replace(decimalSep,"."), Qt::EditRole); //sdff+54rg
                         } else {
-                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"sdff+54rg","\n"), Qt::EditRole);
+                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"\\n","\n"), Qt::EditRole); //sdff+54rg
                         }
                     }
                 }
@@ -421,23 +421,23 @@ public:
     void setEditorData(QWidget *editor, const QModelIndex &index) const override {
         QComboBox *comboBox = qobject_cast<QComboBox *>(editor);
         if (comboBox) {
-            QVariant currentValue = index.data();
+            QVariant currentValue = index.data(Qt::EditRole);
             int comboIndex = comboBox->findData(currentValue);
             comboBox->setCurrentIndex(comboIndex != -1 ? comboIndex : 0);
             return;
         }
         QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
         if (lineEdit) {
-            lineEdit->setText(index.data().toString());
+            lineEdit->setText(index.data(Qt::EditRole).toString());
             return;
         }
         QDateEdit *dateEdit = qobject_cast<QDateEdit *>(editor);
         if (dateEdit) {
-            if (index.data().isNull())
+            if (index.data(Qt::EditRole).isNull())
                 dateEdit->setDate(QDate::currentDate());
             else {
                 // #DateFormat
-                QString dateString = index.data().toString();
+                QString dateString = index.data(Qt::EditRole).toString();
                 QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
                 //if (date.isValid()) {
                 dateEdit->setDate(date);//index.data().toDate()
@@ -481,6 +481,7 @@ public:
     QToolButton *pbRollback;
     QSpinBox *sbInsertRows;
     QToolButton *pbInsertRow;
+    QToolButton *pbDuplicRow;
     QToolButton *pbDeleteRow;
     bool bAllowInsert=false;
     bool bAllowDelete=false;
@@ -552,6 +553,7 @@ private slots:
     void pbCommitClick();
     void pbRollbackClick();
     void pbInsertRowClick();
+    void pbDuplicRowClick();
     void pbDeleteRowClick();
     void cbFilterTypeChanged(int i);
     void leFilterReturnPressed();

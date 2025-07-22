@@ -40,6 +40,6 @@ QColor TableColor(QString sTName,QString sFName);
 QPixmap TablePixmap(QString sTName, QString text);
 QString ToolTipField(const QString sTableName, const QString sFieldName, const QString sDataType);
 QString ToolTipTable(const QString sTableName);
-bool ViewFieldIsDate(const QString sFieldName);
+//bool ViewFieldIsDate(const QString sFieldName, QString sData="");
 
 #endif // DATA_H

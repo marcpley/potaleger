@@ -1,8 +1,9 @@
+#include "Dialogs.h"
 #include <QApplication>
 #include <QMessageBox>
-#include "mainwindow.h"
+#include "qmenu.h"
+#include "qscrollarea.h"
 #include "qsqlerror.h"
-#include "ui_mainwindow.h"
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QRadioButton>
@@ -89,7 +90,7 @@ int findMatchingParenthesis(const QString& text, int pos, QChar open, QChar clos
 // Ajoute la sélection visuelle
 void highlightAt(QPlainTextEdit* SQLEdit, int position, QList<QTextEdit::ExtraSelection>& extraSelections) {
     QTextEdit::ExtraSelection selection;
-    selection.format.setBackground(QColor(255, 255, 0, 128)); // Jaune semi-transparent
+    selection.format.setBackground(QColor(255, 255, 0, 90)); // Jaune semi-transparent
     QTextCursor selCursor = SQLEdit->textCursor();
     selCursor.setPosition(position);
     selCursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
@@ -139,9 +140,9 @@ void highlightParentheses(QPlainTextEdit* SQLEdit) {
 
 } // namespace
 
-void MainWindow::MessageDialog(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
+void MessageDlg(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
 {
-    QDialog dialog(this);
+    QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -195,7 +196,7 @@ void MainWindow::MessageDialog(const QString &titre, const QString &message, con
     }
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(tr("OK"));
+    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
 
     buttonLayout->addStretch();
@@ -216,9 +217,9 @@ void MainWindow::MessageDialog(const QString &titre, const QString &message, con
     dialog.exec();
 }
 
-QString MainWindow::QueryDialog(const QString &titre, const QString &message)
+QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db)
 {
-    QDialog dialog(this);
+    QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -245,8 +246,8 @@ QString MainWindow::QueryDialog(const QString &titre, const QString &message)
     SQLEdit->setMaximumHeight(maxHeight);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(tr("OK"));
-    QPushButton *cancelButton = new QPushButton(tr("Annuler"));
+    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -258,10 +259,11 @@ QString MainWindow::QueryDialog(const QString &titre, const QString &message)
     int result = false;
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
         PotaQuery pQuery(db);
-        if (!SQLEdit->toPlainText().toUpper().startsWith("SELECT ")) {
-            messageLabel->setText(tr("La requête doit commencer par %1.").arg("SELECT"));
-        } else if (pQuery.exec(SQLEdit->toPlainText())) {
-            qDebug() << SQLEdit->toPlainText();
+        QStringList values=SQLEdit->toPlainText().split(";\n");
+        if (!values[0].toUpper().startsWith("SELECT ")) {
+            messageLabel->setText(QObject::tr("La requête doit commencer par %1.").arg("SELECT"));
+        } else if (pQuery.exec(values[0])) {
+            qDebug() << values[0];
             result = true;
             dialog.accept();
         } else {
@@ -344,9 +346,9 @@ QString MainWindow::QueryDialog(const QString &titre, const QString &message)
     }
 }
 
-bool MainWindow::OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
+bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {
-    QDialog dialog(this);
+    QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -371,8 +373,8 @@ bool MainWindow::OkCancelDialog(const QString &titre, const QString &message, QS
     layout->addLayout(headerLayout);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(tr("OK"));
-    QPushButton *cancelButton = new QPushButton(tr("Annuler"));
+    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -401,8 +403,8 @@ bool MainWindow::OkCancelDialog(const QString &titre, const QString &message, QS
     return result;
 }
 
-int MainWindow::RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType, const int MinWidth) {
-    QDialog dialog(this);
+int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType, const int MinWidth) {
+    QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -441,8 +443,8 @@ int MainWindow::RadiobuttonDialog(const QString &titre, const QString &message, 
     }
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(tr("OK"));
-    QPushButton *cancelButton = new QPushButton(tr("Annuler"));
+    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -471,9 +473,9 @@ int MainWindow::RadiobuttonDialog(const QString &titre, const QString &message, 
     return result;
 }
 
-bool MainWindow::YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
+bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {
-    QDialog dialog(this);
+    QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -498,8 +500,8 @@ bool MainWindow::YesNoDialog(const QString &titre, const QString &message, QStyl
     layout->addLayout(headerLayout);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *yesButton = new QPushButton(tr("Oui"));
-    QPushButton *noButton = new QPushButton(tr("Non"));
+    QPushButton *yesButton = new QPushButton(QObject::tr("Oui"));
+    QPushButton *noButton = new QPushButton(QObject::tr("Non"));
     yesButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
     noButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogNoButton));
 

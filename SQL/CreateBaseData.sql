@@ -2,228 +2,125 @@ QString sSQLBaseData = QStringLiteral(R"#(
 
 -- BEGIN TRANSACTION;
 
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Alliacées', 4.0, 'Ail, ciboulette, oignon, poireau
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Alliaceae',4.0,'Ail, ciboulette, oignon, poireau '||x'0a0a'||'Sensibles à la pourriture blanche. '||x'0a0a'||'Plantes herbacées vivaces, le plus souvent à bulbe, rarement rhizomateuses. Feuilles simples, fleurs régulières. Le fruit est une capsule. Les graines sont albuminées. '||x'0a0a'||'Régions tempérées chaudes et subtropicales. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Apiaceae',4.0,'Carotte, Céleri, Coriandre, Cumin, Fenouil, Panais, Persil '||x'0a0a'||'Risques de maladies fongiques du sol. '||x'0a0a'||'Tige creuse et dotée de canaux sécréteurs de résines et d''essences odorantes. Feuilles alternes, composées, pennées, au pétiole engainant au niveau des nœuds. Leur inflorescence est généralement une ombelle. Fruits secs doubles. '||x'0a0a'||'Régions tempérées. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Asteraceae',3.0,'Artichaut, chicorée, laitue, tournesol '||x'0a0a'||'Risques de sclérotiniose. '||x'0a0a'||'Tige herbacée généralement dressée. Feuilles sans stipules, souvent simples. Fleurs minuscules, réunies en inflorescences appelées capitules. '||x'0a0a'||'Principalement dans les régions tempérées. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Brassicaceae',3.0,'Choux, colza, cresson, moutarde, navet, raifort '||x'0a0a'||'Risques d’hernie du chou, altises. '||x'0a0a'||'Plantes herbacées. Iinflorescence généralement en grappe simple. '||x'0a0a'||'Surtout présentes dans l''hémisphère nord. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Cannabaceae',NULL,'Cannabis, houblon');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Chenopodiaceae',3.0,'Betterave, chénopodes, épinard, poirée (ou bette) '||x'0a0a'||'Maladies racinaires comme le rhizoctone. '||x'0a0a'||'Plantes herbacées.');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Convovulvaceae',4.0,'Liserons, patate douce '||x'0a0a'||'Sensible aux maladies fongiques (fusariose, pourriture noire) et aux nématodes à galles (Meloidogyne spp.). '||x'0a0a'||'Racine pivotante, ramifiée, charnue. Tiges dressées ou prostrées, cylindriques, ramifiées. Feuilles alternes, pétiolées, sans stipules. Exsudent souvent un latex blanc. Fleurs généralement grandes et très colorées. '||x'0a0a'||'Régions tropicales et subtropicales '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Couverts végétaux',0.0,NULL);
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Cucurbitaceae',3.0,'Concombre, courges, courgettes, melon '||x'0a0a'||'Problèmes de fusariose et d’oïdium. '||x'0a0a'||'Généralement des plantes herbacées, à port rampant ou grimpant. Feuilles alternes sans stipule. Grandes fleurs. Le fruit est en général une baie. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Ebenaceae',NULL,'Plaqueminier, ébène.'||x'0a0a'||'Arbres et arbustes.'||x'0a0a'||'Principalement des régions tropicales.'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Euphorbiaceae',5.0,'Manioc, ricin '||x'0a0a'||'Sensible à la bactériose vasculaire, risque de  nématodes et de cochenilles farineuses. '||x'0a0a'||'Plantes à fleurs dicotylédones. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Fabaceae',3.0,'Arachide, fèves, haricots, lentilles, luzerne, pois chiche, soja, trèfle '||x'0a0a'||'Sensibles aux nématodes. '||x'0a0a'||'Activité symbiotique de fixation de l''azote atmosphérique grâce à des bactéries. '||x'0a0a'||'Wikipédia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Grossulariaceae',NULL,'Groseilliers, cassissier'||x'0a0a'||'Arbustes dicotylédones.'||x'0a0a'||'Zones froides à subtropicales.'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Hydrophyllaceae',3.0,'Phacélie');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Juglandaceae',NULL,'Noyer, pacanier');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Lamiaceae',3.0,'Basilic, mélisse, menthe, romarin, sauge, serpolet, thym '||x'0a0a'||'Sensibles à  la fusariose, l’oïdium et la verticilliose. '||x'0a0a'||'Producteurs d''huiles essentielles, souvent mellifères. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Lythraceae',NULL,'Grenadier, salicaire, châtaigne d''eau'||x'0a0a'||'Arbres ou herbes vivaces ou annuelles, à fleurs dicotylédones, certaines aquatiques. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Malvaceae',NULL,'Hibiscus, tilleul, rose trémière, guimauve, baobab.'||x'0a0a'||'Principalement régions tropicales d''Amérique du Sud, minoritairement régions tempérées (Méditerranée).'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Moraceae',NULL,NULL);
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Myrtaceae',NULL,'Eucalyptus, Feijoa, giroflier'||x'0a0a'||'Arbres ou arbustes, à fleurs dicotylédones, souvent des producteurs d''huiles aromatiques.'||x'0a0a'||'Zones tempérées, subtropicales à tropicales.'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Oleaceae',NULL,'Lilas, jasmin, forsythia, frêne, troène, olivier '||x'0a0a'||'Plantes dicotylédones à fleurs tétramères.'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Poaceae',4.0,'Blé, maïs, riz '||x'0a0a'||'Plantes herbacées à tiges cylindriques aux entrenœuds creux. Feuilles alternes dont la gaine enveloppe la tige. Inflorescence élémentaire en épillets, fleurs réduites aux organes sexuels. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Polygonaceae',4.0,'Oseille, rhubarbe, sarrasin'||x'0a0a'||'Sensible à certaines rouilles et fusarioses.'||x'0a0a'||'Plantes herbacées, le plus souvent vivaces. Racines fibreuses qui  forment des racines secondaires latérales qui colonisent l''espace disponible. Feuilles simples généralement alternes.  Riches en acide oxalique (toxiques en grande quantité).'||x'0a0a'||'Régions de l''hémisphère nord.'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Rosaceae',NULL,'Abricotier, amandier, aubépine, cerisier, cognacier, cynorrhodon, fraisier, framboisier, mûrier, nèflier, pêcher, plaquebière, poirier, pommier, potentille, prunier, prunelier, ronce');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Rutaceae',NULL,'Agrumes'||x'0a0a'||'Plantes productrices d''huiles essentielles.'||x'0a0a'||'Régions tempérées à tropicales'||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Solanaceae',4.0,'Aubergine, piment, pomme de terre, tomate '||x'0a0a'||'Feuilles généralement alternes. 5 pétales soudés entre eux à des hauteurs variables. Fruit charnu ou sec. Graines habituellement oléagineuses. '||x'0a0a'||'Wikipedia');
+INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Valerianaceae',3.0,'Mâche, valériane '||x'0a0a'||'Sensible au mildiou (Peronospora valerianellae), à la sclérotiniose. Rique de de fonte des semis (Pythium, Rhizoctonia).');
 
-Sensibles à la pourriture blanche.
-
-Plantes herbacées vivaces, le plus souvent à bulbe, rarement rhizomateuses.
-Feuilles simples, fleurs régulières. Le fruit est une capsule. Les graines sont
-albuminées.
-
-Régions tempérées chaudes et subtropicales.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Apiacées', 4.0, 'Carotte, Céleri, Coriandre, Cumin, Fenouil, Panais, Persil
-
-Risques de maladies fongiques du sol.
-
-Tige creuse et dotée de canaux sécréteurs de résines et d''essences odorantes.
-Feuilles alternes, composées, pennées, au pétiole engainant au niveau des
-nœuds. Leur inflorescence est généralement une ombelle. Fruits secs doubles.
-
-Régions tempérées.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Astéracées', 3.0, 'Artichaut, chicorée, laitue, tournesol
-
-Risques de sclérotiniose.
-
-Tige herbacée généralement dressée. Feuilles sans stipules, souvent simples.
-Fleurs minuscules, réunies en inflorescences appelées capitules.
-
-Principalement dans les régions tempérées.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Brassicacées', 3.0, 'Choux, colza, cresson, moutarde, navet, raifort
-
-Risques d’hernie du chou, altises.
-
-Plantes herbacées. Iinflorescence généralement en grappe simple.
-
-Surtout présentes dans l''hémisphère nord.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Chénopodiacées', 3.0, 'Betterave, chénopodes, épinard, poirée (ou bette)
-
-Maladies racinaires comme le rhizoctone.
-
-Plantes herbacées.');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Convolvulacées', 4.0, 'Liserons, patate douce
-
-Sensible aux maladies fongiques (fusariose, pourriture noire) et aux nématodes à galles (Meloidogyne spp.).
-
-Racine pivotante, ramifiée, charnue. Tiges dressées ou prostrées, cylindriques,
-ramifiées. Feuilles alternes, pétiolées, sans stipules. Exsudent souvent un
-latex blanc. Fleurs généralement grandes et très colorées.
-
-Régions tropicales et subtropicales
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Cucurbitacées', 3.0, 'Concombre, courges, courgettes, melon
-
-Problèmes de fusariose et d’oïdium.
-
-Généralement des plantes herbacées, à port rampant ou grimpant. Feuilles
-alternes sans stipule. Grandes fleurs. Le fruit est en général une baie.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Euphorbiacées', 5.0, 'Manioc, ricin
-
-Sensible à la bactériose vasculaire, risque de  nématodes et de
-cochenilles farineuses.
-
-Plantes à fleurs dicotylédones.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Fabacées', 3.0, 'Arachide, fèves, haricots, lentilles, luzerne, pois chiche, soja, trèfle
-
-Sensibles aux nématodes.
-
-Activité symbiotique de fixation de l''azote atmosphérique grâce à des bactéries.
-
-Wikipédia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Hydrophyllacées', 3.0, 'Phacélie');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Lamiacées', 3.0, 'Basilic, mélisse, menthe, romarin, sauge, serpolet, thym
-
-Sensibles à  la fusariose, l’oïdium et la verticilliose.
-
-Producteurs d''huiles essentielles, souvent mellifères.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Poacées', 4.0, 'Blé, maïs, riz
-
-Plantes herbacées à tiges cylindriques aux entrenœuds creux. Feuilles alternes dont la gaine enveloppe la tige. Inflorescence élémentaire en épillets, fleurs réduites aux organes sexuels.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Polygonacée', 4.0, 'Oseille, rhubarbe, sarrasin
-
-Sensible à certaines rouilles et fusarioses.
-
-Plantes herbacées, le plus souvent vivaces. Racines fibreuses qui  forment des
-racines secondaires latérales qui colonisent l''espace disponible. Feuilles
-simples généralement alternes.  Riches en acide oxalique (toxiques en grande
-quantité).
-
-Régions de l''hémisphère nord.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Solanacées', 4.0, 'Aubergine, piment, pomme de terre, tomate
-
-Feuilles généralement alternes. 5 pétales soudés entre eux à des hauteurs
-variables. Fruit charnu ou sec. Graines habituellement oléagineuses.
-
-Wikipedia');
-INSERT INTO Familles (Famille, Intervalle, Notes) VALUES ('Valérianacées', 3.0, 'Mâche, valériane
-
-Sensible au mildiou (Peronospora valerianellae), à la sclérotiniose. Rique de de fonte des semis (Pythium, Rhizoctonia).');
-
--- INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('Aucun',NULL, NULL, 0.0, NULL);
--- INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CDM20','Organique', 'Compost demi-mûr', 20.0, NULL);
--- INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CDM40','Organique', 'Compost demi-mûr', 40.0, NULL);
--- INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CM20','Organique', 'Compost mûr', 20.0, NULL);
--- INSERT INTO Apports (Apport, Type, Description, Poids_m², Notes) VALUES ('CM40','Organique', 'Compost mûr', 40.0, NULL);
-
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Ail','Alliacées',0.7,'Facile',NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Aubergine', 'Solanacées', 2.0, 'Difficile', 0.04, 250.0, 6.0, '24-30', 6.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Betterave', 'Chénopodiacées', 2.5, 'Facile', 1.0, 50.0, 6.0, '10-30', 10.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Blette', 'Chénopodiacées', 8.0, 'Facile', 1.0, 60.0, 5.0, '10-30', 15.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Carotte', 'Apiacées', 3.0, 'Difficile', 0.35, 925.0, 4.5, '7-30', 15.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou brocoli', 'Brassicacées', 1.5, 'Moyen', 0.03, 250.0, 4.5, '7-30', 7.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou de Bruxelles', 'Brassicacées', 1.0, 'Moyen', 0.04, 350.0, 5.5, '7-20', 7.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou de Chine', 'Brassicacées', 2.0, 'Difficile', 0.03, 350.0, 2.5, '7-30', 5.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou frisé', 'Brassicacées', 2, 'Facile', 0.03, 300.0, 5.5, '7-20', 10.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou pommé', 'Brassicacées', 2, 'Moyen', 0.03, 300.0, 5.0, '7-30', 6.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou-fleur', 'Brassicacées', 1.5, 'Difficile', 0.03, 400.0, 5.5, '7-30', 9.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Chou-rave', 'Brassicacées', 2.0, 'Facile', 0.06, 300.0, 5.0, '7-30', 9.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Concombre', 'Cucurbitacées', 1.8, 'Facile', 0.125, 35.0, 10.0, '16-35', 9.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Courge', 'Cucurbitacées', 5, 'Difficile', 0.4, 4.58, 5.0, '21-35', 8.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Courgette', 'Cucurbitacées', 4, 'Facile', 0.5, 7.7, 5.0, '21-35', 8.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Céleri', 'Apiacées', 5.0, 'Moyen', 0.02, 2500.0, 7.0, '16-21', 15.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Epinard', 'Chénopodiacées', 2.0, 'Moyen', 0.75, 110.0, 4.5, '7-24', 10.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Fenouil', 'Apiacées', 2.0, 'Moyen', 0.5, 200.0, 4.0, '12', 9.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Fève', 'Fabacées', 4.0, 'Moyen', 45.0, 0.75, 5.0, '8', 15.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Haricot mangetout', 'Fabacées', 1.5, 'Moyen', 10.0, 7, 3.0, '16-30', 6.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Haricot à écosser', 'Fabacées', 0.2, 'Moyen', 10.0, 3, 3.0, '16-30', 6.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Laitue', 'Astéracées', 2.2, 'Moyen', 0.15, 800.0, 4.5, '5-27', 7.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Maïs', 'Poacées', 1.0, 'Moyen', 4, 4.5, 2.0, '16-30', 12.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Melon', 'Cucurbitacées', 1.6, 'Difficile', 0.15, 35.0, 7.0, '24-35', 6.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Moutarde', 'Brassicacées', NULL, NULL, 1.3, 130.0, NULL, '3-5', 6.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Mâche', 'Valérianacées', 1.0, 'Moyen', 0.6, 660.0, 5.0, '15-20', 13.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Mélange', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Mélilot', 'Fabacées', NULL, NULL, 1.75, 120.0, NULL, '5-10', 8.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Navet', 'Brassicacées', 2.2, 'Moyen', 0.3, 600.0, 4.5, '7-30', 5.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Oignon', 'Alliacées', 3.0, 'Moyen', 0.4, 264.0, 2.0, '10-30', 22.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Panais', 'Apiacées', 1.5, 'Moyen', 0.5, 220.0, 1.0, '20', 17.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Patate douce', 'Convolvulacées', 2, 'Difficile', NULL, NULL, NULL, '25', NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Persil', 'Apiacées', 1.0, 'Moyen', 1.0, 600.0, 3.0, '16-30', 20.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Phacélie', 'Hydrophyllacées', NULL, NULL, 1.5, 550.0, NULL, '4-5', 8.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Physalis', 'Solanacées', 1, NULL, NULL,  825.0, 8.0, '20-22', 25.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Poireau', 'Alliacées', 1.8, 'Moyen', 0.17, 300.3, 2.0, '13-24', 15.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Poivron piment', 'Solanacées', 2.5, 'Moyen', 0.075, 150.0, 4.0, '18-35', 12.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Pomme de terre', 'Solanacées', 2.8, 'Moyen', NULL, NULL, NULL, NULL, NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Radis', 'Brassicacées', 0.7, 'Facile', 4.5, 120.0, 4.5, '7-32', 4.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Radis noir', 'Brassicacées', 2.5, 'Facile', 4.5, 120.0, 4.5, '7-32', 3.5, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Ricin', 'Euphorbiacées', NULL, NULL, 0.5, 1.0, NULL, NULL, NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Roquette', 'Brassicacées', 2.5, 'Facile', NULL, 660.0, NULL, NULL, NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Sarrasin', 'Polygonacée', NULL, NULL, 5.5, 5.5, NULL, '10-15', 8.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Sorgho', 'Poacées', NULL, NULL, 4.5, 27.0, NULL, '20-30', 8.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Tomate', 'Solanacées', 8, 'Moyen', 0.03, 350.0, 4.0, '16-30', 7.0, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Topinambour', 'Astéracées', 1.0, 'Facile', NULL, NULL, NULL, NULL, NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Tournesol', 'Apiacées', 1, NULL, NULL, 50.0, 7.0, NULL, NULL, 'Oui', NULL);
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Trèfle blanc', 'Fabacées', NULL, NULL, 1.0, 50.0, NULL, '5-10', 8.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Trèfle violet', 'Fabacées', NULL, NULL, 2.0, 40.0, NULL, '5-10', 8.0, NULL, 'Pour mélange engrais vert');
--- INSERT INTO Espèces (Espèce, Famille, Rendement, Niveau, Dose_semis, Nb_graines_g, FG, T_germ, Levée, A_planifier, Notes) VALUES ('Vesce', 'Fabacées', NULL, NULL, 12.0, 45.0, NULL, '5-10', 8.0, NULL, 'Pour mélange engrais vert');
-
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Ail','Alliacées',0.7,'Facile',28,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Aubergine','Solanacées',2.0,'Difficile',3.35,0.04,250.0,6.0,'24-30',6.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Betterave','Chénopodiacées',2.5,'Facile',50,1.0,50.0,6.0,'10-30',10.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Blette','Chénopodiacées',8.0,'Facile',3.2,1.0,60.0,5.0,'10-30',15.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Carotte','Apiacées',3.0,'Difficile',80,0.35,925.0,4.5,'7-30',15.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Céleri','Apiacées',5.0,'Moyen',5,0.02,2500.0,7.0,'16-21',15.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou brocoli','Brassicacées',1.5,'Moyen',4.2,0.03,250.0,4.5,'7-30',7.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou de Bruxelles','Brassicacées',1.0,'Moyen',2,0.04,350.0,5.5,'7-20',7.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou de Chine','Brassicacées',2.0,'Difficile',4,0.03,350.0,2.5,'7-30',5.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou frisé','Brassicacées',2.0,'Facile',5,0.03,300.0,5.5,'7-20',10.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou pommé','Brassicacées',2.0,'Moyen',3,0.03,300.0,5.0,'7-30',6.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou-fleur','Brassicacées',1.5,'Difficile',2.2,0.03,400.0,5.5,'7-30',9.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou-rave','Brassicacées',2.0,'Facile',16,0.06,300.0,5.0,'7-30',9.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Concombre','Cucurbitacées',1.8,'Facile',3,0.125,35.0,10.0,'16-35',9.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Courge','Cucurbitacées',5.0,'Difficile',1.3,0.4,4.58,5.0,'21-35',8.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Courgette','Cucurbitacées',4.0,'Facile',1.3,0.5,7.7,5.0,'21-35',8.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Epinard','Chénopodiacées',2.0,'Moyen',70,0.75,110.0,4.5,'7-24',10.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Fenouil','Apiacées',2.0,'Moyen',NULL,0.5,200.0,4.0,'12',9.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Fève','Fabacées',4.0,'Moyen',17,45.0,0.75,5.0,'8',15.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Haricot à écosser','Fabacées',0.2,'Moyen',8.65,10.0,3.0,3.0,'16-30',6.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Haricot mangetout','Fabacées',1.5,'Moyen',7,10.0,7.0,3.0,'16-30',6.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Laitue','Astéracées',2.2,'Moyen',13,0.15,800.0,4.5,'5-27',7.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Mâche','Valérianacées',1.0,'Moyen',77,0.6,660.0,5.0,'15-20',13.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Maïs','Poacées',1.0,'Moyen',10,4.0,4.5,2.0,'16-30',12.5,'Oui',NULL);
+-- Annuelles
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Ail','Alliaceae',0.7,'Facile',28,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Aubergine','Solanaceae',2.0,'Difficile',3.35,0.04,250.0,6.0,'24-30',6.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Betterave','Chenopodiaceae',2.5,'Facile',50,1.0,50.0,6.0,'10-30',10.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Blette','Chenopodiaceae',8.0,'Facile',3.2,1.0,60.0,5.0,'10-30',15.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Carotte','Apiaceae',3.0,'Difficile',80,0.35,925.0,4.5,'7-30',15.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Céleri','Apiaceae',5.0,'Moyen',5,0.02,2500.0,7.0,'16-21',15.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou brocoli','Brassicaceae',1.5,'Moyen',4.2,0.03,250.0,4.5,'7-30',7.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou de Bruxelles','Brassicaceae',1.0,'Moyen',2,0.04,350.0,5.5,'7-20',7.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou de Chine','Brassicaceae',2.0,'Difficile',4,0.03,350.0,2.5,'7-30',5.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou frisé','Brassicaceae',2.0,'Facile',5,0.03,300.0,5.5,'7-20',10.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou pommé','Brassicaceae',2.0,'Moyen',3,0.03,300.0,5.0,'7-30',6.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou-fleur','Brassicaceae',1.5,'Difficile',2.2,0.03,400.0,5.5,'7-30',9.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Chou-rave','Brassicaceae',2.0,'Facile',16,0.06,300.0,5.0,'7-30',9.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Concombre','Cucurbitaceae',1.8,'Facile',3,0.125,35.0,10.0,'16-35',9.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Courge','Cucurbitaceae',5.0,'Difficile',1.3,0.4,4.58,5.0,'21-35',8.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Courgette','Cucurbitaceae',4.0,'Facile',1.3,0.5,7.7,5.0,'21-35',8.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Epinard','Chenopodiaceae',2.0,'Moyen',70,0.75,110.0,4.5,'7-24',10.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Fenouil','Apiaceae',2.0,'Moyen',12,0.5,200.0,4.0,'12',9.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Fève','Fabaceae',4.0,'Moyen',17,45.0,0.75,5.0,'8',15.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Haricot à écosser','Fabaceae',0.2,'Moyen',8.65,10.0,3.0,3.0,'16-30',6.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Haricot mangetout','Fabaceae',1.5,'Moyen',7,10.0,7.0,3.0,'16-30',6.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Laitue','Asteraceae',2.2,'Moyen',13,0.15,800.0,4.5,'5-27',7.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Mâche','Valerianaceae',1.0,'Moyen',77,0.6,660.0,5.0,'15-20',13.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Maïs','Poaceae',1.0,'Moyen',10,4.0,4.5,2.0,'16-30',12.5,'Oui',NULL);
 INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Mélange',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Mélilot','Fabacées',NULL,NULL,NULL,1.75,120.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Melon','Cucurbitacées',1.6,'Difficile',1.8,0.15,35.0,7.0,'24-35',6.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Moutarde','Brassicacées',NULL,NULL,NULL,1.3,130.0,NULL,'3-5',6.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Navet','Brassicacées',2.2,'Moyen',85,0.3,600.0,4.5,'7-30',5.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Oignon','Alliacées',3.0,'Moyen',44,0.4,264.0,2.0,'10-30',22.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Panais','Apiacées',1.5,'Moyen',35,0.5,220.0,1.0,'20',17.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Patate douce','Convolvulacées',2.0,'Difficile',3.2,NULL,NULL,NULL,'25',NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Persil','Apiacées',1.0,'Moyen',2,1.0,600.0,3.0,'16-30',20.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Phacélie','Hydrophyllacées',NULL,NULL,NULL,1.5,550.0,NULL,'4-5',8.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Physalis','Solanacées',1.0,NULL,2,NULL,825.0,8.0,'20-22',25.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Poireau','Alliacées',1.8,'Moyen',47,0.17,300.3,2.0,'13-24',15.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Poivron piment','Solanacées',2.5,'Moyen',4.4,0.075,150.0,4.0,'18-35',12.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Pomme de terre','Solanacées',2.8,'Moyen',2.7,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Radis','Brassicacées',0.7,'Facile',160,4.5,120.0,4.5,'7-32',4.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Radis noir','Brassicacées',2.5,'Facile',26.5,4.5,120.0,4.5,'7-32',3.5,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Ricin','Euphorbiacées',NULL,NULL,0.4,0.5,1.0,NULL,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Roquette','Brassicacées',2.5,'Facile',107,NULL,660.0,NULL,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Sarrasin','Polygonacée',NULL,NULL,NULL,5.5,5.5,NULL,'10-15',8.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Sorgho','Poacées',NULL,NULL,NULL,4.5,27.0,NULL,'20-30',8.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Tomate','Solanacées',8.0,'Moyen',3.5,0.03,350.0,4.0,'16-30',7.0,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Topinambour','Astéracées',1.0,'Facile',3.3,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Tournesol','Apiacées',1.0,NULL,NULL,NULL,50.0,7.0,NULL,NULL,'Oui',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Trèfle blanc','Fabacées',NULL,NULL,NULL,1.0,50.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Trèfle violet','Fabacées',NULL,NULL,NULL,2.0,40.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Vesce','Fabacées',NULL,NULL,NULL,12.0,45.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Mélilot','Fabaceae',NULL,NULL,NULL,1.75,120.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Melon','Cucurbitaceae',1.6,'Difficile',1.8,0.15,35.0,7.0,'24-35',6.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Moutarde','Brassicaceae',NULL,NULL,NULL,1.3,130.0,NULL,'3-5',6.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Navet','Brassicaceae',2.2,'Moyen',85,0.3,600.0,4.5,'7-30',5.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Oignon','Alliaceae',3.0,'Moyen',44,0.4,264.0,2.0,'10-30',22.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Panais','Apiaceae',1.5,'Moyen',35,0.5,220.0,1.0,'20',17.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Patate douce','Convolvulaceae',2.0,'Difficile',3.2,NULL,NULL,NULL,'25',NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Persil','Apiaceae',1.0,'Moyen',2,1.0,600.0,3.0,'16-30',20.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Phacélie','Hydrophyllaceae',NULL,NULL,NULL,1.5,550.0,NULL,'4-5',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Physalis','Solanaceae',1.0,NULL,2,NULL,825.0,8.0,'20-22',25.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Poireau','Alliaceae',1.8,'Moyen',47,0.17,300.3,2.0,'13-24',15.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Poivron piment','Solanaceae',2.5,'Moyen',4.4,0.075,150.0,4.0,'18-35',12.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Pomme de terre','Solanaceae',2.8,'Moyen',2.7,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Radis','Brassicaceae',0.7,'Facile',160,4.5,120.0,4.5,'7-32',4.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Radis noir','Brassicaceae',2.5,'Facile',26.5,4.5,120.0,4.5,'7-32',3.5,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Ricin','Euphorbiaceae',NULL,NULL,0.4,0.5,1.0,NULL,NULL,NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Roquette','Brassicaceae',2.5,'Facile',107,NULL,660.0,NULL,NULL,NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Sarrasin','Polygonaceae',NULL,NULL,NULL,5.5,5.5,NULL,'10-15',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Sorgho','Poaceae',NULL,NULL,NULL,4.5,27.0,NULL,'20-30',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Tomate','Solanaceae',8.0,'Moyen',3.5,0.03,350.0,4.0,'16-30',7.0,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Topinambour','Asteraceae',1.0,'Facile',3.3,NULL,NULL,NULL,NULL,NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Tournesol','Apiaceae',1.0,NULL,NULL,NULL,50.0,7.0,NULL,NULL,'Oui',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Trèfle blanc','Fabaceae',NULL,NULL,NULL,1.0,50.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Trèfle violet','Fabaceae',NULL,NULL,NULL,2.0,40.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,A_planifier,Notes) VALUES ('Vesce','Fabaceae',NULL,NULL,NULL,12.0,45.0,NULL,'5-10',8.0,NULL,'Pour mélange engrais vert');
+
+-- Vivaces
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Abricotier','Rosaceae','- Expo ensoleillèe, lumière et froid en hiver, soleil en été'||x'0a'||'- Ne demande pas de forte fertilisation','Gelées printanières','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Actinidia',NULL,'- Expo abrité,est/sud-est.'||x'0a'||'- Sol frais, riche en humus.'||x'0a'||'- Très résistant au froid.','Gelées printanières','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Albizia','Fabaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Amandier','Rosaceae','- Sol profond, riche en calcaire'||x'0a'||'- Etés chauds et hivers courts'||x'0a'||'- Supporte sécheresse (200mm/an suffisant)','- Sol à humidité stagnante'||x'0a'||'- Gelées printanières','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Argousier',NULL,'Expo ensoleillèe',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Bambou','Poaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Cerisier','Rosaceae','Sol fertile, profond et bien drainé','Taille','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Châtaignier','Fabaceae','Chaleur','- Sol argileux et humide'||x'0a'||'- Gelées printanières','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Chayote','Cucurbitaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Citronnier','Rutaceae','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Cognassier','Rosaceae','- Sol profond et frais'||x'0a'||'- Très résistant au froid'||x'0a'||'- Grosse chaleur',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Feijoa','Myrtaceae','- Expo ensoleillèe'||x'0a'||'- Tout type de sol'||x'0a'||'- Résistant au froid -10°C'||x'0a'||'- Besoin de chaleur pour fructifier',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Figuier','Moraceae','Sol frais et profond','Très sensible au gel','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Framboisier','Rosaceae','Sol léger, frais, riche en humus','- Sol à humidité stagnante'||x'0a'||'- Sécheresse excessive'||x'0a'||'- Concurrence des herbes','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Frêne','Oleaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Grenadier','Lythraceae','- Sol très humide'||x'0a'||'- Résistant au froid -12°C'||x'0a'||'- Besoin de chaleur pour fructifier',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Groseillier','Grossulariaceae','Froid en hiver','- Expo sud/sud-ouest'||x'0a'||'- Forte chaleur en été'||x'0a'||'- Concurrence des herbes','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Hibiscus','Malvaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Houblon','Cannabaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Kaki-pomme','Ebenaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Kumquat','Rutaceae','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Mandarinier','Rutaceae','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Mûrier platane','Moraceae','- Sol profond et frais'||x'0a'||'- Résistant au froid -18°C',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Mûrier sans épine','Rosaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Néflier','Rosaceae','Expo ensoleillèe',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Noisetier',NULL,'Sol fertile limono-argileux',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Noyer','Juglandaceae',NULL,'- Gelées printanières'||x'0a'||'- Taille','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Olivier','Oleaceae','- Expo ensoleillèe'||x'0a'||'- Chaleur','-Froid'||x'0a'||'-Sol argileux humide','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Oranger','Rutaceae','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Pêcher','Rosaceae','-Expo ensoleillèe'||x'0a'||'-Sol fertile','- Sol à humidité stagnante'||x'0a'||'- Gelées printanières'||x'0a'||'- Concurrence des herbes','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Plaqueminier','Ebenaceae','- Sol bien drainé, frais et fertile'||x'0a'||'- Résistant au froid -18°C','Gelées printanières ( jeunes arbres) -5°C','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Poirier','Rosaceae','Sol profond et frais','Sol à humidité stagnante','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Pommier','Rosaceae','- Sol frais'||x'0a'||'- Fraîcheur',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Prunier','Rosaceae',NULL,'- Sol humide et froid'||x'0a'||'- Gelées printanières'||x'0a'||'- Taille','x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Pyracantha','Rosaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Sureau',NULL,'Sol profond, riche en azote et en MO, un peu humide, fertile.',NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Tilleul','Malvaceae',NULL,NULL,'x',NULL);
+INSERT INTO Espèces (Espèce,Famille,Favorable,Défavorable,Vivace,A_planifier) VALUES ('Vigne',NULL,'Expo ensoleillèe',NULL,'x',NULL);
 
 INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Algues marines','Amendement','Oligo-éléments, stimule croissance et résistance');
 INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Broyat de bois','Couvert','Structurant, aère et nourrit les micro-organismes lignivores');
@@ -405,7 +302,8 @@ INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_p
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Poireau précoce', 'Poireau', 'Extérieur', '02-15', '03-15', '05-01', '06-01', '07-15', '11-01', 4.0, 10.0, 1.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Poivron piment ext', 'Poivron piment', 'Extérieur', '03-01', '04-15', '05-15', '06-15', '08-15', '11-01', 2.0, 55.0, 1.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Poivron piment serre', 'Poivron piment', 'Serre', '02-15', '04-01', '05-01', '06-01', '07-15', '11-01', 2.0, 55.0, 1.0, NULL, NULL);
-INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Pomme de terre conservation', 'Pomme de terre', 'Extérieur', NULL, NULL, '02-01', '04-15', '05-01', '07-01', 1.0, 40.0, NULL, NULL, NULL);
+INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Pomme de terre hative', 'Pomme de terre', 'Extérieur', NULL, NULL, '03-01', '04-15', '06-01', '08-01', 2.0, 40.0, NULL, NULL, NULL);
+INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Pomme de terre tardive', 'Pomme de terre', 'Extérieur', NULL, NULL, '03-01', '04-15', '07-01', '09-01', 2.0, 40.0, NULL, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Radis d''hiver', 'Radis noir', 'Extérieur', '08-01', '10-15', NULL, NULL, '11-01', '03-15', 2.0, 10.0, 2.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Radis d''été', 'Radis', 'Extérieur', '05-01', '09-01', NULL, NULL, '06-15', '11-15', 4.0, 4.0, 1.0, NULL, NULL);
 INSERT INTO ITP (IT_plante, Espèce, Type_planche, Déb_semis, Fin_semis, Déb_plantation, Fin_plantation, Déb_récolte, Fin_récolte, Nb_rangs, Espacement, Nb_graines_trou, Dose_semis, Notes) VALUES ('Ricin', 'Ricin', NULL, '03-01', '05-15', '04-01', '05-01', NULL, '11-15', 1.0, 300.0, 1.0, NULL, NULL);
@@ -542,7 +440,7 @@ INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (9, 'Potager', 2, 'Betterave plant. printemps', 100.0, NULL, NULL);
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (10, 'Potager', 3, 'Poireau plant. printemps', 100.0, NULL, NULL);
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (12, 'Potager', 4, 'Chou pommé plant. printemps', 100.0, NULL, NULL);
-INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (14, 'Grande culture', 2, 'Pomme de terre conservation', 100.0, NULL, NULL);
+INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (14, 'Grande culture', 2, 'Pomme de terre hative', 100.0, NULL, NULL);
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (15, 'Grande culture', 1, 'Maïs', 100.0, 'BD', NULL);
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (16, 'Grande culture', 1, 'Courge', 100.0, 'AC', NULL);
 INSERT INTO Rotations_détails (ID, Rotation, Année, IT_plante, Pc_planches, Fi_planches, Notes) VALUES (17, 'Grande culture', 1, 'Haricot Tarbais (maïs)', 100.0, 'BD', NULL);

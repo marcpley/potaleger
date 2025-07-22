@@ -14,7 +14,7 @@ iif(:Valeur>0,CAST(:Valeur AS INTEGER),CAST(:Valeur-1 AS INTEGER))
 QString sPlanifCultureCalcDate = QStringLiteral(R"#(
 -- :D_min (YYYY-MM-DD)
 -- :Déb_période (MM-DD)
-iif(strftime(''%Y'',:D_min)||''-''||:Déb_période<DATE(:D_min,''-''||(SELECT Valeur FROM Params WHERE Paramètre=''Planifier_retard'')||'' days''),
+iif(strftime(''%Y'',:D_min)||''-''||:Déb_période < DATE(:D_min,''-''||(SELECT Valeur FROM Params WHERE Paramètre=''Planifier_retard'')||'' days''),
     DATE(strftime(''%Y'',:D_min)||''-''||:Déb_période,''+1 years''),
     iif(strftime(''%Y'',:D_min)||''-''||:Déb_période<:D_min,
         DATE(:D_min,''+1 days''),
@@ -31,18 +31,24 @@ iif((length(:dPeriode)<>5)AND(round(:dPeriode) BETWEEN 1 AND 12),
 
 QString sItpTempoNJPeriode = QStringLiteral(R"#(
 -- :dDeb1,:dFin1,:dDeb2 nb de jour depuis le début de l'année.
-iif(:dDeb1 <= :dFin1, --Période 1 sur 1 année
-    iif(:dDeb2 > :dDeb1, --Période 2 sur la même année
+iif(:dDeb1 <= :dFin1,
+    --Période 1 sur 1 année
+    iif(:dDeb2 > :dDeb1,
+        --Période 2 sur la même année
         iif(:dDeb2 >= :dFin1,:dFin1 - :dDeb1, -- Pas de chevauchement entre P1 et P2                 OK
-                           :dDeb2 - :dDeb1),-- Chevauchement entre P1 et P2                          OK
-        :dFin1 - :dDeb1), -- Période 2 l'année suivante, pas de chevauchement entre P1 et P2         OK
-                    --Période 1 sur 2 années
-    iif(:dDeb2 >= :dDeb1,:dDeb2 - :dDeb1, --Période 2 sur l'année 1, chevauchement entre P1 et P2    OK
-                      iif(:dDeb2 >= :dFin1,     --Période 2 sur l'année 2
-                          :dFin1 + 365 - :dDeb1, -- Pas de chevauchement entre P1 et P2              OK
-                          :dDeb2 + 365 - :dDeb1))) -- Chevauchement entre P1 et P2                   OK
+                             :dDeb2 - :dDeb1),-- Chevauchement entre P1 et P2                          OK
+        -- Période 2 l'année suivante, pas de chevauchement entre P1 et P2         OK
+        :dFin1 - :dDeb1),
+    --Période 1 sur 2 années
+    iif(:dDeb2 >= :dDeb1,
+        --Période 2 sur l'année 1, chevauchement entre P1 et P2    OK
+        :dDeb2 - :dDeb1,
+        --Période 2 sur l'année 2
+        iif(:dDeb2 >= :dFin1,
+            :dFin1 + 365 - :dDeb1, -- Pas de chevauchement entre P1 et P2              OK
+            :dDeb2 + 365 - :dDeb1))) -- Chevauchement entre P1 et P2                   OK
 
---                          '' dDeb2 ''||:dDeb2||'' - dDeb1 ''||:dDeb1||'' - dFin1 ''||:dFin1||'' - dDeb2+365-dDeb1 = ''||:dDeb2+365-:dDeb1))) -- Chevauchement entre P1 et P2 BUG :dDeb2+365-:dDeb1
+    -- '' dDeb1: ''||:dDeb1||'' - dFin1: ''||:dFin1||'' - dDeb2: ''||:dDeb2||'' - dDeb2+365-dDeb1 = ''||CAST(:dDeb2+365-:dDeb1 AS TEXT) -- Chevauchement entre P1 et P2 BUG :dDeb2+365-:dDeb1
 -- out : nb de jour
 )#");
 
@@ -63,7 +69,7 @@ iif(:dDeb1 <= :dFin1, --Période 1 sur 1 année
 
 QString sItpTempoNJ = QStringLiteral(R"#(
 -- :date (MM-DD)
-iif(:date NOT NULL,strftime(''%j'',''2000-''||:date),0)
+iif(:date NOT NULL,CAST(strftime(''%j'',''2001-''||:date)AS INTEGER),0) -- 2000 est bisextile
 -- out : nb de jour depuis le début de l'année.
 )#");
 
@@ -126,7 +132,8 @@ QString sCul_Espece = QStringLiteral(R"#(
 
 QString sCulTempoNJPeriode = QStringLiteral(R"#(
 -- :dDeb :dFin date (YYYY-MM-DD)
-replace(-julianday(:dDeb)+julianday(:dFin),''.0'','''')
+iif((:dDeb ISNULL)OR(:dFin ISNULL),0,
+     replace(-julianday(:dDeb)+julianday(:dFin),''.0'',''''))
 -- out : nb de jour de la période.
 )#");
 

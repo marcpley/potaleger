@@ -33,6 +33,7 @@ SOURCES += \
     sqlite/sqlite3.c
 
 HEADERS += \
+    Dialogs.h \
     PotaUtils.h \
     SQL/FunctionsSQLite.h \
     classes/zoomgraphicsview.h \

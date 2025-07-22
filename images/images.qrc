@@ -13,5 +13,6 @@
         <file>potaleger.ico</file>
         <file>edit.svg</file>
         <file>editOn.svg</file>
+        <file>duplicate_row.svg</file>
     </qresource>
 </RCC>
