@@ -96,6 +96,5 @@ RC_ICONS = images/potaleger.ico
 
 #Pour que muParser ne provoque pas une erreur de compil sous windows.
 DEFINES -= MUPARSER_DLL
-DEFINES -= MU_PARSER_DLL
 DEFINES += MUPARSER_STATIC
 QMAKE_CXXFLAGS += -DMUPARSER_STATIC
