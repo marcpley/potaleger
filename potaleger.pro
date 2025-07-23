@@ -57,7 +57,6 @@ HEADERS += \
     muParser/muParserTemplateMagic.h \
     muParser/muParserToken.h \
     muParser/muParserTokenReader.h \
-    muParser/muParser_narrow.h \
     potawidget.h \
     sqlean/define.h \
     sqlite/sqlite3.h

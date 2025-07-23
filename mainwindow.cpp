@@ -473,7 +473,7 @@ void MainWindow::on_mAbout_triggered()
                   "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
                   "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
-                  //"ExprTK <a href=\"https://github.com/ArashPartow/exprtk/\">github.com/ArashPartow/exprtk</a><br>"
+                  "muParser <a href=\"https://github.com/ArashPartow/exprtk/\">github.com/ArashPartow/exprtk</a><br>"
                   "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a>, merci Silvère !<br>"
                   "IA: ChatGPT, Mistral et Copilot<br>"
                   "Le Guide Terre Vivante du potager bio <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
@@ -487,7 +487,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "<b>Potaléger 1.20</b> - 01/07/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Culture de vivaces</b>.")+"<br>"+
-                  //"- "+tr("Fonction calculatrice dans les cellules numériques.")+"<br>"+
+                  "- "+tr("Fonction calculatrice dans les cellules numériques.")+"<br>"+
                   "- "+tr("Alerte visuelle (cellule en rouge) si le contenu se termine par un '!'.")+"<br>"+
                   "- "+tr("Champ 'A faire' sur les cultures et nouvel onglet des cultures ayant quelque chose à faire.")+"<br>"+
                   "- "+tr("Amélioration visu graphique des cultures (dépérissement).")+"<br>"+

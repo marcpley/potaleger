@@ -23,7 +23,7 @@
 #include <QSqlRecord>
 #include <QLabel>
 #include "qsqlerror.h"
-#include "muParser/muParser_narrow.h"
+#include "muParser/muParser.h"
 
 class PotaTableModel: public QSqlRelationalTableModel
 {
@@ -147,7 +147,13 @@ public:
                 }
             } else if (value.toString().startsWith("=") and
                       (dataTypes[index.column()]=="REAL" or dataTypes[index.column()]=="INTEGER")) {
-                std::string expr=value.toString().mid(1).trimmed().toStdString();
+                mu::string_type expr;
+                #ifdef _WIN32
+                    expr = value.toString().mid(1).trimmed().toStdWString();
+                #else
+                    expr = value.toString().mid(1).trimmed().toStdString();
+                #endif
+                //std::string expr=value.toString().mid(1).trimmed().toStdString();
                 mu::Parser parser;
                 parser.SetExpr(expr);
                 QString result;
