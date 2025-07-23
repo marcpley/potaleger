@@ -62,11 +62,6 @@ HEADERS += \
     sqlean/define.h \
     sqlite/sqlite3.h
 
-#Pour que muParser ne provoque pas une erreur de compil sous windows.
-#INCLUDEPATH += muParser
-#DEFINES += MUP_USE_WCHAR=0
-#DEFINES -= MUP_USE_WCHAR #Car dans muParserDef.h il y a '#ifdef MUP_USE_WCHAR' au lieu de '#if MUP_USE_WCHAR'.
-
 FORMS += \
     mainwindow.ui
 
@@ -99,3 +94,9 @@ RC_ICONS = images/potaleger.ico
 
 # INCLUDEPATH += $$PWD/sqlean.so
 # DEPENDPATH += $$PWD/sqlean.so
+
+#Pour que muParser ne provoque pas une erreur de compil sous windows.
+DEFINES -= MUPARSER_DLL
+DEFINES -= MU_PARSER_DLL
+DEFINES += MUPARSER_STATIC
+QMAKE_CXXFLAGS += -DMUPARSER_STATIC
