@@ -29,12 +29,8 @@ SOURCES += \
     muParser/muParser.cpp \
     muParser/muParserBase.cpp \
     muParser/muParserBytecode.cpp \
-    muParser/muParserCallback.cpp \
-    muParser/muParserDLL.cpp \
     muParser/muParserError.cpp \
     muParser/muParserInt.cpp \
-    muParser/muParserTest.cpp \
-    muParser/muParserTokenReader.cpp \
     potawidget.cpp \
     sqlean/eval.c \
     sqlean/manage.c \
@@ -51,15 +47,8 @@ HEADERS += \
     muParser/muParser.h \
     muParser/muParserBase.h \
     muParser/muParserBytecode.h \
-    muParser/muParserCallback.h \
-    muParser/muParserDLL.h \
-    muParser/muParserDef.h \
     muParser/muParserError.h \
-    muParser/muParserFixes.h \
     muParser/muParserInt.h \
-    muParser/muParserTemplateMagic.h \
-    muParser/muParserToken.h \
-    muParser/muParserTokenReader.h \
     muParser/muParser_narrow.h \
     potawidget.h \
     sqlean/define.h \
