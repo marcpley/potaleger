@@ -60,12 +60,15 @@ HEADERS += \
     muParser/muParserTemplateMagic.h \
     muParser/muParserToken.h \
     muParser/muParserTokenReader.h \
+    muParser/muParser_narrow.h \
     potawidget.h \
     sqlean/define.h \
     sqlite/sqlite3.h
 
-INCLUDEPATH += muParser
-DEFINES -= MUP_USE_WCHAR #Pour que muParser ne provoque pas une erreur de compil sous windows.
+#Pour que muParser ne provoque pas une erreur de compil sous windows.
+#INCLUDEPATH += muParser
+#DEFINES += MUP_USE_WCHAR=0
+#DEFINES -= MUP_USE_WCHAR #Car dans muParserDef.h il y a '#ifdef MUP_USE_WCHAR' au lieu de '#if MUP_USE_WCHAR'.
 
 FORMS += \
     mainwindow.ui

@@ -23,7 +23,7 @@
 #include <QSqlRecord>
 #include <QLabel>
 #include "qsqlerror.h"
-#include "muParser/muParser.h"
+#include "muParser/muParser_narrow.h"
 
 class PotaTableModel: public QSqlRelationalTableModel
 {
