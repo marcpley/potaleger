@@ -1339,7 +1339,8 @@ bool PotaTableModel::select()  {
                       "WHERE "+sPrimaryKey+"=:pk");
         for (int i=0;i<rowCount();i++) {
             progressBar->setValue(i);
-            query.bindValue(":pk",StrReplace(data(index(i,jPrimaryKey),Qt::EditRole).toString(),"'","''"));
+            //query.bindValue(":pk",StrReplace(data(index(i,jPrimaryKey),Qt::EditRole).toString(),"'","''"));
+            query.bindValue(":pk",data(index(i,jPrimaryKey),Qt::EditRole).toString());
             query.exec();
             query.next();
             //if (i==0)
@@ -1348,11 +1349,13 @@ bool PotaTableModel::select()  {
             for (int j=0;j<columnCount();j++) {
                 //if (i+j==0)
                 //    qDebug() << data(index(i,j),Qt::EditRole).toString() << query.value(j).toString();
-                if (data(index(i,j),Qt::EditRole).toString()!=query.value(j).toString())
+                if (data(index(i,j),Qt::EditRole).toString()!=query.value(j).toString()){
                     // query.Selec0ShowErr("SELECT "+FieldName(j)+" "+
                     //                      "FROM temp."+tempTableName+" "+
                     //                      "WHERE "+sPrimaryKey+"='"+StrReplace(data(index(i,jPrimaryKey)).toString(),"'","''")+"'").toString())
                     commitedCells.insert(index(i,j));
+                    qDebug() << data(index(i,j),Qt::EditRole).toString() << query.value(j).toString();
+                }
             }
         }
         AppBusy(false,progressBar);

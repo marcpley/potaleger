@@ -471,7 +471,9 @@ int PotaCollation(void* /*unused*/, int len1, const void* str1, int len2, const 
     QString s2 = QString::fromUtf8(static_cast<const char*>(str2), len2);
 
     QCollator collator(QLocale::French);
-    //collator.setIgnorePunctuation(true);
+    // collator.setLocale(QLocale(QLocale::French, QLocale::France));
+    // collator.setCaseSensitivity(Qt::CaseInsensitive);
+    // collator.setIgnorePunctuation(true);
     //collator.setStrength(QCollator::Primary);  // Ignore les différences d'accents
 
     return collator.compare(s1, s2);
@@ -495,7 +497,7 @@ bool registerPotaCollation(QSqlDatabase& db) {
     return true;
 }
 
-static void RemoveAccents(sqlite3_context* context, int argc, sqlite3_value** argv) { //todo: utile ?
+static void RemoveAccents(sqlite3_context* context, int argc, sqlite3_value** argv) {
     if (argc == 1 && sqlite3_value_type(argv[0]) == SQLITE_TEXT) {
         QString input = QString::fromUtf8(reinterpret_cast<const char*>(sqlite3_value_text(argv[0]))).toLower();
         QString normalized = input.normalized(QString::NormalizationForm_D);

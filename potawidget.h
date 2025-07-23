@@ -23,7 +23,7 @@
 #include <QSqlRecord>
 #include <QLabel>
 #include "qsqlerror.h"
-//#include "extra/exprtk.hpp"
+#include "muParser/muParser.h"
 
 class PotaTableModel: public QSqlRelationalTableModel
 {
@@ -138,33 +138,30 @@ public:
                     return true;
                 }
             }
-            // #DateFormat
-            if (dateColumns.contains(index.column())) {
+
+            if (dateColumns.contains(index.column())) {// #DateFormat
                 QString dateString = value.toString();
                 QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
                 if (date.isValid()) {
                     return QSqlRelationalTableModel::setData(index, date, role);
                 }
-            // } else if (value.toString().startsWith("=") and
-            //            (dataTypes[index.column()]=="REAL" or dataTypes[index.column()]=="INTEGER")) {
-                // typedef exprtk::expression<double> expression_t;
-                // typedef exprtk::parser<double> parser_t;
-                // std::string expr = value.toString().mid(1).trimmed().toStdString();
-                // expression_t expression;
-                // parser_t parser;
-                // if (parser.compile(expr, expression)) {
-                //     QString result;
-                //     if (dataTypes[index.column()]=="INTEGER")
-                //         result=QString::number(std::round(expression.value()));
-                //     else
-                //         result=QString::number(expression.value());
-                //     QLocale locale;
-                //     QString decimalSep = QString(locale.decimalPoint());
-                //     result.replace(decimalSep,".");
-                //     return QSqlRelationalTableModel::setData(index, result, role);
-                // }
+            } else if (value.toString().startsWith("=") and
+                      (dataTypes[index.column()]=="REAL" or dataTypes[index.column()]=="INTEGER")) {
+                std::string expr=value.toString().mid(1).trimmed().toStdString();
+                mu::Parser parser;
+                parser.SetExpr(expr);
+                QString result;
+                try {
+                    if (dataTypes[index.column()]=="INTEGER")
+                        result=QString::number(std::round(parser.Eval()));
+                    else
+                        result=QString::number(parser.Eval());
+                    QLocale locale;
+                    QString decimalSep = QString(locale.decimalPoint());
+                    result.replace(decimalSep,".");
+                    return QSqlRelationalTableModel::setData(index, result, role);
+                } catch (mu::Parser::exception_type &e) {};
             }
-
         }
 
         return QSqlRelationalTableModel::setData(index, value, role);
