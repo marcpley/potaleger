@@ -65,7 +65,7 @@ HEADERS += \
     sqlite/sqlite3.h
 
 INCLUDEPATH += muParser
-DEFINES += MUP_USE_WCHAR=0 #Pour que muParser ne provoque pas une erreur de compil sous windows.
+DEFINES -= MUP_USE_WCHAR #Pour que muParser ne provoque pas une erreur de compil sous windows.
 
 FORMS += \
     mainwindow.ui
