@@ -46,7 +46,7 @@ jobs:
             mkdir build
             cd build
             qmake -config release ..\potaleger.pro
-            mingw32-make
+            mingw32-make V=1
             Get-ChildItem
 
       - name: Prepare artifact
