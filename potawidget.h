@@ -23,7 +23,6 @@
 #include <QSqlRecord>
 #include <QLabel>
 #include "qsqlerror.h"
-#define MUP_USE_WCHAR 0 //Pour que la compil windows fonctionne avec muParser.
 #include "muParser/muParser.h"
 
 class PotaTableModel: public QSqlRelationalTableModel

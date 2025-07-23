@@ -17,6 +17,8 @@ unix: {
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+DEFINES += MUP_USE_WCHAR=0 #Pour que muParser ne provoque pas une erreur de compil sous windows.
+
 SOURCES += \
     Dialogs.cpp \
     PotaUtils.cpp \
