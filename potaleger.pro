@@ -24,7 +24,6 @@ SOURCES += \
     Structure.cpp \
     classes/zoomgraphicsview.cpp \
     data/Data.cpp \
-    maelia/maelia.cpp \
     main.cpp \
     mainwindow.cpp \
     muParser/muParser.cpp \
@@ -47,7 +46,6 @@ HEADERS += \
     SQL/FunctionsSQLite.h \
     classes/zoomgraphicsview.h \
     data/Data.h \
-    maelia/maelia.h \
     mainwindow.h \
     muParser/muParser.h \
     muParser/muParserBase.h \
