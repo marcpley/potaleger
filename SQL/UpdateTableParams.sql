@@ -13,9 +13,9 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Général', 'Montrer_modifs', 'Montrer les données modifiées depuis le passage en mode édition (plus lent)', 'Oui', 'Oui/Non'),
             ('Général', 'Combo_Notes_Type', 'Types de notes, séparés par des ''|'' (vide pour texte libre)', 'A faire|Fait|Important', NULL),
             ('Général', 'Notes_Modif_dates', 'Permettre de modifier l''ID et les dates de création/modification des notes', 'Non', 'Oui/Non'),
-            -- ('Général', 'Combo_Apports_Type', 'Types d''apports, séparés par des ''|'' (vide pour texte libre)', 'Minéral|Organique|Autre', NULL),
-            ('Général', 'Combo_Fournisseurs_Type', 'Types de fournisseur, séparés par des ''|'' (vide pour texte libre)', 'Semences|Irrigation|Outils|Autre', NULL),
-            ('Général', 'Combo_Destinations_Type', 'Types de destination, séparés par des ''|'' (vide pour texte libre)', 'Magasin|Particulier|Autre', NULL),
+            ('Général', 'Export_sep_col', 'Séparateur de colonnes pour les exports de données (défaut point-virgule)', NULL, NULL), -- todo: devrait être en anglais.
+            ('Général', 'Export_sep_decim', 'Séparateur décimal pour les exports de données (défaut système)', NULL, NULL),
+            ('Fournisseurs', 'Combo_Fournisseurs_Type', 'Types de fournisseur, séparés par des ''|'' (vide pour texte libre)', 'Semences|Irrigation|Outils|Autre', NULL),
             ('Assolement', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production.\nEx: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
             ('Assolement', 'Combo_Planches_Type', 'Types de planche, séparés par des ''|'' (vide pour texte libre)', 'Extérieur|Serre', NULL),
             ('Assolement', 'Largeur_planches', 'Largeur de planche par défaut', 0.8,'m'),
@@ -35,6 +35,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Cultures', 'C_récolte_prolongation', 'Récoltes: prolongation maxi entre date de récolte réelle (Saisie des récoltes) et prévue (Cultures, ''Fin_récolte'')', '30', 'jours'),
             ('Cultures', 'C_horizon_terminer', 'Voir les cultures à terminer sur une période de', '90', 'jours'),
             ('Cultures', 'C_modif_N_culture', 'Permettre de modifier les n° de cultures', 'Non', 'Oui/Non'),
+            ('Destinations', 'Combo_Destinations_Type', 'Types de destination, séparés par des ''|'' (vide pour texte libre)', 'Magasin|Particulier|Autre', NULL),
             ('Consommations', 'Conso_historique', 'Voir les consommations anciennes de', '90', 'jours'),
             ('Fertilisation', 'Combo_Fertilisants_Type', 'Types de fertilisants, séparés par des ''|'' (vide pour texte libre)', 'Amendement|Biostimulant|Couvert|Engrais', NULL),
             ('Fertilisation', 'C_horizon_fertiliser', 'Voir les cultures à fertiliser dont la date de mise en place est dans moins de', '90', 'jours'),
@@ -56,7 +57,9 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Analyses', 'Tolérance_A_plantation', 'Date de plantation incohérente si elle est avant la période prévue, avance de plus de', '30', 'jours'),
             ('Analyses', 'Tolérance_R_plantation', 'Date de plantation incohérente si elle est après la période prévue, retard de plus de', '30', 'jours'),
             ('Analyses', 'Tolérance_A_récolte', 'Dates de récolte incohérentes si elles commencent avant la période prévue, avance de plus de', '30', 'jours'),
-            ('Analyses', 'Tolérance_R_récolte', 'Dates de récolte incohérentes si elles finissent après la période prévue, retard de plus de', '30', 'jours');
+            ('Analyses', 'Tolérance_R_récolte', 'Dates de récolte incohérentes si elles finissent après la période prévue, retard de plus de', '30', 'jours'),
+            ('Danger', 'SQL_données', 'Permettre de modifier les données avec une requète utilisateur',null, 'Oui!/Non'),
+            ('Danger', 'SQL_schéma', 'Permettre de modifier le schéma de la base de données avec une requète utilisateur',null, 'Oui!/Non');
 
 UPDATE Params SET Valeur=coalesce((SELECT T.Valeur FROM Temp_Params T WHERE T.Paramètre=Params.Paramètre),Params.Valeur);
 

@@ -53,12 +53,11 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates !'
                                           WHEN Terminée LIKE 'v%' THEN 'Vivace'
-                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Semis pépinière'
-                                          WHEN Date_plantation NOTNULL AND Début_récolte NOTNULL THEN 'Plant'
-                                          WHEN Date_semis NOTNULL AND Début_récolte NOTNULL THEN 'Semis en place'
-                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL THEN 'Sans récolte'
-                                          WHEN Date_semis NOTNULL THEN 'Engrais vert'
-                                          WHEN Début_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Vivace'
+                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Semis pépinière'
+                                          WHEN Date_semis ISNULL  AND Date_plantation NOTNULL AND Début_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Plant'
+                                          WHEN Date_semis NOTNULL AND Date_plantation ISNULL  AND Début_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Semis en place'
+                                          WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte ISNULL  AND Fin_récolte NOTNULL THEN 'Compagne'
+                                          WHEN Date_semis NOTNULL AND Date_plantation ISNULL  AND Début_récolte ISNULL THEN 'Engrais vert'
                                           ELSE '?' END),
                        Saison TEXT AS (CASE WHEN coalesce(Terminée,'') NOT LIKE 'v%' -- Anuelle
                                             THEN substr(coalesce(Date_plantation,Date_semis,Début_récolte,Fin_récolte),1,4)
@@ -202,19 +201,18 @@ CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY COLLATE POTACOLLATION,
 CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
                   Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE COLLATE POTACOLLATION,
                   Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
-                  Type_culture TEXT AS (CASE WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Semis pépinière'
-                                             WHEN Déb_plantation NOTNULL AND Déb_récolte NOTNULL THEN 'Plant'
-                                             WHEN Déb_semis NOTNULL AND Déb_récolte NOTNULL THEN 'Semis en place'
-                                             WHEN Déb_semis NOTNULL AND Déb_plantation NOTNULL THEN 'Sans récolte'
-                                             WHEN Déb_semis NOTNULL THEN 'Engrais vert'
-                                             WHEN Déb_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Vivace'
+                  Type_culture TEXT AS (CASE WHEN S_semis NOTNULL AND S_plantation NOTNULL AND S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Semis pépinière'
+                                             WHEN S_semis ISNULL  AND S_plantation NOTNULL AND S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Plant'
+                                             WHEN S_semis NOTNULL AND S_plantation ISNULL  AND S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Semis en place'
+                                             WHEN S_semis NOTNULL AND S_plantation NOTNULL AND S_récolte NOTNULL AND D_récolte ISNULL THEN 'Compagne'
+                                             WHEN S_semis NOTNULL AND S_plantation ISNULL                        AND D_récolte ISNULL THEN 'Engrais vert'
+                                             -- WHEN S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Vivace'
                                              ELSE '?' END),
-                  Déb_semis TEXT CONSTRAINT 'Déb_semis, ex: 04-01 ou 04-15' CHECK (Déb_semis #FmtPlanif#),
-                  Fin_semis TEXT CONSTRAINT 'Fin_semis, ex: 05-01 ou 05-15' CHECK (Fin_semis  #FmtPlanif#),
-                  Déb_plantation TEXT CONSTRAINT 'Déb_plantation, ex: 05-01 ou 05-15' CHECK (Déb_plantation  #FmtPlanif#),
-                  Fin_plantation TEXT CONSTRAINT 'Fin_plantation, ex: 07-01 ou 07-15' CHECK (Fin_plantation #FmtPlanif#),
-                  Déb_récolte TEXT CONSTRAINT 'Déb_récolte, ex: 08-01 ou 08-15' CHECK (Déb_récolte #FmtPlanif#),
-                  Fin_récolte TEXT CONSTRAINT 'Fin_récolte, ex: 10-01 ou 10-15' CHECK (Fin_récolte #FmtPlanif#),
+                  S_semis INTEGER CONSTRAINT 'S_semis, 1 à 52 semaines' CHECK (S_semis ISNULL OR S_semis BETWEEN 1 AND 52),
+                  S_plantation INTEGER CONSTRAINT 'S_plantation, 1 à 52 semaines' CHECK (S_plantation ISNULL OR S_plantation BETWEEN 1 AND 52),
+                  S_récolte INTEGER CONSTRAINT 'S_récolte, 1 à 52 semaines' CHECK (S_récolte ISNULL OR S_récolte BETWEEN 1 AND 52),
+                  D_récolte INTEGER CONSTRAINT 'D_récolte, 1 à 52 semaines' CHECK (D_récolte ISNULL OR D_récolte BETWEEN 1 AND 52),
+                  Décal_max INTEGER CONSTRAINT 'Décal_max, 0 à 52 semaines' CHECK (Décal_max ISNULL OR Décal_max BETWEEN 0 AND 52),
                   Nb_rangs REAL,
                   Espacement REAL,
                   Nb_graines_trou REAL,
@@ -271,8 +269,8 @@ CREATE TABLE Variétés (Variété TEXT PRIMARY KEY COLLATE POTACOLLATION,
                        Qté_stock REAL,
                        Qté_cde REAL,
                        Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur) ON UPDATE CASCADE COLLATE POTACOLLATION,
-                       Déb_récolte TEXT CONSTRAINT 'Déb_récolte, ex: 08-01 ou 08-15' CHECK (Déb_récolte #FmtPlanif#),
-                       Fin_récolte TEXT CONSTRAINT 'Fin_récolte, ex: 10-01 ou 10-15' CHECK (Fin_récolte #FmtPlanif#),
+                       S_récolte INTEGER CONSTRAINT 'S_récolte, 1 à 52 semaines' CHECK (S_récolte ISNULL OR S_récolte BETWEEN 1 AND 52),
+                       D_récolte INTEGER CONSTRAINT 'D_récolte, 1 à 52 semaines' CHECK (D_récolte ISNULL OR D_récolte BETWEEN 1 AND 52),
                        PJ INTEGER,
                        IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE COLLATE POTACOLLATION,
                        Notes TEXT) WITHOUT ROWID;

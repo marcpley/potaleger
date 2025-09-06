@@ -1,4 +1,4 @@
-QT       += core gui sql svg
+QT += core gui sql svg charts
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -24,6 +24,7 @@ SOURCES += \
     Structure.cpp \
     classes/zoomgraphicsview.cpp \
     data/Data.cpp \
+    maelia/maelia.cpp \
     main.cpp \
     mainwindow.cpp \
     muParser/muParser.cpp \
@@ -33,6 +34,7 @@ SOURCES += \
     muParser/muParserError.cpp \
     muParser/muParserInt.cpp \
     muParser/muParserTokenReader.cpp \
+    potagraph.cpp \
     potawidget.cpp \
     sqlean/eval.c \
     sqlean/manage.c \
@@ -45,6 +47,7 @@ HEADERS += \
     SQL/FunctionsSQLite.h \
     classes/zoomgraphicsview.h \
     data/Data.h \
+    maelia/maelia.h \
     mainwindow.h \
     muParser/muParser.h \
     muParser/muParserBase.h \
@@ -57,6 +60,7 @@ HEADERS += \
     muParser/muParserTemplateMagic.h \
     muParser/muParserToken.h \
     muParser/muParserTokenReader.h \
+    potagraph.h \
     potawidget.h \
     sqlean/define.h \
     sqlite/sqlite3.h

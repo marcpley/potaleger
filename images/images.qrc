@@ -14,5 +14,6 @@
         <file>edit.svg</file>
         <file>editOn.svg</file>
         <file>duplicate_row.svg</file>
+        <file>help.svg</file>
     </qresource>
 </RCC>

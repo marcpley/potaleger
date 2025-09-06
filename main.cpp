@@ -407,7 +407,7 @@ void MainWindow::PotaDbClose()
 
 void MainWindow::RestaureParams()
 {
-    QSettings settings("greli.net", "Potaléger");
+    QSettings settings;//("greli.net", "Potaléger");
     settings.beginGroup("MainWindow");
     const auto geometry = settings.value("geometry").toByteArray();
     if (geometry.isEmpty())
@@ -451,7 +451,7 @@ void MainWindow::RestaureParams()
 
 void MainWindow::SauvParams()
 {
-    QSettings settings("greli.net", "Potaléger");
+    QSettings settings;//("greli.net", "Potaléger");
     settings.beginGroup("MainWindow");
     settings.setValue("geometry", saveGeometry());
     settings.endGroup();
@@ -549,7 +549,9 @@ void MainWindow::SetMenuIcons() {
     ui->mCulturesParIlots->setIcon(QIcon(TablePixmap("Cult_planif_ilots","")));
     ui->mCulturesParplante->setIcon(QIcon(TablePixmap("Cult_planif_espèces","")));
     ui->mCulturesParPlanche->setIcon(QIcon(TablePixmap("Cult_planif","")));
+    ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap("Cult_planif_récoltes","")));
     ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
+    ui->mPlants->setIcon(QIcon(TablePixmap("Variétés__cde_plants","")));
 
     ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
     ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__couverture","")));
@@ -574,7 +576,7 @@ void MainWindow::SetMenuIcons() {
     ui->mPlanchesDeficit->setIcon(QIcon(TablePixmap("Planches__deficit_fert","")));
 
     ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
-    ui->mEsSaisieSorties->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
+    ui->mEsSaisieConso->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
     ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
 
     ui->mAnaITPA->setIcon(QIcon(TablePixmap("ITP__analyse_a","")));
@@ -611,8 +613,9 @@ int main(int argc, char *argv[])
     }
 
     MainWindow w;
-    //w.db = NEW;
-    //w.db.addDatabase("QSQLITE");
+    QCoreApplication::setOrganizationName("greli.net");
+    QCoreApplication::setApplicationName("Potaléger"+QApplication::applicationDirPath().replace('/', '_').replace('\\', '_'));
+
     w.SetUi();
 
     w.show();

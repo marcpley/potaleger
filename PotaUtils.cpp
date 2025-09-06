@@ -27,14 +27,15 @@ bool PotaQuery::ExecShowErr(QString query)
 bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar,bool keepReturns)
 {
     QStringList QueryList = querys.split(spliter);
-    QString s;
-    s=lErr->text();
-    if ((s.length()>11)and(s.last(11)==" statements"))
-        s=s.first(s.length()-11)+"+"+str(QueryList.count())+" statements";
-    else
-        s=str(QueryList.count())+" statements";
-    if (lErr)
+    if (lErr) {
+        QString s;
+        s=lErr->text();
+        if ((s.length()>11)and(s.last(11)==" statements"))
+            s=s.first(s.length()-11)+"+"+str(QueryList.count())+" statements";
+        else
+            s=str(QueryList.count())+" statements";
         SetColoredText(lErr,s,"Info");
+    }
     if (progressBar) {
         progressBar->setValue(0);
         progressBar->setMaximum(QueryList.count());
@@ -115,9 +116,15 @@ QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
         QString sData=query.Selec0ShowErr("SELECT "+FieldName+" FROM "+TableName+" WHERE "+FieldName+" NOTNULL").toString();
         if(!sData.isEmpty() and sData.length()==10 and sData[4]=='-' and sData[7]=='-')
             return "DATE";
+        else if (QString::number(sData.toInt())==sData)
+            return "INT";
+        else if (QString::number(sData.toDouble())==sData)
+            return "REAL";
         else
-            return "";
-    } else
+            return "TEXT";
+    } else if (result.startsWith("NUM"))
+        return "REAL";
+    else
         return result;
 }
 
@@ -144,6 +151,21 @@ QString EscapeCSV(QString s) {
     if (s.contains("\n") or s.contains(";") or s.contains("\""))
         s="\""+s+"\"";
     return s;
+}
+
+QDate firstDayOffWeek(int year, int week) {
+    QDate date(year, 1, 1);
+    QDate firstMonday;
+    if (date.dayOfWeek() <= 1)
+        firstMonday = date;
+    else
+        firstMonday = date.addDays(8 - date.dayOfWeek());
+    QDate result = firstMonday.addDays((week - 1) * 7);
+    return result;
+}
+
+QDate firstDayOffWeek(QDate date) {
+    return date.addDays(1 - date.dayOfWeek());;
 }
 
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2)
@@ -301,6 +323,15 @@ QString str(qsizetype i)
     QString s;
     s.setNum(i);
     return s;
+}
+
+QString StrElipsis(QString s, int i){
+    if (i>0 and i<s.length())
+        return s.first(i)+"...";
+    else if (i==0)
+        return "";
+    else
+        return s;
 }
 
 QString StrFirst(QString s, int i){

@@ -46,7 +46,7 @@ bool registerScalarFunctions(QSqlDatabase *db) {
     //return true;
     PotaQuery q1(*db);
 
-    // Math (non testées)
+    // Math (pour les fonctions SQLean)
 
     q1.clear();
     if (!q1.exec("SELECT define('ceil2','"+RemoveComment(sCeil,"--")+"')")){
@@ -65,57 +65,29 @@ bool registerScalarFunctions(QSqlDatabase *db) {
     //Potaléger
 
     q1.clear();
+    if (!q1.exec("SELECT define('SemToNJ','"+RemoveComment(sSemToNJ,"--")+"')")){
+        qCritical() << "Failed to register function 'SemToNJ': "<< q1.lastError();
+        qCritical() << q1.lastQuery();
+        return false;
+    }
+
+    q1.clear();
     if (!q1.exec("SELECT define('PlanifCultureCalcDate','"+RemoveComment(sPlanifCultureCalcDate,"--")+"')")){
         qCritical() << "Failed to register function 'PlanifCultureCalcDate': "<< q1.lastError();
         qCritical() << q1.lastQuery();
         return false;
     }
 
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpCompleteDFPeriode','"+RemoveComment(sItpCompleteDFPeriode,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpCompleteDFPeriode': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpTempoNJPeriode','"+RemoveComment(sItpTempoNJPeriode,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpTempoNJPeriode': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpTempoNJInterPe','"+RemoveComment(sItpTempoNJInterPe,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpTempoNJInterPe': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpTempoNJ','"+RemoveComment(sItpTempoNJ,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpTempoNJ': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpTempo','"+RemoveComment(sItpTempo,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpTempo': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
+    // q1.clear();
+    // if (!q1.exec("SELECT define('ItpTempo','"+RemoveComment(sItpTempo,"--")+"')")){
+    //     qCritical() << "Failed to register function 'ItpTempo': "<< q1.lastError();
+    //     qCritical() << q1.lastQuery();
+    //     return false;
+    // }
 
     q1.clear();
     if (!q1.exec("SELECT define('CulNbRecoltesTheo','"+RemoveComment(sCulNbRecoltesTheo,"--")+"')")){
         qCritical() << "Failed to register function 'CulNbRecoltesTheo': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-    q1.clear();
-    if (!q1.exec("SELECT define('CulTempoNJPeriode','"+RemoveComment(sCulTempoNJPeriode,"--")+"')")){
-        qCritical() << "Failed to register function 'CulTempoNJPeriode': "<< q1.lastError();
         qCritical() << q1.lastQuery();
         return false;
     }
@@ -155,21 +127,6 @@ bool registerScalarFunctions(QSqlDatabase *db) {
         return false;
     }
 
-    q1.clear();
-    if (!q1.exec("SELECT define('RotTempo','"+RemoveComment(sRotTempo,"--")+"')")){
-        qCritical() << "Failed to register function 'RotTempo': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-    q1.clear();
-    if (!q1.exec("SELECT define('ItpPlusN','"+RemoveComment(sItpPlusN,"--")+"')")){
-        qCritical() << "Failed to register function 'ItpPlusN': "<< q1.lastError();
-        qCritical() << q1.lastQuery();
-        return false;
-    }
-
-
     //qCritical() << q1.lastQuery();
 
     qInfo() << "Scalar functions registered successfully.";
@@ -180,14 +137,6 @@ bool registerScalarFunctions(QSqlDatabase *db) {
 bool registerTableValuedFunctions(QSqlDatabase *db) {
     //return true;
     PotaQuery q1(*db);
-
-    // q1.exec("DROP TABLE IF EXISTS Cul_Espece");
-    // q1.clear();
-    // if (!q1.exec("CREATE VIRTUAL TABLE Cul_Espece USING define(("+RemoveComment(sCul_Espece,"--")+"))")){
-    //     qCritical() << "Failed to register function 'Cul_Espece': "<< q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return false;
-    // }
 
     q1.exec("DROP TABLE IF EXISTS RF_trop_proches");
     q1.clear();
@@ -220,14 +169,6 @@ bool registerTableValuedFunctions(QSqlDatabase *db) {
         qCritical() << q1.lastQuery();
         return false;
     }
-
-    // q1.exec("DROP TABLE IF EXISTS Analyse_de_sol_proche");
-    // q1.clear();
-    // if (!q1.exec("CREATE VIRTUAL TABLE Analyse_de_sol_proche USING define(("+RemoveComment(sAnalyse_de_sol_proche,"--")+"))")){
-    //     qCritical() << "Failed to register function 'Analyse_de_sol_proche': "<< q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return false;
-    // }
 
     q1.exec("DROP TABLE IF EXISTS Recoltes_cul");
     q1.clear();
@@ -265,62 +206,26 @@ QString testCustomFunctions(QSqlDatabase *db) {
     // qInfo() << "Function ok : SumTest(1,2) = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT PlanifCultureCalcDate('2025-02-01','03-01')") or !q1.next() or q1.value(0).toString()!="2025-03-01"){
-        qCritical() << "Function failed: PlanifCultureCalcDate('2025-02-01','03-01') = " << q1.value(0).toString();
+    if (!q1.exec("SELECT SemToNJ(2)") or !q1.next() or q1.value(0).toInt()!=8){
+        qCritical() << "Function failed: SemToNJ(2) = " << q1.value(0).toInt();
+        qCritical() << q1.lastError();
+        qCritical() << q1.lastQuery();
+        return "SemToNJ";
+    }
+    qInfo() << "Function ok : SemToNJ(2) = " << q1.value(0).toInt();
+
+    q1.clear();
+    if (!q1.exec("SELECT PlanifCultureCalcDate('2025-01-14',3)") or !q1.next() or q1.value(0).toString()!="2025-01-15"){
+        qCritical() << "Function failed: PlanifCultureCalcDate('2025-01-14',3) = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "PlanifCultureCalcDate";
     }
-    qInfo() << "Function ok : PlanifCultureCalcDate('2025-02-01','03-01') = " << q1.value(0).toString();
-
-    q1.clear();
-    if (!q1.exec("SELECT ItpCompleteDFPeriode(10)") or !q1.next() or q1.value(0).toString()!="10-01"){
-        qCritical() << "Function failed: ItpCompleteDFPeriode(10) = " << q1.value(0).toString();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ItpCompleteDFPeriode";
-    }
-    qInfo() << "Function ok : ItpCompleteDFPeriode(10) = " << q1.value(0).toString();
-
-    q1.clear();
-    if (!q1.exec("SELECT ItpTempoNJPeriode(360,5,10)") or !q1.next() or q1.value(0).toInt()!=10){
-        qCritical() << "Function failed: ItpTempoNJPeriode(360,5,10) = " << q1.value(0).toInt();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ItpTempoNJPeriode";
-    }
-    qInfo() << "Function ok : ItpTempoNJPeriode(360,5,10) = " << q1.value(0).toInt();
-
-    q1.clear();
-    if (!q1.exec("SELECT ItpTempoNJInterPe(360,5,10)") or !q1.next() or q1.value(0).toInt()!=5){
-        qCritical() << "Function failed: ItpTempoNJInterPe(360,5,10) = " << q1.value(0).toInt();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ItpTempoNJInterPe";
-    }
-    qInfo() << "Function ok : ItpTempoNJInterPe(360,5,10) = " << q1.value(0).toInt();
-
-    q1.clear();
-    if (!q1.exec("SELECT ItpTempoNJ('02-01')") or !q1.next() or q1.value(0).toInt()!=32){
-        qCritical() << "Function failed: ItpTempoNJ('02-01') = " << q1.value(0).toInt();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ItpTempoNJ";
-    }
-    qInfo() << "Function ok : ItpTempoNJ('02-01') = " << q1.value(0).toInt();
-
-    q1.clear();
-    if (!q1.exec("SELECT ItpTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="31:14:14:14:47:31"){
-        qCritical() << "Function failed: ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ItpTempo";
-    }
-    qInfo() << "Function ok : ItpTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
+    qInfo() << "Function ok : PlanifCultureCalcDate('2025-01-14',3) = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31')") or !q1.next() or q1.value(0).toInt()!=4){
-        qCritical() << "Function failed: CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31') = " << q1.value(0).toInt();
+        qCritical() << "Function failed: CulNbRecoltesTheo(...) = " << q1.value(0).toInt();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "CulNbRecoltesTheo";
@@ -328,22 +233,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : CulNbRecoltesTheo('v','2003-08-31',0,'2000-07-31') = " << q1.value(0).toInt();
 
     q1.clear();
-    if (!q1.exec("SELECT CulTempoNJPeriode('2000-01-01','2000-01-31')") or !q1.next() or q1.value(0).toInt()!=30){
-        qCritical() << "Function failed: CulTempoNJPeriode(''2000-01-01','2000-01-31') = " << q1.value(0).toInt();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "CulTempoNJPeriode";
-    }
-    qInfo() << "Function ok : CulTempoNJPeriode('2000-01-01','2000-01-31') = " << q1.value(0).toInt();
-
-    q1.clear();
-    if (!q1.exec("SELECT CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:4:10:4:11:14"){
-        qCritical() << "Function failed: CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
+    if (!q1.exec("SELECT CulTempo(julianday('2000-01-01'),'2000-02-01','2000-02-15','2000-03-01','2000-03-15')") or !q1.next() or q1.value(0).toString()!="31:35:45:49:60:74"){
+        qCritical() << "Function failed: CulTempo(julianday('2000-01-01'),'2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "CulTempo";
     }
-    qInfo() << "Function ok : CulTempo('Semis pépinière','2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
+    qInfo() << "Function ok : CulTempo(julianday('2000-01-01'),'2000-02-01','2000-02-15','2000-03-01','2000-03-15') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT CulTer('v')") or !q1.next() or q1.value(0).toBool()!=false){
@@ -355,7 +251,7 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : CulTer('v') = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT CulIncDate('2000','02-01','2000-01-30','02-01','D',1)") or !q1.next() or q1.value(0).toInt()!=1){
+    if (!q1.exec("SELECT CulIncDate('2000',5,'2000-01-30',5,'D',1)") or !q1.next() or q1.value(0).toInt()!=-2){
         qCritical() << "Function failed: CulIncDate(...) = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
@@ -364,13 +260,13 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : CulIncDate(...) = " << q1.value(0).toString();
 
     q1.clear();
-    if (!q1.exec("SELECT CulIncDates('2000','02-01','2000-02-02','02-01','02-15','2000-03-02','03-01','03-15','2000-04-02','04-01','2000-04-14','04-15')") or !q1.next() or q1.value(0).toString()!=""){
+    if (!q1.exec("SELECT CulIncDates('2000',1,'2000-01-01',1,2,'2000-01-08',2,'2000-01-15',3,'2000-01-22',1)") or !q1.next() or q1.value(0).toString()!=""){
         qCritical() << "Function failed: CulIncDates(...) = " << q1.value(0).toString();
         qCritical() << q1.lastError();
         qCritical() << q1.lastQuery();
         return "CulIncDates";
     }
-    qInfo() << "Function ok : CulIncDates('2000-02-02','02-01','02-15','2000-03-02','03-01','03-15','2000-04-02','04-01','2000-04-14','04-15') = " << q1.value(0).toString();
+    qInfo() << "Function ok : CulIncDates(...) = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT RotDecalDateMeP('2000-09-02')") or !q1.next() or q1.value(0).toString()!="2000-05-02"){
@@ -380,15 +276,6 @@ QString testCustomFunctions(QSqlDatabase *db) {
         return "RotDecalDateMeP";
     }
     qInfo() << "Function ok : RotDecalDateMeP('2000-09-02') = " << q1.value(0).toString();
-
-    q1.clear();
-    if (!q1.exec("SELECT RotTempo('Semis pépinière',ItpTempoNJ('02-01'),ItpTempoNJ('02-15'),ItpTempoNJ('03-01'),ItpTempoNJ('03-15'),ItpTempoNJ('05-01'),ItpTempoNJ('06-01'))") or !q1.next() or q1.value(0).toString()!="59:::14:47:31"){
-        qCritical() << "Function failed: RotTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "RotTempo";
-    }
-    qInfo() << "Function ok : RotTempo('Semis pépinière','02-01','02-15','03-01','03-15','05-01','06-01') = " << q1.value(0).toString();
 
     q1.clear();
     if (!q1.exec("SELECT * FROM RF_trop_proches('xxx')")){
@@ -418,15 +305,6 @@ QString testCustomFunctions(QSqlDatabase *db) {
     qInfo() << "Function ok : R_ITP_CDer(3,'xxx')";
 
     q1.clear();
-    if (!q1.exec("SELECT ItpPlusN('02-15','1 months')") or !q1.next() or q1.value(0).toString()!="03-15"){
-        qCritical() << "Function failed: ItpPlusN('02-15','1 months') = " << q1.value(0).toString();
-        qCritical() << q1.lastError();
-        qCritical() << q1.lastQuery();
-        return "ItpPlusN";
-    }
-    qInfo() << "Function ok : ItpPlusN('02-15','1 months') = " << q1.value(0).toString();
-
-    q1.clear();
     if (!q1.exec("SELECT * FROM Repartir_Recolte_sur('xxx','xxx','2000-01-01')")){
         qCritical() << "Function failed: Repartir_Recolte_sur('xxx','xxx','2000-01-01')";
         qCritical() << q1.lastError();
@@ -434,15 +312,6 @@ QString testCustomFunctions(QSqlDatabase *db) {
         return "Repartir_Recolte_sur";
     }
     qInfo() << "Function ok : Repartir_Recolte_sur('xxx','xxx','2000-01-01')";
-
-    // q1.clear();
-    // if (!q1.exec("SELECT * FROM Analyse_de_sol_proche('xxx')")){
-    //     qCritical() << "Function failed: Analyse_de_sol_proche('xxx')";
-    //     qCritical() << q1.lastError();
-    //     qCritical() << q1.lastQuery();
-    //     return "Analyse_de_sol_proche";
-    // }
-    // qInfo() << "Function ok : Analyse_de_sol_proche('xxx')";
 
     q1.clear();
     if (!q1.exec("SELECT * FROM Recoltes_cul(1,'v ','2000-05-01','2000-08-01')")){

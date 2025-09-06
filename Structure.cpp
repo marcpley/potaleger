@@ -189,6 +189,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-06-22 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion = "2025-06-22";
         }
+        if (bResult and(sDBVersion == "2025-06-22")) { //Adding field: S_xxx,D_récolte,Décal_max
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult = query->ExecMultiShowErr(sDDL20250728,";",ui->progressBar);
+            sResult.append(sDBVersion+" -> 2025-07-28 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion = "2025-07-28";
+        }
 
         if (bResult) { //Update schema.
             ui->progressBar->setValue(0);

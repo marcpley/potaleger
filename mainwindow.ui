@@ -529,8 +529,10 @@
     <addaction name="mCulturesParplante"/>
     <addaction name="mCulturesParIlots"/>
     <addaction name="mCulturesParPlanche"/>
+    <addaction name="mRecoltesParSemaine"/>
     <addaction name="mCreerCultures"/>
     <addaction name="mSemences"/>
+    <addaction name="mPlants"/>
    </widget>
    <widget class="QMenu" name="mCultures">
     <property name="title">
@@ -587,7 +589,7 @@
      <string>Stock</string>
     </property>
     <addaction name="mDestinations"/>
-    <addaction name="mEsSaisieSorties"/>
+    <addaction name="mEsSaisieConso"/>
     <addaction name="mInventaire"/>
    </widget>
    <widget class="QMenu" name="mFertilisation">
@@ -757,7 +759,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Semences</string>
+    <string>Semences nécessaires</string>
    </property>
    <property name="toolTip">
     <string>Inventaire et commandes des semences</string>
@@ -983,12 +985,12 @@
     <string>Destinations</string>
    </property>
   </action>
-  <action name="mEsSaisieSorties">
+  <action name="mEsSaisieConso">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Saisie des sorties</string>
+    <string>Saisie des consommations</string>
    </property>
   </action>
   <action name="mInventaire">
@@ -1133,6 +1135,22 @@
    </property>
    <property name="text">
     <string>Trucs à faire</string>
+   </property>
+  </action>
+  <action name="mPlants">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Plants nécessaires</string>
+   </property>
+  </action>
+  <action name="mRecoltesParSemaine">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Récoltes prévues par semaine</string>
    </property>
   </action>
  </widget>

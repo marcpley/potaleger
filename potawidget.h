@@ -2,6 +2,7 @@
 #define POTAWIDGET_H
 
 #include "PotaUtils.h"
+#include "potagraph.h"
 #include "qapplication.h"
 #include "qboxlayout.h"
 #include "qclipboard.h"
@@ -104,9 +105,11 @@ public:
                     return data(index,Qt::EditRole).toString()+"!"; //Not number format
                 else
                     return QString::number(data(index,Qt::EditRole).toFloat(),'f', 2);
-            } else if (StrLast(headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString(),3)=="_pc") {
+            } else if (headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString().endsWith("_pc")) {
                 return data(index,Qt::EditRole).toString()+"%";
-            } else if (data(index,Qt::EditRole).toString().startsWith(".")) {//Invisible data
+            } else if (headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString().startsWith("S_")) {
+                return data(index,Qt::EditRole).toString()+" ("+QDate(2001,1,1).addDays((data(index,Qt::EditRole).toInt()-1)*7).toString("dd/MM")+")";
+            } else if (data(index,Qt::EditRole).toString().startsWith(".") and data(index,Qt::EditRole).toString().length()>1) {//Invisible data
                 return QVariant();
             }
         }
@@ -146,7 +149,7 @@ public:
                     return QSqlRelationalTableModel::setData(index, date, role);
                 }
             } else if (value.toString().startsWith("=") and
-                      (dataTypes[index.column()]=="REAL" or dataTypes[index.column()]=="INTEGER")) {
+                      (dataTypes[index.column()]=="REAL" or dataTypes[index.column()].startsWith("INT"))) {
                 mu::string_type expr;
                 #ifdef _WIN32
                     expr = value.toString().mid(1).trimmed().toStdWString();
@@ -158,7 +161,7 @@ public:
                 parser.SetExpr(expr);
                 QString result;
                 try {
-                    if (dataTypes[index.column()]=="INTEGER")
+                    if (dataTypes[index.column()].startsWith("INT"))
                         result=QString::number(std::round(parser.Eval()));
                     else
                         result=QString::number(parser.Eval());
@@ -259,7 +262,7 @@ private:
         }
 
         // Créer une grille pour stocker les valeurs copiées
-        QVector<QVector<QString>> clipboardGrid(maxRow - minRow + 1, QVector<QString>(maxCol - minCol + 1, ""));
+        QList<QList<QString>> clipboardGrid(maxRow - minRow + 1, QList<QString>(maxCol - minCol + 1, ""));
         QLocale locale;
         QString decimalSep = QString(locale.decimalPoint());
 
@@ -267,16 +270,13 @@ private:
         for (const QModelIndex &index : selectedIndexes) {
             int row = index.row() - minRow;
             int col = index.column() - minCol;
-            if (m->dataTypes[index.column()]=="REAL")
-                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","\\n").replace(".",decimalSep).replace("%",""); //sdff+54rg
-            else
-                clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::DisplayRole).toString(),"\n","\\n"); //sdff+54rg
+            clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::EditRole).toString(),"\n","\\n"); //sdff+54rg
             m->copiedCells.insert(index);
         }
 
         // Convertir la grille en texte formaté pour le presse-papier
         QString clipboardText;
-        for (const QVector<QString> &row : clipboardGrid) {
+        for (const QList<QString> &row : clipboardGrid) {
             clipboardText += row.join('\t') + '\n';
         }
         clipboardText.chop(1); // Supprimer le dernier saut de ligne
@@ -309,7 +309,7 @@ private:
 
         // Convertir le texte du presse-papier en lignes et colonnes
         QStringList rows = clipboardText.split('\n');
-        QVector<QStringList> clipboardData;
+        QList<QStringList> clipboardData;
         for (const QString &row : rows) {
             clipboardData.append(row.split('\t'));
         }
@@ -496,6 +496,7 @@ public:
     QHBoxLayout *pageFilterLayout;
     QHBoxLayout *ffLayout;
     QHBoxLayout *ltb;
+    QHBoxLayout *ltbCV;
     QVBoxLayout *lw;
 
     QFrame * ffFrame;
@@ -522,6 +523,15 @@ public:
     QLabel *lErr;
     QAction *mEditNotes;
     QComboBox *cbFontSize;
+
+    QWidget *toolbarCV;
+    QToolButton *pbRefreshCV;
+    QPushButton *pbCloseCV;
+    QToolButton *helpCV;
+
+    PotaGraph *graph=nullptr;
+    PotaChartView *chartView=nullptr;
+    QStringList sGraph;
 
     //bool *userDataEditing;
     bool bUserCurrChanged=true;
@@ -577,6 +587,7 @@ public slots:
     void pbFindFirstClick();
     void pbFindNextClick();
     void pbFindPrevClick();
+    void showGraphDialog();
 
 };
 
