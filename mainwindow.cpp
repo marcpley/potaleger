@@ -495,6 +495,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Chaque installation de Potaléger a ses propres paramètres (chemin BDD, dispositions fenêtres, etc).")+"<br>"+
                   "- "+tr("Séparateur de colonne et séparateur décimal paramétrables pour les exports de données.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Erreur d'arrondi sur 'Qté prév' et 'Qté réc' dans l'onglet 'Couverture des objectifs'.")+"<br>"+
                   "- "+tr("Plantage sur requête SQL utilisateur sans titre ni description.")+"<br>"+
                   "- "+tr("Modification dans l'onglet 'Semis pépinière', des cultures dont le n° est la fin du n° de cultures modifiées sont modifiées aussi par erreur (ex 5 est la fin de 15).")+"<br>"+
                   "- "+tr("Onglet 'Semences nécessaires', les cultures 'Plants' ne sont plus incluses.")+"<br>"+

@@ -1325,22 +1325,10 @@ CREATE VIEW Espèces__couverture AS SELECT
          THEN CAST((SELECT sum(Qté_stock) FROM Variétés V WHERE V.Espèce=C.Espèce)AS INTEGER)
          ELSE NULL END Qté_stock,
     C.Obj_annuel,
-    CAST(sum(C.Qté_prév)AS INTEGER) Qté_prév,
-    CAST(sum(C.Qté_prév)/C.Obj_annuel*100 AS INTEGER) Couv_prév_pc,
-    CAST(sum(C.Qté_réc)AS INTEGER) Qté_réc,
-    CAST(sum(C.Qté_réc)/sum(C.Qté_prév)*100 AS INTEGER) Couv_réc_pc,
-    -- CAST(sum(CASE WHEN C.Récolte_faite NOTNULL THEN Qté_réc ELSE Qté_prév END)AS INTEGER) Qté_pos,
-    -- CAST(sum(CASE WHEN C.Récolte_faite NOTNULL THEN Qté_réc ELSE Qté_prév END)/C.Obj_annuel*100 AS INTEGER) Couv_pos_pc,
-    -- CAST(((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur-1 FROM Params WHERE Paramètre='Année_culture'))AND
-    --                                                       (C.Espèce=E.Espèce))/E.Obj_annuel*100)AS INTEGER) Couv_Nm1_pc,
-    -- CAST((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture'))AND
-    --                                                      (C.Espèce=E.Espèce))AS INTEGER) Prod_N,
-    -- CAST(((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture'))AND
-    --                                                       (C.Espèce=E.Espèce))/E.Obj_annuel*100)AS INTEGER) Couv_N_pc,
-    -- CAST((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'))AND
-    --                                                      (C.Espèce=E.Espèce))AS INTEGER) Prod_Np1,
-    -- CAST(((SELECT sum(Production) FROM C_esp_prod C WHERE (C.Saison=(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'))AND
-    --                                                       (C.Espèce=E.Espèce))/E.Obj_annuel*100)AS INTEGER) Couv_Np1_pc,
+    round(sum(C.Qté_prév)) Qté_prév,
+    round(sum(C.Qté_prév)/C.Obj_annuel*100) Couv_prév_pc,
+    round(sum(C.Qté_réc)) Qté_réc,
+    round(sum(C.Qté_réc)/sum(C.Qté_prév)*100) Couv_réc_pc,
     C.N_espèce Notes
 FROM C_esp_prod C
 GROUP BY Saison,Espèce

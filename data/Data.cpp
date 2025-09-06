@@ -1533,9 +1533,11 @@ QString ToolTipTable(const QString sTableName) {
     else if (sTableName=="Cultures__Tempo")
         sToolTip=QObject::tr(  "Planches et leurs cultures semées ou plantées dans la période.");
     else if (sTableName=="Espèces__couverture")
-        sToolTip=QObject::tr(   "Comparatif des objectifs de production pour les espèces annuelles.\n"
+        sToolTip=QObject::tr(   "Comparatif saison par saison des objectifs de production pour les espèces annuelles.\n"
                                 "L'objectif annuel n'est valable que pour la saison courante.\n"
-                                "Prévue = rendement de l'espèce x surface de culture.");
+                                "Prévue = rendement de l'espèce x surface de culture.\n\n"
+                                "Attention, c'est la date de mise en place (plantation ou semis en place) qui détermine la saison d'une culture.\n"
+                                "Des récoltes année N+1 peuvent donc compter pour la saison N si la mise en place est en fin d'année N.");
     else if (sTableName=="Espèces__inventaire")
         sToolTip=QObject::tr(  "Inventaire des légumes produits/consommés pour chaque espèce dont le champ 'Conservation' est non vide.");
     else if (sTableName=="ITP__analyse_a")
