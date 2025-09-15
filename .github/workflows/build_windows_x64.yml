@@ -21,7 +21,7 @@ jobs:
             target: 'desktop'
             arch: 'win64_mingw'
             tools: 'tools_mingw1310'
-            modules: 'charts'
+            modules: 'qtcharts'
 
       - name: Check MinGW Version
         shell: pwsh

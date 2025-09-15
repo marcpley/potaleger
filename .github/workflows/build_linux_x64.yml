@@ -17,7 +17,7 @@ jobs:
             version: 6.9.1
             host: 'linux'
             dir: '${{ steps.qt-installation-dir.DIR }}'
-            modules: 'charts'
+            modules: 'qtcharts'
 
       - uses: actions/checkout@v4
         with:
