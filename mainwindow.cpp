@@ -474,7 +474,7 @@ void MainWindow::on_mAbout_triggered()
                   "<a href=\"https://www.greli.net\">www.greli.net</a><br>"
                   "Sources: <a href=\"https://github.com/marcpley/potaleger\">github.com/marcpley/potaleger</a>",
                   "<b>Crédits</b>:<br>"
-                  "Qt Creator community 6.8 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
+                  "Qt Creator community 6.9.2 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
                   "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
                   "muParser <a href=\"https://github.com/beltoforion/muparser/\">github.com/beltoforion/muparser</a><br>"
@@ -488,7 +488,7 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.3.0</b> - 01/09/2025<br>"
+                  "<b>Potaléger 1.3.0</b> - 15/09/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Graphique 'Récoltes prévues par semaine'</b> à partir des plans de rotation.")+"<br>"+
                   "- "+tr("<b>Graphiques paramétrables</b> à partir des données de tous les onglets.")+"<br>"+

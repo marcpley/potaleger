@@ -14,7 +14,7 @@ jobs:
         uses: jurplel/install-qt-action@v4.1.1
         with:
             cache: false
-            version: 6.9.1
+            version: 6.9.2
             host: 'linux'
             dir: '${{ steps.qt-installation-dir.DIR }}'
             modules: 'qtcharts'
@@ -29,7 +29,7 @@ jobs:
         run: |
             ls -l /home/runner/work/potaleger/
             ls -l /home/runner/work/potaleger/potaleger/
-            ls -l /home/runner/work/potaleger/Qt/6.8.1/gcc_64/
+            ls -l /home/runner/work/potaleger/Qt/6.9.2/gcc_64/
 
       - name: Build
         shell: bash
@@ -59,22 +59,22 @@ jobs:
             cp ./install/infotab1.png        ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/
             cp ./install/ubuntu2004/qt.conf  ./artifact/bin/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libicu*.so.73         ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Core.so.6       ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6DBus.so.6       ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Gui.so.6        ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Sql.so.6        ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Svg.so.6        ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6SvgWidgets.so.6 ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6Widgets.so.6    ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/lib/libQt6XcbQpa.so.6     ./artifact/libs/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/iconengines/libqsvgicon.so ./artifact/bin/plugins/iconengines/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so ./artifact/bin/plugins/platforminputcontexts/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so    ./artifact/bin/plugins/platforminputcontexts/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platforms/libqxcb.so ./artifact/bin/plugins/platforms/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqgtk3.so             ./artifact/bin/plugins/platformthemes/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/platformthemes/libqxdgdesktopportal.so ./artifact/bin/plugins/platformthemes/
-            cp /home/runner/work/potaleger/Qt/6.8.1/gcc_64/plugins/sqldrivers/libqsqlite.so ./artifact/bin/plugins/sqldrivers/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libicu*.so.73         ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Core.so.6       ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6DBus.so.6       ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Gui.so.6        ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Sql.so.6        ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Svg.so.6        ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6SvgWidgets.so.6 ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Widgets.so.6    ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6XcbQpa.so.6     ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/iconengines/libqsvgicon.so ./artifact/bin/plugins/iconengines/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so ./artifact/bin/plugins/platforminputcontexts/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so    ./artifact/bin/plugins/platforminputcontexts/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/platforms/libqxcb.so ./artifact/bin/plugins/platforms/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/platformthemes/libqgtk3.so             ./artifact/bin/plugins/platformthemes/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/platformthemes/libqxdgdesktopportal.so ./artifact/bin/plugins/platformthemes/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/plugins/sqldrivers/libqsqlite.so ./artifact/bin/plugins/sqldrivers/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
