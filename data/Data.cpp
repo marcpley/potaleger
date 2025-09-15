@@ -43,7 +43,7 @@ QString ComboField(const QString sTableName,const QString sFieldName) {
 }
 
 int DefColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
-    QString sType = DataType(db, sTableName,sFieldName);
+    QString sType=DataType(db, sTableName,sFieldName);
     if (sType=="DATE")
         return 80;
     else if (sType.startsWith("BOOL"))
@@ -73,8 +73,14 @@ int DefColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldN
 
 QString DynDDL(QString sQuery)
 {
-    sQuery=StrReplace(sQuery,"#FmtPlanif#","IN('','01-01','01-15','02-01','02-15','03-01','03-15','04-01','04-15','05-01','05-15','06-01','06-15','07-01','07-15','08-01','08-15','09-01','09-15','10-01','10-15','11-01','11-15','12-01','12-15')");
     sQuery=StrReplace(sQuery,"#DbVer#",DbVersion);
+    sQuery=StrReplace(sQuery,"#NoAccent(","replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(");
+    sQuery=StrReplace(sQuery,")NoAccent#",",'â','a'),'à','a'),'ä','a')"
+                                          ",'é','e'),'è','e'),'ê','e'),'ë','e')"
+                                          ",'î','i'),'ï','i')"
+                                          ",'ô','o'),'ö','o')"
+                                          ",'û','u'),'ù','u'),'ü','u')"
+                                          ",'ç','c')");
     return sQuery;
 }
 
@@ -96,18 +102,20 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFiel
         else if (sTableName=="Cultures")
             queryTest="SELECT count(*) FROM Espèces";
         else if (sTableName=="Fertilisations")
-            queryTest="SELECT count(*) FROM Repartir_Fertilisation_sur('*',NULL,NULL)";
+            queryTest="SELECT count(*) FROM Cult_répartir_fertilisation"
+                      "WHERE (DATE('now') BETWEEN C.Début_fertilisation_possible AND "
+                                                 "C.Fin_fertilisation_possible)";
         else if (sTableName=="ITP")
             queryTest="SELECT count(*) FROM Espèces";
         else if (sTableName=="Récoltes")
-            queryTest="SELECT count(*) FROM Repartir_Recolte_sur('*',NULL,NULL)";
+            queryTest="SELECT count(*) FROM Cult_répartir_récolte WHERE DATE('now') BETWEEN Début_récolte_possible AND Fin_récolte_possible";
         if (sTableName=="Rotations_détails")
             queryTest="(SELECT count(*) FROM Rotations)AND(SELECT count(*) FROM ITP WHERE Espèce NOTNULL)";
 
         if (!queryTest.isEmpty() and query.Selec0ShowErr(queryTest)==0)
             filter="NoFk";
     } else { //Set the filter depending of row data.
-        const PotaTableModel *model = qobject_cast<const PotaTableModel *>(index.model());
+        const PotaTableModel *model=qobject_cast<const PotaTableModel *>(index.model());
         if (model) {
              if (sTableName=="Consommations") {
                 if (sFieldName=="Destination")
@@ -126,12 +134,16 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFiel
                     filter="(Vivace NOTNULL)";
             } else if (sTableName=="Fertilisations") {
                 if (sFieldName=="Culture")
-                    filter="Culture IN (SELECT Culture FROM Repartir_Fertilisation_sur('*','"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"',"+
-                                                                                        iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
-                                                                                            "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
+                    filter="Espèce IN (SELECT Espèce FROM Cult_répartir_fertilisation "
+                                      "WHERE (Espèce='"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"')AND"+
+                                            "(DATE('"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),
+                                                          "now",
+                                                          index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()).toString()+"') BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible))";
                 else if (sFieldName=="Espèce")
-                    filter="Espèce IN (SELECT Espèce FROM Repartir_Fertilisation_sur('*',NULL,"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
-                                                                                               "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
+                    filter="Espèce IN (SELECT Espèce FROM Cult_répartir_fertilisation "
+                                      "WHERE DATE('"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),
+                                                         "now",
+                                                         index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()).toString()+"') BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible)";
             } else if (sTableName=="ITP") {
                 if ((sFieldName=="Espèce")and sPageFilter.contains("Vivace ISNULL"))
                     filter="(Vivace ISNULL)";
@@ -142,12 +154,16 @@ QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFiel
                     filter="Type_planche='"+StrReplace(index.siblingAtColumn(model->fieldIndex("Type")).data().toString(),"'","''")+"'";
             } else if (sTableName=="Récoltes") {
                 if (sFieldName=="Culture")
-                    filter="Culture IN (SELECT Culture FROM Repartir_Recolte_sur('*','"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"',"+
-                                                                                        iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
-                                                                                            "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
+                    filter="Culture IN (SELECT Culture FROM Cult_répartir_récolte "
+                                       "WHERE (Espèce='"+StrReplace(index.siblingAtColumn(model->fieldIndex("Espèce")).data().toString(),"'","''")+"')AND"+
+                                             "(DATE('"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),
+                                                           "now",
+                                                           index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()).toString()+"') BETWEEN Début_récolte_possible AND Fin_récolte_possible))";
                 else if (sFieldName=="Espèce")
-                    filter="Espèce IN (SELECT Espèce FROM Repartir_Recolte_sur('*',NULL,"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),"NULL",
-                                                                                               "'"+index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()+"'").toString()+"))";
+                    filter="Espèce IN (SELECT Espèce FROM Cult_répartir_récolte "
+                                      "WHERE DATE('"+iif(index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).isNull(),
+                                                         "now",
+                                                         index.siblingAtColumn(model->fieldIndex("Date")).data(Qt::EditRole).toString()).toString()+"') BETWEEN Début_récolte_possible AND Fin_récolte_possible)";
             } else if (sTableName=="Rotations_détails") {
                 if (sFieldName=="IT_plante")
                     filter="Espèce NOTNULL";
@@ -191,7 +207,7 @@ int NaturalSortCol(const QString sTableName){
         sTableName=="Rotations_détails__Tempo" or
         sTableName=="UserSQL")
         return -1;
-    else if (sTableName=="Cult_planif")
+    else if (sTableName=="Planif_planches")
         return 5;//Date_semis
     else if (sTableName=="Cultures__à_semer")
         return 9;//Date_semis
@@ -218,7 +234,7 @@ QString NoData(const QString sTableName){
         return QObject::tr("Saisissez au moins une espèce marquée 'Conservation' avant de saisir des sorties de stock.");
     else if (sTableName=="Cultures")
         return QObject::tr("Saisissez au moins une espèce avant de saisir des cultures.");
-    else if (sTableName.startsWith("Cult_planif"))
+    else if (sTableName.startsWith("Planif_"))
         return QObject::tr("Saisissez au moins une rotation de cultures (menu Assolement) pour que la planification puisse générer des cultures.");
     else if (sTableName=="Cultures__analyse")
         return QObject::tr("Il n'y a aucune culture annuelle terminée et significative (champ 'Terminée' différent de '...NS') pour le moment.");
@@ -231,6 +247,8 @@ QString NoData(const QString sTableName){
     else if (sTableName=="Espèces__manquantes")
         return QObject::tr("Aucune !\nToutes les espèces marquées 'A planifier' sont suffisamment incluses dans les rotations.\n\n"
                            "L'onglet 'Planification/Cultures prévues par espèce' donne la production prévue par espèce.");
+    else if (sTableName=="Planches__deficit_fert")
+        return QObject::tr("Aucune planche dont le bilan de fertilisation est faible (paramètre 'Déficit_fert') sur une des 2 saisons précédente (N-1 ou N-2).");
     else if (sTableName=="Récoltes__Saisies")
         return QObject::tr("Il n'y a aucune culture à récolter pour le moment.\n\n"
                            "Les récoltes peuvent être saisies avant ou après la période de récolte\n"
@@ -247,30 +265,30 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
 
     //Tables
     if (sTableName=="Analyses_de_sol"){
-        bReadOnly = (sFieldName.startsWith("☆"));
+        bReadOnly=(sFieldName.startsWith("☆"));
     } else if (sTableName=="Cultures"){
-        bReadOnly = (((sFieldName=="Culture")and(query.Selec0ShowErr("SELECT Valeur!='Oui' FROM Params WHERE Paramètre='C_modif_N_culture'").toBool())) or
+        bReadOnly=(((sFieldName=="Culture")and(query.Selec0ShowErr("SELECT Valeur!='Oui' FROM Params WHERE Paramètre='C_modif_N_culture'").toBool())) or
                      sFieldName=="Type" or
                      sFieldName=="Saison" or
                      sFieldName=="Etat");
 
     } else if (sTableName=="Espèces"){
-        bReadOnly = (sFieldName.startsWith("★"));
+        bReadOnly=(sFieldName.startsWith("★"));
     } else if (sTableName=="Fertilisants"){
-        bReadOnly = (sFieldName.endsWith("_disp_pc"));
+        bReadOnly=(sFieldName.endsWith("_disp_pc"));
 
     } else if (sTableName=="ITP"){
-        bReadOnly = (sFieldName=="Type_culture");
+        bReadOnly=(sFieldName=="Type_culture");
 
     } else if (sTableName=="Params"){
-        bReadOnly = (sFieldName!="Valeur");
+        bReadOnly=(sFieldName!="Valeur");
 
     } else if (false) {//Views
     } else if (sTableName=="Consommations__Saisies"){
-        bReadOnly = (sFieldName=="Stock" or
+        bReadOnly=(sFieldName=="Stock" or
                      sFieldName=="Sorties");
     } else if (sTableName=="Cultures__non_terminées"){
-        bReadOnly = !(((sFieldName=="Culture")and(query.Selec0ShowErr("SELECT Valeur='Oui' FROM Params WHERE Paramètre='C_modif_N_culture'").toBool())) or
+        bReadOnly=!(((sFieldName=="Culture")and(query.Selec0ShowErr("SELECT Valeur='Oui' FROM Params WHERE Paramètre='C_modif_N_culture'").toBool())) or
                       sFieldName=="Planche" or
                       sFieldName=="Espèce" or
                       sFieldName=="IT_plante" or
@@ -292,12 +310,12 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__à_semer_pep"){
-        bReadOnly = !(sFieldName=="Date_semis" or
+        bReadOnly=!(sFieldName=="Date_semis" or
                       sFieldName=="Semis_fait" or
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__à_semer_EP" or sTableName=="Cultures__à_semer"){
-        bReadOnly = !(sFieldName=="Planche" or
+        bReadOnly=!(sFieldName=="Planche" or
                       sFieldName=="Variété" or
                       sFieldName=="Fournisseur" or
                       sFieldName=="D_planif" or
@@ -309,7 +327,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__à_planter"){
-        bReadOnly = !(sFieldName=="Planche" or
+        bReadOnly=!(sFieldName=="Planche" or
                       sFieldName=="Variété" or
                       sFieldName=="Fournisseur" or
                       sFieldName=="D_planif" or
@@ -323,7 +341,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__à_récolter"){
-        bReadOnly = !(sFieldName=="Date_semis" or
+        bReadOnly=!(sFieldName=="Date_semis" or
                       sFieldName=="Semis_fait" or
                       sFieldName=="Date_plantation" or
                       sFieldName=="Plantation_faite" or
@@ -335,7 +353,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__à_terminer"){
-        bReadOnly = !(sFieldName=="Date_semis" or
+        bReadOnly=!(sFieldName=="Date_semis" or
                       sFieldName=="Date_plantation" or
                       sFieldName=="Début_récolte" or
                       // sFieldName=="Récolte_com" or
@@ -345,7 +363,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__A_faire"){
-        bReadOnly = !(sFieldName=="Date_semis" or
+        bReadOnly=!(sFieldName=="Date_semis" or
                       sFieldName=="Semis_fait" or
                       sFieldName=="Date_plantation" or
                       sFieldName=="Plantation_faite" or
@@ -356,7 +374,7 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Cultures__vivaces"){
-        bReadOnly = !(sFieldName=="D_planif" or
+        bReadOnly=!(sFieldName=="D_planif" or
                       sFieldName=="Début_récolte" or
                       sFieldName=="Fin_récolte" or
                       sFieldName=="Récolte_faite" or
@@ -364,35 +382,35 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="A_faire" or
                       sFieldName=="Notes");
     } else if (sTableName=="Destinations__conso"){
-        bReadOnly = (sFieldName=="Consommation" or
+        bReadOnly=(sFieldName=="Consommation" or
                      sFieldName=="Valeur");
 
     } else if (sTableName=="Espèces__couverture"){
-        bReadOnly = !(sFieldName=="Rendement" or
+        bReadOnly=!(sFieldName=="Rendement" or
                       sFieldName=="Niveau" or
                       sFieldName=="Obj_annuel" or
                       sFieldName=="Notes");
     } else if (sTableName=="Espèces__inventaire"){
-        bReadOnly = !(sFieldName=="Date_inv" or
+        bReadOnly=!(sFieldName=="Date_inv" or
                       sFieldName=="Inventaire" or
                       sFieldName=="Prix_kg" or
                       sFieldName=="Notes");
     } else if (sTableName.startsWith("Espèces__")){
-        bReadOnly = (sFieldName.startsWith("★"));
+        bReadOnly=(sFieldName.startsWith("★"));
     } else if (sTableName=="Fertilisants__inventaire"){
-        bReadOnly = !(sFieldName=="Date_inv" or
+        bReadOnly=!(sFieldName=="Date_inv" or
                       sFieldName=="Inventaire" or
                       sFieldName=="Prix_kg" or
                       sFieldName=="Notes");
     } else if (sTableName=="Fertilisations__Saisies"){
-        bReadOnly = (sFieldName=="ID" or
+        bReadOnly=(sFieldName=="ID" or
                      sFieldName=="N" or
                      sFieldName=="P" or
                      sFieldName=="K" or
                      sFieldName=="Planche" or
                      sFieldName=="Variété");
     } else if (sTableName=="ITP__Tempo"){
-        bReadOnly = !(sFieldName=="IT_plante" or
+        bReadOnly=!(sFieldName=="IT_plante" or
                       sFieldName=="Espèce" or
                       sFieldName=="Type_planche" or
                       sFieldName=="S_semis" or
@@ -407,23 +425,23 @@ bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldNam
                       sFieldName=="Notes" or
                       sFieldName=="N_espèce");
     } else if (sTableName=="Notes"){
-        bReadOnly = ((sFieldName=="ID" and (query.Selec0ShowErr("SELECT Valeur!='Oui' FROM Params WHERE Paramètre='Notes_Modif_dates'").toBool())) or
+        bReadOnly=((sFieldName=="ID" and (query.Selec0ShowErr("SELECT Valeur!='Oui' FROM Params WHERE Paramètre='Notes_Modif_dates'").toBool())) or
                      (sFieldName.startsWith("Date_") and (query.Selec0ShowErr("SELECT Valeur!='Oui' FROM Params WHERE Paramètre='Notes_Modif_dates'").toBool())));
     } else if (sTableName=="Récoltes__Saisies"){
-        bReadOnly = (sFieldName=="ID" or
+        bReadOnly=(sFieldName=="ID" or
                      sFieldName=="Planche" or
                      sFieldName=="Variété");
     } else if (sTableName=="Rotations"){
-        bReadOnly = (sFieldName=="Nb_années");
+        bReadOnly=(sFieldName=="Nb_années");
     } else if (sTableName=="Rotations_détails__Tempo"){
-        bReadOnly = !(sFieldName=="Rotation" or
+        bReadOnly=!(sFieldName=="Rotation" or
                       sFieldName=="Année" or
                       sFieldName=="IT_plante" or
                       sFieldName=="Pc_planches" or
                       sFieldName=="Fi_planches" or
                       sFieldName=="Notes");
     } else if (sTableName=="Variétés__inv_et_cde"){
-        bReadOnly = !(sFieldName=="Qté_stock" or
+        bReadOnly=!(sFieldName=="Qté_stock" or
                       sFieldName=="Qté_cde" or
                       sFieldName=="Fournisseur" or
                       sFieldName=="Nb_graines_g" or
@@ -456,7 +474,7 @@ QColor RowColor(QString sValue, QString sTableName){
             alpha=40;
         else
             alpha=60;
-        if (sValue.toInt() % 2 == 0)//Pair
+        if (sValue.toInt() % 2==0)//Pair
             c=cPlanche;
         else
             return QColor();
@@ -518,7 +536,7 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                  iif(!rec.value(rec.indexOf("Prix")).isNull(),
                      rec.value(rec.indexOf("Prix")).toString()+QObject::tr("€")+" - ","").toString()+
                  rec.value(rec.indexOf("Destination")).toString();
-    else if (TableName=="Cult_planif")
+    else if (TableName=="Planif_planches")
         result=rec.value(rec.indexOf("Planche")).toString()+" - "+
                rec.value(rec.indexOf("IT_plante")).toString()+" - "+
                iif(rec.value(rec.indexOf("Date_semis")).isNull(),
@@ -557,11 +575,11 @@ QString RowSummary(QString TableName, const QSqlRecord &rec){
                iif(!rec.value(rec.indexOf("Date_plantation")).isNull(),
                    "Plant "+rec.value(rec.indexOf("Date_plantation")).toDate().toString("dd/MM/yyyy"),
                    "Semis "+rec.value(rec.indexOf("Date_semis")).toDate().toString("dd/MM/yyyy")).toString();
-    else if (TableName=="Cult_planif_espèces")
+    else if (TableName=="Planif_espèces")
         result=rec.value(rec.indexOf("Espèce")).toString()+" - "+
                rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
                rec.value(rec.indexOf("Longueur")).toString()+"m";
-    else if (TableName=="Cult_planif_ilots")
+    else if (TableName=="Planif_ilots")
         result=QObject::tr("Ilot ")+rec.value(rec.indexOf("Ilot")).toString()+" - "+
                rec.value(rec.indexOf("Nb_planches")).toString()+" "+QObject::tr("planches")+" - "+
                rec.value(rec.indexOf("Longueur")).toString()+"m";
@@ -970,7 +988,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                 "- bonne humidité ;\n"
                                 "- bonne activité biologique ;\n"
                                 "- apport bien intégré.\n\n"
-                                "Diponible = teneur x coefficient / 100\n"
+                                "Diponible=teneur x coefficient / 100\n"
                                 "Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').";
         const char* valRef="Valeurs de référence: %1.";
         if (sFieldName=="Type")
@@ -1081,7 +1099,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         if (sFieldName=="Type_planche")
             sToolTip=QObject::tr("Liste de choix paramétrable (paramétre 'Combo_Planches_Type').");
         else if (sFieldName=="Dose_semis")
-            sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire SI ESPACEMENT = 0.");
+            sToolTip=QObject::tr("Quantité de semence (g/m²).")+"\n"+QObject::tr("Utilisé pour calculer le poids de semence nécessaire SI ESPACEMENT=0.");
         else if (sFieldName.startsWith("J_"))
             sToolTip=QObject::tr("Nombre de jours pour...")+"\n"+
                      QObject::tr("La date prévue pour les cultures sera le début de période.");
@@ -1120,10 +1138,10 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr(   "Pourcentage d'occupation des planches de l'UdP.\n"
                                     "Exemple: planche de 10m de long occupée à 40% -> la culture sur cette planche fera 4m.");
         else if (sFieldName=="Fi_planches")
-            sToolTip=QObject::tr(  "Filtrage des planches de l'UdP.\n"
+            sToolTip=QObject::tr(  "Filtrage des planches de l'UdP sur le dernier caractère du nom de planche.\n"
                                    "Exemple: l'ilot AA contient une UdP (1) de 4 planches (A, B, C et D)\n"
                                    "Les planches sont: AA1A, AA1B, AA1C et AA1D\n"
-                                   "Fi_planches = AC -> seule les planches AA1A et AA1C seront occupées par les cultures.");
+                                   "Fi_planches=AC -> seule les planches AA1A et AA1C seront occupées par les cultures.");
         else if (sFieldName=="Mise_en_place")
             sToolTip=QObject::tr(  "Semaine de mise en place de la culture sur la planche.\n"
                                    "* indique un chevauchement avec la culture précédente (pas encore récoltée).\n"
@@ -1274,7 +1292,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         else if (sFieldName=="Vivace")
             sToolTip=QObject::tr("Espèce pouvant être récoltée tout les ans, après la période de juvénilité (noté sur la variété).\n"
                                  "Pendant la période de juvénilité, le champ 'Type' des cultures est identique aux cultures annuelles (semis, plant).\n"
-                                 "A partir de la 1ère récolte, le champ 'Type' des cultures devient 'Vivace' (le champ 'Terminée' = 'v').");
+                                 "A partir de la 1ère récolte, le champ 'Type' des cultures devient 'Vivace' (le champ 'Terminée'='v').");
         else if (sFieldName=="Conservation")
             sToolTip=QObject::tr("Espèce pouvant se conserver. Elles apparaissent dans l'onglet Stock.");
         else if (sFieldName=="A_planifier")
@@ -1363,7 +1381,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
             sToolTip=QObject::tr(  "Nombre de cultures significatives (champ 'Terminée' différent de '...NS').");
         // else if (sFieldName.startsWith("Prod_N"))
         //     sToolTip=QObject::tr(  "Somme des productions (réelles ou possibles) des cultures de la saison (kg).")+"\n"+
-        //              QObject::tr(  "Saison = année de mise en place (plantation ou semis en place), la récolte peut se terminer l'année suivante.")+"\n"+
+        //              QObject::tr(  "Saison=année de mise en place (plantation ou semis en place), la récolte peut se terminer l'année suivante.")+"\n"+
         //              QObject::tr(  "Production réelle (somme des récoltes) pour les cultures terminées.")+"\n"+
         //              QObject::tr(  "Production possible (rendement de l'espèce x surface de la culture) pour les cultures non terminées.");
         else if (sFieldName=="Pl_libre_le")
@@ -1389,10 +1407,10 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
         if (sDataType.startsWith("BOOL")){
             sToolTip+=iif(sToolTip=="","","\n\n").toString()+
                       QObject::tr( "Champ Oui/Non (BOOL))\n"
-                                   "Vide = Non (ou faux)");
+                                   "Vide=Non (ou faux)");
             if (!sToolTip.contains("'x' ") and !sToolTip.contains("'v' "))
                 sToolTip+=QObject::tr( "\n"
-                                       "Saisie quelconque = Oui (ou vrai).\n"
+                                       "Saisie quelconque=Oui (ou vrai).\n"
                                        "'X', 'Oui', 'Non', '0' ou n'importe quoi veulent dire OUI.");
         } else {
             sToolTip+=iif(sToolTip=="","","\n\n").toString()+
@@ -1491,9 +1509,9 @@ QString ToolTipTable(const QString sTableName) {
     else if (sTableName=="Rotations_détails__Tempo")
         sToolTip=QObject::tr(   "Les ITP (donc les espèces cultivées) vont être déplacés chaque année\n"
                                 "sur une nouvelle unité de production (UdP).\n"
-                                "Si Pc_planches = 100%, les cultures occuperont la totalité des planches de l'UdP.\n"
+                                "Si Pc_planches=100%, les cultures occuperont la totalité des planches de l'UdP.\n"
                                 "Si Fi_planches est vide, les cultures occupperont toutes les planches de l'UdP\n"
-                                "Si Pc_planches = 50% et Fi_planches = A, les cultures occuperont\n"
+                                "Si Pc_planches=50% et Fi_planches=A, les cultures occuperont\n"
                                 "la moitié de chaque planche se terminant par A.");
     else if (sTableName=="Récoltes__Saisies")
         sToolTip=QObject::tr("Quantités de légume récoltées par culture.");
@@ -1515,7 +1533,7 @@ QString ToolTipTable(const QString sTableName) {
         return QObject::tr("Paramètres pour la base de données (BDD) courante.");
 
     //Views
-    if (sTableName=="Cult_planif")
+    if (sTableName=="Planif_planches")
         sToolTip=QObject::tr(  "Cultures qui vont être créées lors de la prochaîne planification.\n"
                                "La variété choisie pour chaque culture est celle dont\n"
                                "la quantité de semence en stock est la plus importante.\n"
@@ -1535,7 +1553,7 @@ QString ToolTipTable(const QString sTableName) {
     else if (sTableName=="Espèces__couverture")
         sToolTip=QObject::tr(   "Comparatif saison par saison des objectifs de production pour les espèces annuelles.\n"
                                 "L'objectif annuel n'est valable que pour la saison courante.\n"
-                                "Prévue = rendement de l'espèce x surface de culture.\n\n"
+                                "Prévue=rendement de l'espèce x surface de culture.\n\n"
                                 "Attention, c'est la date de mise en place (plantation ou semis en place) qui détermine la saison d'une culture.\n"
                                 "Des récoltes année N+1 peuvent donc compter pour la saison N si la mise en place est en fin d'année N.");
     else if (sTableName=="Espèces__inventaire")
@@ -1548,7 +1566,7 @@ QString ToolTipTable(const QString sTableName) {
         sToolTip=QObject::tr(   "Espèces marquées 'A planifier' et qui ne sont\n"
                                 "pourtant pas suffisamment incluses dans les rotations.\n"
                                 "La planification ne générera donc pas assez de cultures pour ces espèces.");
-    else if (sTableName=="Cult_planif_espèces" or sTableName=="Cult_planif_ilots")
+    else if (sTableName=="Planif_espèces" or sTableName=="Planif_ilots")
         sToolTip=QObject::tr(  "Espèces pour lesquelles des cultures vont être créées\n"
                                "lors de la prochaîne planification.")+"\n"+
                    QObject::tr(  "Liste non directement modifiable, déduite des 'Rotations'.");
@@ -1558,8 +1576,8 @@ QString ToolTipTable(const QString sTableName) {
                                "Le débuts du nom des planches indique leur ilot (voir le paramètre 'Ilot_nb_car').");
     else if (sTableName=="Planches__bilan_fert")
         sToolTip=QObject::tr(  "Bilan de fertilisation par planche sur une saison.\n"
-                               "Besoins = somme des besoins des cultures annuelles de la saison.\n"
-                               "Apports = somme des fertilisations des cultures annuelles de la saison.");
+                               "Besoins=somme des besoins des cultures annuelles de la saison.\n"
+                               "Apports=somme des fertilisations des cultures annuelles de la saison.");
     else if (sTableName=="Planches__deficit_fert")
         sToolTip=QObject::tr(  "Planches dont le bilan de fertilisation est faible (paramètre 'Déficit_fert') sur une des 2 saisons précédente (N-1 ou N-2).");
     else if (sTableName=="Variétés__inv_et_cde")

@@ -52,8 +52,8 @@ void PotaGraph::createSeries(QAbstractItemModel* model)
     removeAllSeries();
 
     if (m_xAxisYearSeries) {
-        for (int row = 0; row < model->rowCount(); ++row) {
-            int year = model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year();
+        for (int row=0; row < model->rowCount(); ++row) {
+            int year=model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year();
             if (!years.contains(year))
                 years.append(year);
         }
@@ -65,11 +65,11 @@ void PotaGraph::createSeries(QAbstractItemModel* model)
         for (int i =0;i<years.count();i++) {
             seriesName[i]=str(years[i]);
             if (m_yAxisType[0]==typeSeriesScatter or m_yAxisType[0]==typeSeriesScatNotNull)
-                m_series[i] = new QScatterSeries(this);
+                m_series[i]=new QScatterSeries(this);
             else if (m_yAxisType[0]==typeSeriesBar)
-                m_series[i] = new QBarSeries(this);
+                m_series[i]=new QBarSeries(this);
             else
-                m_series[i] = new QLineSeries(this);
+                m_series[i]=new QLineSeries(this);
             addSeries(m_series[i]);
         }
     } else {
@@ -80,13 +80,13 @@ void PotaGraph::createSeries(QAbstractItemModel* model)
             seriesName[i]="";
             if (m_yAxisFieldNum[i]>=0  or i==0) {
                 if (m_yAxisType[i]==typeSeriesScatter or m_yAxisType[i]==typeSeriesScatNotNull)
-                    m_series[i] = new QScatterSeries(this);
+                    m_series[i]=new QScatterSeries(this);
                 else if (m_yAxisType[i]==typeSeriesBar)
-                    m_series[i] = new QBarSeries(this);
+                    m_series[i]=new QBarSeries(this);
                 else
-                    m_series[i] = new QLineSeries(this);
+                    m_series[i]=new QLineSeries(this);
                 addSeries(m_series[i]);
-            } else m_series[i] = nullptr;
+            } else m_series[i]=nullptr;
         }
     }
 }
@@ -163,13 +163,13 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
             abscissaVar.clear();
             ordinateVar[i].clear();
 
-            if (m_xAxisGroup == xAxisGroupNo) { // All abscissa values
+            if (m_xAxisGroup==xAxisGroupNo) { // All abscissa values
                 QString label;
                 QMap<QString, int> labelCounts;
-                for (int row = 0; row < model->rowCount(); ++row) {
+                for (int row=0; row < model->rowCount(); ++row) {
                     label=model->index(row, m_xAxisFieldNum).data().toString();
-                    int count = labelCounts.value(label, 0) + 1;
-                    labelCounts[label] = count;
+                    int count=labelCounts.value(label, 0) + 1;
+                    labelCounts[label]=count;
                     if (count > 1)
                         abscissaVar << label+" ("+QString::number(count)+")";
                     else
@@ -179,44 +179,44 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                 }
             } else { //Group abscissa values
                 QMap<QString, QList<QVariant>> abscissaVarNotGrouped;
-                for (int row = 0; row < model->rowCount(); ++row) { //read data from model and prepare grouping.
+                for (int row=0; row < model->rowCount(); ++row) { //read data from model and prepare grouping.
                     if (!m_xAxisYearSeries or model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year()==years[i]) {
                         QString key;
                         if (model->index(row, m_xAxisFieldNum).data(Qt::EditRole).isNull()) {
-                            key = " ";
-                        } else if (m_xAxisGroup == xAxisGroupSame) {
-                            key = model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toString();
+                            key=" ";
+                        } else if (m_xAxisGroup==xAxisGroupSame) {
+                            key=model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toString();
                         } else if  (m_xAxisDataType=="TEXT") {
-                            if (m_xAxisGroup == xAxisGroupFirstWord)
-                                key = model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toString().split(" ").first();
+                            if (m_xAxisGroup==xAxisGroupFirstWord)
+                                key=model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toString().split(" ").first();
                             else if (m_xAxisGroup >= xAxisGroupfirstChar) //First chars
-                                key = model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toString().first(m_xAxisGroup-2);
+                                key=model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toString().first(m_xAxisGroup-2);
                         } else if  (m_xAxisDataType=="DATE") {
-                            if (m_xAxisGroup == xAxisGroupYear)
-                                key = QDate(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year(),1,1).toString("yyyy-MM-dd");
-                            else if (m_xAxisGroup == xAxisGroupMonth)
-                                key = QDate(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year(),
+                            if (m_xAxisGroup==xAxisGroupYear)
+                                key=QDate(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year(),1,1).toString("yyyy-MM-dd");
+                            else if (m_xAxisGroup==xAxisGroupMonth)
+                                key=QDate(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().year(),
                                             model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().month(),1).toString("yyyy-MM-dd");
-                            else if (m_xAxisGroup == xAxisGroupWeek)
-                                key = firstDayOffWeek(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate()).toString("yyyy-MM-dd");
-                            else if (m_xAxisGroup == xAxisGroupDay)
-                                key = model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().toString("yyyy-MM-dd");
+                            else if (m_xAxisGroup==xAxisGroupWeek)
+                                key=firstDayOffWeek(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate()).toString("yyyy-MM-dd");
+                            else if (m_xAxisGroup==xAxisGroupDay)
+                                key=model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDate().toString("yyyy-MM-dd");
                         } else if  (m_xAxisDataType=="REAL" or m_xAxisDataType.startsWith("INT")) {
-                            if (m_xAxisGroup == xAxisGroup1000)
-                                key = QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/1000)*1000);
-                            else if (m_xAxisGroup == xAxisGroup100)
-                                key = QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/100)*100);
-                            else if (m_xAxisGroup == xAxisGroup10)
-                                key = QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/10)*10);
+                            if (m_xAxisGroup==xAxisGroup1000)
+                                key=QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/1000)*1000);
+                            else if (m_xAxisGroup==xAxisGroup100)
+                                key=QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/100)*100);
+                            else if (m_xAxisGroup==xAxisGroup10)
+                                key=QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/10)*10);
                             if  (m_xAxisDataType=="REAL") {
-                                if (m_xAxisGroup == xAxisGroup1)
-                                    key = QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/1)*1);
+                                if (m_xAxisGroup==xAxisGroup1)
+                                    key=QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()/1)*1);
                                 else if (m_xAxisGroup >= xAxisGroup1Decimal)
-                                    key = QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()*std::pow(10,m_xAxisGroup-1))/std::pow(10,m_xAxisGroup-1));
+                                    key=QString::number(std::floor(model->index(row, m_xAxisFieldNum).data(Qt::EditRole).toDouble()*std::pow(10,m_xAxisGroup-1))/std::pow(10,m_xAxisGroup-1));
                             }
                         }
-                        if (key.isEmpty()) key = " ";
-                        QVariant value = model->index(row, yAxisFieldNum).data(Qt::EditRole);
+                        if (key.isEmpty()) key=" ";
+                        QVariant value=model->index(row, yAxisFieldNum).data(Qt::EditRole);
                         if (m_xAxisYearSeries)
                             key="2000-"+key.last(5);
                         abscissaVarNotGrouped[key].append(value);
@@ -224,10 +224,10 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                 }
 
                 if  (m_xAxisDataType=="DATE") { //Add zero value if point will missing on xAxis
-                    if (m_xAxisGroup == xAxisGroupYear) {
+                    if (m_xAxisGroup==xAxisGroupYear) {
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
-                        for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                        for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                         qDebug() << it.key();
                             xMin=fmin(xMin,QDate::fromString(it.key(),"yyyy-MM-dd").year());
                             xMax=fmax(xMax,QDate::fromString(it.key(),"yyyy-MM-dd").year());
@@ -235,7 +235,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         int x=xMin+1;
                         while (x<xMax) {
                             bool present=false;
-                            for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                            for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                                 if (x==QDate::fromString(it.key(),"yyyy-MM-dd").year()) {
                                     present=true;
                                     break;
@@ -245,10 +245,10 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                                 abscissaVarNotGrouped[QString::number(x)+"-01-01"].append(0);
                             x++;
                         }
-                    } else if (m_xAxisGroup == xAxisGroupMonth) {
+                    } else if (m_xAxisGroup==xAxisGroupMonth) {
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
-                        for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                        for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                         qDebug() << it.key();
                             xMin=fmin(xMin,QDate::fromString(it.key(),"yyyy-MM-dd").year()*12+QDate::fromString(it.key(),"yyyy-MM-dd").month());
                             xMax=fmax(xMax,QDate::fromString(it.key(),"yyyy-MM-dd").year()*12+QDate::fromString(it.key(),"yyyy-MM-dd").month());
@@ -256,7 +256,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         int x=xMin+1;
                         while (x<xMax) {
                             bool present=false;
-                            for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                            for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                                 if (x==QDate::fromString(it.key(),"yyyy-MM-dd").year()*12+QDate::fromString(it.key(),"yyyy-MM-dd").month()) {
                                     present=true;
                                     break;
@@ -267,10 +267,10 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                                 abscissaVarNotGrouped[QString::number(floor(x/12))+"-"+StrLast("0"+QString::number(x-floor(x/12)*12),2)+"-01"].append(0);
                             x++;
                         }
-                    } else if (m_xAxisGroup == xAxisGroupWeek) {
+                    } else if (m_xAxisGroup==xAxisGroupWeek) {
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
-                        for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                        for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                         qDebug() << it.key();
                             xMin=fmin(xMin,floor(QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay()/7));
                             xMax=fmax(xMax,floor(QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay()/7));
@@ -278,7 +278,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         int x=xMin+1;
                         while (x<xMax) {
                             bool present=false;
-                            for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                            for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                                 if (x==floor(QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay()/7)) {
                                     present=true;
                                     break;
@@ -288,17 +288,17 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                                 abscissaVarNotGrouped[QDate::fromJulianDay(x*7).toString("yyyy-MM-dd")].append(0);
                             x++;
                         }
-                    } else if (m_xAxisGroup == xAxisGroupDay) {
+                    } else if (m_xAxisGroup==xAxisGroupDay) {
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
-                        for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                        for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                             xMin=fmin(xMin,QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay());
                             xMax=fmax(xMax,QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay());
                         }
                         int x=xMin+1;
                         while (x<xMax) {
                             bool present=false;
-                            for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
+                            for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
                                 if (x==QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay()) {
                                     present=true;
                                     break;
@@ -311,36 +311,36 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                     }
                 }
 
-                for (auto it = abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) { //Group data.
-                    const QVariant& absc = it.key();
-                    const QList<QVariant>& ordos = it.value();
+                for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) { //Group data.
+                    const QVariant& absc=it.key();
+                    const QList<QVariant>& ordos=it.value();
 
-                    QVariant y = 0;
-                    if (yAxisFieldNum == -1) { //Count
-                        y = ordos.size();
-                    } else if (yAxisCalc == calcSeriesNotNull) {
-                        int count = 0;
+                    QVariant y=0;
+                    if (yAxisFieldNum==-1) { //Count
+                        y=ordos.size();
+                    } else if (yAxisCalc==calcSeriesNotNull) {
+                        int count=0;
                         for (const QVariant& v : ordos) if (!v.isNull()) ++count;
-                        y = count;
-                    } else if (yAxisCalc == calcSeriesDistinct) {
+                        y=count;
+                    } else if (yAxisCalc==calcSeriesDistinct) {
                         QSet<QString> uniqueVals;
                         for (const QVariant& v : ordos) uniqueVals.insert(v.toString());
-                        y = uniqueVals.size();
-                    } else if (yAxisCalc == calcSeriesFirst) {
-                        y = ordos.first();
-                    } else if (yAxisCalc == calcSeriesLast) {
-                        y = ordos.last();
-                    } else if (yAxisCalc == calcSeriesAverage) {
-                        for (const QVariant& v : ordos) y = y.toDouble() + v.toDouble();
-                        y = y.toDouble() / ordos.size();
-                    } else if (yAxisCalc == calcSeriesMin) {
-                        y = std::numeric_limits<double>::max();
-                        for (const QVariant& v : ordos) y = std::min(y.toDouble(), v.toDouble());
-                    } else if (yAxisCalc == calcSeriesMax) {
-                        y = std::numeric_limits<double>::min();
-                        for (const QVariant& v : ordos) y = std::max(y.toDouble(), v.toDouble());
-                    } else if (yAxisCalc == calcSeriesSum) {
-                        for (const QVariant& v : ordos) y = y.toDouble() + v.toDouble();
+                        y=uniqueVals.size();
+                    } else if (yAxisCalc==calcSeriesFirst) {
+                        y=ordos.first();
+                    } else if (yAxisCalc==calcSeriesLast) {
+                        y=ordos.last();
+                    } else if (yAxisCalc==calcSeriesAverage) {
+                        for (const QVariant& v : ordos) y=y.toDouble() + v.toDouble();
+                        y=y.toDouble() / ordos.size();
+                    } else if (yAxisCalc==calcSeriesMin) {
+                        y=std::numeric_limits<double>::max();
+                        for (const QVariant& v : ordos) y=std::min(y.toDouble(), v.toDouble());
+                    } else if (yAxisCalc==calcSeriesMax) {
+                        y=std::numeric_limits<double>::min();
+                        for (const QVariant& v : ordos) y=std::max(y.toDouble(), v.toDouble());
+                    } else if (yAxisCalc==calcSeriesSum) {
+                        for (const QVariant& v : ordos) y=y.toDouble() + v.toDouble();
                     }
                     // } else {
                     //     for (const QVariant& v : ordos) {
@@ -356,24 +356,24 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
 
             //Calculate min and max on Y axis.
             if (yRightAxis) {
-                for (int j = 0; j < ordinateVar[i].size(); ++j) {
-                    if (minYRAxis > ordinateVar[i][j].toDouble()) minYRAxis = ordinateVar[i][j].toDouble();
-                    if (maxYRAxis < ordinateVar[i][j].toDouble()) maxYRAxis = ordinateVar[i][j].toDouble();
+                for (int j=0; j < ordinateVar[i].size(); ++j) {
+                    if (minYRAxis > ordinateVar[i][j].toDouble()) minYRAxis=ordinateVar[i][j].toDouble();
+                    if (maxYRAxis < ordinateVar[i][j].toDouble()) maxYRAxis=ordinateVar[i][j].toDouble();
                 }
             } else {
-                for (int j = 0; j < ordinateVar[i].size(); ++j) {
-                    if (minYLAxis > ordinateVar[i][j].toDouble()) minYLAxis = ordinateVar[i][j].toDouble();
-                    if (maxYLAxis < ordinateVar[i][j].toDouble()) maxYLAxis = ordinateVar[i][j].toDouble();
+                for (int j=0; j < ordinateVar[i].size(); ++j) {
+                    if (minYLAxis > ordinateVar[i][j].toDouble()) minYLAxis=ordinateVar[i][j].toDouble();
+                    if (maxYLAxis < ordinateVar[i][j].toDouble()) maxYLAxis=ordinateVar[i][j].toDouble();
                 }
             }
 
             // Populate series and create axis X and Y
             if (yAxisType==typeSeriesBar){
-                QBarSeries* barSeries = qobject_cast<QBarSeries*>(m_series[i]);
+                QBarSeries* barSeries=qobject_cast<QBarSeries*>(m_series[i]);
                 barSeries->clear();
-                QBarSet* set = new QBarSet(seriesName[i]);
+                QBarSet* set=new QBarSet(seriesName[i]);
                 QStringList categories;
-                for (int j = 0; j < abscissaVar.size(); ++j) { // && j < ordinateVar[j].size()
+                for (int j=0; j < abscissaVar.size(); ++j) { // && j < ordinateVar[j].size()
                     categories << abscissaVar[j].toString();
                     *set << ordinateVar[i][j].toDouble();
                 }
@@ -389,19 +389,19 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
 
                 if (i==0) {
                     // X axis
-                    QBarCategoryAxis* axisXBar = new QBarCategoryAxis;
+                    QBarCategoryAxis* axisXBar=new QBarCategoryAxis;
                     axisXBar->append(categories);
                     addAxis(axisXBar, Qt::AlignBottom);
                     //barSeries->attachAxis(axisXBar);
 
                     // Y left axis
-                    QValueAxis* axisY = new QValueAxis;
+                    QValueAxis* axisY=new QValueAxis;
                     addAxis(axisY, Qt::AlignLeft);
                     //barSeries->attachAxis(axisY);
                     //axisY->setTitleText(seriesName[i]);
                 } else if (yRightAxis and !RightAxisCreated) {
                     // Y right axis
-                    QValueAxis* axisY = new QValueAxis;
+                    QValueAxis* axisY=new QValueAxis;
                     addAxis(axisY, Qt::AlignRight);
                     //barSeries->attachAxis(axisY);
                     //axisY->setTitleText(seriesName[i]);
@@ -409,7 +409,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                     RightAxisColor=yColor;
                 }
             } else { //Line or scatter.
-                QXYSeries* series = qobject_cast<QXYSeries*>(m_series[i]);
+                QXYSeries* series=qobject_cast<QXYSeries*>(m_series[i]);
                 series->clear();
                 series->setName(seriesName[i]);
                 if (yColor.isValid()) {
@@ -419,14 +419,14 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                     });
                 }
 
-                for (int j = 0; j < abscissaVar.size(); ++j) { // && j < ordinateVar[i].size()
-                    double y = ordinateVar[i][j].toDouble();
+                for (int j=0; j < abscissaVar.size(); ++j) { // && j < ordinateVar[i].size()
+                    double y=ordinateVar[i][j].toDouble();
                     if (yAxisType!=typeSeriesScatNotNull or y>0) {
                         if (m_xAxisDataType=="REAL" or m_xAxisDataType.startsWith("INT") or m_xAxisDataType.startsWith("BOOL")) {
                             series->append(abscissaVar[j].toDouble(), y);
                         } else if (m_xAxisDataType=="DATE") {
                             QDateTime dt;
-                            dt = abscissaVar[j].toDateTime();
+                            dt=abscissaVar[j].toDateTime();
                             if (dt.isValid())
                                 series->append(dt.toMSecsSinceEpoch(), y);
                         } else {
@@ -442,28 +442,28 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         maxXAxis=QDateTime();
                         QDateTime dt;
                         for (const QPointF &point : series->points()) {
-                            dt = QDateTime::fromMSecsSinceEpoch(point.x());
+                            dt=QDateTime::fromMSecsSinceEpoch(point.x());
                             if ((minXAxis==QDateTime()) or (dt < minXAxis.toDateTime()))
-                                minXAxis = dt;
+                                minXAxis=dt;
                             if ((maxXAxis==QDateTime()) or (dt > maxXAxis.toDateTime()))
-                                maxXAxis = dt;
+                                maxXAxis=dt;
                         }
                         nbJours=minXAxis.toDate().daysTo(maxXAxis.toDate());
                         //qDebug() << "nbJours: " << nbJours;
                         if (nbJours>365*3) {//Years axis.
-                            minXAxis = QDate(minXAxis.toDate().year(), 1, 1).startOfDay();
-                            maxXAxis = QDate(maxXAxis.toDate().year() + 1, 1, 1).startOfDay();
+                            minXAxis=QDate(minXAxis.toDate().year(), 1, 1).startOfDay();
+                            maxXAxis=QDate(maxXAxis.toDate().year() + 1, 1, 1).startOfDay();
                         } else if (nbJours>30*3) {//Months axis.
-                            minXAxis = QDate(minXAxis.toDate().year(),minXAxis.toDate().month(), 1).startOfDay();
-                            maxXAxis = QDate(maxXAxis.toDate().year(),maxXAxis.toDate().month(), 1).addMonths(1).startOfDay();
+                            minXAxis=QDate(minXAxis.toDate().year(),minXAxis.toDate().month(), 1).startOfDay();
+                            maxXAxis=QDate(maxXAxis.toDate().year(),maxXAxis.toDate().month(), 1).addMonths(1).startOfDay();
                         } else if (nbJours>7*3) {//Weeks axis.
-                            minXAxis = minXAxis.toDate().startOfDay();
-                            maxXAxis = maxXAxis.toDate().addDays(1).startOfDay();
+                            minXAxis=minXAxis.toDate().startOfDay();
+                            maxXAxis=maxXAxis.toDate().addDays(1).startOfDay();
                         } else if (nbJours>3) {//Days axis.
-                            minXAxis = minXAxis.toDate().startOfDay();
-                            maxXAxis = maxXAxis.toDate().addDays(1).startOfDay();
+                            minXAxis=minXAxis.toDate().startOfDay();
+                            maxXAxis=maxXAxis.toDate().addDays(1).startOfDay();
                         } else if (nbJours>0){//Hours axis.
-                            minXAxis = minXAxis.toDate().startOfDay();
+                            minXAxis=minXAxis.toDate().startOfDay();
                         }
                     } else {
                         minXAxis=std::numeric_limits<double>::max();
@@ -477,12 +477,12 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                     }
 
                     if (m_xAxisDataType=="REAL" or m_xAxisDataType.startsWith("INT") or m_xAxisDataType.startsWith("BOOL")) {
-                        auto* axis = new QValueAxis;
+                        auto* axis=new QValueAxis;
                         axis->setRange(minXAxis.toDouble(),maxXAxis.toDouble());
                         axis->applyNiceNumbers();
                         addAxis(axis, Qt::AlignBottom);
                     } else if (m_xAxisDataType=="DATE") {
-                        auto* axis = new QCategoryAxis; //Don't use QDateTimeAxis
+                        auto* axis=new QCategoryAxis; //Don't use QDateTimeAxis
                         //axis->setFormat("yyyy-MM-dd");//HH:mm:ss
                         if (m_xAxisYearSeries) {
                             minXAxis="2000-01-01";
@@ -491,20 +491,20 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         axis->setRange(minXAxis.toDateTime().toMSecsSinceEpoch(),maxXAxis.toDateTime().toMSecsSinceEpoch());
                         addAxis(axis, Qt::AlignBottom);
                     } else {
-                        auto* axis = new QCategoryAxis;
+                        auto* axis=new QCategoryAxis;
                         axis->setRange(0, abscissaVar.size());// ne pas mettre abscissaVar.size()-1 pour que le dernier points ne soit pas au bout.
                         setXAxisLabels(axis);
                         addAxis(axis, Qt::AlignBottom);
                     }
 
                     // Y left axis
-                    auto* axisYLeft = new QValueAxis;
+                    auto* axisYLeft=new QValueAxis;
                     addAxis(axisYLeft, Qt::AlignLeft);
                     //axisYLeft->setTitleText(seriesName[i]);
 
                 } else if (yRightAxis and !RightAxisCreated) {
                     // Y right axis
-                    auto* axisYRight = new QValueAxis;
+                    auto* axisYRight=new QValueAxis;
                     addAxis(axisYRight, Qt::AlignRight);
                     //axisYRight->setTitleText(seriesName[i]);
                     RightAxisCreated=true;
@@ -539,9 +539,9 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
     else minYRAxis=std::round(minYRAxis*0.9);
     maxYRAxis=std::round(maxYRAxis*1.1);
     axes(Qt::Horizontal).first()->setTitleText(abscisseName);
-    if (QValueAxis* axisYLeft = qobject_cast<QValueAxis*>(axes(Qt::Vertical).first())) {
+    if (QValueAxis* axisYLeft=qobject_cast<QValueAxis*>(axes(Qt::Vertical).first())) {
         if (m_xAxisDataType=="DATE") {
-            if (QCategoryAxis* axisX = qobject_cast<QCategoryAxis*>(axes(Qt::Horizontal).first())) {
+            if (QCategoryAxis* axisX=qobject_cast<QCategoryAxis*>(axes(Qt::Horizontal).first())) {
                 addVerticalGuides(axisX, axisYLeft, minXAxis.toDateTime() , maxXAxis.toDateTime(),nbJours);
                 axisX->setGridLineVisible(false);
             }
@@ -562,7 +562,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
     }
 
     if (RightAxisCreated) {
-       if (QValueAxis* axisY = qobject_cast<QValueAxis*>(axes(Qt::Vertical).last())) {
+       if (QValueAxis* axisY=qobject_cast<QValueAxis*>(axes(Qt::Vertical).last())) {
             axisY->setRange(minYRAxis, maxYRAxis);
             axisY->applyNiceNumbers();
         }

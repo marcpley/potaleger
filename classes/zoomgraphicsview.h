@@ -10,7 +10,7 @@ class ZoomGraphicsView : public QGraphicsView {
     Q_OBJECT
 
 public:
-    explicit ZoomGraphicsView(QWidget *parent = nullptr);
+    explicit ZoomGraphicsView(QWidget *parent=nullptr);
     void setImage(const QPixmap &pixmap);
 
 protected:

@@ -20,7 +20,6 @@ unix: {
 SOURCES += \
     Dialogs.cpp \
     PotaUtils.cpp \
-    SQL/FunctionsSQLite.cpp \
     Structure.cpp \
     classes/zoomgraphicsview.cpp \
     data/Data.cpp \
@@ -34,16 +33,11 @@ SOURCES += \
     muParser/muParserInt.cpp \
     muParser/muParserTokenReader.cpp \
     potagraph.cpp \
-    potawidget.cpp \
-    sqlean/eval.c \
-    sqlean/manage.c \
-    sqlean/module.c \
-    sqlite/sqlite3.c
+    potawidget.cpp
 
 HEADERS += \
     Dialogs.h \
     PotaUtils.h \
-    SQL/FunctionsSQLite.h \
     classes/zoomgraphicsview.h \
     data/Data.h \
     mainwindow.h \
@@ -59,16 +53,14 @@ HEADERS += \
     muParser/muParserToken.h \
     muParser/muParserTokenReader.h \
     potagraph.h \
-    potawidget.h \
-    sqlean/define.h \
-    sqlite/sqlite3.h
+    potawidget.h
 
 FORMS += \
     mainwindow.ui
 
 # Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
+qnx: target.path=/tmp/$${TARGET}/bin
+else: unix:!android: target.path=/opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
@@ -76,7 +68,6 @@ DISTFILES += \
     SQL/CreateTables.sql \
     SQL/CreateTriggers.sql \
     SQL/CreateViews.sql \
-    SQL/FunctionsSQLite.sql \
     SQL/UpdateBaseData.sql \
     SQL/UpdateStru.sql \
     SQL/UpdateTableParams.sql \
@@ -86,15 +77,7 @@ DISTFILES += \
 RESOURCES += \
     images/images.qrc
 
-RC_ICONS = images/potaleger.ico
-
-# librairie sqlean (à la place des fichiers de Pawel ?)
-# win32:CONFIG(release, debug|release): LIBS += -L$$PWD/sqlean.so/release/ -ldefine
-# else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/sqlean.so/debug/ -ldefine
-# else:unix: LIBS += -L$$PWD/sqlean.so/ -ldefine
-
-# INCLUDEPATH += $$PWD/sqlean.so
-# DEPENDPATH += $$PWD/sqlean.so
+RC_ICONS=images/potaleger.ico
 
 #Pour que muParser ne provoque pas une erreur de compil sous windows.
 DEFINES -= MUPARSER_DLL

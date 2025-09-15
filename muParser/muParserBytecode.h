@@ -145,7 +145,7 @@ namespace mu
 
 		inline const SToken* GetBase() const
 		{
-			if (m_vRPN.size() == 0)
+			if (m_vRPN.size()==0)
 				throw ParserError(ecINTERNAL_ERROR);
 			else
 				return &m_vRPN[0];
@@ -153,8 +153,8 @@ namespace mu
 
 		void StoreEnvironment(string_type expr, stringbuf_type const& strBuf)
 		{
-			m_stringBuffer = strBuf;
-			m_expr = expr;
+			m_stringBuffer=strBuf;
+			m_expr=expr;
 		}
 
 		std::tuple<string_type, stringbuf_type> RestoreEnvironment() const

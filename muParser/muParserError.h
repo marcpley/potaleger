@@ -57,11 +57,11 @@ namespace mu
 		string_type operator[](unsigned a_iIdx) const;
 
 	private:
-		ParserErrorMsg& operator=(const ParserErrorMsg&) = delete;
-		ParserErrorMsg(const ParserErrorMsg&) = delete;
+		ParserErrorMsg& operator=(const ParserErrorMsg&)=delete;
+		ParserErrorMsg(const ParserErrorMsg&)=delete;
 		ParserErrorMsg();
 
-		~ParserErrorMsg() = default;
+		~ParserErrorMsg()=default;
 
 		std::vector<string_type>  m_vErrMsg;  ///< A vector with the predefined error messages
 	};
@@ -84,9 +84,9 @@ namespace mu
 		ParserError();
 		explicit ParserError(EErrorCodes a_iErrc);
 		explicit ParserError(const string_type& sMsg);
-		ParserError(EErrorCodes a_iErrc, const string_type& sTok, const string_type& sFormula = string_type(), int a_iPos = -1);
+		ParserError(EErrorCodes a_iErrc, const string_type& sTok, const string_type& sFormula=string_type(), int a_iPos=-1);
 		ParserError(EErrorCodes a_iErrc, int a_iPos, const string_type& sTok);
-		ParserError(const char_type* a_szMsg, int a_iPos = -1, const string_type& sTok = string_type());
+		ParserError(const char_type* a_szMsg, int a_iPos=-1, const string_type& sTok=string_type());
 		ParserError(const ParserError& a_Obj);
 
 		ParserError& operator=(const ParserError& a_Obj);

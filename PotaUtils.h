@@ -1,6 +1,7 @@
 #ifndef POTAUTILS_H
 #define POTAUTILS_H
 
+#include "qdir.h"
 #include "qlabel.h"
 #include "qprogressbar.h"
 #include "qtoolbutton.h"
@@ -35,6 +36,7 @@ QDate firstDayOffWeek(int year, int week);
 QDate firstDayOffWeek(QDate date);
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2);
 bool isDarkTheme();
+void logMessage(const QString fileName, const QString message);
 float min(float a,float b);
 int min(int a,int b);
 void parseCSV(QString entry, QString sep, QStringList &list);

@@ -137,37 +137,37 @@ namespace mu
 		// The following are codes for built in binary operators
 		// apart from built in operators the user has the opportunity to
 		// add user defined operators.
-		cmLE = 0,			///< Operator item:  less or equal
-		cmGE = 1,			///< Operator item:  greater or equal
-		cmNEQ = 2,			///< Operator item:  not equal
-		cmEQ = 3,			///< Operator item:  equals
-		cmLT = 4,			///< Operator item:  less than
-		cmGT = 5,			///< Operator item:  greater than
-		cmADD = 6,			///< Operator item:  add
-		cmSUB = 7,			///< Operator item:  subtract
-		cmMUL = 8,			///< Operator item:  multiply
-		cmDIV = 9,			///< Operator item:  division
-		cmPOW = 10,			///< Operator item:  y to the power of ...
-		cmLAND = 11,
-		cmLOR = 12,
-		cmASSIGN = 13,		///< Operator item:  Assignment operator
-		cmBO = 14,			///< Operator item:  opening bracket
-		cmBC = 15,			///< Operator item:  closing bracket
-		cmIF = 16,			///< For use in the ternary if-then-else operator
-		cmELSE = 17,		///< For use in the ternary if-then-else operator
-		cmENDIF = 18,		///< For use in the ternary if-then-else operator
-		cmARG_SEP = 19,		///< function argument separator
-		cmVAR = 20,			///< variable item
-		cmVAL = 21,			///< value item
+		cmLE=0,			///< Operator item:  less or equal
+		cmGE=1,			///< Operator item:  greater or equal
+		cmNEQ=2,			///< Operator item:  not equal
+		cmEQ=3,			///< Operator item:  equals
+		cmLT=4,			///< Operator item:  less than
+		cmGT=5,			///< Operator item:  greater than
+		cmADD=6,			///< Operator item:  add
+		cmSUB=7,			///< Operator item:  subtract
+		cmMUL=8,			///< Operator item:  multiply
+		cmDIV=9,			///< Operator item:  division
+		cmPOW=10,			///< Operator item:  y to the power of ...
+		cmLAND=11,
+		cmLOR=12,
+		cmASSIGN=13,		///< Operator item:  Assignment operator
+		cmBO=14,			///< Operator item:  opening bracket
+		cmBC=15,			///< Operator item:  closing bracket
+		cmIF=16,			///< For use in the ternary if-then-else operator
+		cmELSE=17,		///< For use in the ternary if-then-else operator
+		cmENDIF=18,		///< For use in the ternary if-then-else operator
+		cmARG_SEP=19,		///< function argument separator
+		cmVAR=20,			///< variable item
+		cmVAL=21,			///< value item
 
 		// For optimization purposes
-		cmVARPOW2 = 22,
-		cmVARPOW3 = 23,
-		cmVARPOW4 = 24,
-		cmVARMUL = 25,
+		cmVARPOW2=22,
+		cmVARPOW3=23,
+		cmVARPOW4=24,
+		cmVARMUL=25,
 
 		// operators and functions
-		cmFUNC = 26,		///< Code for a generic function item
+		cmFUNC=26,		///< Code for a generic function item
 		cmFUNC_STR,			///< Code for a function with a string parameter
 		cmFUNC_BULK,		///< Special callbacks for Bulk mode with an additional parameter for the bulk index 
 		cmSTRING,			///< Code for a string token
@@ -182,9 +182,9 @@ namespace mu
 	*/
 	enum ETypeCode
 	{
-		tpSTR = 0,     ///< String type (Function arguments and constants only, no string variables)
-		tpDBL = 1,     ///< Floating point variables
-		tpVOID = 2      ///< Undefined type.
+		tpSTR=0,     ///< String type (Function arguments and constants only, no string variables)
+		tpDBL=1,     ///< Floating point variables
+		tpVOID=2      ///< Undefined type.
 	};
 
 
@@ -198,27 +198,27 @@ namespace mu
 	/** \brief Parser operator precedence values. */
 	enum EOprtAssociativity
 	{
-		oaLEFT = 0,
-		oaRIGHT = 1,
-		oaNONE = 2
+		oaLEFT=0,
+		oaRIGHT=1,
+		oaNONE=2
 	};
 
 
 	/** \brief Parser operator precedence values. */
 	enum EOprtPrecedence
 	{
-		prLOR = 1,		///< logic or
-		prLAND = 2,		///< logic and
-		prBOR = 3,      ///< bitwise or
-		prBAND = 4,     ///< bitwise and
-		prCMP = 5,		///< comparsion operators
-		prADD_SUB = 6,	///< addition
-		prMUL_DIV = 7,	///< multiplication/division
-		prPOW = 8,		///< power operator priority (highest)
+		prLOR=1,		///< logic or
+		prLAND=2,		///< logic and
+		prBOR=3,      ///< bitwise or
+		prBAND=4,     ///< bitwise and
+		prCMP=5,		///< comparsion operators
+		prADD_SUB=6,	///< addition
+		prMUL_DIV=7,	///< multiplication/division
+		prPOW=8,		///< power operator priority (highest)
 
 		// infix operators
-		prINFIX = 7,	///< Signs have a higher priority than ADD_SUB, but lower than power operator
-		prPOSTFIX = 7	///< Postfix operator priority (currently unused)
+		prINFIX=7,	///< Signs have a higher priority than ADD_SUB, but lower than power operator
+		prPOSTFIX=7	///< Postfix operator priority (currently unused)
 	};
 
 
@@ -226,63 +226,63 @@ namespace mu
 	enum EErrorCodes
 	{
 		// Formula syntax errors
-		ecUNEXPECTED_OPERATOR = 0,	///< Unexpected binary operator found
-		ecUNASSIGNABLE_TOKEN = 1,	///< Token can't be identified.
-		ecUNEXPECTED_EOF = 2,		///< Unexpected end of formula. (Example: "2+sin(")
-		ecUNEXPECTED_ARG_SEP = 3,	///< An unexpected comma has been found. (Example: "1,23")
-		ecUNEXPECTED_ARG = 4,		///< An unexpected argument has been found
-		ecUNEXPECTED_VAL = 5,		///< An unexpected value token has been found
-		ecUNEXPECTED_VAR = 6,		///< An unexpected variable token has been found
-		ecUNEXPECTED_PARENS = 7,	///< Unexpected Parenthesis, opening or closing
-		ecUNEXPECTED_STR = 8,		///< A string has been found at an inapropriate position
-		ecSTRING_EXPECTED = 9,		///< A string function has been called with a different type of argument
-		ecVAL_EXPECTED = 10,		///< A numerical function has been called with a non value type of argument
-		ecMISSING_PARENS = 11,		///< Missing parens. (Example: "3*sin(3")
-		ecUNEXPECTED_FUN = 12,		///< Unexpected function found. (Example: "sin(8)cos(9)")
-		ecUNTERMINATED_STRING = 13,	///< unterminated string constant. (Example: "3*valueof("hello)")
-		ecTOO_MANY_PARAMS = 14,		///< Too many function parameters
-		ecTOO_FEW_PARAMS = 15,		///< Too few function parameters. (Example: "ite(1<2,2)")
-		ecOPRT_TYPE_CONFLICT = 16,	///< binary operators may only be applied to value items of the same type
-		ecSTR_RESULT = 17,			///< result is a string
+		ecUNEXPECTED_OPERATOR=0,	///< Unexpected binary operator found
+		ecUNASSIGNABLE_TOKEN=1,	///< Token can't be identified.
+		ecUNEXPECTED_EOF=2,		///< Unexpected end of formula. (Example: "2+sin(")
+		ecUNEXPECTED_ARG_SEP=3,	///< An unexpected comma has been found. (Example: "1,23")
+		ecUNEXPECTED_ARG=4,		///< An unexpected argument has been found
+		ecUNEXPECTED_VAL=5,		///< An unexpected value token has been found
+		ecUNEXPECTED_VAR=6,		///< An unexpected variable token has been found
+		ecUNEXPECTED_PARENS=7,	///< Unexpected Parenthesis, opening or closing
+		ecUNEXPECTED_STR=8,		///< A string has been found at an inapropriate position
+		ecSTRING_EXPECTED=9,		///< A string function has been called with a different type of argument
+		ecVAL_EXPECTED=10,		///< A numerical function has been called with a non value type of argument
+		ecMISSING_PARENS=11,		///< Missing parens. (Example: "3*sin(3")
+		ecUNEXPECTED_FUN=12,		///< Unexpected function found. (Example: "sin(8)cos(9)")
+		ecUNTERMINATED_STRING=13,	///< unterminated string constant. (Example: "3*valueof("hello)")
+		ecTOO_MANY_PARAMS=14,		///< Too many function parameters
+		ecTOO_FEW_PARAMS=15,		///< Too few function parameters. (Example: "ite(1<2,2)")
+		ecOPRT_TYPE_CONFLICT=16,	///< binary operators may only be applied to value items of the same type
+		ecSTR_RESULT=17,			///< result is a string
 
 		// Invalid Parser input Parameters
-		ecINVALID_NAME = 18,			///< Invalid function, variable or constant name.
-		ecINVALID_BINOP_IDENT = 19,		///< Invalid binary operator identifier
-		ecINVALID_INFIX_IDENT = 20,		///< Invalid function, variable or constant name.
-		ecINVALID_POSTFIX_IDENT = 21,	///< Invalid function, variable or constant name.
+		ecINVALID_NAME=18,			///< Invalid function, variable or constant name.
+		ecINVALID_BINOP_IDENT=19,		///< Invalid binary operator identifier
+		ecINVALID_INFIX_IDENT=20,		///< Invalid function, variable or constant name.
+		ecINVALID_POSTFIX_IDENT=21,	///< Invalid function, variable or constant name.
 
-		ecBUILTIN_OVERLOAD = 22, ///< Trying to overload builtin operator
-		ecINVALID_FUN_PTR = 23, ///< Invalid callback function pointer 
-		ecINVALID_VAR_PTR = 24, ///< Invalid variable pointer 
-		ecEMPTY_EXPRESSION = 25, ///< The Expression is empty
-		ecNAME_CONFLICT = 26, ///< Name conflict
-		ecOPT_PRI = 27, ///< Invalid operator priority
+		ecBUILTIN_OVERLOAD=22, ///< Trying to overload builtin operator
+		ecINVALID_FUN_PTR=23, ///< Invalid callback function pointer 
+		ecINVALID_VAR_PTR=24, ///< Invalid variable pointer 
+		ecEMPTY_EXPRESSION=25, ///< The Expression is empty
+		ecNAME_CONFLICT=26, ///< Name conflict
+		ecOPT_PRI=27, ///< Invalid operator priority
 		// 
-		ecDOMAIN_ERROR = 28, ///< catch division by zero, sqrt(-1), log(0) (currently unused)
-		ecDIV_BY_ZERO = 29, ///< Division by zero (currently unused)
-		ecGENERIC = 30, ///< Generic error
-		ecLOCALE = 31, ///< Conflict with current locale
+		ecDOMAIN_ERROR=28, ///< catch division by zero, sqrt(-1), log(0) (currently unused)
+		ecDIV_BY_ZERO=29, ///< Division by zero (currently unused)
+		ecGENERIC=30, ///< Generic error
+		ecLOCALE=31, ///< Conflict with current locale
 
-		ecUNEXPECTED_CONDITIONAL = 32,
-		ecMISSING_ELSE_CLAUSE = 33,
-		ecMISPLACED_COLON = 34,
+		ecUNEXPECTED_CONDITIONAL=32,
+		ecMISSING_ELSE_CLAUSE=33,
+		ecMISPLACED_COLON=34,
 
-		ecUNREASONABLE_NUMBER_OF_COMPUTATIONS = 35,
+		ecUNREASONABLE_NUMBER_OF_COMPUTATIONS=35,
 
-		ecIDENTIFIER_TOO_LONG = 36, ///< Thrown when an identifier with more then 255 characters is used.
+		ecIDENTIFIER_TOO_LONG=36, ///< Thrown when an identifier with more then 255 characters is used.
 
-		ecEXPRESSION_TOO_LONG = 37, ///< Throw an exception if the expression has more than 10000 characters. (an arbitrary limit)
+		ecEXPRESSION_TOO_LONG=37, ///< Throw an exception if the expression has more than 10000 characters. (an arbitrary limit)
 
-		ecINVALID_CHARACTERS_FOUND = 38,///< The expression or identifier contains invalid non printable characters
+		ecINVALID_CHARACTERS_FOUND=38,///< The expression or identifier contains invalid non printable characters
 
 		// internal errors
-		ecINTERNAL_ERROR = 39,			///< Internal error of any kind.
+		ecINTERNAL_ERROR=39,			///< Internal error of any kind.
 
-		ecBYTECODE_IMPORT_EXPORT_DISABLED = 40,	///< Bytecode cannot be exported.
+		ecBYTECODE_IMPORT_EXPORT_DISABLED=40,	///< Bytecode cannot be exported.
 
 		// The last two are special entries 
 		ecCOUNT,                      ///< This is no error code, It just stores just the total number of error codes
-		ecUNDEFINED = -1  ///< Undefined message, placeholder to detect unassigned error messages
+		ecUNDEFINED=-1  ///< Undefined message, placeholder to detect unassigned error messages
 	};
 
 	//------------------------------------------------------------------------------
@@ -506,10 +506,10 @@ namespace mu
 	/** \brief Callback used for variable creation factory functions. */
 	typedef value_type* (*facfun_type)(const char_type*, void*);
 
-	static const int MaxLenExpression = 20000;
-	static const int MaxLenIdentifier = 100;
-	static const string_type ParserVersion = string_type(_T("2.3.5 (Release)"));
-	static const string_type ParserVersionDate = string_type(_T("20241213"));
+	static const int MaxLenExpression=20000;
+	static const int MaxLenIdentifier=100;
+	static const string_type ParserVersion=string_type(_T("2.3.5 (Release)"));
+	static const string_type ParserVersionDate=string_type(_T("20241213"));
 } // end of namespace
 
 #if defined(_MSC_VER)

@@ -154,8 +154,8 @@ namespace mu
 			if (!a_iArgc)
 				throw ParserError(_T("too few arguments for function sum."));
 
-			T fRes = 0;
-			for (int i = 0; i < a_iArgc; ++i) fRes += a_afArg[i];
+			T fRes=0;
+			for (int i=0; i < a_iArgc; ++i) fRes += a_afArg[i];
 			return fRes;
 		}
 
@@ -164,8 +164,8 @@ namespace mu
 			if (!a_iArgc)
 				throw ParserError(_T("too few arguments for function avg."));
 
-			T fRes = 0;
-			for (int i = 0; i < a_iArgc; ++i) fRes += a_afArg[i];
+			T fRes=0;
+			for (int i=0; i < a_iArgc; ++i) fRes += a_afArg[i];
 			return fRes / (T)a_iArgc;
 		}
 
@@ -174,9 +174,9 @@ namespace mu
 			if (!a_iArgc)
 				throw ParserError(_T("too few arguments for function min."));
 
-			T fRes = a_afArg[0];
-			for (int i = 0; i < a_iArgc; ++i)
-				fRes = std::min(fRes, a_afArg[i]);
+			T fRes=a_afArg[0];
+			for (int i=0; i < a_iArgc; ++i)
+				fRes=std::min(fRes, a_afArg[i]);
 
 			return fRes;
 		}
@@ -186,8 +186,8 @@ namespace mu
 			if (!a_iArgc)
 				throw ParserError(_T("too few arguments for function max."));
 
-			T fRes = a_afArg[0];
-			for (int i = 0; i < a_iArgc; ++i) fRes = std::max(fRes, a_afArg[i]);
+			T fRes=a_afArg[0];
+			for (int i=0; i < a_iArgc; ++i) fRes=std::max(fRes, a_afArg[i]);
 
 			return fRes;
 		}
@@ -196,12 +196,12 @@ namespace mu
 #if defined (__GNUG__)
 		// Bei zu genauer definition von pi kann die Berechnung von
 		// sin(pi*a) mit a=1 10 x langsamer sein! 
-		static constexpr T CONST_PI = (T)3.141592653589;
+		static constexpr T CONST_PI=(T)3.141592653589;
 #else
-		static constexpr T CONST_PI = (T)3.141592653589793238462643;
+		static constexpr T CONST_PI=(T)3.141592653589793238462643;
 #endif
 
-		static constexpr T CONST_E = (T)2.718281828459045235360287;
+		static constexpr T CONST_E=(T)2.718281828459045235360287;
 	};
 }
 

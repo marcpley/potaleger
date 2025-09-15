@@ -43,7 +43,7 @@ namespace mu
 {
 	value_type ParserInt::Abs(value_type v) { return (value_type)Round(fabs((double)v)); }
 	value_type ParserInt::Sign(value_type v) { return (Round(v) < 0) ? -1 : (Round(v) > 0) ? 1 : 0; }
-	value_type ParserInt::Ite(value_type v1, value_type v2,	value_type v3) { return (Round(v1) == 1) ? Round(v2) : Round(v3); }
+	value_type ParserInt::Ite(value_type v1, value_type v2,	value_type v3) { return (Round(v1)==1) ? Round(v2) : Round(v3); }
 	value_type ParserInt::Add(value_type v1, value_type v2) { return Round(v1) + Round(v2); }
 	value_type ParserInt::Sub(value_type v1, value_type v2) { return Round(v1) - Round(v2); }
 	value_type ParserInt::Mul(value_type v1, value_type v2) { return Round(v1) * Round(v2); }
@@ -59,7 +59,7 @@ namespace mu
 	value_type ParserInt::Greater(value_type v1, value_type v2) { return Round(v1) > Round(v2); }
 	value_type ParserInt::LessEq(value_type v1, value_type v2) { return Round(v1) <= Round(v2); }
 	value_type ParserInt::GreaterEq(value_type v1, value_type v2) { return Round(v1) >= Round(v2); }
-	value_type ParserInt::Equal(value_type v1, value_type v2) { return Round(v1) == Round(v2); }
+	value_type ParserInt::Equal(value_type v1, value_type v2) { return Round(v1)==Round(v2); }
 	value_type ParserInt::NotEqual(value_type v1, value_type v2) { return Round(v1) != Round(v2); }
 	value_type ParserInt::Not(value_type v) { return !Round(v); }
 
@@ -80,8 +80,8 @@ namespace mu
 		if (!a_iArgc)
 			throw ParserError(_T("too few arguments for function sum."));
 
-		value_type fRes = 0;
-		for (int i = 0; i < a_iArgc; ++i)
+		value_type fRes=0;
+		for (int i=0; i < a_iArgc; ++i)
 			fRes += a_afArg[i];
 
 		return fRes;
@@ -93,9 +93,9 @@ namespace mu
 		if (!a_iArgc)
 			throw ParserError(_T("too few arguments for function min."));
 
-		value_type fRes = a_afArg[0];
-		for (int i = 0; i < a_iArgc; ++i)
-			fRes = std::min(fRes, a_afArg[i]);
+		value_type fRes=a_afArg[0];
+		for (int i=0; i < a_iArgc; ++i)
+			fRes=std::min(fRes, a_afArg[i]);
 
 		return fRes;
 	}
@@ -106,9 +106,9 @@ namespace mu
 		if (!a_iArgc)
 			throw ParserError(_T("too few arguments for function min."));
 
-		value_type fRes = a_afArg[0];
-		for (int i = 0; i < a_iArgc; ++i)
-			fRes = std::max(fRes, a_afArg[i]);
+		value_type fRes=a_afArg[0];
+		for (int i=0; i < a_iArgc; ++i)
+			fRes=std::max(fRes, a_afArg[i]);
 
 		return fRes;
 	}
@@ -117,9 +117,9 @@ namespace mu
 	int ParserInt::IsVal(const char_type* a_szExpr, int* a_iPos, value_type* a_fVal)
 	{
 		string_type buf(a_szExpr);
-		std::size_t pos = buf.find_first_not_of(_T("0123456789"));
+		std::size_t pos=buf.find_first_not_of(_T("0123456789"));
 
-		if (pos == std::string::npos)
+		if (pos==std::string::npos)
 			return 0;
 
 		stringstream_type stream(buf.substr(0, pos));
@@ -129,15 +129,15 @@ namespace mu
 		if (stream.fail())
 			return 0;
 
-		stringstream_type::pos_type iEnd = stream.tellg();   // Position after reading
+		stringstream_type::pos_type iEnd=stream.tellg();   // Position after reading
 		if (stream.fail())
-			iEnd = stream.str().length();
+			iEnd=stream.str().length();
 
-		if (iEnd == (stringstream_type::pos_type) - 1)
+		if (iEnd==(stringstream_type::pos_type) - 1)
 			return 0;
 
 		*a_iPos += (int)iEnd;
-		*a_fVal = (value_type)iVal;
+		*a_fVal=(value_type)iVal;
 		return 1;
 	}
 
@@ -153,7 +153,7 @@ namespace mu
 	*/
 	int ParserInt::IsHexVal(const char_type* a_szExpr, int* a_iPos, value_type* a_fVal)
 	{
-		if (a_szExpr[1] == 0 || (a_szExpr[0] != '0' || a_szExpr[1] != 'x'))
+		if (a_szExpr[1]==0 || (a_szExpr[0] != '0' || a_szExpr[1] != 'x'))
 			return 0;
 
 		unsigned iVal(0);
@@ -162,13 +162,13 @@ namespace mu
 		stringstream_type::pos_type nPos(0);
 		stringstream_type ss(a_szExpr + 2);
 		ss >> std::hex >> iVal;
-		nPos = ss.tellg();
+		nPos=ss.tellg();
 
-		if (nPos == (stringstream_type::pos_type)0)
+		if (nPos==(stringstream_type::pos_type)0)
 			return 1;
 
 		*a_iPos += (int)(2 + nPos);
-		*a_fVal = (value_type)iVal;
+		*a_fVal=(value_type)iVal;
 		return 1;
 	}
 
@@ -182,16 +182,16 @@ namespace mu
 			iBits(sizeof(iVal) * 8),
 			i(0);
 
-		for (i = 0; (a_szExpr[i + 1] == '0' || a_szExpr[i + 1] == '1') && i < iBits; ++i)
-			iVal |= (int)(a_szExpr[i + 1] == '1') << ((iBits - 1) - i);
+		for (i=0; (a_szExpr[i + 1]=='0' || a_szExpr[i + 1]=='1') && i < iBits; ++i)
+			iVal |= (int)(a_szExpr[i + 1]=='1') << ((iBits - 1) - i);
 
-		if (i == 0)
+		if (i==0)
 			return 0;
 
-		if (i == iBits)
+		if (i==iBits)
 			throw exception_type(_T("Binary to integer conversion error (overflow)."));
 
-		*a_fVal = (unsigned)(iVal >> (iBits - i));
+		*a_fVal=(unsigned)(iVal >> (iBits - i));
 		*a_iPos += i + 1;
 
 		return 1;

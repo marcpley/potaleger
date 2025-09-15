@@ -23,7 +23,6 @@
 #include <QSqlTableModel>
 #include <QSqlRecord>
 #include <QLabel>
-#include "qsqlerror.h"
 #include "muParser/muParser.h"
 
 class PotaTableModel: public QSqlRelationalTableModel
@@ -32,7 +31,7 @@ class PotaTableModel: public QSqlRelationalTableModel
 
 public:
     PotaTableModel() {}
-    // explicit PotaTableModel(QObject *parent = nullptr)
+    // explicit PotaTableModel(QObject *parent=nullptr)
     //     : QSqlRelationalTableModel(parent) {}
     QSqlDatabase *db;
     QString sPrimaryKey;
@@ -49,7 +48,7 @@ public:
     QString tempTableName;
     bool bBatch;
 
-    int FieldIndex(QString FieldName);
+    int FieldIndex(QString sFieldName);
     QString FieldName(int index);
 
     bool SelectShowErr();
@@ -71,7 +70,7 @@ public:
     }
 
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override {
-        if (orientation == Qt::Horizontal && role == Qt::FontRole) {
+        if (orientation==Qt::Horizontal && role==Qt::FontRole) {
             if (nonEditableColumns.contains(section)) {
                 QFont font;
                 font.setItalic(true);
@@ -79,17 +78,17 @@ public:
             }
         }
 
-        if (orientation == Qt::Horizontal && role == Qt::TextAlignmentRole) {
+        if (orientation==Qt::Horizontal && role==Qt::TextAlignmentRole) {
             return Qt::AlignLeft;
         }
 
         return QSqlRelationalTableModel::headerData(section, orientation, role);
     }
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override {
-        // if (role == Qt::DisplayRole && rowsToRemove.contains(index.row()))
+    QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override {
+        // if (role==Qt::DisplayRole && rowsToRemove.contains(index.row()))
         //     return QVariant(); //Don't show text for rows to delete.
-        if (role == Qt::FontRole && nonEditableColumns.contains(index.column())) {
+        if (role==Qt::FontRole && nonEditableColumns.contains(index.column())) {
             QFont font;
             font.setItalic(true);
             return font;
@@ -113,7 +112,7 @@ public:
                 return QVariant();
             }
         }
-        if (role == Qt::TextAlignmentRole) {
+        if (role==Qt::TextAlignmentRole) {
             if (StrLast(data(index,Qt::EditRole).toString(),1)=='%' or
                 moneyColumns.contains(index.column())) {
                 return Qt::AlignRight;
@@ -123,8 +122,8 @@ public:
         return QSqlRelationalTableModel::data(index, role);
     }
 
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override {
-        if (role == Qt::EditRole) {
+    bool setData(const QModelIndex &index, const QVariant &value, int role=Qt::EditRole) override {
+        if (role==Qt::EditRole) {
             // if (QSqlRelationalTableModel::data(index, role).toString() != value.toString() and
             //     !nonEditableColumns.contains(index.column())) {
             //     if (copiedCells.contains(index))
@@ -132,7 +131,7 @@ public:
             // }
             if (relation(index.column()).isValid()) {
                 //Column with FK. #FKnull
-                QVariant currentValue = QSqlTableModel::data(index, role);
+                QVariant currentValue=QSqlTableModel::data(index, role);
                 if ((!value.isValid() || value.toString().isEmpty())and
                     !currentValue.isNull()) {
                     // Si la valeur est invalide ou vide, insérer NULL dans la base
@@ -143,8 +142,8 @@ public:
             }
 
             if (dateColumns.contains(index.column())) {// #DateFormat
-                QString dateString = value.toString();
-                QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
+                QString dateString=value.toString();
+                QDate date=QDate::fromString(dateString, "dd/MM/yyyy");
                 if (date.isValid()) {
                     return QSqlRelationalTableModel::setData(index, date, role);
                 }
@@ -152,9 +151,9 @@ public:
                       (dataTypes[index.column()]=="REAL" or dataTypes[index.column()].startsWith("INT"))) {
                 mu::string_type expr;
                 #ifdef _WIN32
-                    expr = value.toString().mid(1).trimmed().toStdWString();
+                    expr=value.toString().mid(1).trimmed().toStdWString();
                 #else
-                    expr = value.toString().mid(1).trimmed().toStdString();
+                    expr=value.toString().mid(1).trimmed().toStdString();
                 #endif
                 //std::string expr=value.toString().mid(1).trimmed().toStdString();
                 mu::Parser parser;
@@ -166,7 +165,7 @@ public:
                     else
                         result=QString::number(parser.Eval());
                     QLocale locale;
-                    QString decimalSep = QString(locale.decimalPoint());
+                    QString decimalSep=QString(locale.decimalPoint());
                     result.replace(decimalSep,".");
                     return QSqlRelationalTableModel::setData(index, result, role);
                 } catch (mu::Parser::exception_type &e) {};
@@ -178,19 +177,7 @@ public:
 
     bool select() override;
 
-    void sort(int column,Qt::SortOrder so) override {
-
-        if (column<0)
-            sOrderByClause="";
-        else {
-            sOrderByClause="ORDER BY "+FieldName(column);
-            if (so==Qt::SortOrder::DescendingOrder)
-                sOrderByClause+=" DESC";
-            else
-                sOrderByClause+=" ASC";
-        }
-        select();
-    }
+    void setOrderBy(int column,Qt::SortOrder so);
 
     bool submitAll()  {
         if (QSqlRelationalTableModel::submitAll()) {
@@ -215,7 +202,7 @@ public:
             return tableName();
     }
 
-    bool removeRow(int row, const QModelIndex &parent = QModelIndex()) {
+    bool removeRow(int row, const QModelIndex &parent=QModelIndex()) {
         if (!rowsToRemove.contains(row) and !rowsToInsert.contains(row))
             rowsToRemove.insert(row);
         return QSqlRelationalTableModel::removeRow(row, parent);
@@ -237,40 +224,40 @@ protected:
 
 private:
     void copySelectionToClipboard() {
-        // QClipboard *clipboard = QApplication::clipboard();
-        QItemSelectionModel *selectionModel = this->selectionModel();
+        // QClipboard *clipboard=QApplication::clipboard();
+        QItemSelectionModel *selectionModel=this->selectionModel();
         if (!selectionModel || !selectionModel->hasSelection()) return;
 
-        QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
+        QModelIndexList selectedIndexes=selectionModel->selectedIndexes();
         if (selectedIndexes.isEmpty()) return;
 
-        PotaTableModel *m = dynamic_cast<PotaTableModel*>(model());
+        PotaTableModel *m=dynamic_cast<PotaTableModel*>(model());
         m->copiedCells.clear();
         QApplication::clipboard()->setText("");
 
         // Déterminer le rectangle englobant
-        int minRow = std::numeric_limits<int>::max();
-        int maxRow = std::numeric_limits<int>::min();
-        int minCol = std::numeric_limits<int>::max();
-        int maxCol = std::numeric_limits<int>::min();
+        int minRow=std::numeric_limits<int>::max();
+        int maxRow=std::numeric_limits<int>::min();
+        int minCol=std::numeric_limits<int>::max();
+        int maxCol=std::numeric_limits<int>::min();
 
         for (const QModelIndex &index : selectedIndexes) {
-            minRow = qMin(minRow, index.row());
-            maxRow = qMax(maxRow, index.row());
-            minCol = qMin(minCol, index.column());
-            maxCol = qMax(maxCol, index.column());
+            minRow=qMin(minRow, index.row());
+            maxRow=qMax(maxRow, index.row());
+            minCol=qMin(minCol, index.column());
+            maxCol=qMax(maxCol, index.column());
         }
 
         // Créer une grille pour stocker les valeurs copiées
         QList<QList<QString>> clipboardGrid(maxRow - minRow + 1, QList<QString>(maxCol - minCol + 1, ""));
         QLocale locale;
-        QString decimalSep = QString(locale.decimalPoint());
+        QString decimalSep=QString(locale.decimalPoint());
 
         // Remplir la grille avec les données des cellules sélectionnées
         for (const QModelIndex &index : selectedIndexes) {
-            int row = index.row() - minRow;
-            int col = index.column() - minCol;
-            clipboardGrid[row][col] = StrReplace(model()->data(index, Qt::EditRole).toString(),"\n","\\n"); //sdff+54rg
+            int row=index.row() - minRow;
+            int col=index.column() - minCol;
+            clipboardGrid[row][col]=StrReplace(model()->data(index, Qt::EditRole).toString(),"\n","\\n"); //sdff+54rg
             m->copiedCells.insert(index);
         }
 
@@ -292,38 +279,38 @@ private:
     }
 
     void pasteFromClipboard() {
-        // QClipboard *clipboard = QApplication::clipboard();
-        QString clipboardText = QApplication::clipboard()->text();
+        // QClipboard *clipboard=QApplication::clipboard();
+        QString clipboardText=QApplication::clipboard()->text();
         if (clipboardText.isEmpty()) return;
 
-        QItemSelectionModel *selectionModel = this->selectionModel();
+        QItemSelectionModel *selectionModel=this->selectionModel();
         if (!selectionModel || !selectionModel->hasSelection()) return;
 
-        QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
+        QModelIndexList selectedIndexes=selectionModel->selectedIndexes();
         if (selectedIndexes.isEmpty()) return;
 
         // Trier les cellules sélectionnées pour un parcours cohérent (par ligne/colonne)
         std::sort(selectedIndexes.begin(), selectedIndexes.end(), [](const QModelIndex &a, const QModelIndex &b) {
-            return (a.row() == b.row()) ? (a.column() < b.column()) : (a.row() < b.row());
+            return (a.row()==b.row()) ? (a.column() < b.column()) : (a.row() < b.row());
         });
 
         // Convertir le texte du presse-papier en lignes et colonnes
-        QStringList rows = clipboardText.split('\n');
+        QStringList rows=clipboardText.split('\n');
         QList<QStringList> clipboardData;
         for (const QString &row : rows) {
             clipboardData.append(row.split('\t'));
         }
-        int clipboardRowCount = clipboardData.size();
+        int clipboardRowCount=clipboardData.size();
         int clipboardColCount;
 
         int SelectedCount=selectionModel->selectedIndexes().count();
         QModelIndex index;
-        PotaTableModel *m = dynamic_cast<PotaTableModel*>(model());
-        QStringList formats = {"yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "yy-MM-dd", "MM-dd-yyyy"};
+        PotaTableModel *m=dynamic_cast<PotaTableModel*>(model());
+        QStringList formats={"yyyy-MM-dd", "dd/MM/yyyy", "dd/MM/yy", "yy-MM-dd", "MM-dd-yyyy"};
         QDate date;
         bool noCentury=false;
         QLocale locale;
-        QString decimalSep = QString(locale.decimalPoint());
+        QString decimalSep=QString(locale.decimalPoint());
 
         //Loop on selected cells for pasting
         for (int iSel=0;iSel<SelectedCount;iSel++)
@@ -332,7 +319,7 @@ private:
             //Loop on clipboard rows.
             for (int iCB=0;iCB<clipboardRowCount;iCB++)
             {
-                clipboardColCount = clipboardData[iCB].size();
+                clipboardColCount=clipboardData[iCB].size();
                 //Loop on clipboard columns.
                 for (int jCB=0;jCB<clipboardColCount;jCB++)
                 {
@@ -344,7 +331,7 @@ private:
                         !m->nonEditableColumns.contains(index.column())) {
                         if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString())=="DATE") {
                             for (const QString &format : formats) {
-                                date = QDate::fromString(clipboardData[iCB][jCB], format);
+                                date=QDate::fromString(clipboardData[iCB][jCB], format);
                                 if (date.isValid()) {
                                     noCentury=(format.contains("yy") and !format.contains("yyyy"));
                                     break;
@@ -370,10 +357,10 @@ private:
     }
 
     void clearSelectionData() {
-        QItemSelectionModel *selectionModel = this->selectionModel();
+        QItemSelectionModel *selectionModel=this->selectionModel();
         if (!selectionModel || !selectionModel->hasSelection()) return;
 
-        QModelIndexList selectedIndexes = selectionModel->selectedIndexes();
+        QModelIndexList selectedIndexes=selectionModel->selectedIndexes();
         for (const QModelIndex &index : selectedIndexes) {
             if (!model()->data(index,Qt::EditRole).isNull()) {
                 model()->setData(index, QVariant(), Qt::EditRole);
@@ -386,15 +373,15 @@ private:
 class PotaHeaderView : public QHeaderView {
     Q_OBJECT
 public:
-    explicit PotaHeaderView(Qt::Orientation orientation, QWidget *parent = nullptr)
+    explicit PotaHeaderView(Qt::Orientation orientation, QWidget *parent=nullptr)
         : QHeaderView(orientation, parent) {
         //setStretchLastSection(false);
     }
-    int iSortCol = 0;
+    int iSortCol=0;
     mutable bool inPaintSection=false;
 
 protected:
-    bool bSortDes = false;
+    bool bSortDes=false;
 
     void paintSection(QPainter *painter, const QRect &rect, int logicalIndex) const override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
@@ -404,7 +391,7 @@ class PotaItemDelegate : public QStyledItemDelegate {
     Q_OBJECT
 
 public:
-    explicit PotaItemDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
+    explicit PotaItemDelegate(QObject *parent=nullptr) : QStyledItemDelegate(parent) {}
 
     QColor cTableColor;
     QColor cColColors[50];
@@ -422,26 +409,26 @@ public:
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override ;
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const override {
-        QComboBox *comboBox = qobject_cast<QComboBox *>(editor);
+        QComboBox *comboBox=qobject_cast<QComboBox *>(editor);
         if (comboBox) {
-            QVariant currentValue = index.data(Qt::EditRole);
-            int comboIndex = comboBox->findData(currentValue);
+            QVariant currentValue=index.data(Qt::EditRole);
+            int comboIndex=comboBox->findData(currentValue);
             comboBox->setCurrentIndex(comboIndex != -1 ? comboIndex : 0);
             return;
         }
-        QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
+        QLineEdit *lineEdit=qobject_cast<QLineEdit *>(editor);
         if (lineEdit) {
             lineEdit->setText(index.data(Qt::EditRole).toString());
             return;
         }
-        QDateEdit *dateEdit = qobject_cast<QDateEdit *>(editor);
+        QDateEdit *dateEdit=qobject_cast<QDateEdit *>(editor);
         if (dateEdit) {
             if (index.data(Qt::EditRole).isNull())
                 dateEdit->setDate(QDate::currentDate());
             else {
                 // #DateFormat
-                QString dateString = index.data(Qt::EditRole).toString();
-                QDate date = QDate::fromString(dateString, "dd/MM/yyyy");
+                QString dateString=index.data(Qt::EditRole).toString();
+                QDate date=QDate::fromString(dateString, "dd/MM/yyyy");
                 //if (date.isValid()) {
                 dateEdit->setDate(date);//index.data().toDate()
             }
@@ -463,7 +450,7 @@ class PotaWidget: public QWidget
     Q_OBJECT
 
 public:
-    PotaWidget(QWidget *parent = 0);
+    PotaWidget(QWidget *parent=0);
 
     void Init(QString TableName);
     PotaTableModel *model;

@@ -52,17 +52,17 @@
 namespace mu
 {
 	template <std::size_t NbParams> struct TplCallType;
-	template <> struct TplCallType<0> { using fun_type = fun_type0; using fun_userdata_type = fun_userdata_type0; using bulkfun_type = bulkfun_type0; using bulkfun_userdata_type = bulkfun_userdata_type0; };
-	template <> struct TplCallType<1> { using fun_type = fun_type1; using fun_userdata_type = fun_userdata_type1; using bulkfun_type = bulkfun_type1; using bulkfun_userdata_type = bulkfun_userdata_type1; using strfun_type = strfun_type1; using strfun_userdata_type = strfun_userdata_type1; };
-	template <> struct TplCallType<2> { using fun_type = fun_type2; using fun_userdata_type = fun_userdata_type2; using bulkfun_type = bulkfun_type2; using bulkfun_userdata_type = bulkfun_userdata_type2; using strfun_type = strfun_type2; using strfun_userdata_type = strfun_userdata_type2; };
-	template <> struct TplCallType<3> { using fun_type = fun_type3; using fun_userdata_type = fun_userdata_type3; using bulkfun_type = bulkfun_type3; using bulkfun_userdata_type = bulkfun_userdata_type3; using strfun_type = strfun_type3; using strfun_userdata_type = strfun_userdata_type3; };
-	template <> struct TplCallType<4> { using fun_type = fun_type4; using fun_userdata_type = fun_userdata_type4; using bulkfun_type = bulkfun_type4; using bulkfun_userdata_type = bulkfun_userdata_type4; using strfun_type = strfun_type4; using strfun_userdata_type = strfun_userdata_type4; };
-	template <> struct TplCallType<5> { using fun_type = fun_type5; using fun_userdata_type = fun_userdata_type5; using bulkfun_type = bulkfun_type5; using bulkfun_userdata_type = bulkfun_userdata_type5; using strfun_type = strfun_type5; using strfun_userdata_type = strfun_userdata_type5; };
-	template <> struct TplCallType<6> { using fun_type = fun_type6; using fun_userdata_type = fun_userdata_type6; using bulkfun_type = bulkfun_type6; using bulkfun_userdata_type = bulkfun_userdata_type6; using strfun_type = strfun_type6; using strfun_userdata_type = strfun_userdata_type6; };
-	template <> struct TplCallType<7> { using fun_type = fun_type7; using fun_userdata_type = fun_userdata_type7; using bulkfun_type = bulkfun_type7; using bulkfun_userdata_type = bulkfun_userdata_type7; };
-	template <> struct TplCallType<8> { using fun_type = fun_type8; using fun_userdata_type = fun_userdata_type8; using bulkfun_type = bulkfun_type8; using bulkfun_userdata_type = bulkfun_userdata_type8; };
-	template <> struct TplCallType<9> { using fun_type = fun_type9; using fun_userdata_type = fun_userdata_type9; using bulkfun_type = bulkfun_type9; using bulkfun_userdata_type = bulkfun_userdata_type9; };
-	template <> struct TplCallType<10> { using fun_type = fun_type10; using fun_userdata_type = fun_userdata_type10; using bulkfun_type = bulkfun_type10; using bulkfun_userdata_type = bulkfun_userdata_type10; };
+	template <> struct TplCallType<0> { using fun_type=fun_type0; using fun_userdata_type=fun_userdata_type0; using bulkfun_type=bulkfun_type0; using bulkfun_userdata_type=bulkfun_userdata_type0; };
+	template <> struct TplCallType<1> { using fun_type=fun_type1; using fun_userdata_type=fun_userdata_type1; using bulkfun_type=bulkfun_type1; using bulkfun_userdata_type=bulkfun_userdata_type1; using strfun_type=strfun_type1; using strfun_userdata_type=strfun_userdata_type1; };
+	template <> struct TplCallType<2> { using fun_type=fun_type2; using fun_userdata_type=fun_userdata_type2; using bulkfun_type=bulkfun_type2; using bulkfun_userdata_type=bulkfun_userdata_type2; using strfun_type=strfun_type2; using strfun_userdata_type=strfun_userdata_type2; };
+	template <> struct TplCallType<3> { using fun_type=fun_type3; using fun_userdata_type=fun_userdata_type3; using bulkfun_type=bulkfun_type3; using bulkfun_userdata_type=bulkfun_userdata_type3; using strfun_type=strfun_type3; using strfun_userdata_type=strfun_userdata_type3; };
+	template <> struct TplCallType<4> { using fun_type=fun_type4; using fun_userdata_type=fun_userdata_type4; using bulkfun_type=bulkfun_type4; using bulkfun_userdata_type=bulkfun_userdata_type4; using strfun_type=strfun_type4; using strfun_userdata_type=strfun_userdata_type4; };
+	template <> struct TplCallType<5> { using fun_type=fun_type5; using fun_userdata_type=fun_userdata_type5; using bulkfun_type=bulkfun_type5; using bulkfun_userdata_type=bulkfun_userdata_type5; using strfun_type=strfun_type5; using strfun_userdata_type=strfun_userdata_type5; };
+	template <> struct TplCallType<6> { using fun_type=fun_type6; using fun_userdata_type=fun_userdata_type6; using bulkfun_type=bulkfun_type6; using bulkfun_userdata_type=bulkfun_userdata_type6; using strfun_type=strfun_type6; using strfun_userdata_type=strfun_userdata_type6; };
+	template <> struct TplCallType<7> { using fun_type=fun_type7; using fun_userdata_type=fun_userdata_type7; using bulkfun_type=bulkfun_type7; using bulkfun_userdata_type=bulkfun_userdata_type7; };
+	template <> struct TplCallType<8> { using fun_type=fun_type8; using fun_userdata_type=fun_userdata_type8; using bulkfun_type=bulkfun_type8; using bulkfun_userdata_type=bulkfun_userdata_type8; };
+	template <> struct TplCallType<9> { using fun_type=fun_type9; using fun_userdata_type=fun_userdata_type9; using bulkfun_type=bulkfun_type9; using bulkfun_userdata_type=bulkfun_userdata_type9; };
+	template <> struct TplCallType<10> { using fun_type=fun_type10; using fun_userdata_type=fun_userdata_type10; using bulkfun_type=bulkfun_type10; using bulkfun_userdata_type=bulkfun_userdata_type10; };
 
 	struct generic_callable_type
 	{
@@ -74,15 +74,15 @@ namespace mu
 		template <std::size_t NbParams, typename... Args>
 		value_type call_fun(Args&&... args) const
 		{
-			static_assert(NbParams == sizeof...(Args), "mismatch between NbParams and Args");
-			if (_pUserData == nullptr) 
+			static_assert(NbParams==sizeof...(Args), "mismatch between NbParams and Args");
+			if (_pUserData==nullptr) 
 			{
-				auto fun_typed_ptr = reinterpret_cast<typename TplCallType<NbParams>::fun_type>(_pRawFun);
+				auto fun_typed_ptr=reinterpret_cast<typename TplCallType<NbParams>::fun_type>(_pRawFun);
 				return (*fun_typed_ptr)(std::forward<Args>(args)...);
 			} 
 			else 
 			{
-				auto fun_userdata_typed_ptr = reinterpret_cast<typename TplCallType<NbParams>::fun_userdata_type>(_pRawFun);
+				auto fun_userdata_typed_ptr=reinterpret_cast<typename TplCallType<NbParams>::fun_userdata_type>(_pRawFun);
 				return (*fun_userdata_typed_ptr)(_pUserData, std::forward<Args>(args)...);
 			}
 		}
@@ -90,23 +90,23 @@ namespace mu
 		template <std::size_t NbParams, typename... Args>
 		value_type call_bulkfun(Args&&... args) const
 		{
-			static_assert(NbParams == sizeof...(Args) - 2, "mismatch between NbParams and Args");
-			if (_pUserData == nullptr) {
-				auto bulkfun_typed_ptr = reinterpret_cast<typename TplCallType<NbParams>::bulkfun_type>(_pRawFun);
+			static_assert(NbParams==sizeof...(Args) - 2, "mismatch between NbParams and Args");
+			if (_pUserData==nullptr) {
+				auto bulkfun_typed_ptr=reinterpret_cast<typename TplCallType<NbParams>::bulkfun_type>(_pRawFun);
 				return (*bulkfun_typed_ptr)(std::forward<Args>(args)...);
 			} else {
-				auto bulkfun_userdata_typed_ptr = reinterpret_cast<typename TplCallType<NbParams>::bulkfun_userdata_type>(_pRawFun);
+				auto bulkfun_userdata_typed_ptr=reinterpret_cast<typename TplCallType<NbParams>::bulkfun_userdata_type>(_pRawFun);
 				return (*bulkfun_userdata_typed_ptr)(_pUserData, std::forward<Args>(args)...);
 			}
 		}
 
 		value_type call_multfun(const value_type* a_afArg, int a_iArgc) const
 		{
-			if (_pUserData == nullptr) {
-				auto multfun_typed_ptr = reinterpret_cast<multfun_type>(_pRawFun);
+			if (_pUserData==nullptr) {
+				auto multfun_typed_ptr=reinterpret_cast<multfun_type>(_pRawFun);
 				return (*multfun_typed_ptr)(a_afArg, a_iArgc);
 			} else {
-				auto multfun_userdata_typed_ptr = reinterpret_cast<multfun_userdata_type>(_pRawFun);
+				auto multfun_userdata_typed_ptr=reinterpret_cast<multfun_userdata_type>(_pRawFun);
 				return (*multfun_userdata_typed_ptr)(_pUserData, a_afArg, a_iArgc);
 			}
 		}
@@ -114,22 +114,22 @@ namespace mu
 		template <std::size_t NbParams, typename... Args>
 		value_type call_strfun(Args&&... args) const
 		{
-			static_assert(NbParams == sizeof...(Args), "mismatch between NbParams and Args");
-			if (_pUserData == nullptr) 
+			static_assert(NbParams==sizeof...(Args), "mismatch between NbParams and Args");
+			if (_pUserData==nullptr) 
 			{
-				auto strfun_typed_ptr = reinterpret_cast<typename TplCallType<NbParams>::strfun_type>(_pRawFun);
+				auto strfun_typed_ptr=reinterpret_cast<typename TplCallType<NbParams>::strfun_type>(_pRawFun);
 				return (*strfun_typed_ptr)(std::forward<Args>(args)...);
 			} 
 			else 
 			{
-				auto strfun_userdata_typed_ptr = reinterpret_cast<typename TplCallType<NbParams>::strfun_userdata_type>(_pRawFun);
+				auto strfun_userdata_typed_ptr=reinterpret_cast<typename TplCallType<NbParams>::strfun_userdata_type>(_pRawFun);
 				return (*strfun_userdata_typed_ptr)(_pUserData, std::forward<Args>(args)...);
 			}
 		}
 
 		bool operator==(generic_callable_type other) const 
 		{
-			return _pRawFun == other._pRawFun && _pUserData == other._pUserData; 
+			return _pRawFun==other._pRawFun && _pUserData==other._pUserData; 
 		}
 
 		explicit operator bool() const 
@@ -139,7 +139,7 @@ namespace mu
 
 		bool operator==(std::nullptr_t) const 
 		{
-			return _pRawFun == nullptr; 
+			return _pRawFun==nullptr; 
 		}
 		
 		bool operator!=(std::nullptr_t) const 
@@ -232,13 +232,13 @@ namespace mu
 		*/
 		void Assign(const ParserToken& a_Tok)
 		{
-			m_iCode = a_Tok.m_iCode;
-			m_pTok = a_Tok.m_pTok;
-			m_strTok = a_Tok.m_strTok;
-			m_iIdx = a_Tok.m_iIdx;
-			m_strVal = a_Tok.m_strVal;
-			m_iType = a_Tok.m_iType;
-			m_fVal = a_Tok.m_fVal;
+			m_iCode=a_Tok.m_iCode;
+			m_pTok=a_Tok.m_pTok;
+			m_strTok=a_Tok.m_strTok;
+			m_iIdx=a_Tok.m_iIdx;
+			m_strVal=a_Tok.m_strVal;
+			m_iType=a_Tok.m_iType;
+			m_fVal=a_Tok.m_fVal;
 			// create new callback object if a_Tok has one 
 			m_pCallback.reset(a_Tok.m_pCallback.get() ? a_Tok.m_pCallback->Clone() : 0);
 		}
@@ -251,21 +251,21 @@ namespace mu
 		  \pre [assert] a_iType!=cmVAR
 		  \pre [assert] a_iType!=cmVAL
 		  \pre [assert] a_iType!=cmFUNC
-		  \post m_fVal = 0
-		  \post m_pTok = 0
+		  \post m_fVal=0
+		  \post m_pTok=0
 		*/
-		ParserToken& Set(ECmdCode a_iType, const TString& a_strTok = TString())
+		ParserToken& Set(ECmdCode a_iType, const TString& a_strTok=TString())
 		{
 			// The following types can't be set this way, they have special Set functions
 			MUP_ASSERT(a_iType != cmVAR);
 			MUP_ASSERT(a_iType != cmVAL);
 			MUP_ASSERT(a_iType != cmFUNC);
 
-			m_iCode = a_iType;
-			m_iType = tpVOID;
-			m_pTok = 0;
-			m_strTok = a_strTok;
-			m_iIdx = -1;
+			m_iCode=a_iType;
+			m_iType=tpVOID;
+			m_pTok=0;
+			m_strTok=a_strTok;
+			m_iIdx=-1;
 
 			return *this;
 		}
@@ -276,13 +276,13 @@ namespace mu
 		{
 			MUP_ASSERT(a_pCallback.IsValid());
 
-			m_iCode = a_pCallback.GetCode();
-			m_iType = tpVOID;
-			m_strTok = a_sTok;
+			m_iCode=a_pCallback.GetCode();
+			m_iType=tpVOID;
+			m_strTok=a_sTok;
 			m_pCallback.reset(new ParserCallback(a_pCallback));
 
-			m_pTok = 0;
-			m_iIdx = -1;
+			m_pTok=0;
+			m_iIdx=-1;
 
 			return *this;
 		}
@@ -293,15 +293,15 @@ namespace mu
 			Member variables not necessary for value tokens will be invalidated.
 			\throw nothrow
 		*/
-		ParserToken& SetVal(TBase a_fVal, const TString& a_strTok = TString())
+		ParserToken& SetVal(TBase a_fVal, const TString& a_strTok=TString())
 		{
-			m_iCode = cmVAL;
-			m_iType = tpDBL;
-			m_fVal = a_fVal;
-			m_strTok = a_strTok;
-			m_iIdx = -1;
+			m_iCode=cmVAL;
+			m_iType=tpDBL;
+			m_fVal=a_fVal;
+			m_strTok=a_strTok;
+			m_iIdx=-1;
 
-			m_pTok = 0;
+			m_pTok=0;
 			m_pCallback.reset(0);
 
 			return *this;
@@ -315,11 +315,11 @@ namespace mu
 		*/
 		ParserToken& SetVar(TBase* a_pVar, const TString& a_strTok)
 		{
-			m_iCode = cmVAR;
-			m_iType = tpDBL;
-			m_strTok = a_strTok;
-			m_iIdx = -1;
-			m_pTok = (void*)a_pVar;
+			m_iCode=cmVAR;
+			m_iType=tpDBL;
+			m_strTok=a_strTok;
+			m_iIdx=-1;
+			m_pTok=(void*)a_pVar;
 			m_pCallback.reset(0);
 			return *this;
 		}
@@ -332,12 +332,12 @@ namespace mu
 		*/
 		ParserToken& SetString(const TString& a_strTok, std::size_t a_iSize)
 		{
-			m_iCode = cmSTRING;
-			m_iType = tpSTR;
-			m_strTok = a_strTok;
-			m_iIdx = static_cast<int>(a_iSize);
+			m_iCode=cmSTRING;
+			m_iType=tpSTR;
+			m_strTok=a_strTok;
+			m_iIdx=static_cast<int>(a_iSize);
 
-			m_pTok = 0;
+			m_pTok=0;
 			m_pCallback.reset(0);
 			return *this;
 		}
@@ -354,7 +354,7 @@ namespace mu
 			if (m_iCode != cmSTRING || a_iIdx < 0)
 				throw ParserError(ecINTERNAL_ERROR);
 
-			m_iIdx = a_iIdx;
+			m_iIdx=a_iIdx;
 		}
 
 		//------------------------------------------------------------------------------
@@ -419,7 +419,7 @@ namespace mu
 		//------------------------------------------------------------------------------
 		EOprtAssociativity GetAssociativity() const
 		{
-			if (m_pCallback.get() == nullptr || m_pCallback->GetCode() != cmOPRT_BIN)
+			if (m_pCallback.get()==nullptr || m_pCallback->GetCode() != cmOPRT_BIN)
 				throw ParserError(ecINTERNAL_ERROR);
 
 			return m_pCallback->GetAssociativity();

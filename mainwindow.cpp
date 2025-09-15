@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "Dialogs.h"
+#include "qsqlerror.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QStackedLayout>
@@ -36,7 +37,7 @@ MainWindow::~MainWindow()
 bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, QString const sTitre, QString const sDesc)
 {
     //Recherche parmis les onglets existants.
-    for (int i = 0; i < ui->tabWidget->count(); i++) {
+    for (int i=0; i < ui->tabWidget->count(); i++) {
         if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName ) {
             ui->tabWidget->setCurrentIndex(i);
             if (sTableName=="UserSQL") {
@@ -52,7 +53,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
     }
     if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName) {
         //Create tab
-        PotaWidget *w = new PotaWidget(ui->tabWidget);
+        PotaWidget *w=new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
         w->lErr=ui->lDBErr;
         w->cbFontSize=ui->cbFont;
@@ -78,7 +79,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 query.Selec0ShowErr("SELECT count() FROM sqlite_schema "
                                     "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
                                           "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1)){
-                QPalette palette = w->sbInsertRows->palette();
+                QPalette palette=w->sbInsertRows->palette();
                 palette.setColor(QPalette::Text, Qt::white);
                 palette.setColor(QPalette::Base, QColor(234,117,0,110));
                 palette.setColor(QPalette::Button, QColor(234,117,0,110));
@@ -142,13 +143,17 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 else if (sTableName!="Params" and
                          FieldIsMoney(w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
                     w->model->moneyColumns.insert(i);
+
+                //Hide _columns
+                if (w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("_"))
+                    w->tv->hideColumn(i);
             }
 
             w->RefreshHorizontalHeader();
 
             //Colored tab title
             ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
-            QFont font = this->font();
+            QFont font=this->font();
             w->lTabTitle->setFont(font);
             w->lTabTitle->setText(" "+sTitre+" ");
             w->lTabTitle->setContentsMargins(10, 4, 10, 4);
@@ -259,10 +264,10 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
 
         //ColWidth
         settings.beginGroup("ColWidth");
-            for (int i=0; i<w->model->columnCount();i++) {
-                if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_"))
-                    settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->columnWidth(i));
-            }
+        for (int i=0; i<w->model->columnCount();i++) {
+            if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_"))
+                settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->columnWidth(i));
+        }
         settings.endGroup();
 
         settings.setValue(w->model->tableName()+"-pageFilter",w->cbPageFilter->currentIndex());
@@ -287,7 +292,7 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
 
 void MainWindow::ClosePotaTabs()
 {
-    for (int i = ui->tabWidget->count()-1; i >=0 ; i--) {
+    for (int i=ui->tabWidget->count()-1; i >=0 ; i--) {
         ClosePotaTab(ui->tabWidget->widget(i));
     }
     ui->tabWidget->setCurrentIndex(0);
@@ -296,7 +301,7 @@ void MainWindow::ClosePotaTabs()
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
     //Set to bolt title of new tab, unbolt others.
-    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    for (int i=0; i < ui->tabWidget->count(); ++i) {
         if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
             PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
             if (i==index)//ui->tabWidget->currentIndex()
@@ -328,7 +333,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 void MainWindow::on_mSelecDB_triggered()
 {
     ClosePotaTabs();
-    const QString sFileName = QFileDialog::getOpenFileName( this, tr("Base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3");
+    const QString sFileName=QFileDialog::getOpenFileName( this, tr("Base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3");
     if (sFileName != "") {
         PotaDbClose();
         PotaDbOpen(sFileName,"",false);
@@ -360,7 +365,7 @@ void MainWindow::on_mCopyBDD_triggered()
         return;
     }
 
-    const QString sFileName = QFileDialog::getSaveFileName(this, tr("Copie de la base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
+    const QString sFileName=QFileDialog::getSaveFileName(this, tr("Copie de la base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
     if (sFileName.isEmpty()) return;
     FileInfoVerif.setFile(sFileName);
     if (!FileInfoVerif.exists() or
@@ -420,15 +425,15 @@ void MainWindow::CreateNewDB(bool bEmpty)
         // if (!dir.exists("data"))
         //     dir.mkdir("data");
 // #ifdef Q_OS_WIN
-//         sFileName = "C:\\Users\\NomUtilisateur\\Documents";
+//         sFileName="C:\\Users\\NomUtilisateur\\Documents";
 // #else
-//         sFileName = "/home/NomUtilisateur/Documents";
+//         sFileName="/home/NomUtilisateur/Documents";
 // #endif
         sFileName=QStandardPaths::writableLocation(QStandardPaths::HomeLocation)+
                   QDir::toNativeSeparators("/Documents/Potaleger.sqlite3");
     }
 
-    sFileName = QFileDialog::getSaveFileName(this, tr("Nom pour la BDD %1").arg("Potaléger "+sEmpty), sFileName, "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
+    sFileName=QFileDialog::getSaveFileName(this, tr("Nom pour la BDD %1").arg("Potaléger "+sEmpty), sFileName, "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
     if (sFileName.isEmpty()) return;
 
     FileInfoVerif.setFile(sFileName);
@@ -471,7 +476,6 @@ void MainWindow::on_mAbout_triggered()
                   "<b>Crédits</b>:<br>"
                   "Qt Creator community 6.8 <a href=\"https://www.qt.io/\">www.qt.io/</a><br>"
                   "SQLite 3 <a href=\"https://www.sqlite.org/\">www.sqlite.org/</a><br>"
-                  "SQLean <a href=\"https://github.com/nalgeon/sqlean\">github.com/nalgeon/sqlean</a><br>"
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
                   "muParser <a href=\"https://github.com/beltoforion/muparser/\">github.com/beltoforion/muparser</a><br>"
                   "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a>, merci Silvère !<br>"
@@ -494,6 +498,9 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Amélioration affichage graphique des ITP (chevauchement des périodes semis/plantation/récolte).")+"<br>"+
                   "- "+tr("Chaque installation de Potaléger a ses propres paramètres (chemin BDD, dispositions fenêtres, etc).")+"<br>"+
                   "- "+tr("Séparateur de colonne et séparateur décimal paramétrables pour les exports de données.")+"<br>"+
+                  "<u>"+tr("Régressions (temporaires)")+" :</u><br>"+
+                  "- "+tr("Conflits familles plus détectés dans les rotations.")+"<br>"+
+                  "- "+tr("Mises en place trop tôt ou trop tard plus détectées dans les rotations.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Erreur d'arrondi sur 'Qté prév' et 'Qté réc' dans l'onglet 'Couverture des objectifs'.")+"<br>"+
                   "- "+tr("Plantage sur requête SQL utilisateur sans titre ni description.")+"<br>"+
@@ -566,10 +573,6 @@ void MainWindow::on_mCloseTabs_triggered()
 
 void MainWindow::on_mParam_triggered()
 {
-    // //OuvrirOnglet("sqlean_define","sqlean_define","test");
-    // OuvrirOnglet("test","Rotations_détails","test");
-    // return;
-
     if (OpenPotaTab("Param","Params",tr("Paramètres"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->sbInsertRows->setVisible(false);
@@ -605,7 +608,7 @@ void MainWindow::on_mImport_triggered()
         if (PathImport.isEmpty())
             PathImport=PathExport;
 
-        QString sFileName = QFileDialog::getOpenFileName(this, tr("Importer des données"),
+        QString sFileName=QFileDialog::getOpenFileName(this, tr("Importer des données"),
                                                          PathImport+w->lTabTitle->text().trimmed(), "*.csv");
 
         //Check filename.
@@ -633,7 +636,7 @@ void MainWindow::on_mImport_triggered()
         int nbColImport=fieldNames.count();
         int primaryFieldImport=-1;
         info="";
-        for (int col = 0; col < nbColImport; ++col) {
+        for (int col=0; col < nbColImport; ++col) {
             fieldindexes.append(w->model->FieldIndex(fieldNames[col]));
             if (fieldindexes[col]==-1 or//Column don't exists in the table.
                 w->model->nonEditableColumns.contains(fieldindexes[col])) {//Column is readonly.
@@ -676,7 +679,7 @@ void MainWindow::on_mImport_triggered()
             if(linesToImport.count()>4)
                 info2+="<br>...";
 
-            choice = RadiobuttonDialog("Potaléger "+ui->lVer->text(),w->lTabTitle->text().trimmed()+"<br><br>"+
+            choice=RadiobuttonDialog("Potaléger "+ui->lVer->text(),w->lTabTitle->text().trimmed()+"<br><br>"+
                                            "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
                                            sFileName+"<br><br>"+
                                            "<b>"+tr("Les champs suivants vont être importés:")+"</b><br>"+info+"<br><br>"+
@@ -717,7 +720,7 @@ void MainWindow::on_mImport_triggered()
         int nbModifiedRows=0;
         int nbErrors=0;
         QLocale locale;
-        QString decimalSep = QString(locale.decimalPoint());
+        QString decimalSep=QString(locale.decimalPoint());
         if (choice==5 or choice==6) {//Delete selected lines
             if(w->model->rowCount()>1 and
                 !OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(w->model->rowCount()),QStyle::SP_MessageBoxWarning,600)) {
@@ -777,7 +780,7 @@ void MainWindow::on_mImport_triggered()
                     if(choice!=4){
                         //Update existing record.
                         bModified=false;
-                        for (int col = 0; col < valuesToImport.count(); col++) {
+                        for (int col=0; col < valuesToImport.count(); col++) {
                             if (fieldindexes[col]>-1){//Col exists in table.
                                 if(dataTypes[col]=="REAL")
                                     valuesToImport[col]=StrReplace(valuesToImport[col],decimalSep,".");
@@ -806,7 +809,7 @@ void MainWindow::on_mImport_triggered()
                         //Create new record.
                         int row=w->model->rowCount();
                         if (w->model->insertRow(row)){
-                            for (int col = 0; col < valuesToImport.count(); col++) {
+                            for (int col=0; col < valuesToImport.count(); col++) {
                                 if (fieldindexes[col]>-1){//Col exists in table.
                                     if(dataTypes[col]=="REAL")
                                         w->model->setData(w->model->index(row,fieldindexes[col]),StrReplace(valuesToImport[col],decimalSep,"."));
@@ -849,7 +852,7 @@ void MainWindow::on_mExport_triggered()
     if (ui->tabWidget->currentWidget()->objectName().startsWith("PW")){
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
 
-        QString sFileName = QFileDialog::getSaveFileName(this, tr("Exporter les données dans un fichier %1").arg("CSV"),
+        QString sFileName=QFileDialog::getSaveFileName(this, tr("Exporter les données dans un fichier %1").arg("CSV"),
                                                          PathExport+w->lTabTitle->text().trimmed(), "*.csv",
                                                          nullptr,QFileDialog::DontConfirmOverwrite);
         //Check filename.
@@ -891,15 +894,15 @@ void MainWindow::on_mExport_triggered()
             decimalSep=pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Export_sep_decim'").toString();
             if(decimalSep.isEmpty()) {
                 QLocale locale;
-                decimalSep = QString(locale.decimalPoint());
+                decimalSep=QString(locale.decimalPoint());
             }
             QString ColSep;
             ColSep=pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Export_sep_col'").toString();
             if(ColSep.isEmpty())
-                ColSep = ";";
+                ColSep=";";
 
             //Header export
-            for (int col = 0; col < w->model->columnCount(); ++col) {
+            for (int col=0; col < w->model->columnCount(); ++col) {
                 if (col > 0)
                     data.append(ColSep.toUtf8());
                 data.append(w->model->headerData(col,Qt::Horizontal,Qt::EditRole).toString().toUtf8());
@@ -915,8 +918,8 @@ void MainWindow::on_mExport_triggered()
                 AppBusy(true,ui->progressBar,totalRow,w->lTabTitle->text().trimmed()+" %p%");
 
                 //Data export
-                for (row = 0; row < w->model->rowCount(); ++row) {
-                    for (int col = 0; col < w->model->columnCount(); ++col) {
+                for (row=0; row < w->model->rowCount(); ++row) {
+                    for (int col=0; col < w->model->columnCount(); ++col) {
                         if (col > 0) data.append(ColSep.toUtf8());
                         if (dataTypes[col]=="REAL")
                             data.append(EscapeCSV(StrReplace(w->model->data(w->model->index(row, col),Qt::EditRole).toString(),".",decimalSep)).toUtf8());
@@ -1057,24 +1060,24 @@ void MainWindow::on_mIlots_triggered()
 
 //Menu Planification
 
-void MainWindow::on_mCulturesParplante_triggered()
+void MainWindow::on_mPlanifEspeces_triggered()
 {
-    OpenPotaTab("Cult_planif_espèces","Cult_planif_espèces",tr("Cult.prévues espèces"));
+    OpenPotaTab("Planif_espèces","Planif_espèces",tr("Cult.prévues espèces"));
 }
 
-void MainWindow::on_mCulturesParIlots_triggered()
+void MainWindow::on_mPlanifIlots_triggered()
 {
-    OpenPotaTab("Cult_planif_ilots","Cult_planif_ilots",tr("Cult.prévues ilots"));
+    OpenPotaTab("Planif_ilots","Planif_ilots",tr("Cult.prévues ilots"));
 }
 
-void MainWindow::on_mCulturesParPlanche_triggered()
+void MainWindow::on_mPlanifPlanches_triggered()
 {
-    OpenPotaTab("Cult_planif_2","Cult_planif_2",tr("Cult.prévues"));
+    OpenPotaTab("Planif_planches","Planif_planches",tr("Cult.prévues"));
 }
 
 void MainWindow::on_mRecoltesParSemaine_triggered()
 {
-    if (OpenPotaTab("Cult_planif_recoltes","Cult_planif_récoltes",tr("Récoltes prévues"))){
+    if (OpenPotaTab("Planif_recoltes","Planif_récoltes",tr("Récoltes prévues"))){
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
 
 
@@ -1098,7 +1101,7 @@ void MainWindow::on_mCreerCultures_triggered()
 {
     PotaQuery pQuery(db);
     pQuery.lErr=ui->lDBErr;
-    int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif").toInt();
+    int NbCultPlanif=pQuery.Selec0ShowErr("SELECT count() FROM Planif_planches").toInt();
     if (NbCultPlanif==0) {
         MessageDlg(windowTitle(),tr("Aucune culture à planifier:")+"\n\n"+
                           tr("- Créez des rotations")+"\n"+
@@ -1106,7 +1109,7 @@ void MainWindow::on_mCreerCultures_triggered()
         return;
     }
 
-    int NbCultPlanifRetard=pQuery.Selec0ShowErr("SELECT count() FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)<DATE('now')").toInt();
+    int NbCultPlanifRetard=pQuery.Selec0ShowErr("SELECT count() FROM Planif_planches WHERE coalesce(Date_semis,Date_plantation)<DATE('now')").toInt();
     int NbCultAVenir=pQuery.Selec0ShowErr("SELECT count() FROM C_non_commencées").toInt();
     QStyle::StandardPixmap icon;
     QString CultAVenir;
@@ -1127,7 +1130,7 @@ void MainWindow::on_mCreerCultures_triggered()
                        icon)) {
         int choice=2;
         if (NbCultPlanifRetard>0){
-            choice = RadiobuttonDialog(windowTitle(),tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanif).arg(NbCultPlanifRetard),
+            choice=RadiobuttonDialog(windowTitle(),tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanif).arg(NbCultPlanifRetard),
                                            {tr("Ne pas créer ces cultures en retard"),
                                             tr("Créer aussi ces cultures en retard")},
                                             iif(NbCultPlanifRetard<NbCultPlanif/10,1,0).toInt(),
@@ -1141,11 +1144,11 @@ void MainWindow::on_mCreerCultures_triggered()
         if (choice==0)
             result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
                                        "SELECT Espèce,IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
-                                       "FROM Cult_planif WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')");
+                                       "FROM Planif_planches WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')");
         else
             result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement) "
                                        "SELECT Espèce,IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),Longueur,Nb_rangs,Espacement "
-                                       "FROM Cult_planif");
+                                       "FROM Planif_planches");
         if (result) {
             int IdCult2=pQuery.Selec0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
             int IdCult3=pQuery.Selec0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
@@ -1235,7 +1238,7 @@ void MainWindow::on_mCouverture_triggered()
         saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
         smin=query.Selec0ShowErr("SELECT min(Saison) FROM Espèces__couverture").toInt();
         smax=query.Selec0ShowErr("SELECT max(Saison) FROM Espèces__couverture").toInt();
-        for (int i = smin; i <= smax; ++i) {
+        for (int i=smin; i <= smax; ++i) {
             w->cbPageFilter->addItem(str(i));
             w->pageFilterFilters.append("Saison='"+str(i)+"'");
         }
@@ -1435,7 +1438,7 @@ void MainWindow::on_mBilanPlanches_triggered()
         saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
         smin=query.Selec0ShowErr("SELECT min(Saison) FROM Planches__bilan_fert").toInt();
         smax=query.Selec0ShowErr("SELECT max(Saison) FROM Planches__bilan_fert").toInt();
-        for (int i = smin; i <= smax; ++i) {
+        for (int i=smin; i <= smax; ++i) {
             w->cbPageFilter->addItem(str(i));
             w->pageFilterFilters.append("Saison='"+str(i)+"'");
         }
@@ -1519,7 +1522,7 @@ void MainWindow::on_mRequeteSQL_triggered()
 
 void MainWindow::on_cbTheme_currentIndexChanged(int index)
 {
-    QPalette palette = QApplication::palette();
+    QPalette palette=QApplication::palette();
     palette.setColor(QPalette::ToolTipBase ,QColor( "#d7c367" )); //ffffdc
     palette.setColor(QPalette::ToolTipText ,QColor( "#000000" ));
     palette.setColor(QPalette::BrightText ,QColor( "#ffffff" ));
@@ -1582,17 +1585,17 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
 {
     if (ui->cbFont->count()<2) return;//Initialisation of cbfont entries.
 
-    QFont font = this->font();
+    QFont font=this->font();
     font.setPointSize(arg1.toInt());
     setFont(font);
 
-    QList<QWidget*> widgets = findChildren<QWidget*>();
+    QList<QWidget*> widgets=findChildren<QWidget*>();
     foreach (QWidget* widget, widgets) {
         widget->setFont(font);
     }
 
     //Tab titles
-    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    for (int i=0; i < ui->tabWidget->count(); ++i) {
         if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
             PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
             ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, nullptr);

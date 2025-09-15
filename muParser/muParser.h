@@ -59,7 +59,7 @@ namespace mu
 		void InitOprt() override;
 		void OnDetectVar(string_type* pExpr, int& nStart, int& nEnd) override;
 
-		value_type Diff(value_type* a_Var, value_type a_fPos, value_type a_fEpsilon = 0) const;
+		value_type Diff(value_type* a_Var, value_type a_fPos, value_type a_fEpsilon=0) const;
 
 	protected:
 

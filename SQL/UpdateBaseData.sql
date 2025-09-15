@@ -1,4 +1,4 @@
-QString sUpdateBaseDataNPKE = QStringLiteral(R"#(
+QString sUpdateBaseDataNPKE=QStringLiteral(R"#(
 
 UPDATE Espèces SET N=9,P=4,K=10 WHERE Espèce LIKE 'Ail%';
 UPDATE Espèces SET N=16,P=7,K=21 WHERE Espèce LIKE 'Aubergine%';
@@ -66,7 +66,7 @@ UPDATE Espèces SET N=5,P=4,K=8 WHERE Espèce LIKE 'Vesce%';
 
 )#");
 
-QString sUpdateBaseDataNPKF = QStringLiteral(R"#(
+QString sUpdateBaseDataNPKF=QStringLiteral(R"#(
 
 UPDATE Fertilisants SET pH=7.8,N=1.3,N_coef=50,P=0.3,P_coef=35,K=2.3,K_coef=75,Ca=1.5,Ca_coef=55,Fe=0.08,Fe_coef=20,Na=1.5,Na_coef=75,Mg=0.75,Mg_coef=55,S=0.35,S_coef=70,Si=0.35,Si_coef=20 WHERE (Fertilisant LIKE 'Algues %');
 UPDATE Fertilisants SET pH=6,N=0.3,N_coef=15,P=0.08,P_coef=15,K=0.55,K_coef=45,Ca=0.35,Ca_coef=15,Fe=0.05,Fe_coef=10,Na=0.08,Na_coef=15,Mg=0.15,Mg_coef=20,S=0.08,S_coef=20,Si=0.08,Si_coef=10 WHERE (Fertilisant LIKE 'Broyat %')AND(Fertilisant LIKE '%bois%');

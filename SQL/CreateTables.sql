@@ -1,15 +1,7 @@
-QString sDDLTables = QStringLiteral(R"#(
+QString sDDLTables=QStringLiteral(R"#(
 
--- BEGIN TRANSACTION;
-
--- CREATE TABLE Apports (Apport TEXT PRIMARY KEY COLLATE POTACOLLATION,
---                       Type TEXT COLLATE POTACOLLATION,
---                       Description TEXT COLLATE POTACOLLATION,
---                       Poids_m² REAL,
---                       Notes TEXT) WITHOUT ROWID;
-
-CREATE TABLE Analyses_de_sol (Analyse TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                           Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
+CREATE TABLE Analyses_de_sol (Analyse TEXT PRIMARY KEY,
+                           Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE,
                            Date DATE NOT NULL,
                            Sable_grossier REAL,
                            Sable_fin REAL,
@@ -33,24 +25,24 @@ CREATE TABLE Analyses_de_sol (Analyse TEXT PRIMARY KEY COLLATE POTACOLLATION,
                            Mg REAL,
                            Na REAL,
                            Interprétation TEXT,
-                           Référence TEXT COLLATE POTACOLLATION,
-                           Organisme TEXT COLLATE POTACOLLATION,
+                           Référence TEXT,
+                           Organisme TEXT,
                            Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                        Date DATE NOT NULL, -- DEFAULT (DATE('now'))
-                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Quantité REAL NOT NULL,
                        Prix REAL,
-                       Destination TEXT REFERENCES Destinations (Destination) ON DELETE SET NULL ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Destination TEXT REFERENCES Destinations (Destination) ON DELETE SET NULL ON UPDATE CASCADE,
                        Notes TEXT);
 
 CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
-                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
-                       IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE COLLATE POTACOLLATION,
-                       Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE COLLATE POTACOLLATION,
-                       Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE COLLATE POTACOLLATION,
-                       Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL,
+                       IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
+                       Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE,
+                       Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE,
+                       Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE,
                        Type TEXT AS (CASE WHEN (Date_plantation < Date_semis) OR (Début_récolte < Date_semis) OR (Fin_récolte < Date_semis) OR (Début_récolte < Date_plantation) OR (Fin_récolte < Date_plantation) OR (Fin_récolte < Début_récolte) THEN 'Erreur dates !'
                                           WHEN Terminée LIKE 'v%' THEN 'Vivace'
                                           WHEN Date_semis NOTNULL AND Date_plantation NOTNULL AND Début_récolte NOTNULL AND Fin_récolte NOTNULL THEN 'Semis pépinière'
@@ -99,28 +91,29 @@ CREATE TABLE Cultures (Culture INTEGER PRIMARY KEY AUTOINCREMENT,
                        Notes TEXT);
 
 CREATE TABLE Cu_Fertilisants (Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-                              Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+                              Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                               Quantité REAL);
 
-CREATE TABLE Destinations (Destination TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                           Type TEXT COLLATE POTACOLLATION,
-                           Adresse TEXT COLLATE POTACOLLATION,
+CREATE TABLE Destinations (Destination TEXT PRIMARY KEY,
+                           Type TEXT,
+                           Adresse TEXT,
                            Site_web TEXT,
                            Date_RAZ DATE,
                            Active BOOL DEFAULT ('x'),
                            Notes TEXT) WITHOUT ROWID;
 
-CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                      Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE COLLATE POTACOLLATION,
+CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY,
+                      -- _Espèce TEXT AS (#NoAccent(Espèce)NoAccent#),
+                      Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE,
                       Rendement REAL,
-                      Niveau TEXT COLLATE POTACOLLATION,
+                      Niveau TEXT,
                       Densité INTEGER,
                       Dose_semis REAL,
                       Nb_graines_g REAL,
                       FG REAL,
                       T_germ TEXT,
                       Levée REAL,
-                      Irrig TEXT COLLATE POTACOLLATION,
+                      Irrig TEXT,
                       Conservation BOOL,
                       A_planifier BOOL DEFAULT ('x'),
                       Vivace BOOL,
@@ -139,12 +132,12 @@ CREATE TABLE Espèces (Espèce TEXT PRIMARY KEY COLLATE POTACOLLATION,
                       Prix_kg REAL,
                       Notes TEXT) WITHOUT ROWID;
 
-CREATE TABLE Familles (Famille TEXT PRIMARY KEY COLLATE POTACOLLATION,
+CREATE TABLE Familles (Famille TEXT PRIMARY KEY,
                        Intervalle REAL DEFAULT (4),
                        Notes TEXT) WITHOUT ROWID;
 
-CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                           Type TEXT COLLATE POTACOLLATION,
+CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY,
+                           Type TEXT,
                            Fonction TEXT,
                            Utilisation TEXT,
                            pH REAL,
@@ -182,25 +175,25 @@ CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY COLLATE POTACOLLATION,
 
 CREATE TABLE Fertilisations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                        Date DATE NOT NULL, -- DEFAULT (DATE('now'))
-                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-                       Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+                       Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Quantité REAL NOT NULL,
                        N REAL,
                        P REAL,
                        K REAL,
                        Notes TEXT);
 
-CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                           Type TEXT COLLATE POTACOLLATION,
+CREATE TABLE Fournisseurs (Fournisseur TEXT PRIMARY KEY,
+                           Type TEXT,
                            Priorité INTEGER,
-                           Adresse TEXT COLLATE POTACOLLATION,
+                           Adresse TEXT,
                            Site_web TEXT,
                            Notes TEXT) WITHOUT ROWID;
 
-CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                  Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE COLLATE POTACOLLATION,
-                  Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
+CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY,
+                  Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE,
+                  Type_planche TEXT, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                   Type_culture TEXT AS (CASE WHEN S_semis NOTNULL AND S_plantation NOTNULL AND S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Semis pépinière'
                                              WHEN S_semis ISNULL  AND S_plantation NOTNULL AND S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Plant'
                                              WHEN S_semis NOTNULL AND S_plantation ISNULL  AND S_récolte NOTNULL AND D_récolte NOTNULL THEN 'Semis en place'
@@ -222,32 +215,32 @@ CREATE TABLE ITP (IT_plante TEXT PRIMARY KEY COLLATE POTACOLLATION,
 CREATE TABLE Notes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                     Date_création DATE,
                     Date_modif DATE,
-                    Type TEXT COLLATE POTACOLLATION,
-                    Description TEXT COLLATE POTACOLLATION,
+                    Type TEXT,
+                    Description TEXT,
                     Texte TEXT);
 
 CREATE TABLE Params (Section TEXT, Paramètre TEXT, Description TEXT, Valeur TEXT, Unité TEXT, Date_modif DATE);
 
-CREATE TABLE Planches (Planche TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                       Type TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
+CREATE TABLE Planches (Planche TEXT PRIMARY KEY,
+                       Type TEXT, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                        Longueur REAL,
                        Largeur REAL,
-                       Irrig TEXT COLLATE POTACOLLATION,
-                       Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Irrig TEXT,
+                       Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE,
                        Année INTEGER,
                        Analyse TEXT REFERENCES Analyses_de_sol (Analyse) ON DELETE SET NULL ON UPDATE CASCADE,
                        Notes TEXT) WITHOUT ROWID;
 
-CREATE TABLE Rotations (Rotation TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                        Type_planche TEXT COLLATE POTACOLLATION, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
+CREATE TABLE Rotations (Rotation TEXT PRIMARY KEY,
+                        Type_planche TEXT, -- REFERENCES Types_planche (Type) ON UPDATE CASCADE
                         Année_1 INTEGER,
                         Nb_années INTEGER,
                         Notes TEXT) WITHOUT ROWID;
 
 CREATE TABLE Rotations_détails (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                                Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                                Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE,
                                 Année INTEGER DEFAULT (1) NOT NULL ON CONFLICT REPLACE,
-                                IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                                IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
                                 Pc_planches REAL DEFAULT (100) NOT NULL ON CONFLICT REPLACE,
                                 -- Nb_planches INTEGER,
                                 Fi_planches TEXT,
@@ -255,26 +248,21 @@ CREATE TABLE Rotations_détails (ID INTEGER PRIMARY KEY AUTOINCREMENT,
 
 CREATE TABLE Récoltes (ID INTEGER PRIMARY KEY AUTOINCREMENT,
                        Date DATE NOT NULL, -- DEFAULT (DATE('now'))
-                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
                        Quantité REAL NOT NULL,
                        Notes TEXT);
 
--- CREATE TABLE Types_planche (Type TEXT PRIMARY KEY COLLATE POTACOLLATION,
---                             Notes TEXT) WITHOUT ROWID;
-
-CREATE TABLE Variétés (Variété TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL COLLATE POTACOLLATION,
+CREATE TABLE Variétés (Variété TEXT PRIMARY KEY,
+                       Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL,
                        Nb_graines_g REAL,
                        Qté_stock REAL,
                        Qté_cde REAL,
-                       Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur) ON UPDATE CASCADE,
                        S_récolte INTEGER CONSTRAINT 'S_récolte, 1 à 52 semaines' CHECK (S_récolte ISNULL OR S_récolte BETWEEN 1 AND 52),
                        D_récolte INTEGER CONSTRAINT 'D_récolte, 1 à 52 semaines' CHECK (D_récolte ISNULL OR D_récolte BETWEEN 1 AND 52),
                        PJ INTEGER,
-                       IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE COLLATE POTACOLLATION,
+                       IT_plante TEXT REFERENCES ITP (IT_plante) ON UPDATE CASCADE,
                        Notes TEXT) WITHOUT ROWID;
-
--- COMMIT TRANSACTION;
 
 )#");

@@ -14,7 +14,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.3.0b2";
+QString const Version="1.3.0b3";
 QString const DbVersion="2025-07-28";
 
 class MainWindow : public QMainWindow
@@ -25,14 +25,12 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void showEvent(QShowEvent *event) override;
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget *parent=nullptr);
     ~MainWindow();
     Ui::MainWindow *ui;
 
     //global variables.
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    // bool userDataEditing=false;
-    // bool dbIsOpen=false;
+    QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE");
     QString PathExport="";
     QString PathImport="";
     int TypeImport=0;
@@ -66,9 +64,9 @@ private slots:
     void on_mPlanches_triggered();
     void on_mIlots_triggered();
     void on_mSuccessionParPlanche_triggered();
-    void on_mCulturesParIlots_triggered();
+    void on_mPlanifIlots_triggered();
     void on_mRotationManquants_triggered();
-    void on_mCulturesParPlanche_triggered();
+    void on_mPlanifEspeces_triggered();
     void on_mSemences_triggered();
     void on_mCuNonTer_triggered();
     void on_mCuASemerEP_triggered();
@@ -82,7 +80,7 @@ private slots:
     void on_mITPTempo_triggered();
     void on_mCreerCultures_triggered();
     void on_tabWidget_currentChanged(int index);
-    void on_mCulturesParplante_triggered();
+    void on_mPlanifPlanches_triggered();
     void on_mAbout_triggered();
     void on_mUpdateSchema_triggered();
     void on_mExport_triggered();
@@ -120,7 +118,7 @@ private:
     void SetEnabledDataMenuEntries(bool b);
     // bool PotaBDDInfo();
     bool UpdateDBShema(QString sDBVersion);
-    bool dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn);
+    bool dbOpen(QString sFichier, bool bNew, bool SetFkOn);
     void dbClose();
     bool PotaDbOpen(QString sFichier, QString sNew, bool bUpdate);
     void PotaDbClose();

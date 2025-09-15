@@ -1,4 +1,4 @@
-QString sDDLTableParams = QStringLiteral(R"#(
+QString sDDLTableParams=QStringLiteral(R"#(
 
 BEGIN TRANSACTION;
 
@@ -29,7 +29,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Cultures', 'C_horizon_semis', 'Voir les cultures à semer sur une période de', '90', 'jours'),
             ('Cultures', 'C_horizon_plantation', 'Voir les cultures à planter sur une période de', '90', 'jours'),
             ('Cultures', 'C_horizon_récolte', 'Voir les cultures à récolter sur une période de', '90', 'jours'),
-            ('Cultures', 'C_historique_récolte', 'Voir les saisies de récolte anciennes de', '90', 'jours'),
+            ('Cultures', 'C_historique_récolte', 'Voir les saisies de récolte anciennes de', '1000', 'jours'),
             ('Cultures', 'C_récolte_après_MEP', 'Récoltes: nb jours mini entre date de mise en place (semis en place ou plantation) et dates de récolte', '15', 'jours'),
             ('Cultures', 'C_récolte_avance', 'Récoltes: avance maxi entre date de récolte réelle (Saisie des récoltes) et prévue (Cultures, ''Début_récolte'')', '15', 'jours'),
             ('Cultures', 'C_récolte_prolongation', 'Récoltes: prolongation maxi entre date de récolte réelle (Saisie des récoltes) et prévue (Cultures, ''Fin_récolte'')', '30', 'jours'),

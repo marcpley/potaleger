@@ -40,8 +40,8 @@
 
 namespace mu
 {
-	static constexpr int CALLBACK_INTERNAL_VAR_ARGS         = 1 << 14;
-	static constexpr int CALLBACK_INTERNAL_FIXED_ARGS_MASK  = 0xf;
+	static constexpr int CALLBACK_INTERNAL_VAR_ARGS        =1 << 14;
+	static constexpr int CALLBACK_INTERNAL_FIXED_ARGS_MASK =0xf;
 	static constexpr int CALLBACK_INTERNAL_WITH_USER_DATA	= 1 << 13;
 
 	struct CbWithUserData
@@ -762,24 +762,24 @@ namespace mu
 	*/
 	void ParserCallback::Assign(const ParserCallback& ref)
 	{
-		if (this == &ref)
+		if (this==&ref)
 			return;
 
 		if (m_iArgc & CALLBACK_INTERNAL_WITH_USER_DATA) {
 			delete reinterpret_cast<CbWithUserData*>(m_pFun);
-			m_pFun = nullptr;
+			m_pFun=nullptr;
 		}
 
 		if (ref.m_iArgc & CALLBACK_INTERNAL_WITH_USER_DATA)
-			m_pFun = new CbWithUserData(*reinterpret_cast<CbWithUserData*>(ref.m_pFun));
+			m_pFun=new CbWithUserData(*reinterpret_cast<CbWithUserData*>(ref.m_pFun));
 		else
-			m_pFun = ref.m_pFun;
-		m_iArgc = ref.m_iArgc;
-		m_bAllowOpti = ref.m_bAllowOpti;
-		m_iCode = ref.m_iCode;
-		m_iType = ref.m_iType;
-		m_iPri = ref.m_iPri;
-		m_eOprtAsct = ref.m_eOprtAsct;
+			m_pFun=ref.m_pFun;
+		m_iArgc=ref.m_iArgc;
+		m_bAllowOpti=ref.m_bAllowOpti;
+		m_iCode=ref.m_iCode;
+		m_iType=ref.m_iType;
+		m_iPri=ref.m_iPri;
+		m_eOprtAsct=ref.m_eOprtAsct;
 	}
 
 
@@ -840,7 +840,7 @@ namespace mu
 	{
 		return GetAddr() != nullptr
 			&& !((m_iArgc & CALLBACK_INTERNAL_WITH_USER_DATA)
-			     && GetUserData() == nullptr);
+			     && GetUserData()==nullptr);
 	}
 
 

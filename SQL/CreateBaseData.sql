@@ -1,4 +1,4 @@
-QString sSQLBaseData = QStringLiteral(R"#(
+QString sSQLBaseData=QStringLiteral(R"#(
 
 -- BEGIN TRANSACTION;
 

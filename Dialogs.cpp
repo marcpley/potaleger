@@ -27,7 +27,7 @@
 
 class SqlHighlighter : public QSyntaxHighlighter {
 public:
-    SqlHighlighter(QTextDocument *parent = nullptr) : QSyntaxHighlighter(parent) {
+    SqlHighlighter(QTextDocument *parent=nullptr) : QSyntaxHighlighter(parent) {
         QTextCharFormat keywordFormat, keywordFormat2;
         if (isDarkTheme()) {
             keywordFormat.setForeground(QColor("#0085c4"));
@@ -37,10 +37,10 @@ public:
             keywordFormat2.setForeground(Qt::darkYellow);
         }
         keywordFormat.setFontWeight(QFont::Bold);
-        QStringList keywordPatterns = {
+        QStringList keywordPatterns={
             "\\bSELECT\\b", "\\bFROM\\b", "\\bWHERE\\b", "\\bGROUP BY\\b", "\\bORDER BY\\b", "\\bJOIN\\b", "\\bLEFT\\b", "\\bRIGHT\\b", "\\bUSING\\b"
         };
-        QStringList keywordPatterns2 = {
+        QStringList keywordPatterns2={
             "\\bAND\\b", "\\bOR\\b", "\\bNULL\\b", "\\bISNULL\\b", "\\bNOTNULL\\b", "\\bNOT\\b", "\\bBETWEEN\\b"
         };
         for (const QString &pattern : keywordPatterns)
@@ -51,9 +51,9 @@ public:
 protected:
     void highlightBlock(const QString &text) override {
         for (const auto &rule : rules) {
-            auto matchIter = rule.pattern.globalMatch(text);
+            auto matchIter=rule.pattern.globalMatch(text);
             while (matchIter.hasNext()) {
-                auto match = matchIter.next();
+                auto match=matchIter.next();
                 setFormat(match.capturedStart(), match.capturedLength(), rule.format);
             }
         }
@@ -69,20 +69,20 @@ private:
 namespace {// Highlight dynamique des parenthèses
 // Recherche la parenthèse associée
 int findMatchingParenthesis(const QString& text, int pos, QChar open, QChar close, bool forward) {
-    int depth = 0;
+    int depth=0;
     if (forward) {
-        for (int i = pos+1; i < text.length(); ++i) {
-            if (text[i] == open) depth++;
-            else if (text[i] == close) {
-                if (depth == 0) return i;
+        for (int i=pos+1; i < text.length(); ++i) {
+            if (text[i]==open) depth++;
+            else if (text[i]==close) {
+                if (depth==0) return i;
                 depth--;
             }
         }
     } else {
-        for (int i = pos-1; i >= 0; --i) {
-            if (text[i] == close) depth++;
-            else if (text[i] == open) {
-                if (depth == 0) return i;
+        for (int i=pos-1; i >= 0; --i) {
+            if (text[i]==close) depth++;
+            else if (text[i]==open) {
+                if (depth==0) return i;
                 depth--;
             }
         }
@@ -94,45 +94,45 @@ int findMatchingParenthesis(const QString& text, int pos, QChar open, QChar clos
 void highlightAt(QPlainTextEdit* SQLEdit, int position, QList<QTextEdit::ExtraSelection>& extraSelections) {
     QTextEdit::ExtraSelection selection;
     selection.format.setBackground(QColor(255, 255, 0, 90)); // Jaune semi-transparent
-    QTextCursor selCursor = SQLEdit->textCursor();
+    QTextCursor selCursor=SQLEdit->textCursor();
     selCursor.setPosition(position);
     selCursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-    selection.cursor = selCursor;
+    selection.cursor=selCursor;
     extraSelections.append(selection);
 }
 
 void highlightParentheses(QPlainTextEdit* SQLEdit) {
     QList<QTextEdit::ExtraSelection> extraSelections;
-    QTextCursor cursor = SQLEdit->textCursor();
-    int pos = cursor.position();
+    QTextCursor cursor=SQLEdit->textCursor();
+    int pos=cursor.position();
 
-    QString text = SQLEdit->toPlainText();
+    QString text=SQLEdit->toPlainText();
     if (text.isEmpty())
         return;
 
     QChar charUnder, charBefore;
     if (pos < text.length())
-        charUnder = text.at(pos);
+        charUnder=text.at(pos);
     if (pos > 0)
-        charBefore = text.at(pos-1);
+        charBefore=text.at(pos-1);
 
-    int matchPos = -1;
+    int matchPos=-1;
     QChar open, close;
 
     // Cherche si curseur sur une parenthèse ouvrante
-    if (charUnder == '(' || charUnder == '[' || charUnder == '{') {
-        open = charUnder;
-        close = (open == '(') ? ')' : (open == '[') ? ']' : '}';
-        matchPos = findMatchingParenthesis(text, pos, open, close, true);
+    if (charUnder=='(' || charUnder=='[' || charUnder=='{') {
+        open=charUnder;
+        close=(open=='(') ? ')' : (open=='[') ? ']' : '}';
+        matchPos=findMatchingParenthesis(text, pos, open, close, true);
         highlightAt(SQLEdit, pos, extraSelections);
         if (matchPos != -1)
             highlightAt(SQLEdit, matchPos, extraSelections);
     }
     // Cherche si curseur juste après une parenthèse fermante
-    else if (charBefore == ')' || charBefore == ']' || charBefore == '}') {
-        close = charBefore;
-        open = (close == ')') ? '(' : (close == ']') ? '[' : '{';
-        matchPos = findMatchingParenthesis(text, pos-1, open, close, false);
+    else if (charBefore==')' || charBefore==']' || charBefore=='}') {
+        close=charBefore;
+        open=(close==')') ? '(' : (close==']') ? '[' : '{';
+        matchPos=findMatchingParenthesis(text, pos-1, open, close, false);
         highlightAt(SQLEdit, pos-1, extraSelections);
         if (matchPos != -1)
             highlightAt(SQLEdit, matchPos, extraSelections);
@@ -148,16 +148,16 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout = new QHBoxLayout();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
 
     if (iconType!=QStyle::SP_CustomBase) {
-        QLabel *iconLabel = new QLabel();
+        QLabel *iconLabel=new QLabel();
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
-            icon = QIcon(":/images/potaleger.svg");
+            icon=QIcon(":/images/potaleger.svg");
         else
-            icon = QApplication::style()->standardIcon(iconType);
+            icon=QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
         iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
@@ -169,7 +169,7 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
         sMess=StrReplace(sMess,"<a href","<a style=\"color: #7785ff\" href");
         sMess2=StrReplace(sMess2,"<a href","<a style=\"color: #7785ff\" href");
     }
-    QLabel *messageLabel = new QLabel(sMess);
+    QLabel *messageLabel=new QLabel(sMess);
     //messageLabel->setWordWrap(true);
     messageLabel->setOpenExternalLinks(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -179,10 +179,10 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
     layout->addLayout(headerLayout);
 
     if (message2!=""){
-        QScrollArea *scrollArea = new QScrollArea();
+        QScrollArea *scrollArea=new QScrollArea();
         scrollArea->setWidgetResizable(true);
-        //QHBoxLayout *textLayout = new QHBoxLayout();
-        QLabel *messageLabel2 = new QLabel(sMess2);
+        //QHBoxLayout *textLayout=new QHBoxLayout();
+        QLabel *messageLabel2=new QLabel(sMess2);
         messageLabel2->setWordWrap(true);
         messageLabel2->setOpenExternalLinks(true);
         messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -193,13 +193,13 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
         layout->addWidget(scrollArea);
         //textLayout->addWidget(messageLabel2);
         //layout->addLayout(textLayout);
-        QSize screenSize = QGuiApplication::primaryScreen()->size();
-        int maxHeight = screenSize.height()-200; // Par exemple, la moitié de la hauteur de l'écran
+        QSize screenSize=QGuiApplication::primaryScreen()->size();
+        int maxHeight=screenSize.height()-200; // Par exemple, la moitié de la hauteur de l'écran
         scrollArea->setMaximumHeight(maxHeight);
     }
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
 
     buttonLayout->addStretch();
@@ -225,61 +225,61 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout = new QHBoxLayout();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
     if (false) {
-        QLabel *iconLabel = new QLabel();
+        QLabel *iconLabel=new QLabel();
         QIcon icon;
-        icon = QIcon(":/images/potaleger.svg");
+        icon=QIcon(":/images/potaleger.svg");
         iconLabel->setPixmap(icon.pixmap(64, 64));
         iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
-    QLabel *messageLabel = new QLabel(message);
+    QLabel *messageLabel=new QLabel(message);
     messageLabel->setWordWrap(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     headerLayout->addWidget(messageLabel);
     layout->addLayout(headerLayout);
 
-    QLabel *lxAxis = new QLabel();
-    QComboBox *xAxis = new QComboBox();
-    QComboBox *xAxisGroup = new QComboBox();
-    QCheckBox *xAxisYearsSeries = new QCheckBox(QObject::tr("Une série par an"));
+    QLabel *lxAxis=new QLabel();
+    QComboBox *xAxis=new QComboBox();
+    QComboBox *xAxisGroup=new QComboBox();
+    QCheckBox *xAxisYearsSeries=new QCheckBox(QObject::tr("Une série par an"));
 
-    QLabel *ly1Axis = new QLabel(); ly1Axis->setObjectName("ly1Axis");
-    QComboBox *y1Axis = new QComboBox();
-    QComboBox *y1AxisCalc = new QComboBox();
-    QComboBox *y1AxisType = new QComboBox();
-    QToolButton *y1Color = new QToolButton();
-    QCheckBox *y1RightAxis = new QCheckBox("");
-    QHBoxLayout *y1AxisLayout = new QHBoxLayout();
+    QLabel *ly1Axis=new QLabel(); ly1Axis->setObjectName("ly1Axis");
+    QComboBox *y1Axis=new QComboBox();
+    QComboBox *y1AxisCalc=new QComboBox();
+    QComboBox *y1AxisType=new QComboBox();
+    QToolButton *y1Color=new QToolButton();
+    QCheckBox *y1RightAxis=new QCheckBox("");
+    QHBoxLayout *y1AxisLayout=new QHBoxLayout();
 
-    QLabel *ly2Axis = new QLabel();
-    QComboBox *y2Axis = new QComboBox();
-    QComboBox *y2AxisCalc = new QComboBox();
-    QComboBox *y2AxisType = new QComboBox();
-    QToolButton *y2Color = new QToolButton();
-    QCheckBox *y2RightAxis = new QCheckBox("");
-    QHBoxLayout *y2AxisLayout = new QHBoxLayout();
+    QLabel *ly2Axis=new QLabel();
+    QComboBox *y2Axis=new QComboBox();
+    QComboBox *y2AxisCalc=new QComboBox();
+    QComboBox *y2AxisType=new QComboBox();
+    QToolButton *y2Color=new QToolButton();
+    QCheckBox *y2RightAxis=new QCheckBox("");
+    QHBoxLayout *y2AxisLayout=new QHBoxLayout();
 
-    QLabel *ly3Axis = new QLabel();
-    QComboBox *y3Axis = new QComboBox();
-    QComboBox *y3AxisCalc = new QComboBox();
-    QComboBox *y3AxisType = new QComboBox();
-    QToolButton *y3Color = new QToolButton();
-    QCheckBox *y3RightAxis = new QCheckBox("");
-    QHBoxLayout *y3AxisLayout = new QHBoxLayout();
+    QLabel *ly3Axis=new QLabel();
+    QComboBox *y3Axis=new QComboBox();
+    QComboBox *y3AxisCalc=new QComboBox();
+    QComboBox *y3AxisType=new QComboBox();
+    QToolButton *y3Color=new QToolButton();
+    QCheckBox *y3RightAxis=new QCheckBox("");
+    QHBoxLayout *y3AxisLayout=new QHBoxLayout();
 
-    QLabel *ly4Axis = new QLabel();
-    QComboBox *y4Axis = new QComboBox();
-    QComboBox *y4AxisCalc = new QComboBox();
-    QComboBox *y4AxisType = new QComboBox();
-    QToolButton *y4Color = new QToolButton();
-    QCheckBox *y4RightAxis = new QCheckBox("");
-    QHBoxLayout *y4AxisLayout = new QHBoxLayout();
+    QLabel *ly4Axis=new QLabel();
+    QComboBox *y4Axis=new QComboBox();
+    QComboBox *y4AxisCalc=new QComboBox();
+    QComboBox *y4AxisType=new QComboBox();
+    QToolButton *y4Color=new QToolButton();
+    QCheckBox *y4RightAxis=new QCheckBox("");
+    QHBoxLayout *y4AxisLayout=new QHBoxLayout();
 
-    bool bComboSetting = false;
-    QList<QColor> seriesColors = {y2Color->palette().base().color(),QColor(),QColor(),QColor(),QColor()};
+    bool bComboSetting=false;
+    QList<QColor> seriesColors={y2Color->palette().base().color(),QColor(),QColor(),QColor(),QColor()};
 
     xAxis->setToolTip(QObject::tr("Champ de la table (ou vue) qui contient les \n"
                                   "valeurs d'abscisse (axe horizontal) des points du graphique."));
@@ -301,16 +301,16 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
     xAxis->addItems(columns);
     QObject::connect(xAxis, &QComboBox::currentIndexChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         setXAxisGroup(xAxisGroup,dataTypes[columns.indexOf(xAxis->currentText())]);
         xAxisYearsSeries->setVisible(dataTypes[columns.indexOf(xAxis->currentText())]=="DATE");
         if (!xAxisYearsSeries->isVisible()) xAxisYearsSeries->setChecked(false);
-        bComboSetting = false;
+        bComboSetting=false;
     });
 
     QObject::connect(xAxisGroup, &QComboBox::currentIndexChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         setYAxis(y1Axis,xAxisGroup->currentIndex()!=xAxisGroupNo, columns, dataTypes,xAxis->currentIndex(),false);
         setYAxis(y2Axis,xAxisGroup->currentIndex()!=xAxisGroupNo, columns, dataTypes,xAxis->currentIndex(),true);
         setYAxis(y3Axis,xAxisGroup->currentIndex()!=xAxisGroupNo, columns, dataTypes,xAxis->currentIndex(),true);
@@ -319,13 +319,13 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
         y2AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y2Axis->currentText()!=QObject::tr("Nombre de lignes"));
         y3AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y3Axis->currentText()!=QObject::tr("Nombre de lignes"));
         y4AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y4Axis->currentText()!=QObject::tr("Nombre de lignes"));
-        bComboSetting = false;
+        bComboSetting=false;
     });
 
     xAxisYearsSeries->setVisible(false);
     QObject::connect(xAxisYearsSeries, &QCheckBox::checkStateChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         y2Axis->setVisible(!xAxisYearsSeries->isChecked());
         y2AxisCalc->setVisible(!xAxisYearsSeries->isChecked());
         y2AxisType->setVisible(!xAxisYearsSeries->isChecked());
@@ -353,10 +353,10 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
             ly4Axis->setText(QObject::tr("Série %1").arg(4));
         }
 
-        bComboSetting = false;
+        bComboSetting=false;
     });
 
-    QHBoxLayout *xAxisLayout = new QHBoxLayout();
+    QHBoxLayout *xAxisLayout=new QHBoxLayout();
     xAxisLayout->addWidget(lxAxis);
     xAxisLayout->addWidget(xAxis);
     xAxisLayout->addWidget(xAxisGroup);
@@ -373,7 +373,7 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
     y3AxisCalc->setFixedWidth(150);
     y4AxisCalc->setFixedWidth(150);
 
-    QStringList typeItems = {QObject::tr("Courbe"),QObject::tr("Points"),QObject::tr("Points > 0"),QObject::tr("Barres")};
+    QStringList typeItems={QObject::tr("Courbe"),QObject::tr("Points"),QObject::tr("Points > 0"),QObject::tr("Barres")};
     y1AxisType->addItems(typeItems);
     y2AxisType->addItems(typeItems);
     y3AxisType->addItems(typeItems);
@@ -425,15 +425,15 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
 
     QObject::connect(y1Axis, &QComboBox::currentIndexChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         y1AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y1Axis->currentText()!=QObject::tr("Nombre de lignes"));
         if (columns.indexOf(y1Axis->currentText())>-1)
             setYAxisCalc(y1AxisCalc,dataTypes[columns.indexOf(y1Axis->currentText())]);
-        bComboSetting = false;
+        bComboSetting=false;
     });
     QObject::connect(y2Axis, &QComboBox::currentIndexChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         y2AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y2Axis->currentText()!=QObject::tr("Nombre de lignes"));
         if (columns.indexOf(y2Axis->currentText())>-1)
             setYAxisCalc(y2AxisCalc,dataTypes[columns.indexOf(y2Axis->currentText())]);
@@ -445,11 +445,11 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
         else
             y2Color->setStyleSheet("background-color: " + seriesColors[0].name() + ";width: 16px;");
         y2RightAxis->setEnabled(y2AxisCalc->isEnabled());
-        bComboSetting = false;
+        bComboSetting=false;
     });
     QObject::connect(y3Axis, &QComboBox::currentIndexChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         y3AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y3Axis->currentText()!=QObject::tr("Nombre de lignes"));
         if (columns.indexOf(y3Axis->currentText())>-1)
             setYAxisCalc(y3AxisCalc,dataTypes[columns.indexOf(y3Axis->currentText())]);
@@ -461,11 +461,11 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
         else
             y3Color->setStyleSheet("background-color: " + seriesColors[0].name() + ";width: 16px;");
         y3RightAxis->setEnabled(y3AxisCalc->isEnabled());
-        bComboSetting = false;
+        bComboSetting=false;
     });
     QObject::connect(y4Axis, &QComboBox::currentIndexChanged, [&]() {
         if (bComboSetting) return;
-        bComboSetting = true;
+        bComboSetting=true;
         y4AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y4Axis->currentText()!=QObject::tr("Nombre de lignes"));
         if (columns.indexOf(y4Axis->currentText())>-1)
             setYAxisCalc(y4AxisCalc,dataTypes[columns.indexOf(y4Axis->currentText())]);
@@ -477,20 +477,20 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
         else
             y4Color->setStyleSheet("background-color: " + seriesColors[0].name() + ";width: 16px;");
         y4RightAxis->setEnabled(y4AxisCalc->isEnabled());
-        bComboSetting = false;
+        bComboSetting=false;
     });
 
     // QObject::connect(y1AxisType, &QComboBox::currentIndexChanged, [&]() {
     //     if (bComboSetting) return;
-    //     bComboSetting = true;
+    //     bComboSetting=true;
     //     setYAxisType(y2AxisType,y1AxisType->currentIndex());
     //     setYAxisType(y3AxisType,y1AxisType->currentIndex());
     //     setYAxisType(y3AxisType,y1AxisType->currentIndex());
-    //     bComboSetting = false;
+    //     bComboSetting=false;
     // });
 
     QObject::connect(y1Color, &QPushButton::clicked, [&]() {
-        seriesColors[1] = QColorDialog::getColor(seriesColors[1], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
+        seriesColors[1]=QColorDialog::getColor(seriesColors[1], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
                                                  {QColorDialog::ShowAlphaChannel,QColorDialog::DontUseNativeDialog});
         if (seriesColors[1].isValid())
             y1Color->setStyleSheet("background-color: " + seriesColors[1].name() + ";border: none;width: 21px;");
@@ -498,7 +498,7 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
             y1Color->setStyleSheet("background-color: " + seriesColors[0].name() + ";width: 16px;");
     });
     QObject::connect(y2Color, &QPushButton::clicked, [&]() {
-        seriesColors[2] = QColorDialog::getColor(seriesColors[2], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
+        seriesColors[2]=QColorDialog::getColor(seriesColors[2], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
                                                  {QColorDialog::ShowAlphaChannel,QColorDialog::DontUseNativeDialog});
         if (seriesColors[2].isValid())
             y2Color->setStyleSheet("background-color: " + seriesColors[2].name() + ";border: none;width: 21px;");
@@ -506,7 +506,7 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
             y2Color->setStyleSheet("background-color: " + seriesColors[0].name() + ";width: 16px;");
     });
     QObject::connect(y3Color, &QPushButton::clicked, [&]() {
-        seriesColors[3] = QColorDialog::getColor(seriesColors[3], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
+        seriesColors[3]=QColorDialog::getColor(seriesColors[3], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
                                                  {QColorDialog::ShowAlphaChannel,QColorDialog::DontUseNativeDialog});
         if (seriesColors[3].isValid())
             y3Color->setStyleSheet("background-color: " + seriesColors[3].name() + ";border: none;width: 21px;");
@@ -514,7 +514,7 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
             y3Color->setStyleSheet("background-color: " + seriesColors[0].name() + ";width: 16px;");
     });
     QObject::connect(y4Color, &QPushButton::clicked, [&]() {
-        seriesColors[4] = QColorDialog::getColor(seriesColors[4], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
+        seriesColors[4]=QColorDialog::getColor(seriesColors[4], QApplication::activeWindow(), QObject::tr("Couleur de la série"),
                                                  {QColorDialog::ShowAlphaChannel,QColorDialog::DontUseNativeDialog});
         if (seriesColors[4].isValid())
             y4Color->setStyleSheet("background-color: " + seriesColors[4].name() + ";border: none;width: 21px;");
@@ -523,9 +523,9 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
     });
 
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
-    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -701,7 +701,7 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
 }
 
 void setXAxisGroup(QComboBox *cb, QString dataType) {
-    QString text = cb->currentText();
+    QString text=cb->currentText();
     cb->clear();
     cb->addItem(QObject::tr("Toutes les lignes")); //xAxisGroup
     cb->addItem(QObject::tr("Grouper si identique"));
@@ -740,7 +740,7 @@ void setXAxisGroup(QComboBox *cb, QString dataType) {
 };
 
 void setYAxis(QComboBox *cb, bool grouping, QStringList columns, QStringList dataTypes, int xIndex, bool nullValue) {
-    QString text = cb->currentText();
+    QString text=cb->currentText();
     cb->clear();
     if (!grouping) { //All lines, only numerical fields
         for (int i=0;i<columns.count();i++) {
@@ -760,7 +760,7 @@ void setYAxis(QComboBox *cb, bool grouping, QStringList columns, QStringList dat
 }
 
 void setYAxisCalc(QComboBox *cb, QString dataType) {
-    QString text = cb->currentText();
+    QString text=cb->currentText();
     cb->clear();
     cb->addItem(QObject::tr("Nb valeurs non vides")); //calcSeries
     cb->addItem(QObject::tr("Nb valeurs distinctes"));
@@ -792,16 +792,16 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout = new QHBoxLayout();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
 
-    QLabel *messageLabel = new QLabel(message);
+    QLabel *messageLabel=new QLabel(message);
     messageLabel->setWordWrap(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     headerLayout->addWidget(messageLabel);
     layout->addLayout(headerLayout);
 
-    QPlainTextEdit *SQLEdit = new QPlainTextEdit(&dialog);
+    QPlainTextEdit *SQLEdit=new QPlainTextEdit(&dialog);
     new SqlHighlighter(SQLEdit->document());
     QFont monospaceFont;
     monospaceFont.setStyleHint(QFont::Monospace);
@@ -811,13 +811,13 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     QSettings settings;//("greli.net", "Potaléger");
     SQLEdit->setPlainText(settings.value("SQL").toString());
     layout->addWidget(SQLEdit);
-    QSize screenSize = QGuiApplication::primaryScreen()->size();
-    int maxHeight = screenSize.height()-200;
+    QSize screenSize=QGuiApplication::primaryScreen()->size();
+    int maxHeight=screenSize.height()-200;
     SQLEdit->setMaximumHeight(maxHeight);
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
-    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -826,7 +826,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
 
-    bool result = false;
+    bool result=false;
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
         PotaQuery pQuery(db);        
         QStringList values;
@@ -835,7 +835,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
             values=SQLEdit->toPlainText().split(";\n");
             if (pQuery.exec(values[0])) {
                 //qDebug() << values[0];
-                result = true;
+                result=true;
                 dialog.accept();
             } else {
                 messageLabel->setText(StrElipsis(pQuery.lastError().text(),200));
@@ -901,7 +901,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
         }
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
-        result = false;
+        result=false;
         dialog.reject();
     });
     QObject::connect(SQLEdit, &QPlainTextEdit::cursorPositionChanged, [&]() {
@@ -915,16 +915,16 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     SQLEdit->setContextMenuPolicy(Qt::CustomContextMenu);
     QObject::connect(SQLEdit, &QPlainTextEdit::customContextMenuRequested, SQLEdit, [SQLEdit, &dialog]() {
         QMenu menu;
-        QAction* openAction = menu.addAction(QObject::tr("Ouvrir un fichier SQL"));
-        QAction* saveAction = menu.addAction(QObject::tr("Enregistrer dans un fichier SQL"));
+        QAction* openAction=menu.addAction(QObject::tr("Ouvrir un fichier SQL"));
+        QAction* saveAction=menu.addAction(QObject::tr("Enregistrer dans un fichier SQL"));
         menu.addSeparator();
         // Ajoute le menu par défaut de l'éditeur
         menu.addActions(SQLEdit->createStandardContextMenu()->actions());
         QSettings settings;//("greli.net", "Potaléger");
 
-        QAction* chosen = menu.exec(QCursor::pos());
-        if (chosen == openAction) {
-            QString fileName = QFileDialog::getOpenFileName(SQLEdit, QObject::tr("Ouvrir un fichier SQL"),settings.value("SQLdir").toString(),"*.sql");
+        QAction* chosen=menu.exec(QCursor::pos());
+        if (chosen==openAction) {
+            QString fileName=QFileDialog::getOpenFileName(SQLEdit, QObject::tr("Ouvrir un fichier SQL"),settings.value("SQLdir").toString(),"*.sql");
             if (!fileName.isEmpty()) {
                 QFile file(fileName);
                 if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -937,8 +937,8 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
                     QMessageBox::warning(&dialog, QObject::tr("Erreur"), QObject::tr("Impossible d'ouvrir le fichier"));
                 }
             }
-        } else if (chosen == saveAction) {
-            QString fileName = QFileDialog::getSaveFileName( SQLEdit, QObject::tr("Enregistrer dans un fichier SQL"),settings.value("SQLdir").toString(),"*.sql");
+        } else if (chosen==saveAction) {
+            QString fileName=QFileDialog::getSaveFileName( SQLEdit, QObject::tr("Enregistrer dans un fichier SQL"),settings.value("SQLdir").toString(),"*.sql");
             if (!fileName.isEmpty()) {
                 QFile file(fileName);
                 if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -955,7 +955,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     });
 
     settings.beginGroup(titre);
-    const auto geometry = settings.value("geometry").toByteArray();
+    const auto geometry=settings.value("geometry").toByteArray();
     if (geometry.isEmpty())
         dialog.setGeometry(50, 50, 600, 400);
     else
@@ -981,30 +981,30 @@ bool OkCancelDialog(const QString &titre, const QString &message, QStyle::Standa
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout = new QHBoxLayout();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
 
     if (iconType!=QStyle::SP_CustomBase) {
-        QLabel *iconLabel = new QLabel();
+        QLabel *iconLabel=new QLabel();
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
-            icon = QIcon(":/images/potaleger.svg");
+            icon=QIcon(":/images/potaleger.svg");
         else
-            icon = QApplication::style()->standardIcon(iconType);
+            icon=QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
         iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
-    QLabel *messageLabel = new QLabel(message);
+    QLabel *messageLabel=new QLabel(message);
     messageLabel->setWordWrap(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     headerLayout->addWidget(messageLabel);
     layout->addLayout(headerLayout);
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
-    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -1013,13 +1013,13 @@ bool OkCancelDialog(const QString &titre, const QString &message, QStyle::Standa
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
 
-    int result = false;
+    int result=false;
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
-        result = true;
+        result=true;
         dialog.accept();
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
-        result = false;
+        result=false;
         dialog.reject();
     });
 
@@ -1037,34 +1037,34 @@ int RadiobuttonDialog(const QString &titre, const QString &message, const QStrin
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout = new QHBoxLayout();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
 
     if (iconType!=QStyle::SP_CustomBase) {
-        QLabel *iconLabel = new QLabel();
+        QLabel *iconLabel=new QLabel();
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
-            icon = QIcon(":/images/potaleger.svg");
+            icon=QIcon(":/images/potaleger.svg");
         else
-            icon = QApplication::style()->standardIcon(iconType);
+            icon=QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
         iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
-    QLabel *messageLabel = new QLabel(message);
+    QLabel *messageLabel=new QLabel(message);
     messageLabel->setWordWrap(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     headerLayout->addWidget(messageLabel);
     layout->addLayout(headerLayout);
 
-    QButtonGroup *buttonGroup = new QButtonGroup(&dialog);
+    QButtonGroup *buttonGroup=new QButtonGroup(&dialog);
     buttonGroup->setExclusive(true);
 
     QList<QRadioButton *> radioButtons;
-    for (int i = 0; i < options.size(); ++i) {
-        QRadioButton *radioButton = new QRadioButton(options[i]);
+    for (int i=0; i < options.size(); ++i) {
+        QRadioButton *radioButton=new QRadioButton(options[i]);
         buttonGroup->addButton(radioButton, i);
         layout->addWidget(radioButton);
         radioButtons.append(radioButton);
@@ -1072,9 +1072,9 @@ int RadiobuttonDialog(const QString &titre, const QString &message, const QStrin
             radioButton->setChecked(true);
     }
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton(QObject::tr("OK"));
-    QPushButton *cancelButton = new QPushButton(QObject::tr("Annuler"));
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+    QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
@@ -1083,13 +1083,13 @@ int RadiobuttonDialog(const QString &titre, const QString &message, const QStrin
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
 
-    int result = -1; // Valeur par défaut si annulé
+    int result=-1; // Valeur par défaut si annulé
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
-        result = buttonGroup->checkedId(); // Récupère l'ID du bouton sélectionné
+        result=buttonGroup->checkedId(); // Récupère l'ID du bouton sélectionné
         dialog.accept();
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
-        result = -1;
+        result=-1;
         dialog.reject();
     });
 
@@ -1108,30 +1108,30 @@ bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardP
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout = new QHBoxLayout();
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
 
     if (iconType!=QStyle::SP_CustomBase) {
-        QLabel *iconLabel = new QLabel();
+        QLabel *iconLabel=new QLabel();
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
-            icon = QIcon(":/images/potaleger.svg");
+            icon=QIcon(":/images/potaleger.svg");
         else
-            icon = QApplication::style()->standardIcon(iconType);
+            icon=QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap(64, 64));
         iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
-    QLabel *messageLabel = new QLabel(message);
+    QLabel *messageLabel=new QLabel(message);
     messageLabel->setWordWrap(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     headerLayout->addWidget(messageLabel);
     layout->addLayout(headerLayout);
 
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *yesButton = new QPushButton(QObject::tr("Oui"));
-    QPushButton *noButton = new QPushButton(QObject::tr("Non"));
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *yesButton=new QPushButton(QObject::tr("Oui"));
+    QPushButton *noButton=new QPushButton(QObject::tr("Non"));
     yesButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
     noButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogNoButton));
 
@@ -1140,13 +1140,13 @@ bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardP
     buttonLayout->addWidget(noButton);
     layout->addLayout(buttonLayout);
 
-    int result = false;
+    int result=false;
     QObject::connect(yesButton, &QPushButton::clicked, [&]() {
-        result = true;
+        result=true;
         dialog.accept();
     });
     QObject::connect(noButton, &QPushButton::clicked, [&]() {
-        result = false;
+        result=false;
         dialog.reject();
     });
 

@@ -526,9 +526,9 @@
     <property name="title">
      <string>Planification</string>
     </property>
-    <addaction name="mCulturesParplante"/>
-    <addaction name="mCulturesParIlots"/>
-    <addaction name="mCulturesParPlanche"/>
+    <addaction name="mPlanifEspeces"/>
+    <addaction name="mPlanifIlots"/>
+    <addaction name="mPlanifPlanches"/>
     <addaction name="mRecoltesParSemaine"/>
     <addaction name="mCreerCultures"/>
     <addaction name="mSemences"/>
@@ -711,7 +711,7 @@
     <string>Ilots</string>
    </property>
   </action>
-  <action name="mCulturesParIlots">
+  <action name="mPlanifIlots">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -719,7 +719,7 @@
     <string>Cultures prévues par ilots</string>
    </property>
   </action>
-  <action name="mCulturesParplante">
+  <action name="mPlanifEspeces">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -727,7 +727,7 @@
     <string>Cultures prévues par espèce</string>
    </property>
   </action>
-  <action name="mCulturesParPlanche">
+  <action name="mPlanifPlanches">
    <property name="enabled">
     <bool>false</bool>
    </property>

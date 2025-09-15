@@ -117,26 +117,26 @@ namespace mu
 		int GetNumResults() const;
 
 		void SetExpr(const string_type& a_sExpr);
-		void SetVarFactory(facfun_type a_pFactory, void* pUserData = nullptr);
+		void SetVarFactory(facfun_type a_pFactory, void* pUserData=nullptr);
 
 		void SetDecSep(char_type cDecSep);
-		void SetThousandsSep(char_type cThousandsSep = 0);
+		void SetThousandsSep(char_type cThousandsSep=0);
 		void ResetLocale();
 
-		void EnableOptimizer(bool a_bIsOn = true);
-		void EnableBuiltInOprt(bool a_bIsOn = true);
+		void EnableOptimizer(bool a_bIsOn=true);
+		void EnableBuiltInOprt(bool a_bIsOn=true);
 
 		bool HasBuiltInOprt() const;
 		void AddValIdent(identfun_type a_pCallback);
 
-		/** \fn void mu::ParserBase::DefineFun(const string_type &a_strName, fun_type0 a_pFun, bool a_bAllowOpt = true)
+		/** \fn void mu::ParserBase::DefineFun(const string_type &a_strName, fun_type0 a_pFun, bool a_bAllowOpt=true)
 			\brief Define a parser function without arguments.
 			\param a_strName Name of the function
 			\param a_pFun Pointer to the callback function
 			\param a_bAllowOpt A flag indicating this function may be optimized
 		*/
 		template<typename T>
-		void DefineFun(const string_type& a_strName, T a_pFun, bool a_bAllowOpt = true)
+		void DefineFun(const string_type& a_strName, T a_pFun, bool a_bAllowOpt=true)
 		{
 			AddCallback(a_strName, ParserCallback(a_pFun, a_bAllowOpt), m_FunDef, ValidNameChars());
 		}
@@ -149,17 +149,17 @@ namespace mu
 			\param a_bAllowOpt A flag indicating this function may be optimized
 		*/
 		template<typename T>
-		void DefineFunUserData(const string_type& a_strName, T a_pFun, void* a_pUserData, bool a_bAllowOpt = true)
+		void DefineFunUserData(const string_type& a_strName, T a_pFun, void* a_pUserData, bool a_bAllowOpt=true)
 		{
 			AddCallback(a_strName, ParserCallback(a_pFun, a_pUserData, a_bAllowOpt), m_FunDef, ValidNameChars());
 		}
 
-		void DefineOprt(const string_type& a_strName, fun_type2 a_pFun, unsigned a_iPri = 0, EOprtAssociativity a_eAssociativity = oaLEFT, bool a_bAllowOpt = false);
+		void DefineOprt(const string_type& a_strName, fun_type2 a_pFun, unsigned a_iPri=0, EOprtAssociativity a_eAssociativity=oaLEFT, bool a_bAllowOpt=false);
 		void DefineConst(const string_type& a_sName, value_type a_fVal);
 		void DefineStrConst(const string_type& a_sName, const string_type& a_strVal);
 		void DefineVar(const string_type& a_sName, value_type* a_fVar);
-		void DefinePostfixOprt(const string_type& a_strFun, fun_type1 a_pOprt, bool a_bAllowOpt = true);
-		void DefineInfixOprt(const string_type& a_strName, fun_type1 a_pOprt, int a_iPrec = prINFIX, bool a_bAllowOpt = true);
+		void DefinePostfixOprt(const string_type& a_strFun, fun_type1 a_pOprt, bool a_bAllowOpt=true);
+		void DefineInfixOprt(const string_type& a_strName, fun_type1 a_pOprt, int a_iPrec=prINFIX, bool a_bAllowOpt=true);
 
 		// Clear user defined variables, constants or functions
 		void ClearVar();
@@ -175,7 +175,7 @@ namespace mu
 		const valmap_type& GetConst() const;
 		const string_type& GetExpr() const;
 		const funmap_type& GetFunDef() const;
-		string_type GetVersion(EParserVersionInfo eInfo = pviFULL) const;
+		string_type GetVersion(EParserVersionInfo eInfo=pviFULL) const;
 		const ParserByteCode& GetByteCode() const;
 
 		const char_type** GetOprtDef() const;
@@ -195,12 +195,12 @@ namespace mu
 	protected:
 
 		void Init();
-		void Error(EErrorCodes a_iErrc, int a_iPos = static_cast<int>(mu::string_type::npos), const string_type& a_strTok = string_type()) const;
+		void Error(EErrorCodes a_iErrc, int a_iPos=static_cast<int>(mu::string_type::npos), const string_type& a_strTok=string_type()) const;
 
-		virtual void InitCharSets() = 0;
-		virtual void InitFun() = 0;
-		virtual void InitConst() = 0;
-		virtual void InitOprt() = 0;
+		virtual void InitCharSets()=0;
+		virtual void InitFun()=0;
+		virtual void InitConst()=0;
+		virtual void InitOprt()=0;
 
 		virtual void OnDetectVar(string_type* pExpr, int& nStart, int& nEnd);
 
@@ -215,7 +215,7 @@ namespace mu
 		{
 		public:
 
-			explicit change_dec_sep(char_type cDecSep, char_type cThousandsSep = 0, int nGroup = 3)
+			explicit change_dec_sep(char_type cDecSep, char_type cThousandsSep=0, int nGroup=3)
 				:std::numpunct<TChar>()
 				,m_nGroup(nGroup)
 				,m_cDecPoint(cDecSep)

@@ -1,4 +1,4 @@
-QString sDDL20250120 = QStringLiteral(R"#(
+QString sDDL20250120=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 ALTER TABLE Rotations_détails DROP COLUMN Nb_planches;
@@ -6,7 +6,7 @@ ALTER TABLE Rotations_détails DROP COLUMN Nb_planches;
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250227 = QStringLiteral(R"#(
+QString sDDL20250227=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +27,7 @@ CREATE TABLE Destinations (Destination TEXT PRIMARY KEY,
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250305 = QStringLiteral(R"#(
+QString sDDL20250305=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 ALTER TABLE Cultures ADD COLUMN Récolte_com BOOL;
@@ -39,7 +39,7 @@ WHERE (Récolte_faite NOTNULL AND Début_récolte NOTNULL) OR
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250325 = QStringLiteral(R"#(
+QString sDDL20250325=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 UPDATE Cultures SET Récolte_faite='x '||Récolte_faite
@@ -53,16 +53,16 @@ WHERE Récolte_com NOTNULL AND Récolte_faite ISNULL;
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250514 = QStringLiteral(R"#(
+QString sDDL20250514=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 ALTER TABLE Espèces ADD COLUMN N REAL;
 ALTER TABLE Espèces ADD COLUMN P REAL;
 ALTER TABLE Espèces ADD COLUMN K REAL;
 
-CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY COLLATE POTACOLLATION,
-                           Type TEXT COLLATE POTACOLLATION,
-                           Fonction TEXT COLLATE POTACOLLATION,
+CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY,
+                           Type TEXT,
+                           Fonction TEXT,
                            pH REAL,
                            N REAL,
                            N_coef REAL,
@@ -115,7 +115,7 @@ INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Urine stockée','
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250615 = QStringLiteral(R"#(
+QString sDDL20250615=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 -- ALTER TABLE Espèces ADD COLUMN Vivace BOOL;
@@ -133,7 +133,7 @@ DELETE FROM Espèces WHERE (Espèce='Inconnue')AND((SELECT count(*) FROM Variét
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250622 = QStringLiteral(R"#(
+QString sDDL20250622=QStringLiteral(R"#(
 BEGIN TRANSACTION;
 
 INSERT INTO Espèces (Espèce,Notes)
@@ -154,8 +154,10 @@ DELETE FROM Espèces WHERE (Espèce='Inconnue')AND
 COMMIT TRANSACTION;
 )#");
 
-QString sDDL20250728 = QStringLiteral(R"#(
+QString sDDL20250728=QStringLiteral(R"#(
 BEGIN TRANSACTION;
+
+DROP TABLE IF EXISTS sqlean_define;
 
 DROP TRIGGER IF EXISTS ITP_UPDATE_FinsPériodes;
 DROP TRIGGER IF EXISTS Variétés_UPDATE_FinsPériodes;

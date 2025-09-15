@@ -70,12 +70,12 @@ namespace mu
 		try
 		{
 			std::size_t charsProcessed;
-			value_type fVal = static_cast<value_type>(std::stod(string_type(a_szExpr), &charsProcessed));
-			if (charsProcessed == 0)
+			value_type fVal=static_cast<value_type>(std::stod(string_type(a_szExpr), &charsProcessed));
+			if (charsProcessed==0)
 				return 0;
 
 			*a_iPos += (int)charsProcessed;
-			*a_fVal = fVal;
+			*a_fVal=fVal;
 			return 1;
 		}
 		catch (...)
@@ -88,13 +88,13 @@ namespace mu
 		stringstream_type stream(a_szExpr);
 		stream.imbue(Parser::s_locale);
 		stream >> fVal;
-		stringstream_type::pos_type iEnd = stream.tellg(); // Position after reading
+		stringstream_type::pos_type iEnd=stream.tellg(); // Position after reading
 
-		if (iEnd == (stringstream_type::pos_type) - 1)
+		if (iEnd==(stringstream_type::pos_type) - 1)
 			return 0;
 
 		*a_iPos += (int)iEnd;
-		*a_fVal = fVal;
+		*a_fVal=fVal;
 		return 1;
 #endif		
 	}
@@ -214,16 +214,16 @@ namespace mu
 
 
 		string sVar(pExpr->begin()+nStart, pExpr->begin()+nEnd);
-		string sRepl = std::string("_") + sVar + "_";
+		string sRepl=std::string("_") + sVar + "_";
 
-		int nOrigVarEnd = nEnd;
+		int nOrigVarEnd=nEnd;
 		cout << "variable detected!\n";
 		cout << "  Expr: " << *pExpr << "\n";
 		cout << "  Start: " << nStart << "\n";
 		cout << "  End: " << nEnd << "\n";
 		cout << "  Var: \"" << sVar << "\"\n";
 		cout << "  Repl: \"" << sRepl << "\"\n";
-		nEnd = nStart + sRepl.length();
+		nEnd=nStart + sRepl.length();
 		cout << "  End: " << nEnd << "\n";
 		pExpr->replace(pExpr->begin()+nStart, pExpr->begin()+nOrigVarEnd, sRepl);
 		cout << "  New expr: " << *pExpr << "\n";
@@ -244,21 +244,21 @@ namespace mu
 	{
 		value_type fRes(0);
 		value_type fBuf(*a_Var);
-		value_type f[4] = { 0,0,0,0 };
+		value_type f[4]={ 0,0,0,0 };
 		value_type fEpsilon(a_fEpsilon);
 
 		// Backwards compatible calculation of epsilon inc case the user doesn't provide
 		// his own epsilon
-		if (fEpsilon == 0)
-			fEpsilon = (a_fPos == 0) ? (value_type)1e-10 : (value_type)1e-7 * a_fPos;
+		if (fEpsilon==0)
+			fEpsilon=(a_fPos==0) ? (value_type)1e-10 : (value_type)1e-7 * a_fPos;
 
-		*a_Var = a_fPos + 2 * fEpsilon;  f[0] = Eval();
-		*a_Var = a_fPos + 1 * fEpsilon;  f[1] = Eval();
-		*a_Var = a_fPos - 1 * fEpsilon;  f[2] = Eval();
-		*a_Var = a_fPos - 2 * fEpsilon;  f[3] = Eval();
-		*a_Var = fBuf; // restore variable
+		*a_Var=a_fPos + 2 * fEpsilon;  f[0]=Eval();
+		*a_Var=a_fPos + 1 * fEpsilon;  f[1]=Eval();
+		*a_Var=a_fPos - 1 * fEpsilon;  f[2]=Eval();
+		*a_Var=a_fPos - 2 * fEpsilon;  f[3]=Eval();
+		*a_Var=fBuf; // restore variable
 
-		fRes = (-f[0] + 8 * f[1] - 8 * f[2] + f[3]) / (12 * fEpsilon);
+		fRes=(-f[0] + 8 * f[1] - 8 * f[2] + f[3]) / (12 * fEpsilon);
 		return fRes;
 	}
 } // namespace mu

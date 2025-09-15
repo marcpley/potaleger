@@ -20,6 +20,7 @@
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
 #include <QImage>
+#include "PotaUtils.h"
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
@@ -27,37 +28,39 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
     ui->mUpdateSchema->setEnabled(b);
     ui->mParam->setEnabled(b);
     ui->mNotes->setEnabled(b);
-    for (int i = 0; i < ui->mBaseData->actions().count(); i++)
+    for (int i=0; i < ui->mBaseData->actions().count(); i++)
         ui->mBaseData->actions().at(i)->setEnabled(b);
 
-    for (int i = 0; i < ui->mAssolement->actions().count(); i++)
+    for (int i=0; i < ui->mAssolement->actions().count(); i++)
         ui->mAssolement->actions().at(i)->setEnabled(b);
 
-    for (int i = 0; i < ui->mPlanif->actions().count(); i++)
+    for (int i=0; i < ui->mPlanif->actions().count(); i++)
         ui->mPlanif->actions().at(i)->setEnabled(b);
 
-    for (int i = 0; i < ui->mCultures->actions().count(); i++)
+    for (int i=0; i < ui->mCultures->actions().count(); i++)
         ui->mCultures->actions().at(i)->setEnabled(b);
 
     ui->mASemer->setEnabled(b);
-    for (int i = 0; i < ui->mASemer->actions().count(); i++)
+    for (int i=0; i < ui->mASemer->actions().count(); i++)
         ui->mASemer->actions().at(i)->setEnabled(b);
 
-    for (int i = 0; i < ui->mFertilisation->actions().count(); i++)
+    for (int i=0; i < ui->mFertilisation->actions().count(); i++)
         ui->mFertilisation->actions().at(i)->setEnabled(b);
 
-    for (int i = 0; i < ui->mStock->actions().count(); i++)
+    for (int i=0; i < ui->mStock->actions().count(); i++)
         ui->mStock->actions().at(i)->setEnabled(b);
 
-    for (int i = 0; i < ui->mAnalyses->actions().count(); i++)
+    for (int i=0; i < ui->mAnalyses->actions().count(); i++)
         ui->mAnalyses->actions().at(i)->setEnabled(b);
 }
 
-bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool SetFkOn)
+bool MainWindow::dbOpen(QString sFichier, bool bNew, bool SetFkOn)
 {
-    qInfo() << "SQLite version:" << sqlite3_libversion();
+    //qInfo() << "SQLite version:" << sqlite3_libversion();
     qInfo() << "DB file:" << sFichier;
     dbClose();
+
+    logMessage("sql.log","OPEN : "+sFichier+iif(bNew," (NEW)","").toString()+iif(SetFkOn," (Set Fk ON)"," (Set Fk OFF)").toString());
 
     if (!bNew) {
         QFile fBDD(sFichier);
@@ -68,7 +71,7 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
         }
     }
 
-    //QSqlDatabase db = QSqlDatabase::database();
+    //QSqlDatabase db=QSqlDatabase::database();
     db.setDatabaseName(sFichier);
 
     // qDebug() << "Transactions: " << db.driver()->hasFeature(QSqlDriver::Transactions);
@@ -95,15 +98,15 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
     }
 
     PotaQuery query(db);
-    if (!query.exec("PRAGMA journal_mode = WAL;")) {
+    if (!query.exec("PRAGMA journal_mode=WAL;")) {
         dbClose();
-        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite journal_mode = WAL"), "Err");
+        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite journal_mode=WAL"), "Err");
         return false;
     }
 
-    if (!query.exec("PRAGMA locking_mode = NORMAL;")) {
+    if (!query.exec("PRAGMA locking_mode=NORMAL;")) {
         dbClose();
-        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite locking_mode = NORMAL"), "Err");
+        SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLite locking_mode=NORMAL"), "Err");
         return false;
     }
 
@@ -114,55 +117,20 @@ bool MainWindow::dbOpen(QString sFichier, bool bNew, bool bResetSQLean, bool Set
     //     return false;
     // }
 
-    if (SetFkOn and !query.exec("PRAGMA foreign_keys = ON")) {
+    if (SetFkOn and !query.exec("PRAGMA foreign_keys=ON")) {
         dbClose();
         SetColoredText(ui->lDBErr, "Foreign keys : Err", "Err");
         return false;
     }
-
-    if (true) {
-        if (bResetSQLean and !query.exec("DELETE FROM sqlean_define")) {//"SELECT define_free('<function_name>')" don't work.
-            dbClose();
-            SetColoredText(ui->lDBErr, tr("Impossible d'effacer les fonctions %1.").arg("SQLean"), "Err");
-            return false;
-        }
-        if (!initSQLean(&db)) {
-            dbClose();
-            SetColoredText(ui->lDBErr, tr("Impossible d'initialiser %1.").arg("SQLean"), "Err");
-            return false;
-        }
-
-        // QString s=testCustomFunctions();
-        // if (!s.isEmpty()){
-        //     dbClose();
-        //     SetColoredText(ui->lDBErr, tr("La fonction %1 ne fonctionne pas.").arg(s), "Err");
-        //     return false;
-        // }
-    }
-
-    if (!registerPotaCollation(db)) {
-        dbClose();
-        SetColoredText(ui->lDBErr, "Collation : Err", "Err");
-        return false;
-    }
-
-    if (!registerRemoveAccentsFunction(db)) {
-        dbClose();
-        SetColoredText(ui->lDBErr, "RemoveAccents : Err", "Err");
-        return false;
-    }
-
 
     return true;
 }
 
 void MainWindow::dbClose()
 {
-    //QSqlDatabase db = QSqlDatabase::database();
+    //QSqlDatabase db=QSqlDatabase::database();
     if (db.isOpen()){
-        PotaQuery q1(db);
-        q1.exec("SELECT define_free();");
-
+        logMessage("sql.log","CLOSE DB");
         db.close();
     }
 }
@@ -172,21 +140,23 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     //userDataEditing=false;
     ReadOnlyDb=true;
 
-    if (!dbOpen(sFichier,(sNew!=""),false,true))
+    if (!dbOpen(sFichier,(sNew!=""),false))
         return false;
 
     PotaQuery pQuery(db);
-    pQuery.lErr = ui->lDBErr;
+    pQuery.lErr=ui->lDBErr;
     ui->lDBErr->clear();
     ui->lDB->setText(sFichier);
 
     bool result=true;
 
-    QString sVerBDD = "";
+    QString sVerBDD="";
     if (sNew==""){//Vérifier une BDD existante.
         if (pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) {//Si la vue Info n'existe pas ou pas correcte, on tente pas de mettre cette BDD à jour.
             pQuery.next();
-            sVerBDD = pQuery.value(0).toString();
+            sVerBDD=pQuery.value(0).toString();
+        } else if (pQuery.Selec0ShowErr("SELECT count() FROM sqlite_master WHERE (name='Cultures')OR(name='ITP')")==2) {//La vue Info n'existe pas ou pas correcte, mais cela semble une BDD Potaléger.
+            sVerBDD="?";
         } else {
             MessageDlg("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
                           sFichier,QStyle::SP_MessageBoxCritical,600);
@@ -211,9 +181,9 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             result=false;
         }
 
-        if (result and (sVerBDD > DbVersion)) {
-            MessageDlg("Potaléger "+ui->lVer->text(),tr("La version de cette BDD est trop %1, vous ne pouvez pas la modifier et\n"
-                             "certains onglets peuvent ne pas fonctionner.").arg("récente")+"\n\n"+
+        if (result and (sVerBDD!="?") and (sVerBDD > DbVersion)) {
+            MessageDlg("Potaléger "+ui->lVer->text(),tr("La version de cette BDD est trop récente, vous ne pouvez pas la modifier et\n"
+                             "certains onglets peuvent ne pas fonctionner.")+"\n\n"+
                           sFichier+"\n"+
                           tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                           tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
@@ -223,12 +193,19 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             // return false;
         } else if (result and (bUpdate or (sVerBDD != DbVersion))) {
             if (bUpdate or
-                YesNoDialog("Potaléger "+ui->lVer->text(),tr("Base de données trop ancienne.")+"\n\n"+
-                               sFichier+"\n"+
-                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
-                               tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
-                               tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion),
-                               QStyle::SP_MessageBoxQuestion,600)) {   //Mettre à jour la BDD.
+                (sVerBDD!="?" and YesNoDialog("Potaléger "+ui->lVer->text(),tr("Base de données trop ancienne.")+"\n\n"+
+                                              sFichier+"\n"+
+                                              tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
+                                              tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
+                                              tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion),
+                                              QStyle::SP_MessageBoxQuestion,600))or
+                (sVerBDD=="?" and YesNoDialog("Potaléger "+ui->lVer->text(),tr("Base de données trop ancienne.")+"\n\n"+
+                                              sFichier+"\n"+
+                                              tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
+                                              tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
+                                              tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion)+"\n\n"+
+                                              tr("ATTENTION, version de BDD inconnue, résultat de mise à jour incertain."),
+                                              QStyle::SP_MessageBoxWarning,600))) {   //Mettre à jour la BDD.
                 //Delete previous backup file.
                 QFile FileInfo;
                 QString FileName=ui->lDB->text(); //Pourquoi pas sFichier ?
@@ -255,7 +232,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 
                     //Update schema.
                     if (UpdateDBShema(sVerBDD)) {
-                        sVerBDD = DbVersion;
+                        sVerBDD=DbVersion;
                         ReadOnlyDb=false;
 
                         //Delete backup file.
@@ -346,7 +323,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             ui->graphicsView->setImage(pixmap);
         } else {
             // ui->graphicsView->setVisible(false);
-            QGraphicsScene *scene = new QGraphicsScene(this);
+            QGraphicsScene *scene=new QGraphicsScene(this);
             QPixmap pixmap(700,40);
             pixmap.fill(Qt::transparent);
             QColor cPen=QColor();
@@ -409,7 +386,7 @@ void MainWindow::RestaureParams()
 {
     QSettings settings;//("greli.net", "Potaléger");
     settings.beginGroup("MainWindow");
-    const auto geometry = settings.value("geometry").toByteArray();
+    const auto geometry=settings.value("geometry").toByteArray();
     if (geometry.isEmpty())
         setGeometry(50, 50, 800, 600);
     else
@@ -428,7 +405,7 @@ void MainWindow::RestaureParams()
 
     if (settings.value("database_path").toString().isEmpty() or
         !PotaDbOpen(settings.value("database_path").toString(),"",false)) {
-        int choice = RadiobuttonDialog("Potaléger "+ui->lVer->text(),
+        int choice=RadiobuttonDialog("Potaléger "+ui->lVer->text(),
                                         tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
                                        {tr("Sélectionner une base de données existante"),
                                         tr("Créer une BDD avec les données de base"),
@@ -505,21 +482,21 @@ void MainWindow::SetUi(){
 
 
     if (false) {
-        QPalette palette = QApplication::palette();
+        QPalette palette=QApplication::palette();
 
-        QList<QPalette::ColorRole> roles = {
+        QList<QPalette::ColorRole> roles={
             QPalette::Window, QPalette::WindowText, QPalette::Base, QPalette::AlternateBase,
             QPalette::ToolTipBase, QPalette::ToolTipText, QPalette::Text, QPalette::Button,
             QPalette::ButtonText, QPalette::BrightText, QPalette::Light, QPalette::Midlight,
             QPalette::Dark, QPalette::Mid, QPalette::Shadow, QPalette::Highlight, QPalette::HighlightedText
         };
 
-        QList<QPalette::ColorGroup> groups = {QPalette::Active,QPalette::Inactive,QPalette::Disabled};
+        QList<QPalette::ColorGroup> groups={QPalette::Active,QPalette::Inactive,QPalette::Disabled};
 
         for (auto group : groups) {
             qDebug() << "        // " << group;
             for (auto role : roles) {
-                QColor color = palette.color(group, role);
+                QColor color=palette.color(group, role);
                 qDebug() << "        palette.setColor(" << group << "," << role << ",QColor(" << color.name() << "));";
             }
         }
@@ -546,10 +523,10 @@ void MainWindow::SetMenuIcons() {
     ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
     ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
 
-    ui->mCulturesParIlots->setIcon(QIcon(TablePixmap("Cult_planif_ilots","")));
-    ui->mCulturesParplante->setIcon(QIcon(TablePixmap("Cult_planif_espèces","")));
-    ui->mCulturesParPlanche->setIcon(QIcon(TablePixmap("Cult_planif","")));
-    ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap("Cult_planif_récoltes","")));
+    ui->mPlanifIlots->setIcon(QIcon(TablePixmap("Planif_ilots","")));
+    ui->mPlanifEspeces->setIcon(QIcon(TablePixmap("Planif_espèces","")));
+    ui->mPlanifPlanches->setIcon(QIcon(TablePixmap("Planif_planches","")));
+    ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap("Planif_récoltes","")));
     ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
     ui->mPlants->setIcon(QIcon(TablePixmap("Variétés__cde_plants","")));
 
@@ -590,7 +567,7 @@ void MainWindow::showIfDdOpen() {
 }
 
 void MainWindow::showEvent(QShowEvent *){
-    // QTimer *dbTimer = new QTimer(this);
+    // QTimer *dbTimer=new QTimer(this);
     // connect(dbTimer, &QTimer::timeout, this, &MainWindow::showIfDdOpen);
     // dbTimer->start(1000);
 }
@@ -599,6 +576,8 @@ void MainWindow::closeEvent(QCloseEvent *)
 {
     SauvParams();
     PotaDbClose();
+    logMessage("sql.log","Stop");
+
 }
 
 int main(int argc, char *argv[])
@@ -616,7 +595,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("greli.net");
     QCoreApplication::setApplicationName("Potaléger"+QApplication::applicationDirPath().replace('/', '_').replace('\\', '_'));
 
-    w.SetUi();
+    logMessage("sql.log","Start");
+
+    w.SetUi(); // Restaure params et open db.
 
     w.show();
     return a.exec();
