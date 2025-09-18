@@ -61,6 +61,7 @@ jobs:
             cp ./install/ubuntu2004/qt.conf  ./artifact/bin/
             cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libicu*.so.73         ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Core.so.6       ./artifact/libs/
+            cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Charts.so.6     ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6DBus.so.6       ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Gui.so.6        ./artifact/libs/
             cp /home/runner/work/potaleger/Qt/6.9.2/gcc_64/lib/libQt6Sql.so.6        ./artifact/libs/

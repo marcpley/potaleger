@@ -31,6 +31,7 @@ bool FieldIsMoney(const QString sFieldName);
 QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sPageFilter, const QModelIndex &index, bool countFk=false);
 QString FkSortCol(const QString sTableName,const QString sFieldName);
 QString GeneratedFielnameForDummyFilter(const QString sTableName);
+bool lastRow(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
 QString NoData(const QString sTableName);
 bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);

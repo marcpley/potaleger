@@ -202,6 +202,13 @@ QString GeneratedFielnameForDummyFilter(const QString sTableName) {
         return "";
 }
 
+bool lastRow(const QString sTableName){
+    if (sTableName=="Récoltes__Saisies")
+        return true;
+    else
+        return false;
+}
+
 int NaturalSortCol(const QString sTableName){
     if (sTableName=="Params" or
         sTableName=="Rotations_détails__Tempo" or
@@ -683,7 +690,7 @@ QColor TableColor(QString sTName,QString sFName)
     if (sFName.endsWith("_sol"))
         return cBase;
     else if (sFName.startsWith("Culture") or
-        sFName.endsWith("_MEP") or
+        (sFName.endsWith("_MEP")and sFName!="S_MEP") or
         sFName=="Etats" or
         sFName.startsWith("Nb_cu") or
         sFName=="Min_semis" or sFName=="Max_semis" or
@@ -1080,7 +1087,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "Le paramètre 'Ferti_retard' permet de saisir les fertilisation après le début de récolte (Début_récolte).");
         else if (sFieldName=="Quantité")
             sToolTip=QObject::tr("Quantité apportée sur la planche (kg).");
-        else if (sFieldName=="Répartir")
+        else if (sFieldName=="Planche·s")
             sToolTip=QObject::tr(  "Pour répartir la quantité apporté sur plusieurs cultures de l'espèce sélectionnée,\n"
                                    "saisir le début du nom des planches concernées\n"
                                    "ou saisir '*' pour répartir sur toutes les cultures possibles pour l'espèce sélectionnée.\n"
@@ -1142,7 +1149,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "Exemple: l'ilot AA contient une UdP (1) de 4 planches (A, B, C et D)\n"
                                    "Les planches sont: AA1A, AA1B, AA1C et AA1D\n"
                                    "Fi_planches=AC -> seule les planches AA1A et AA1C seront occupées par les cultures.");
-        else if (sFieldName=="Mise_en_place")
+        else if (sFieldName=="S_MEP")
             sToolTip=QObject::tr(  "Semaine de mise en place de la culture sur la planche.\n"
                                    "* indique un chevauchement avec la culture précédente (pas encore récoltée).\n"
                                    "- indique que la culture précédente est récoltée depuis %1 mois (automne) à %2 mois (printemps).").arg("4").arg("8");
@@ -1163,7 +1170,7 @@ QString ToolTipField(const QString sTableName,const QString sFieldName, const QS
                                    "Le paramètre 'C_récolte_prolongation' permet de saisir les récoltes après que celles-ci aient été faites.");
         else if (sFieldName=="Quantité")
             sToolTip=QObject::tr("Quantité récoltée sur la planche (kg).");
-        else if (sFieldName=="Répartir")
+        else if (sFieldName=="Planche·s")
             sToolTip=QObject::tr(  "Pour répartir la quantité récoltée sur plusieurs cultures de l'espèce sélectionnée,\n"
                                    "saisir le début du nom des planches concernées\n"
                                    "ou saisir '*' pour répartir sur toutes les cultures possibles.\n"

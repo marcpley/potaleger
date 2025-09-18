@@ -32,14 +32,12 @@ iif(substr(:DateMeP,6,2)=''12'',DATE(:DateMeP,''-5 month''),:DateMeP
 
 QString sRF_trop_proches = QStringLiteral(R"#(
 SELECT RF.Famille || ' année ' || format('%i',RF.Année) result
-                                         FROM R_famille RF
-                                        WHERE (RF.Rotation=:Rot)AND --ITP de la rotation
-                                              (RF.Année<>:Ann)AND -- que les ITP des autres années de la rotation
-                                              (RF.Famille=:Fam)AND -- que les ITP de la même famille
-                                              ((:Ann BETWEEN RF.Année-RF.Intervalle+1 AND
-                                                             RF.Année+RF.Intervalle-1)OR -- en conflit lors du 1er cycle
-                                               (:Ann BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND
-                                                             RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
+FROM R_famille RF
+WHERE (RF.Rotation=:Rot)AND --ITP de la rotation
+      (RF.Année<>:Ann)AND -- que les ITP des autres années de la rotation
+      (RF.Famille=:Fam)AND -- que les ITP de la même famille
+      ((:Ann BETWEEN RF.Année-RF.Intervalle+1 AND RF.Année+RF.Intervalle-1)OR -- en conflit lors du 1er cycle
+      (:Ann BETWEEN RF.Année-RF.Intervalle+1+RF.Nb_années AND RF.Année+RF.Intervalle-1+RF.Nb_années)) -- en conflit lors du 2ème cycle
 )#");
 
 QString sR_ITP_CAnt = QStringLiteral(R"#(

@@ -107,7 +107,8 @@ public:
             } else if (headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString().endsWith("_pc")) {
                 return data(index,Qt::EditRole).toString()+"%";
             } else if (headerData(index.column(), Qt::Horizontal, Qt::EditRole).toString().startsWith("S_")) {
-                return data(index,Qt::EditRole).toString()+" ("+QDate(2001,1,1).addDays((data(index,Qt::EditRole).toInt()-1)*7).toString("dd/MM")+")";
+                if (data(index,Qt::EditRole).toInt()>0 and data(index,Qt::EditRole).toInt()<53)
+                    return data(index,Qt::EditRole).toString()+" ("+QDate(2001,1,1).addDays((data(index,Qt::EditRole).toInt()-1)*7).toString("dd/MM")+")";
             } else if (data(index,Qt::EditRole).toString().startsWith(".") and data(index,Qt::EditRole).toString().length()>1) {//Invisible data
                 return QVariant();
             }

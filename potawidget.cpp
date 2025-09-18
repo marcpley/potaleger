@@ -811,6 +811,8 @@ void PotaWidget::PositionRestore() {
     }
     if (rowRestore>-1)
         tv->setCurrentIndex(model->index(rowRestore,iPositionCol));
+    else if (lastRow(model->tableName()))
+        tv->setCurrentIndex(model->index(model->rowCount()-1,1));
 
     lRowSummary->setText(RowSummary(model->tableName(),model->record(tv->currentIndex().row())));
     lSelect->setText("");
@@ -1181,9 +1183,9 @@ void PotaWidget::pbFilterClick(bool checked)
                 else if (cbFilterType->currentText()==tr("ne contient pas"))
                     filter=raField+" NOT LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
                 else if (cbFilterType->currentText()==tr("égal à"))
-                    filter=raField+"='"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
+                    filter=raField+" LIKE '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else if (cbFilterType->currentText()==tr("différent de"))
-                    filter=raField+" != '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
+                    filter=raField+" NOT LIKE '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else if (cbFilterType->currentText()==tr("fini par"))
                     filter=raField+" LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else//commence par

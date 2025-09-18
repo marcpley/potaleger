@@ -225,6 +225,9 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                                       iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
                                       iif(ReadOnlyDb,"Info","Ok").toString());
 
+            if (lastRow(sTableName)) // go to last row
+                w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+
             return true;
         }
         else {
@@ -488,11 +491,15 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.3.0</b> - 15/09/2025<br>"
+                  "<b>Potaléger 1.3.0</b> - 17/09/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Graphique 'Récoltes prévues par semaine'</b> à partir des plans de rotation.")+"<br>"+
                   "- "+tr("<b>Graphiques paramétrables</b> à partir des données de tous les onglets.")+"<br>"+
                   "- "+tr("<b>Précision des ITP à la semaine</b> au lieu de 15 jours. Saisie de n° de semaine.")+"<br>"+
+                  "- "+tr("<b>Meilleure portabilité de la base de données</b> avec l'abandon de SQLean.")+"<br>"+
+                  "- "+tr("Rotations, amélioration de la détection de retour trop rapide d'une même famille sur une planche (calcul plus rapide).")+"<br>"+
+                  "- "+tr("Rotations, amélioration de la détection de conflit de cultures sur une planche.")+"<br>"+
+                  "- "+tr("Saisies des récoltes et fertilisations améliorées.")+"<br>"+
                   "- "+tr("Planification, nouvel onglet 'Plants nécessaires'.")+"<br>"+
                   "- "+tr("Périodes semis dans affichage graphique des plans de rotation.")+"<br>"+
                   "- "+tr("Amélioration affichage graphique des ITP (chevauchement des périodes semis/plantation/récolte).")+"<br>"+
@@ -500,7 +507,6 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Séparateur de colonne et séparateur décimal paramétrables pour les exports de données.")+"<br>"+
                   "<u>"+tr("Régressions (temporaires)")+" :</u><br>"+
                   "- "+tr("Conflits familles plus détectés dans les rotations.")+"<br>"+
-                  "- "+tr("Mises en place trop tôt ou trop tard plus détectées dans les rotations.")+"<br>"+
                   "<u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Erreur d'arrondi sur 'Qté prév' et 'Qté réc' dans l'onglet 'Couverture des objectifs'.")+"<br>"+
                   "- "+tr("Plantage sur requête SQL utilisateur sans titre ni description.")+"<br>"+
@@ -1332,7 +1338,7 @@ void MainWindow::on_mCuSaisieRecoltes_triggered()
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
         //Go to last row.
-        w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+        //w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
     }
 }
 
