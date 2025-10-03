@@ -491,6 +491,9 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
+                  "<b>Potaléger 1.3.1</b> - 4/10/2025<br>"
+                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Intégrités référentielles: modification d'une info pas transmise dans les tables enfants.")+"<br>"+
                   "<b>Potaléger 1.3.0</b> - 17/09/2025<br>"
                   "<u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Graphique 'Récoltes prévues par semaine'</b> à partir des plans de rotation.")+"<br>"+
