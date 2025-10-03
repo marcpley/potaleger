@@ -55,6 +55,7 @@ jobs:
             cp ./install/ubuntu2004/install.sh    ./artifact/
             cp ./install/ubuntu2004/potaleger.sh  ./artifact/
             cp ./install/potaleger.svg       ./artifact/
+            cp ./install/potaleger.png       ./artifact/
             cp ./install/readme.md           ./artifact/bin/
             cp ./install/infotab1.png        ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/

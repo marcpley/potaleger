@@ -140,7 +140,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     //userDataEditing=false;
     ReadOnlyDb=true;
 
-    if (!dbOpen(sFichier,(sNew!=""),false))
+    if (!dbOpen(sFichier,(sNew!=""),true))
         return false;
 
     PotaQuery pQuery(db);
