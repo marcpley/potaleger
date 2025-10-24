@@ -155,11 +155,11 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
         QLabel *iconLabel=new QLabel();
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
-            icon=QIcon(":/images/potaleger.svg");
+            icon=QIcon(":/images/potaleger_texte.svg");
         else
             icon=QApplication::style()->standardIcon(iconType);
-        iconLabel->setPixmap(icon.pixmap(64, 64));
-        iconLabel->setFixedSize(64,64);
+        iconLabel->setPixmap(icon.pixmap( 150, 64));
+        iconLabel->setFixedSize(150,64);
         headerLayout->addWidget(iconLabel);
     }
 
@@ -180,22 +180,22 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
 
     if (message2!=""){
         QScrollArea *scrollArea=new QScrollArea();
-        scrollArea->setWidgetResizable(true);
-        //QHBoxLayout *textLayout=new QHBoxLayout();
+        //scrollArea->setWidgetResizable(true);
+
         QLabel *messageLabel2=new QLabel(sMess2);
         messageLabel2->setWordWrap(true);
         messageLabel2->setOpenExternalLinks(true);
-        messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse);
-        messageLabel2->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
+        messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
         SetFontWeight(messageLabel2,QFont::Light);
         SetFontWeight(messageLabel,QFont::DemiBold);
-        scrollArea->setWidget(messageLabel2);
-        layout->addWidget(scrollArea);
-        //textLayout->addWidget(messageLabel2);
-        //layout->addLayout(textLayout);
+        messageLabel2->setFixedWidth(fmax(dialog.sizeHint().width(),MinWidth)-45);
+        //messageLabel2->adjustSize();
         QSize screenSize=QGuiApplication::primaryScreen()->size();
-        int maxHeight=screenSize.height()-200; // Par exemple, la moitié de la hauteur de l'écran
+        int maxHeight=screenSize.height()-200;
         scrollArea->setMaximumHeight(maxHeight);
+        scrollArea->setWidget(messageLabel2);
+
+        layout->addWidget(scrollArea);
     }
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
@@ -831,6 +831,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
         PotaQuery pQuery(db);        
         QStringList values;
         if (SQLEdit->toPlainText().toUpper().startsWith("SELECT ") or
+            //SQLEdit->toPlainText().toUpper().startsWith("PRAGMA TABLE_") or
             SQLEdit->toPlainText().toUpper().startsWith("WITH ")) {
             values=SQLEdit->toPlainText().split(";\n");
             if (pQuery.exec(values[0])) {
@@ -842,62 +843,63 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
             }
         } else if (SQLEdit->toPlainText().toUpper().startsWith("INSERT ")or
                    SQLEdit->toPlainText().toUpper().startsWith("UPDATE ")or
-                   SQLEdit->toPlainText().toUpper().startsWith("DELETE ")) {
-            #ifdef QT_NO_DEBUG
-                if(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_données'")=="Oui!") {
-            #endif
-            QString QueryError="";
-            values=SQLEdit->toPlainText().split(";\n");
-            for(int i=0;i<values.count();i++){
-                if (!values[i].toUpper().startsWith("INSERT ")and
-                    !values[i].toUpper().startsWith("UPDATE ")and
-                    !values[i].toUpper().startsWith("DELETE ")){
-                    QueryError=values[i];
-                    break;
+                   SQLEdit->toPlainText().toUpper().startsWith("DELETE ")or
+                   SQLEdit->toPlainText().toUpper().startsWith("PRAGMA ")) {
+            if(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_données'")=="Oui!") {
+                QString QueryError="";
+                values=SQLEdit->toPlainText().split(";\n");
+                for(int i=0;i<values.count();i++){
+                    if (!values[i].toUpper().startsWith("INSERT ")and
+                        !values[i].toUpper().startsWith("UPDATE ")and
+                        !values[i].toUpper().startsWith("DELETE ")and
+                        !values[i].toUpper().startsWith("PRAGMA ")){
+                        QueryError=values[i];
+                        break;
+                    }
                 }
-            }
-            if (QueryError.isEmpty()) {
-                if(!pQuery.ExecMultiShowErr(SQLEdit->toPlainText(),";\n",nullptr))
-                    messageLabel->setText(StrElipsis(pQuery.lastError().text(),200));
-                else
-                    messageLabel->setText(StrElipsis(pQuery.lastQuery(),200)+"\n"
-                                          "Rows affected: "+str(pQuery.numRowsAffected()));
-            } else {
-                messageLabel->setText(QObject::tr("Requête de modification de données incorrecte :")+"\n"+StrElipsis(QueryError,200));
-            }
-            #ifdef QT_NO_DEBUG
+                if (QueryError.isEmpty()) {
+                    if (values.count()==1) {
+                        messageLabel->setText(StrElipsis(SQLEdit->toPlainText(),200)+" : "+
+                                              pQuery.Selec0ShowErr(SQLEdit->toPlainText()).toString()+"\n"
+                                              "Rows affected: "+str(pQuery.numRowsAffected())+
+                                              pQuery.lastError().text());
+                    } else {
+                        if(!pQuery.ExecMultiShowErr(SQLEdit->toPlainText(),";\n",nullptr))
+                            messageLabel->setText(StrElipsis(pQuery.lastError().text(),200));
+                        else
+                            messageLabel->setText(StrElipsis(pQuery.lastQuery(),200)+"\n"
+                                                  "Rows affected: "+str(pQuery.numRowsAffected()));
+                    }
                 } else {
-                    messageLabel->setText(QObject::tr("Requêtes de modification de données non autorisées dans le paramétrage."));
+                    messageLabel->setText(QObject::tr("Requête de modification de données incorrecte :")+"\n"+StrElipsis(QueryError,200));
                 }
-            #endif
+            } else {
+                messageLabel->setText(QObject::tr("Requêtes de modification de données non autorisées dans le paramétrage."));
+            }
         } else {
-            #ifdef QT_NO_DEBUG
-                if(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_schéma'")=="Oui!") {
-            #endif
-            QString QueryError="";
-            values=SQLEdit->toPlainText().split(";;\n");
-            for(int i=0;i<values.count();i++){
-                if (!values[i].toUpper().startsWith("CREATE ")and
-                    !values[i].toUpper().startsWith("ALTER ")and
-                    !values[i].toUpper().startsWith("DROP ")){
-                    QueryError=values[i];
-                    break;
+            if(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_schéma'")=="Oui!") {
+                QString QueryError="";
+                values=SQLEdit->toPlainText().split(";;\n");
+                for(int i=0;i<values.count();i++){
+                    if (!values[i].toUpper().startsWith("CREATE ")and
+                        !values[i].toUpper().startsWith("ALTER ")and
+                        !values[i].toUpper().startsWith("DROP ")){
+                        QueryError=values[i];
+                        break;
+                    }
                 }
-            }
-            if (QueryError.isEmpty()) {
-                if(!pQuery.ExecMultiShowErr(SQLEdit->toPlainText(),";;\n",nullptr))
-                    messageLabel->setText(StrElipsis(pQuery.lastError().text(),200));
-                else
-                    messageLabel->setText(StrElipsis(pQuery.lastQuery(),200)+"\n"
-                                          "Rows affected: "+str(pQuery.numRowsAffected()));
-            } else {
-                messageLabel->setText(QObject::tr("Requête de modification du schéma de base de données incorrecte :")+"\n"+StrElipsis(QueryError,200));
-            }
-            #ifdef QT_NO_DEBUG
+                if (QueryError.isEmpty()) {
+                    if(!pQuery.ExecMultiShowErr(SQLEdit->toPlainText(),";;\n",nullptr))
+                        messageLabel->setText(StrElipsis(pQuery.lastError().text(),200));
+                    else
+                        messageLabel->setText(StrElipsis(pQuery.lastQuery(),200)+"\n"
+                                              "Rows affected: "+str(pQuery.numRowsAffected()));
                 } else {
-                    messageLabel->setText(QObject::tr("Requêtes de modification de données non autorisées dans le paramétrage."));
+                    messageLabel->setText(QObject::tr("Requête de modification du schéma de base de données incorrecte :")+"\n"+StrElipsis(QueryError,200));
                 }
-            #endif
+            } else {
+                messageLabel->setText(QObject::tr("Requêtes de modification de données non autorisées dans le paramétrage."));
+            }
         }
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {

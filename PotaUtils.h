@@ -17,7 +17,7 @@ public:
     //QSqlDatabase *db;
     QLabel *lErr=nullptr;
     bool ExecShowErr(QString query);
-    bool ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool keepReturns=false);
+    bool ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool stopIfError=true); //, bool keepReturns=false
     QVariant Selec0ShowErr(QString query);
 
     QSqlDatabase& database() { return m_db; }
@@ -31,7 +31,8 @@ QColor blendColors(const QColor& baseColor, const QColor& overlayColor);
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName);
 //QString SQLiteDate();
 //QString DBInfo(QSqlDatabase *db);
-QString EscapeCSV(QString line);
+QString EscapeCSV(QString s,QString sep);
+QString EscapeSQL(QString s);
 QDate firstDayOffWeek(int year, int week);
 QDate firstDayOffWeek(QDate date);
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2);
@@ -52,6 +53,7 @@ QString str(qsizetype i);
 QString StrElipsis(QString s, int i);
 QString StrFirst(QString s, int i);
 QString StrLast(QString s, int i);
+QString StrRemoveLasts(QString s, int i);
 QString StrReplace(QString s, const QString sTarg, const QString sRepl);
 QString SubString(QString s, int iDeb, int iFin);
 //bool dbSuspend(QSqlDatabase *db, bool bSuspend, bool bEditing, QLabel *ldbs);

@@ -14,8 +14,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.3.0";
-QString const DbVersion="2025-07-28";
+QString const Version="1.4.0b2";
+QString const DbVersion="2025-09-25";
 
 class MainWindow : public QMainWindow
 {
@@ -113,6 +113,22 @@ private slots:
     void on_mPlants_triggered();
 
     void on_mRecoltesParSemaine_triggered();
+
+    void on_mAssociations_triggered();
+
+    void on_mCuAssociations_triggered();
+
+    void on_mPlanifAsso_triggered();
+
+    void on_mFKErrors_triggered();
+
+    void on_mTableList_triggered();
+
+    void on_mViewList_triggered();
+
+    void on_mSchemaBDD_triggered();
+
+    void on_mEspecesToutes_triggered();
 
 private:
     void SetEnabledDataMenuEntries(bool b);

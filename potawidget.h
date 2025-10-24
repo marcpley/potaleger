@@ -42,7 +42,7 @@ public:
     //QSet<QModelIndex> modifiedCells;
     QSet<QModelIndex> commitedCells;
     QSet<QModelIndex> copiedCells;
-    QSet<int> rowsToRemove,rowsToInsert;
+    QList<int> rowsToRemove,rowsToInsert;
     //QSet<int> modifiedRows;
     QProgressBar* progressBar;
     QString tempTableName;
@@ -204,9 +204,25 @@ public:
     }
 
     bool removeRow(int row, const QModelIndex &parent=QModelIndex()) {
-        if (!rowsToRemove.contains(row) and !rowsToInsert.contains(row))
-            rowsToRemove.insert(row);
+        if (rowsToInsert.contains(row)) {//row will immediatly desepear, move up rows below.
+            rowsToInsert.removeOne(row);
+            for (int k = 0; k < rowsToInsert.size(); ++k) {
+                if (rowsToInsert[k] > row)
+                    rowsToInsert[k]--;
+            }
+            for (int k = 0; k < rowsToRemove.size(); ++k) {
+                if (rowsToRemove[k] >= row)
+                    rowsToRemove[k]--;
+            }
+        }
+        rowsToRemove.append(row);
         return QSqlRelationalTableModel::removeRow(row, parent);
+    }
+
+    void revertRow(int row) override {
+        //if (rowsToRemove.contains(row))
+        rowsToRemove.removeOne(row);
+        QSqlRelationalTableModel::revertRow(row);
     }
 
 // private slots:
@@ -279,7 +295,7 @@ private:
         clearSelectionData();       // Efface les données sélectionnées
     }
 
-    void pasteFromClipboard() {
+    void pasteFromClipboard(bool InOneCell=false,bool InOneCellOneLine=false) {
         // QClipboard *clipboard=QApplication::clipboard();
         QString clipboardText=QApplication::clipboard()->text();
         if (clipboardText.isEmpty()) return;
@@ -313,43 +329,54 @@ private:
         QLocale locale;
         QString decimalSep=QString(locale.decimalPoint());
 
-        //Loop on selected cells for pasting
-        for (int iSel=0;iSel<SelectedCount;iSel++)
+        //Paste
+        for (int iSel=0;iSel<SelectedCount;iSel++)//Loop on selected cells for pasting
         {
-            //Paste
-            //Loop on clipboard rows.
-            for (int iCB=0;iCB<clipboardRowCount;iCB++)
-            {
-                clipboardColCount=clipboardData[iCB].size();
-                //Loop on clipboard columns.
-                for (int jCB=0;jCB<clipboardColCount;jCB++)
+            if (InOneCell) {
+                if (InOneCellOneLine) {
+                    clipboardText=clipboardText.replace("\t",", ").replace("\\n","lgj,zgoe").replace("\n",", ").replace("lgj,zgoe","\n\n");
+                    while(clipboardText.contains(", , "))
+                        clipboardText.replace(", , ",", ");
+                    //m->setData(selectedIndexes.value(iSel),StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(clipboardText,"\t",", "),"\\n","lgj,zgoe"),"\n",", "),"lgj,zgoe","\n\n"),", , ",", "));
+                    m->setData(selectedIndexes.value(iSel),clipboardText);
+                } else {
+                    m->setData(selectedIndexes.value(iSel),StrReplace(StrReplace(StrReplace(clipboardText,"\\n","lgj,zgoe"),"\n","\n\n"),"lgj,zgoe","\n\n"));
+                }
+            } else {
+
+                for (int iCB=0;iCB<clipboardRowCount;iCB++)//Loop on clipboard rows.
                 {
-                    index=selectedIndexes.value(iSel).sibling(selectedIndexes.value(iSel).row()+iCB,
-                                                              selectedIndexes.value(iSel).column()+jCB);
-                    //qDebug() << "clipboardData[iCB][jCB] : "+clipboardData[iCB][jCB];
-                    if (index.isValid() and
-                        (!clipboardData[iCB][jCB].isEmpty()) and
-                        !m->nonEditableColumns.contains(index.column())) {
-                        if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString())=="DATE") {
-                            for (const QString &format : formats) {
-                                date=QDate::fromString(clipboardData[iCB][jCB], format);
-                                if (date.isValid()) {
-                                    noCentury=(format.contains("yy") and !format.contains("yyyy"));
-                                    break;
+                    clipboardColCount=clipboardData[iCB].size();
+
+                    for (int jCB=0;jCB<clipboardColCount;jCB++)//Loop on clipboard columns.
+                    {
+                        index=selectedIndexes.value(iSel).sibling(selectedIndexes.value(iSel).row()+iCB,
+                                                                  selectedIndexes.value(iSel).column()+jCB);
+                        //qDebug() << "clipboardData[iCB][jCB] : "+clipboardData[iCB][jCB];
+                        if (index.isValid() and
+                            (!clipboardData[iCB][jCB].isEmpty()) and
+                            !m->nonEditableColumns.contains(index.column())) {
+                            if (DataType(m->db,m->tableName(),m->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString())=="DATE") {
+                                for (const QString &format : formats) {
+                                    date=QDate::fromString(clipboardData[iCB][jCB], format);
+                                    if (date.isValid()) {
+                                        noCentury=(format.contains("yy") and !format.contains("yyyy"));
+                                        break;
+                                    }
                                 }
+                                if (!date.isValid())
+                                    m->setData(index,clipboardData[iCB][jCB], Qt::EditRole);//Try raw paste
+                                else {//Paste the formated date
+                                    if (noCentury)
+                                        m->setData(index,date.toString("20yy-MM-dd"), Qt::EditRole);
+                                    else
+                                        m->setData(index,date.toString("yyyy-MM-dd"), Qt::EditRole);
+                                }
+                            } else if (m->dataTypes[index.column()]=="REAL"){
+                                m->setData(index,StrReplace(clipboardData[iCB][jCB],"\\n","\n").replace(decimalSep,"."), Qt::EditRole); //sdff+54rg
+                            } else {
+                                m->setData(index,StrReplace(clipboardData[iCB][jCB],"\\n","\n"), Qt::EditRole); //sdff+54rg
                             }
-                            if (!date.isValid())
-                                m->setData(index,clipboardData[iCB][jCB], Qt::EditRole);//Try raw paste
-                            else {//Paste the formated date
-                                if (noCentury)
-                                    m->setData(index,date.toString("20yy-MM-dd"), Qt::EditRole);
-                                else
-                                    m->setData(index,date.toString("yyyy-MM-dd"), Qt::EditRole);
-                            }
-                        } else if (m->dataTypes[index.column()]=="REAL"){
-                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"\\n","\n").replace(decimalSep,"."), Qt::EditRole); //sdff+54rg
-                        } else {
-                            m->setData(index,StrReplace(clipboardData[iCB][jCB],"\\n","\n"), Qt::EditRole); //sdff+54rg
                         }
                     }
                 }
@@ -474,8 +501,9 @@ public:
     QToolButton *pbInsertRow;
     QToolButton *pbDuplicRow;
     QToolButton *pbDeleteRow;
-    bool bAllowInsert=false;
-    bool bAllowDelete=false;
+    QLabel *lToDelete;
+    //bool bAllowInsert=false;
+    //bool bAllowDelete=false;
 
     QLabel *lRowSummary;
     QLabel *lSelect;

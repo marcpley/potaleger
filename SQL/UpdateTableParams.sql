@@ -1,29 +1,32 @@
 QString sDDLTableParams=QStringLiteral(R"#(
 
-BEGIN TRANSACTION;
+-- BEGIN TRANSACTION;
 
+DROP TABLE IF EXISTS Temp_Params;
 CREATE TABLE Temp_Params AS SELECT * FROM Params;
 
-DROP TABLE Params;
+DROP TABLE IF EXISTS Params;
 
 CREATE TABLE Params (Section TEXT, Paramètre TEXT PRIMARY KEY, Description TEXT, Valeur TEXT, Unité TEXT);
 INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
     VALUES  ('Général', 'Utilisateur', 'Personne, entreprise ou organisation utilisant cette BDD Potaléger', NULL, NULL),
             ('Général', 'Année_culture', 'Saison en cours de culture (la planification créé les cultures l''année suivante)', '2025', NULL),
-            ('Général', 'Montrer_modifs', 'Montrer les données modifiées depuis le passage en mode édition (plus lent)', 'Oui', 'Oui/Non'),
+            ('Général', 'Montrer_modifs', 'Montrer les modifications depuis le dernier rechargement des données (plus lent)', 'Oui', 'Oui/Non'),
             ('Général', 'Combo_Notes_Type', 'Types de notes, séparés par des ''|'' (vide pour texte libre)', 'A faire|Fait|Important', NULL),
             ('Général', 'Notes_Modif_dates', 'Permettre de modifier l''ID et les dates de création/modification des notes', 'Non', 'Oui/Non'),
             ('Général', 'Export_sep_col', 'Séparateur de colonnes pour les exports de données (défaut point-virgule)', NULL, NULL), -- todo: devrait être en anglais.
             ('Général', 'Export_sep_decim', 'Séparateur décimal pour les exports de données (défaut système)', NULL, NULL),
+            ('Associations', 'Asso_bénéfique', 'Les associations bénéfiques se terminent par', ' +', NULL),
+            ('Associations', 'Nb_sem_croisement', 'Temps de croisement mini pour que l''association soit effective', 4, 'semaines'),
             ('Fournisseurs', 'Combo_Fournisseurs_Type', 'Types de fournisseur, séparés par des ''|'' (vide pour texte libre)', 'Semences|Irrigation|Outils|Autre', NULL),
-            ('Assolement', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production.\nEx: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
+            ('Assolement', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production.'||x'0a0a'||'Ex: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
             ('Assolement', 'Combo_Planches_Type', 'Types de planche, séparés par des ''|'' (vide pour texte libre)', 'Extérieur|Serre', NULL),
             ('Assolement', 'Largeur_planches', 'Largeur de planche par défaut', 0.8,'m'),
+            ('Assolement', 'Rot_Rech_ass_poss', 'Dans les plans de rotation, toujours rechercher les associations possibles'||x'0a0a'||'Si non: rechercher seulement si ''Pc_planches'' < 100 et ''Occupation'' = R ou E', 'Oui', 'Oui/Non'),
             ('Irrigation', 'Combo_Planches_Irrig', 'Types d''irrigation des planches, séparés par des ''|'' (vide pour texte libre)', 'GàG|Asp', NULL),
             ('Irrigation', 'Combo_Espèces_Irrig', 'Types d''irrigation, séparés par des ''|'' (vide pour texte libre)', 'GàG|Asp', NULL),
             ('Irrigation', 'C_Irrig_avant_MEP', 'Voir les cultures à irriguer dont la date de mise en place est dans moins de', '15', 'jours'),
             ('Irrigation', 'C_Irrig_après_MEP', 'Période d''irrigation après date de mise en place (semis en place ou plantation)', '30', 'jours'),
-            -- ('Planification', 'Année_planif', 'Saison à planifier', '2025', NULL),
             ('Planification', 'Planifier_planches', 'Début du nom des planches à planifier (vide pour toutes)', NULL, NULL),
             ('Planification', 'Planifier_retard', 'Si l''opération précédente (semis, plantation) est déjà faite et est en retard, avant de passer à l''année suivante, accepter de reporter l''opération suivante de maximum', '15', 'jours'),
             ('Cultures', 'C_horizon_semis', 'Voir les cultures à semer sur une période de', '90', 'jours'),
@@ -65,6 +68,6 @@ UPDATE Params SET Valeur=coalesce((SELECT T.Valeur FROM Temp_Params T WHERE T.Pa
 
 DROP TABLE Temp_Params;
 
-COMMIT TRANSACTION;
+-- COMMIT TRANSACTION;
 
 )#");

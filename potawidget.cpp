@@ -104,6 +104,9 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     connect(pbDeleteRow, &QToolButton::released, this, &PotaWidget::pbDeleteRowClick);
     pbDeleteRow->setEnabled(false);
     pbDeleteRow->setVisible(false);
+    lToDelete=new QLabel(this);
+    lToDelete->setVisible(false);
+
 
     //Filter tool
     filterFrame=new QFrame(this);
@@ -285,6 +288,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     ltb->addWidget(pbDuplicRow);
     ltb->addSpacing(5);
     ltb->addWidget(pbDeleteRow);
+    ltb->addWidget(lToDelete);
     ltb->addSpacing(10);
     ltb->addWidget(lRowSummary);
     ltb->addSpacing(10);
@@ -425,10 +429,10 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
     if (bUserCurrChanged){
         tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
 
-        sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-        pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-        pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-        pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+        // sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        // pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        // pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+        // pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
 
         if (cur.row()>-1)
             lRowSummary->setText(RowSummary(model->tableName(),model->record(cur.row())));
@@ -715,7 +719,7 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
         int y=tv->rowViewportPosition(tv->currentIndex().row())+
                 tv->horizontalHeader()->height()+
                 tv->rowHeight(tv->currentIndex().row());
-        int EditNotesWidth=400;
+        int EditNotesWidth=fmax(tv->columnWidth(tv->currentIndex().column()),400);
         int EditNotesHeight=200;
 
         if (editNotes->isReadOnly()) {
@@ -753,7 +757,7 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
             }
             // editNotes->setFixedSize(min(maxWidth+50,400),
             //                         min(lines.count()*22+5,200));
-            EditNotesWidth=min((maxWidth*1.2)+50,400);
+            EditNotesWidth=min((maxWidth*1.2)+50,EditNotesWidth);
             EditNotesHeight=min((lines.count()+returns)*22+5,200);
         }
         x=min(x,tv->width()-EditNotesWidth-20);
@@ -799,7 +803,7 @@ void PotaWidget::PositionRestore() {
                                      model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
                                      model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
             rowRestore=row;
-            break;
+            //break;
         } else if (sPositionRowPrev==model->index(row,iStart+0).data(Qt::DisplayRole).toString()+
                                      model->index(row,iStart+1).data(Qt::DisplayRole).toString()+
                                      model->index(row,iStart+2).data(Qt::DisplayRole).toString()) {
@@ -1043,7 +1047,7 @@ void PotaWidget::pbRefreshClick(){
             break;
         }
     }
-    if(PaintedCols) {
+    if (PaintedCols) {
     //if(!delegate->PaintedCols.isEmpty()) {
         RefreshHorizontalHeader();
         emit model->headerDataChanged(Qt::Horizontal, 0, model->columnCount() - 1);
@@ -1051,6 +1055,14 @@ void PotaWidget::pbRefreshClick(){
     }
     PositionRestore();
     bUserCurrChanged=true;
+
+    PotaQuery query(*model->db);
+    if (query.Selec0ShowErr("SELECT Valeur='Oui' FROM Params WHERE Paramètre='Montrer_modifs'").toBool()) {
+        query.ExecShowErr("DROP TABLE IF EXISTS temp."+model->tempTableName+";");
+        model->tempTableName="Temp"+QDateTime::currentDateTime().toString("hhmmss")+model->tableName();
+        query.ExecShowErr("CREATE TEMP TABLE "+model->tempTableName+" AS SELECT * FROM "+model->tableName());
+        model->commitedCells.clear();
+    }
 
     if (chartView and chartView->isVisible()){
         dynamic_cast<PotaGraph*>(chartView->chart())->createSeries(model);
@@ -1072,12 +1084,6 @@ void PotaWidget::pbEditClick(){
                 model->nonEditableColumns.insert(i);
         }
         pbEdit->setIcon(QIcon(":/images/editOn.svg"));
-
-        PotaQuery query(*model->db);
-        if (query.Selec0ShowErr("SELECT Valeur='Oui' FROM Params WHERE Paramètre='Montrer_modifs'").toBool()) {
-            model->tempTableName="Temp"+QDateTime::currentDateTime().toString("hhmmss")+model->tableName();
-            query.ExecShowErr("CREATE TEMP TABLE "+model->tempTableName+" AS SELECT * FROM "+model->tableName());
-        }
 
     } else {
         if (!pbCommit->isEnabled() or
@@ -1112,10 +1118,10 @@ void PotaWidget::pbCommitClick()
     PositionSave();
     if (model->SubmitAllShowErr())
         PositionRestore();
-    sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+    // sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
     AppBusy(false);
     bUserCurrChanged=true;
 }
@@ -1128,17 +1134,17 @@ void PotaWidget::pbRollbackClick()
         //model->modifiedCells.clear();
         PositionRestore();
     }
-    sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+    // sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
     bUserCurrChanged=true;
 }
 
 void PotaWidget::pbInsertRowClick()
 {
     model->InsertRowShowErr();
-    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+    //pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
 
     tv->setFocus();
 }
@@ -1146,7 +1152,7 @@ void PotaWidget::pbInsertRowClick()
 void PotaWidget::pbDuplicRowClick()
 {
     model->DuplicRowShowErr();
-    pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
+    //pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
 
     tv->setFocus();
 }
@@ -1154,8 +1160,9 @@ void PotaWidget::pbDuplicRowClick()
 void PotaWidget::pbDeleteRowClick()
 {
     model->DeleteRowShowErr();
-    pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
-    sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
+    // pbDuplicRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
     tv->setFocus();
 }
 
@@ -1339,7 +1346,7 @@ void PotaWidget::FindFrom(int row, int column, bool Backward){
         for (int i=row;i<model->rowCount();i++) {
             for (int j=column;j<model->columnCount();j++) {
                 if (!tv->isColumnHidden(j) and
-                    RemoveAccents(model->index(i,j).data(Qt::DisplayRole).toString()).contains(RemoveAccents(leFind->text()))){
+                    RemoveAccents(model->index(i,j).data(Qt::DisplayRole).toString()).contains(RemoveAccents(leFind->text()),Qt::CaseInsensitive)){
                     tv->setCurrentIndex(model->index(i,j));
                     return;
                 }
@@ -1350,7 +1357,7 @@ void PotaWidget::FindFrom(int row, int column, bool Backward){
         for (int i=row;i>=0;i--) {
             for (int j=column;j>=0;j--) {
                 if (!tv->isColumnHidden(j) and
-                    RemoveAccents(model->index(i,j).data(Qt::DisplayRole).toString()).contains(RemoveAccents(leFind->text()))){
+                    RemoveAccents(model->index(i,j).data(Qt::DisplayRole).toString()).contains(RemoveAccents(leFind->text()),Qt::CaseInsensitive)){
                     tv->setCurrentIndex(model->index(i,j));
                     return;
                 }
@@ -1482,7 +1489,7 @@ bool PotaTableModel::select()  {
         !bBatch) {
         //Show modified cells
         //qDebug() << "culture ligne 1" << query.Selec0ShowErr("SELECT Culture FROM temp."+tempTableName+" WHERE Culture=1700");
-        AppBusy(true,progressBar,rowCount(),"Show modified cells %p%");
+        AppBusy(true,progressBar,rowCount(),"Show commited cells %p%");
         //QString sPrimaryKey=PrimaryKeyFieldName(db,RealTableName());
         int jPrimaryKey=FieldIndex(sPrimaryKey);
         query.prepare("SELECT * "
@@ -1593,6 +1600,7 @@ bool PotaTableModel::SubmitAllShowErr() {
         pw->isCommittingError=false;
         pw->pbCommit->setEnabled(false);
         pw->pbRollback->setEnabled(false);
+        pw->lToDelete->setVisible(false);
         pw->pbFilter->setEnabled(true);
         pw->cbPageFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(""));
@@ -1618,6 +1626,7 @@ bool PotaTableModel::RevertAllShowErr() {
         pw->isCommittingError=false;
         pw->pbCommit->setEnabled(false);
         pw->pbRollback->setEnabled(false);
+        pw->lToDelete->setVisible(false);
         pw->pbFilter->setEnabled(true);
         pw->cbPageFilter->setEnabled(true);
         pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(""));
@@ -1636,14 +1645,26 @@ bool PotaTableModel::InsertRowShowErr()
     PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
     if (insertRows(pw->tv->currentIndex().row()+1,//Create blank new rows
                    pw->sbInsertRows->value())) {
-        for (int i=0;i<pw->sbInsertRows->value();i++)
-            rowsToInsert.insert(i+pw->tv->currentIndex().row()+1);
+        for (int i=0;i<pw->sbInsertRows->value();i++) {
+            int newRow=i+pw->tv->currentIndex().row()+1;
+            for (int k = 0; k < rowsToInsert.size(); ++k) {
+                if (rowsToInsert[k] >= newRow)
+                    rowsToInsert[k]++;
+            }
+            for (int k = 0; k < rowsToRemove.size(); ++k) {
+                if (rowsToRemove[k] >= newRow)
+                    rowsToRemove[k]++;
+            }
+            rowsToInsert.append(newRow);
+        }
         pw->tv->setCurrentIndex(index(pw->tv->currentIndex().row()+1,iif(pw->tv->isColumnHidden(0),1,0).toInt()));
         pw->pbCommit->setEnabled(true);
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
         pw->cbPageFilter->setEnabled(false);
         pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(":/images/toCommit.svg"));
+        if (pw->sbInsertRows->value()>5)
+            pw->sbInsertRows->setValue(1);
     } else {
         SetColoredText(pw->lErr,"insertRows(x,y)","Err");
         return false;
@@ -1662,7 +1683,16 @@ bool PotaTableModel::DuplicRowShowErr()
                 QModelIndex destIndex=index(sourceRow+1+i, col);
                 setData(destIndex, data(sourceIndex,Qt::EditRole));
             }
-            rowsToInsert.insert(sourceRow+1);
+            int newRow=sourceRow+1;
+            for (int k = 0; k < rowsToInsert.size(); ++k) {
+                if (rowsToInsert[k] >= newRow)
+                    rowsToInsert[k]++;
+            }
+            for (int k = 0; k < rowsToRemove.size(); ++k) {
+                if (rowsToRemove[k] >= newRow)
+                    rowsToRemove[k]++;
+            }
+            rowsToInsert.append(newRow);
         }
         pw->tv->setCurrentIndex(index(sourceRow+1,iif(pw->tv->isColumnHidden(0),1,0).toInt()));
         pw->pbCommit->setEnabled(true);
@@ -1670,6 +1700,8 @@ bool PotaTableModel::DuplicRowShowErr()
         pw->pbFilter->setEnabled(false);
         pw->cbPageFilter->setEnabled(false);
         pw->twParent->setTabIcon(pw->twParent->indexOf(pw),QIcon(":/images/toCommit.svg"));
+        if (pw->sbInsertRows->value()>5)
+            pw->sbInsertRows->setValue(1);
     } else {
         SetColoredText(pw->lErr,"insertRows(x,y)","Err");
         return false;
@@ -1680,15 +1712,22 @@ bool PotaTableModel::DuplicRowShowErr()
 bool PotaTableModel::DeleteRowShowErr()
 {
     PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
-    QModelIndexList selectedPoxyIndexes=pw->tv->selectionModel()->selectedIndexes();
-    int rr=0;
-    for (const QModelIndex &index : selectedPoxyIndexes) {
-        if (removeRow(index.row()))
-            rr++;
-        else
-            SetColoredText(pw->lErr,"removeRow("+str(index.row())+")","Err");
+    QModelIndexList selectedIndexes=pw->tv->selectionModel()->selectedIndexes();
+    //int rr=0;
+    for (const QModelIndex &index : selectedIndexes) {
+        if (rowsToRemove.contains(index.row())) {
+            revertRow(index.row());
+            //rr--;
+        } else {
+            if (!removeRow(index.row()))
+            //     rr++;
+            // else
+                SetColoredText(pw->lErr,"removeRow("+str(index.row())+")","Err");
+        }
     }
-    if (rr>0) {
+    pw->lToDelete->setText(QString::number(rowsToRemove.count()));
+    pw->lToDelete->setVisible(rowsToRemove.count()>0);
+    if (rowsToInsert.count()>0 or rowsToRemove.count()>0) {
         pw->pbCommit->setEnabled(true);
         pw->pbRollback->setEnabled(true);
         pw->pbFilter->setEnabled(false);
@@ -1718,6 +1757,14 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
         cutSelectionToClipboard();
     } else if (event->matches(QKeySequence::Paste)) {
         pasteFromClipboard();
+    } else if ((event->modifiers() & Qt::ControlModifier) &&
+               (event->modifiers() & Qt::ShiftModifier) &&
+               (event->key() == Qt::Key_V)) {
+        pasteFromClipboard(true,false);
+    } else if ((event->modifiers() & Qt::ControlModifier) &&
+               (event->modifiers() & Qt::ALT) &&
+               (event->key() == Qt::Key_V)) {
+        pasteFromClipboard(true,true);
     } else {
         QTableView::keyPressEvent(event);
     }
@@ -1909,7 +1956,7 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     }
 
     if (index.column()==FilterCol or //Filtering column.
-        (!FindText.isEmpty() and RemoveAccents(index.data(Qt::DisplayRole).toString()).contains(FindText))) { //Find
+        (!FindText.isEmpty() and RemoveAccents(index.data(Qt::DisplayRole).toString()).contains(FindText,Qt::CaseInsensitive))) { //Find
         if (!isDarkTheme())
             cFiltered=QColor("#000000");
         else

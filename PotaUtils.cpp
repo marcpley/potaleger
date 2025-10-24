@@ -9,11 +9,12 @@
 
 bool PotaQuery::ExecShowErr(QString query)
 {
-   //dbSuspend(&m_db,false,true,lErr);
+    if (query.trimmed().isEmpty()) return true;
+
     clear();
 
     if (!query.startsWith("PRAGMA ") and !query.startsWith("SELECT "))
-        logMessage("sql.log",query);
+        logMessage("sql.log",query.trimmed());
 
     exec(query);
 
@@ -31,7 +32,7 @@ bool PotaQuery::ExecShowErr(QString query)
     return true;
 }
 
-bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar,bool keepReturns)
+bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar,bool stopIfError) //,bool keepReturns
 {
     QStringList QueryList=querys.split(spliter);
     if (lErr) {
@@ -50,18 +51,17 @@ bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QP
     for (int i=0;i<QueryList.count();i++) {
         if (QueryList[i].trimmed().isEmpty())
             continue;
-        QString sQuery=RemoveComment(QueryList[i].trimmed(),"--",keepReturns);
+        QString sQuery=RemoveComment(QueryList[i].trimmed(),"--",false); //keepReturns
         clear();
         ExecShowErr(sQuery);
         if (progressBar) progressBar->setValue(progressBar->value()+1);
-        if (lastError().type() != QSqlError::NoError) {
+        if (lastError().type()!=QSqlError::NoError and stopIfError and !lastError().text().startsWith("UNIQUE constraint failed")) {
             qWarning() << sQuery;
             qWarning() << lastError().text();
             if (lErr)
                 SetColoredText(lErr,QueryList[i].trimmed()+"\n"+lastError().text(),//+"\n"+DBInfo(db),
                                "Err");
             return false;
-
         }
     }
     return true;
@@ -151,12 +151,18 @@ QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
 //     return sResult;
 // }
 
-QString EscapeCSV(QString s) {
-    //s=StrReplace(s,"\r","");
-    //s=StrReplace(s,"\n","\\n");
+QString EscapeCSV(QString s,QString sep) {
     s=StrReplace(s,"\"","\"\"");
-    if (s.contains("\n") or s.contains(";") or s.contains("\""))
+    if (s.contains("\n") or s.contains(sep) or s.contains("\""))
         s="\""+s+"\"";
+    return s;
+}
+
+QString EscapeSQL(QString s) {
+    s=StrReplace(s,"'","''");
+    s=StrReplace(s,"\n\n","'||x'0a0a'||'");
+    s=StrReplace(s,"\n","'||x'0a'||'");
+    s="'"+s+"'";
     return s;
 }
 
@@ -250,9 +256,10 @@ void parseCSV(QString entry, QString sep, QStringList &list) {
 // }
 
 QString RemoveAccents(QString input) {
-    QString normalized=input.normalized(QString::NormalizationForm_D).toLower();
-    normalized.remove(QRegularExpression("[̀-̈]"));  // Supprime les accents combinés
-    return normalized;
+    return input;
+    // QString normalized=input.normalized(QString::NormalizationForm_D).toLower();
+    // normalized.remove(QRegularExpression("[̀-̈]"));  // Supprime les accents combinés
+    // return normalized;
 }
 
 QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns)
@@ -371,6 +378,14 @@ QString StrLast(QString s, int i){
         return "";
     else
         return s;
+}
+
+QString StrRemoveLasts(QString s, int i){
+    while (i>0 and s.length()>0) {
+        s.removeLast();
+        i-=1;
+    }
+    return s;
 }
 
 QString StrReplace(QString s, const QString sTarg, const QString sRepl) {

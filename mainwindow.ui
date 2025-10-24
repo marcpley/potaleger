@@ -491,11 +491,24 @@
     <property name="title">
      <string>Fichiers</string>
     </property>
+    <widget class="QMenu" name="mMaintenance">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>Maintenance</string>
+     </property>
+     <addaction name="mTableList"/>
+     <addaction name="mViewList"/>
+     <addaction name="mFKErrors"/>
+     <addaction name="mSchemaBDD"/>
+    </widget>
     <addaction name="mSelecDB"/>
     <addaction name="mCopyBDD"/>
     <addaction name="mUpdateSchema"/>
     <addaction name="mCreateDB"/>
     <addaction name="mCreateEmptyDB"/>
+    <addaction name="mMaintenance"/>
     <addaction name="mAbout"/>
     <addaction name="mWhatSNew"/>
    </widget>
@@ -503,9 +516,20 @@
     <property name="title">
      <string>Données de base</string>
     </property>
+    <widget class="QMenu" name="mEspeces">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>Espèces</string>
+     </property>
+     <addaction name="mEspecesA"/>
+     <addaction name="mEspecesV"/>
+     <addaction name="mEspecesToutes"/>
+    </widget>
     <addaction name="mFamilles"/>
-    <addaction name="mEspecesA"/>
-    <addaction name="mEspecesV"/>
+    <addaction name="mEspeces"/>
+    <addaction name="mAssociations"/>
     <addaction name="mFournisseurs"/>
     <addaction name="mVarietes"/>
     <addaction name="mITP"/>
@@ -530,6 +554,7 @@
     <addaction name="mPlanifIlots"/>
     <addaction name="mPlanifPlanches"/>
     <addaction name="mRecoltesParSemaine"/>
+    <addaction name="mPlanifAsso"/>
     <addaction name="mCreerCultures"/>
     <addaction name="mSemences"/>
     <addaction name="mPlants"/>
@@ -559,8 +584,9 @@
     <addaction name="mCuSaisieRecoltes"/>
     <addaction name="mCuATerminer"/>
     <addaction name="mCuAFaire"/>
-    <addaction name="mCuVivaces"/>
     <addaction name="separator"/>
+    <addaction name="mCuVivaces"/>
+    <addaction name="mCuAssociations"/>
     <addaction name="mCuToutes"/>
    </widget>
    <widget class="QMenu" name="mAnalyses">
@@ -1151,6 +1177,85 @@
    </property>
    <property name="text">
     <string>Récoltes prévues par semaine</string>
+   </property>
+  </action>
+  <action name="mAssociations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Associations</string>
+   </property>
+  </action>
+  <action name="mCuAssociations">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Associations dans les cultures non terminées</string>
+   </property>
+  </action>
+  <action name="mPlanifAsso">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Associations dans les cultures prévues</string>
+   </property>
+  </action>
+  <action name="mFKErrors">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditFind"/>
+   </property>
+   <property name="text">
+    <string>Erreurs d'intégrité</string>
+   </property>
+  </action>
+  <action name="mTableList">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
+   </property>
+   <property name="text">
+    <string>Liste des tables</string>
+   </property>
+   <property name="toolTip">
+    <string>Liste des tables</string>
+   </property>
+  </action>
+  <action name="mViewList">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
+   </property>
+   <property name="text">
+    <string>Liste des vues</string>
+   </property>
+  </action>
+  <action name="mSchemaBDD">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentPageSetup"/>
+   </property>
+   <property name="text">
+    <string>Schéma de la BDD</string>
+   </property>
+  </action>
+  <action name="mEspecesToutes">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Toutes</string>
    </property>
   </action>
  </widget>

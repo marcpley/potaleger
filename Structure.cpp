@@ -19,67 +19,65 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     PotaQuery *qNewTableFields=new PotaQuery(db);
     PotaQuery *qOldTableFields=new PotaQuery(db);
     query->lErr=ui->lDBErr;
+    #ifdef QT_NO_DEBUG
     bool bNew=false;
+    #endif
     bool bResult=true;
+    // bool bInsertBaseData=false;
+    // bool bUpdateBaseData=false;
     QString sResult="";
 
     AppBusy(true,ui->progressBar,0,"%p%");
 
-    if (bResult){
+    if (bResult){ //Set exclusive access.
         bResult=query->ExecShowErr("PRAGMA locking_mode=EXCLUSIVE;")and
                 query->ExecShowErr("PRAGMA locking_mode=NORMAL;");
         if (!bResult)
             sResult.append(tr("Impossible d'obtenir un accès exclusif à la BDD.")+"\n");
     }
-    if (bResult){
+    if (bResult){ //Set FK OFF
         bResult=query->ExecShowErr("PRAGMA foreign_keys=OFF");
         if (!bResult)
             sResult.append("Foreign keys : Err\n");
     }
 
-    if (sDBVersion=="New" or sDBVersion=="NewWithBaseData") {
-        //bNew=true; mettre à false quand debug fait.
-        if (bResult){
+    if (sDBVersion=="New" or sDBVersion=="NewWithBaseData") { //Create new DB.
+        if (bResult){ //Create empty tables.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("CREATE TABLES %p%");
             bResult=query->ExecMultiShowErr(DynDDL(sDDLTables),";",ui->progressBar);
             sResult.append("Create tables (").append(DbVersion).append(") : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-        // if (bResult){
-        //     //Create scalar functions
-        //     ui->progressBar->setValue(0);
-        //     ui->progressBar->setMaximum(0);
-        //     ui->progressBar->setFormat("Scalar functions %p%");
-        //     bResult=registerScalarFunctions(&db);
-        //     sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
-        // }
-        if (bResult and(sDBVersion=="NewWithBaseData")) {
+
+        if (bResult and(sDBVersion=="NewWithBaseData")) { //Insert general base data.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("BASE DATA %p%");
-            bResult=query->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar,true);
+            bResult=query->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar); //keepReturns true
             sResult.append("Base data : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-        if (bResult and(sDBVersion=="NewWithBaseData")) {
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("UPDATE NPK DATA (Espèces) %p%");
-            bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar,true);
-            sResult.append("Update base data (Espèces) : "+iif(bResult,"ok","Err").toString()+"\n");
-        }
-        if (bResult and(sDBVersion=="NewWithBaseData")) {
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("UPDATE NPK DATA (Fertilisants) %p%");
-            bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar,true);
-            sResult.append("Update base data (Fertilisants) : "+iif(bResult,"ok","Err").toString()+"\n");
-        }
+        // if (bResult and(sDBVersion=="NewWithBaseData")) { //Update NPK in Espèces.
+        //     ui->progressBar->setValue(0);
+        //     ui->progressBar->setMaximum(0);
+        //     ui->progressBar->setFormat("UPDATE NPK DATA (Espèces) %p%");
+        //     bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar,true);
+        //     sResult.append("Update base data (Espèces) : "+iif(bResult,"ok","Err").toString()+"\n");
+        // }
+        // if (bResult and(sDBVersion=="NewWithBaseData")) { //Update NPK in Fertilisants.
+        //     ui->progressBar->setValue(0);
+        //     ui->progressBar->setMaximum(0);
+        //     ui->progressBar->setFormat("UPDATE NPK DATA (Fertilisants) %p%");
+        //     bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar,true);
+        //     sResult.append("Update base data (Fertilisants) : "+iif(bResult,"ok","Err").toString()+"\n");
+        // }
 
-        if (bResult)
+        if (bResult) {
+            //bInsertBaseData=(sDBVersion=="NewWithBaseData");
             sDBVersion=DbVersion;
+        }
 
-    } else {    //Updating an existing db.
+    } else { //Update existing db.
         if (bResult){ //DROP all trigers
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
@@ -198,39 +196,57 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-07-28 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-07-28";
         }
+        if (bResult and(sDBVersion=="2025-07-28")) { //Adding field: Rotations_détails.Décalage. Adding associations.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(sDDL20250925,";",ui->progressBar);
+            //bUpdateBaseData=true;
+            sResult.append(sDBVersion+" -> 2025-09-25 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion="2025-09-25";
+        }
 
-        if (bResult) { //Update schema.
+        if (bResult) { //Update schema (general).
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Update shema %p%");
             QString sUpdateSchema="BEGIN TRANSACTION;";
-            //Rename old tables.
+            //SQL statements for renaming old tables.
             query->clear();
             query->ExecShowErr("PRAGMA table_list;");
             while (query->next()) {
-                if (query->value("type").toString()=="table" and !query->value("name").toString().startsWith("sqlite"))//No sqlite tables.
-                    sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+query->value("name").toString()+";"
-                                    "CREATE TABLE Temp_"+query->value("name").toString()+" AS "
-                                           "SELECT * FROM "+query->value("name").toString()+";"
-                                    "DROP TABLE "+query->value("name").toString()+";";
+                if (query->value("type").toString()=="table" and
+                    query->value("name").toString()!="Params" and
+                    !query->value("name").toString().startsWith("sqlite")) {//No sqlite tables.
+                    if (query->value("name").toString().startsWith("Temp_"))
+                        sUpdateSchema +="DROP TABLE IF EXISTS "+query->value("name").toString()+";";
+                    else
+                        sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+query->value("name").toString()+";"
+                                        "CREATE TABLE Temp_"+query->value("name").toString()+" AS "
+                                               "SELECT * FROM "+query->value("name").toString()+";"
+                                        "DROP TABLE "+query->value("name").toString()+";";
+                }
             }
 
-            //Create new tables.
+            //SQL statements for creating new tables.
             sUpdateSchema += DynDDL(sDDLTables);
 
+            //Execute SQL.
             bResult=query->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar);
-            if (bResult) {
+
+            if (bResult) { //Import data from old to new tables.
                 sUpdateSchema="";
                 ui->progressBar->setValue(0);
                 ui->progressBar->setMaximum(0);
                 ui->progressBar->setFormat("Data transfert %p%");
-                //Import data from old to new tables.
+
                 QString sFieldsList;
                 query->clear();
                 query->ExecShowErr("PRAGMA table_list;");
-                while (query->next()) {
+                while (query->next()) { //SQL statements for importing data from old to new tables.
                     if (query->value("type").toString()=="table" and
                         !query->value("name").toString().startsWith("Temp_") and
+                        query->value("name").toString()!="Params" and
                         !query->value("name").toString().startsWith("sqlite")) {
                         sFieldsList="";
                         qNewTableFields->clear();
@@ -253,17 +269,19 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                     }
                 }
 
-                //DROP Temp tables.
                 query->clear();
                 query->ExecShowErr("PRAGMA table_list;");
-                while (query->next()) {
-                    if (query->value("type").toString()=="table" and !query->value("name").toString().startsWith("sqlite"))
+                while (query->next()) { //SQL statements for DROPing Temp tables.
+                    if (query->value("type").toString()=="table" and
+                        query->value("name").toString()!="Params" and
+                        !query->value("name").toString().startsWith("sqlite"))
                         sUpdateSchema +="DROP TABLE IF EXISTS Temp_"+query->value("name").toString()+";";
                 }
 
-                //Update schema.
+                //Execute SQL.
                 sUpdateSchema += "COMMIT TRANSACTION;";
                 bResult=query->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar);
+
                 if (bResult and sDBVersion=="?")
                     sDBVersion=DbVersion;
             }
@@ -271,21 +289,8 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         }
     }
 
-    if (bResult and(sDBVersion==DbVersion)) { //Tables shema ok.
-        //if (sResult=="")
-        //    sResult.append("Version : "+sDBVersion+"\n");
-
-        // if (bResult){
-        //     //Create scalar functions
-        //     ui->progressBar->setValue(0);
-        //     ui->progressBar->setMaximum(0);
-        //     ui->progressBar->setFormat("Scalar functions %p%");
-        //     bResult=registerScalarFunctions(&db);
-        //     sResult.append("Scalar functions : "+iif(bResult,"ok","Err").toString()+"\n");
-        // }
-
-        if (bResult){
-            //Create views
+    if (bResult and(sDBVersion==DbVersion)) { //Tables shema ok, create views, triggers and update params table..
+        if (bResult){ //Create views
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Views %p%");
@@ -293,8 +298,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
-        if (bResult){
-            //Create triggers
+        if (bResult){ //Create triggers
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Triggers %p%");
@@ -302,22 +306,35 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
-        if (bResult){
-            //Update params table
+        if (bResult){ //Update params table
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Params %p%");
-            bResult=query->ExecMultiShowErr(sDDLTableParams,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(sDDLTableParams,";",ui->progressBar,false);
             sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }
 
-    if (bResult){
+    // if (bResult and bInsertBaseData) { //Insert base data.
+    //     ui->progressBar->setValue(0);
+    //     ui->progressBar->setMaximum(0);
+    //     ui->progressBar->setFormat("Insert base data %p%");
+    //     bResult=query->ExecMultiShowErr(sInsertBaseData,";",ui->progressBar);
+    // }
+
+    // if (bResult and bUpdateBaseData) { //Update base data.
+    //     ui->progressBar->setValue(0);
+    //     ui->progressBar->setMaximum(0);
+    //     ui->progressBar->setFormat("Insert base data %p%");
+    //     bResult=query->ExecMultiShowErr(sUpdateBaseData,";",ui->progressBar);
+    // }
+
+    if (bResult){ //Set FK ON.
         bResult=query->ExecShowErr("PRAGMA foreign_keys=ON");
         if (!bResult)
             sResult.append("Foreign keys : Err\n");
     }
-    if (bResult){
+    if (bResult){ //Set normal access.
         bResult=query->ExecShowErr("PRAGMA locking_mode=NORMAL;");
         if (!bResult)
             sResult.append(tr("Impossible d'annuler l'accès exclusif.")+"\n");
@@ -325,11 +342,13 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
     AppBusy(false,ui->progressBar);
 
-    if (bResult) {
+    if (bResult) { //Final user dialog.
         if (sDBVersion==DbVersion) {
+            #ifdef QT_NO_DEBUG
             if (!bNew)
                 MessageDlg("Potaléger "+ui->lVer->text(),tr("Mise à jour réussie."),
                            sResult,QStyle::SP_MessageBoxInformation);
+            #endif
             return true;
         }
         else {

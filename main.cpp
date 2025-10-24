@@ -15,8 +15,6 @@
 #include <QStyleFactory>
 //#include <QLocale>
 //#include "qtimer.h"
-#include "SQL/FunctionsSQLite.h"
-#include "sqlite/sqlite3.h"
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
 #include <QImage>
@@ -26,10 +24,18 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
     ui->mCopyBDD->setEnabled(b);
     ui->mUpdateSchema->setEnabled(b);
+    ui->mTableList->setEnabled(b);
+    ui->mViewList->setEnabled(b);
+    ui->mFKErrors->setEnabled(b);
+    ui->mSchemaBDD->setEnabled(b);
     ui->mParam->setEnabled(b);
     ui->mNotes->setEnabled(b);
     for (int i=0; i < ui->mBaseData->actions().count(); i++)
         ui->mBaseData->actions().at(i)->setEnabled(b);
+
+    ui->mEspeces->setEnabled(b);
+    for (int i=0; i < ui->mEspeces->actions().count(); i++)
+        ui->mEspeces->actions().at(i)->setEnabled(b);
 
     for (int i=0; i < ui->mAssolement->actions().count(); i++)
         ui->mAssolement->actions().at(i)->setEnabled(b);
@@ -140,7 +146,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     //userDataEditing=false;
     ReadOnlyDb=true;
 
-    if (!dbOpen(sFichier,(sNew!=""),false))
+    if (!dbOpen(sFichier,(sNew!=""),true))
         return false;
 
     PotaQuery pQuery(db);
@@ -507,8 +513,11 @@ void MainWindow::SetMenuIcons() {
     ui->mNotes->setIcon(QIcon(TablePixmap("Notes","T")));
 
     ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
-    ui->mEspecesA->setIcon(QIcon(TablePixmap("Espèces","T")));
-    ui->mEspecesV->setIcon(QIcon(TablePixmap("Espèces","T")));
+    ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","")));
+    ui->mEspecesA->setIcon(QIcon(TablePixmap("Espèces","")));
+    ui->mEspecesV->setIcon(QIcon(TablePixmap("Espèces","")));
+    ui->mEspecesToutes->setIcon(QIcon(TablePixmap("Espèces","T")));
+    ui->mAssociations->setIcon(QIcon(TablePixmap("Associations_détails","T")));
     ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
     //ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
     ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
@@ -526,12 +535,14 @@ void MainWindow::SetMenuIcons() {
     ui->mPlanifIlots->setIcon(QIcon(TablePixmap("Planif_ilots","")));
     ui->mPlanifEspeces->setIcon(QIcon(TablePixmap("Planif_espèces","")));
     ui->mPlanifPlanches->setIcon(QIcon(TablePixmap("Planif_planches","")));
+    ui->mPlanifAsso->setIcon(QIcon(TablePixmap("Planif_associations","")));
     ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap("Planif_récoltes","")));
     ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
     ui->mPlants->setIcon(QIcon(TablePixmap("Variétés__cde_plants","")));
 
     ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
     ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__couverture","")));
+    ui->mASemer->setIcon(QIcon(TablePixmap("Cultures","")));
     ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
     ui->mCuASemerPep->setIcon(QIcon(TablePixmap("Cultures__à_semer_pep","")));
     ui->mCuASemerEP->setIcon(QIcon(TablePixmap("Cultures__à_semer_EP","")));
@@ -542,6 +553,7 @@ void MainWindow::SetMenuIcons() {
     ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
     ui->mCuAFaire->setIcon(QIcon(TablePixmap("Cultures__A_faire","")));
     ui->mCuVivaces->setIcon(QIcon(TablePixmap("Cultures__vivaces","")));
+    ui->mCuAssociations->setIcon(QIcon(TablePixmap("Associations__présentes","")));
     ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
 
     ui->mAnalysesSol->setIcon(QIcon(TablePixmap("Analyses_de_sol","T")));
