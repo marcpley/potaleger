@@ -3,13 +3,6 @@
 #include "ui_mainwindow.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQueryModel>
-#include "SQL/UpdateStru.sql"
-#include "SQL/CreateTables.sql"
-#include "SQL/CreateViews.sql"
-#include "SQL/CreateBaseData.sql"
-#include "SQL/CreateTriggers.sql"
-#include "SQL/UpdateTableParams.sql"
-#include "SQL/UpdateBaseData.sql"
 #include "PotaUtils.h"
 #include "data/Data.h"
 
@@ -46,7 +39,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("CREATE TABLES %p%");
-            bResult=query->ExecMultiShowErr(DynDDL(sDDLTables),";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateTables")),";",ui->progressBar);
             sResult.append("Create tables (").append(DbVersion).append(") : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -54,23 +47,9 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("BASE DATA %p%");
-            bResult=query->ExecMultiShowErr(sSQLBaseData,";",ui->progressBar); //keepReturns true
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateBaseData"),";",ui->progressBar); //keepReturns true
             sResult.append("Base data : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-        // if (bResult and(sDBVersion=="NewWithBaseData")) { //Update NPK in Espèces.
-        //     ui->progressBar->setValue(0);
-        //     ui->progressBar->setMaximum(0);
-        //     ui->progressBar->setFormat("UPDATE NPK DATA (Espèces) %p%");
-        //     bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar,true);
-        //     sResult.append("Update base data (Espèces) : "+iif(bResult,"ok","Err").toString()+"\n");
-        // }
-        // if (bResult and(sDBVersion=="NewWithBaseData")) { //Update NPK in Fertilisants.
-        //     ui->progressBar->setValue(0);
-        //     ui->progressBar->setMaximum(0);
-        //     ui->progressBar->setFormat("UPDATE NPK DATA (Fertilisants) %p%");
-        //     bResult=query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar,true);
-        //     sResult.append("Update base data (Fertilisants) : "+iif(bResult,"ok","Err").toString()+"\n");
-        // }
 
         if (bResult) {
             //bInsertBaseData=(sDBVersion=="NewWithBaseData");
@@ -126,15 +105,15 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250120,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250120"),";",ui->progressBar,false);
             sResult.append(sDBVersion+" -> 2025-01-20 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-01-20";
         }
         if (bResult and(sDBVersion=="2025-01-20")) { //Adding tables: Destinations, Consommations.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250227,";",ui->progressBar);
+            // ui->progressBar->setValue(0);
+            // ui->progressBar->setMaximum(0);
+            // ui->progressBar->setFormat("Specific update shema %p%");
+            // bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250227"),";",ui->progressBar);
             sResult.append(sDBVersion+" -> 2025-02-27 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-02-27";
         }
@@ -142,7 +121,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250305,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250305"),";",ui->progressBar,false);
             sResult.append(sDBVersion+" -> 2025-03-05 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-03-05";
         }
@@ -150,7 +129,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250325,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250325"),";",ui->progressBar,false);
             sResult.append(sDBVersion+" -> 2025-03-25 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-03-25";
         }
@@ -170,9 +149,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250514,";",ui->progressBar) and
-                      query->ExecMultiShowErr(sUpdateBaseDataNPKE,";",ui->progressBar) and
-                      query->ExecMultiShowErr(sUpdateBaseDataNPKF,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250514"),";",ui->progressBar,false);
             sResult.append(sDBVersion+" -> 2025-05-14 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-05-14";
         }
@@ -184,7 +161,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250622,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250622"),";",ui->progressBar,false);
             sResult.append(sDBVersion+" -> 2025-06-22 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-06-22";
         }
@@ -192,7 +169,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250728,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250728"),";",ui->progressBar,false);
             sResult.append(sDBVersion+" -> 2025-07-28 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-07-28";
         }
@@ -200,7 +177,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(sDDL20250925,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250925"),";",ui->progressBar,false);
             //bUpdateBaseData=true;
             sResult.append(sDBVersion+" -> 2025-09-25 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-09-25";
@@ -217,6 +194,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             while (query->next()) {
                 if (query->value("type").toString()=="table" and
                     query->value("name").toString()!="Params" and
+                    query->value("name").toString()!="fda_schema" and
                     !query->value("name").toString().startsWith("sqlite")) {//No sqlite tables.
                     if (query->value("name").toString().startsWith("Temp_"))
                         sUpdateSchema +="DROP TABLE IF EXISTS "+query->value("name").toString()+";";
@@ -229,10 +207,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             }
 
             //SQL statements for creating new tables.
-            sUpdateSchema += DynDDL(sDDLTables);
+            sUpdateSchema += DynDDL(loadSQLFromResource("CreateTables"));
 
             //Execute SQL.
-            bResult=query->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar,true,true);
 
             if (bResult) { //Import data from old to new tables.
                 sUpdateSchema="";
@@ -294,7 +272,21 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Views %p%");
-            bResult=query->ExecMultiShowErr(DynDDL(sDDLViews),";",ui->progressBar);
+            //Update View fields info with same field info in the table.
+            QString addSchema="UPDATE fda_schema SET "
+                                "type=(SELECT A1.type FROM fda_schema A1 "
+                                      "WHERE (A1.tbl_type='Table')AND"
+                                            "(A1.field_name=fda_schema.field_name)AND"
+                                            "(fda_schema.name LIKE A1.name||'__%')) "
+                              "WHERE (type ISNULL)AND(tbl_type='View as table')AND(field_name NOTNULL);"
+                              "UPDATE fda_schema SET "
+                                "description=(SELECT A1.description FROM fda_schema A1 "
+                                             "WHERE (A1.tbl_type='Table')AND"
+                                                   "(A1.field_name=fda_schema.field_name)AND"
+                                                   "(fda_schema.name LIKE A1.name||'__%')) "
+                              "WHERE (description ISNULL)AND(tbl_type LIKE 'View%')AND(field_name NOTNULL);" //todo
+                              ;
+            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateViews"))+addSchema,";",ui->progressBar,true,true);
             sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -302,7 +294,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Triggers %p%");
-            bResult=query->ExecMultiShowErr(sDDLTriggers,";;",ui->progressBar);//";" exists in CREATE TRIGGER statments
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateTriggers"),";;",ui->progressBar);//";" exists in CREATE TRIGGER statments
             sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -310,7 +302,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Params %p%");
-            bResult=query->ExecMultiShowErr(sDDLTableParams,";",ui->progressBar,false);
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateTableParams"),";",ui->progressBar,false);
             sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }

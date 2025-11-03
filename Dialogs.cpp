@@ -28,13 +28,15 @@
 class SqlHighlighter : public QSyntaxHighlighter {
 public:
     SqlHighlighter(QTextDocument *parent=nullptr) : QSyntaxHighlighter(parent) {
-        QTextCharFormat keywordFormat, keywordFormat2;
+        QTextCharFormat keywordFormat, keywordFormat2, keywordFormat3;
         if (isDarkTheme()) {
             keywordFormat.setForeground(QColor("#0085c4"));
             keywordFormat2.setForeground(Qt::darkYellow);
+            keywordFormat3.setForeground(Qt::red);
         } else {
             keywordFormat.setForeground(Qt::blue);
             keywordFormat2.setForeground(Qt::darkYellow);
+            keywordFormat3.setForeground(Qt::red);
         }
         keywordFormat.setFontWeight(QFont::Bold);
         QStringList keywordPatterns={
@@ -43,10 +45,15 @@ public:
         QStringList keywordPatterns2={
             "\\bAND\\b", "\\bOR\\b", "\\bNULL\\b", "\\bISNULL\\b", "\\bNOTNULL\\b", "\\bNOT\\b", "\\bBETWEEN\\b"
         };
+        QStringList keywordPatterns3={
+            "\\bUPDATE\\b", "\\bINSERT\\b", "\\bDELETE\\b", "\\bSET\\b", "\\bCREATE\\b", "\\bDROP\\b", "\\bALTER\\b"
+        };
         for (const QString &pattern : keywordPatterns)
             rules.append({QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption), keywordFormat});
         for (const QString &pattern2 : keywordPatterns2)
             rules.append({QRegularExpression(pattern2, QRegularExpression::CaseInsensitiveOption), keywordFormat2});
+        for (const QString &pattern3 : keywordPatterns3)
+            rules.append({QRegularExpression(pattern3, QRegularExpression::CaseInsensitiveOption), keywordFormat3});
     }
 protected:
     void highlightBlock(const QString &text) override {
@@ -155,7 +162,7 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
         QLabel *iconLabel=new QLabel();
         QIcon icon;
         if (iconType==QStyle::NStandardPixmap)
-            icon=QIcon(":/images/potaleger_texte.svg");
+            icon=QIcon(":/images/potaleger.svg");
         else
             icon=QApplication::style()->standardIcon(iconType);
         iconLabel->setPixmap(icon.pixmap( 150, 64));
@@ -845,11 +852,12 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
                    SQLEdit->toPlainText().toUpper().startsWith("UPDATE ")or
                    SQLEdit->toPlainText().toUpper().startsWith("DELETE ")or
                    SQLEdit->toPlainText().toUpper().startsWith("PRAGMA ")) {
-            if(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_données'")=="Oui!") {
+            if(pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_données'")=="Oui!") {
                 QString QueryError="";
                 values=SQLEdit->toPlainText().split(";\n");
                 for(int i=0;i<values.count();i++){
-                    if (!values[i].toUpper().startsWith("INSERT ")and
+                    if (!values[i].trimmed().isEmpty() and
+                        !values[i].toUpper().startsWith("INSERT ")and
                         !values[i].toUpper().startsWith("UPDATE ")and
                         !values[i].toUpper().startsWith("DELETE ")and
                         !values[i].toUpper().startsWith("PRAGMA ")){
@@ -860,7 +868,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
                 if (QueryError.isEmpty()) {
                     if (values.count()==1) {
                         messageLabel->setText(StrElipsis(SQLEdit->toPlainText(),200)+" : "+
-                                              pQuery.Selec0ShowErr(SQLEdit->toPlainText()).toString()+"\n"
+                                              pQuery.Select0ShowErr(SQLEdit->toPlainText()).toString()+"\n"
                                               "Rows affected: "+str(pQuery.numRowsAffected())+
                                               pQuery.lastError().text());
                     } else {
@@ -877,7 +885,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
                 messageLabel->setText(QObject::tr("Requêtes de modification de données non autorisées dans le paramétrage."));
             }
         } else {
-            if(pQuery.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_schéma'")=="Oui!") {
+            if(pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='SQL_schéma'")=="Oui!") {
                 QString QueryError="";
                 values=SQLEdit->toPlainText().split(";;\n");
                 for(int i=0;i<values.count();i++){
@@ -1035,7 +1043,7 @@ bool OkCancelDialog(const QString &titre, const QString &message, QStyle::Standa
     return result;
 }
 
-int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, QStyle::StandardPixmap iconType, const int MinWidth) {
+int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, const QSet<int> disabledOptions, const bool bNext, QStyle::StandardPixmap iconType, const int MinWidth) {
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
 
@@ -1070,14 +1078,19 @@ int RadiobuttonDialog(const QString &titre, const QString &message, const QStrin
         buttonGroup->addButton(radioButton, i);
         layout->addWidget(radioButton);
         radioButtons.append(radioButton);
-        if (i==iDef)
+        if (disabledOptions.contains(i))
+            radioButton->setEnabled(false);
+        else if (i==0 or i==iDef)
             radioButton->setChecked(true);
     }
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
-    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
-    okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    if (bNext)
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    else
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
     buttonLayout->addStretch();

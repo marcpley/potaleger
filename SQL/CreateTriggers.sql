@@ -1,4 +1,4 @@
-QString sDDLTriggers=QStringLiteral(R"#(
+
 -- BEGIN TRANSACTION;;
 
 DROP TRIGGER IF EXISTS Associations_détails_INSERT;;
@@ -206,9 +206,8 @@ CREATE TRIGGER Cultures_INSERT_Nb_rangs AFTER INSERT ON Cultures
           WHEN (NEW.Nb_rangs ISNULL OR NEW.Nb_rangs='?') AND (NEW.IT_plante NOTNULL)
 BEGIN
     UPDATE Cultures
-       SET Nb_rangs=coalesce( (SELECT Nb_rangs
-                                 FROM ITP I
-                                WHERE I.IT_plante=NEW.IT_plante), 0)
+       SET Nb_rangs=coalesce(max(round((SELECT Largeur FROM Planches P WHERE P.Planche=NEW.Planche)*100/
+                                       (SELECT Esp_rangs FROM ITP I WHERE I.IT_plante=NEW.IT_plante)),1),1)
      WHERE Culture=NEW.Culture;
 END;;
 
@@ -217,9 +216,8 @@ CREATE TRIGGER Cultures_UPDATE_Nb_rangs AFTER UPDATE ON Cultures
           WHEN (NEW.Nb_rangs ISNULL OR NEW.Nb_rangs='?') AND (NEW.IT_plante NOTNULL)
 BEGIN
     UPDATE Cultures
-       SET Nb_rangs=coalesce( (SELECT Nb_rangs
-                                 FROM ITP I
-                                WHERE I.IT_plante=NEW.IT_plante), 0)
+       SET Nb_rangs=coalesce(max(round((SELECT Largeur FROM Planches P WHERE P.Planche=NEW.Planche)*100/
+                                       (SELECT Esp_rangs FROM ITP I WHERE I.IT_plante=NEW.IT_plante)),1),1)
      WHERE Culture=NEW.Culture;
 END;;
 
@@ -243,6 +241,34 @@ BEGIN
                                  FROM Rec_culture RC
                                  WHERE RC.Culture=NEW.Culture),DATE('now'))
      WHERE Culture=NEW.Culture;
+END;;
+
+DROP TRIGGER IF EXISTS Cultures_UPDATE_Récolte;;
+CREATE TRIGGER Cultures_UPDATE_Récolte AFTER UPDATE ON Cultures
+          WHEN (NEW.Récolte_faite='?')
+BEGIN
+    -- -- Correction des récoltes si la culture indique récolte faite.
+    -- UPDATE Récoltes SET
+    --     Réc_ter=iif(Date=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=Récoltes.Culture)),'x',NULL)
+    -- WHERE (NEW.Récolte_faite LIKE '?x%')AND -- La culture était déjà marqué récolte faite avant que la saisie de récolte ne force le recalcul de la culture.
+    --       (Culture=NEW.Culture);
+
+    -- Mise à jour de la culture maintenant que la dernière récolte est corrigée.
+    UPDATE Cultures SET
+        Début_récolte=coalesce((SELECT RC.Date_min FROM Rec_culture RC WHERE RC.Culture=NEW.Culture),-- Récolte commencée ou terminée -> plus petite date.
+                               (SELECT CP.Début_récolte FROM Cu_planif CP WHERE CP.Culture=NEW.Culture), -- Récolte pas commencée -> date planifiée.
+                               Début_récolte), -- Pas de date planifiée -> garder la date actuelle.
+        Fin_récolte=coalesce((SELECT RC.Date_max FROM Rec_culture RC WHERE (RC.Culture=NEW.Culture)AND(RC.Réc_ter='x')), -- Récolte terminée -> plus grande date.
+                             max((SELECT RC.Date_max FROM Rec_culture RC WHERE (RC.Culture=NEW.Culture)),Fin_récolte), -- Récolte commencée -> plus grande date y compris date prévue.
+                             (SELECT CP.Fin_récolte FROM Cu_planif CP WHERE CP.Culture=NEW.Culture), -- Récolte pas commencée -> date planifiée.
+                             Fin_récolte),
+        Récolte_faite=CASE WHEN (SELECT RC.Réc_ter NOTNULL FROM Rec_culture RC WHERE RC.Culture=NEW.Culture)
+                           THEN 'x'
+                           WHEN (SELECT count() FROM Rec_culture RC WHERE RC.Culture=NEW.Culture)>0
+                           THEN '-'
+                           ELSE NULL
+                           END
+    WHERE (Culture=NEW.Culture);
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__non_terminées_INSERT;;
@@ -472,6 +498,7 @@ DROP TRIGGER IF EXISTS Cultures__vivaces_UPDATE;;
 CREATE TRIGGER Cultures__vivaces_UPDATE INSTEAD OF UPDATE ON Cultures__vivaces
 BEGIN
     UPDATE Cultures SET
+        Planche=NEW.Planche,
         D_planif=NEW.D_planif,
         Début_récolte=NEW.Début_récolte,
         Fin_récolte=NEW.Fin_récolte,
@@ -612,8 +639,8 @@ BEGIN
     WHERE Espèce=OLD.Espèce;
 END;;
 
-DROP TRIGGER IF EXISTS Espèces__couverture_UPDATE;;
-CREATE TRIGGER Espèces__couverture_UPDATE INSTEAD OF UPDATE ON Espèces__couverture
+DROP TRIGGER IF EXISTS Espèces__Bilans_annuels_UPDATE;;
+CREATE TRIGGER Espèces__Bilans_annuels_UPDATE INSTEAD OF UPDATE ON Espèces__Bilans_annuels
 BEGIN
     UPDATE Espèces SET
         Rendement=NEW.Rendement,
@@ -632,7 +659,9 @@ BEGIN
         Rendement,
         Favorable,
         Défavorable,
-        Taille,
+        S_taille,
+        Effet,
+        Usages,
         Irrig,
         Conservation,
         -- A_planifier,
@@ -641,7 +670,6 @@ BEGIN
         N,
         P,
         K,
-        Effet,
         Notes)
     VALUES (
         NEW.Espèce,
@@ -649,7 +677,9 @@ BEGIN
         NEW.Rendement,
         NEW.Favorable,
         NEW.Défavorable,
-        NEW.Taille,
+        NEW.S_taille,
+        NEW.Effet,
+        NEW.Usages,
         NEW.Irrig,
         NEW.Conservation,
         -- NEW.A_planifier,
@@ -658,7 +688,6 @@ BEGIN
         NEW.N,
         NEW.P,
         NEW.K,
-        NEW.Effet,
         NEW.Notes);
 END;;
 
@@ -671,7 +700,9 @@ BEGIN
         Rendement=NEW.Rendement,
         Favorable=NEW.Favorable,
         Défavorable=NEW.Défavorable,
-        Taille=NEW.Taille,
+        S_taille=NEW.S_taille,
+        Effet=NEW.Effet,
+        Usages=NEW.Usages,
         Irrig=NEW.Irrig,
         Conservation=NEW.Conservation,
         -- A_planifier=NEW.A_planifier,
@@ -679,7 +710,6 @@ BEGIN
         N=NEW.N,
         P=NEW.P,
         K=NEW.K,
-        Effet=NEW.Effet,
         Notes=NEW.Notes
      WHERE Espèce=OLD.Espèce;
 END;;
@@ -881,9 +911,10 @@ BEGIN
         S_récolte,
         D_récolte,
         Décal_max,
-        Nb_rangs,
+        -- Nb_rangs,
         Espacement,
-        Nb_graines_trou,
+        Esp_rangs,
+        Nb_graines_plant,
         Dose_semis,
         Notes)
     VALUES (
@@ -895,9 +926,10 @@ BEGIN
         NEW.S_récolte,
         NEW.D_récolte,
         NEW.Décal_max,
-        NEW.Nb_rangs,
+        -- NEW.Nb_rangs,
         NEW.Espacement,
-        NEW.Nb_graines_trou,
+        NEW.Esp_rangs,
+        NEW.Nb_graines_plant,
         NEW.Dose_semis,
         NEW.Notes);
 END;;
@@ -914,9 +946,10 @@ BEGIN
         S_récolte=NEW.S_récolte,
         D_récolte=NEW.D_récolte,
         Décal_max=NEW.Décal_max,
-        Nb_rangs=NEW.Nb_rangs,
+        -- Nb_rangs=NEW.Nb_rangs,
         Espacement=NEW.Espacement,
-        Nb_graines_trou=NEW.Nb_graines_trou,
+        Esp_rangs=NEW.Esp_rangs,
+        Nb_graines_plant=NEW.Nb_graines_plant,
         Dose_semis=NEW.Dose_semis,
         Notes=NEW.Notes
      WHERE IT_plante=OLD.IT_plante;
@@ -1046,22 +1079,30 @@ BEGIN
         Espèce,
         Culture,
         Quantité,
+        Réc_ter,
         Notes)
     SELECT
         coalesce(NEW.Date,DATE('now')), --min(Début_récolte,DATE('now'))
         NEW.Espèce,
         C.Culture,
         NEW.Quantité,
+        CASE WHEN (C.Récolte_faite LIKE 'x%')AND
+                  (coalesce(NEW.Date,DATE('now'))>=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=C.Culture))
+             THEN coalesce(NEW.Réc_ter,'x') -- Forcer Réc_ter car Culture.Récolte_faite
+             ELSE NEW.Réc_ter
+             END,
         NEW.Notes
     FROM Cultures C
     WHERE (NEW.Culture NOTNULL)AND
           (C.Culture=NEW.Culture);
+
     --Répartition de la quantité récoltée.
     INSERT INTO Récoltes (
         Date,
         Espèce,
         Culture,
         Quantité,
+        Réc_ter,
         Notes)
     SELECT
         coalesce(NEW.Date,DATE('now')), --min(Début_récolte,DATE('now'))
@@ -1072,6 +1113,11 @@ BEGIN
                                   (coalesce(NEW.Date,DATE('now')) BETWEEN CRR.Début_récolte_possible AND CRR.Fin_récolte_possible) AND
                                   ((NEW.Planche·s='*')OR(CRR.Planche LIKE NEW.Planche·s||'%'))
                            )*C.Longueur,3),
+        CASE WHEN (C.Récolte_faite LIKE 'x%')AND
+                  (coalesce(NEW.Date,DATE('now'))>=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=C.Culture))
+             THEN coalesce(NEW.Réc_ter,'x') -- Forcer Réc_ter car Culture.Récolte_faite
+             ELSE NEW.Réc_ter
+             END,
         NEW.Notes
     FROM Cu_répartir_récolte C
     WHERE (NEW.Culture ISNULL)AND
@@ -1091,6 +1137,13 @@ BEGIN
         Espèce=NEW.Espèce,
         Culture=NEW.Culture,
         Quantité=NEW.Quantité,
+        Réc_ter=CASE WHEN NEW.Réc_ter='-'
+                     THEN NULL -- Ne pas regarder la culture, on veux la forcer récolte non faite.
+                     WHEN ((SELECT C.Récolte_faite FROM Cultures C WHERE C.Culture=Récoltes.Culture) LIKE 'x%')AND
+                          (coalesce(NEW.Date,DATE('now'))>=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=Récoltes.Culture))
+                     THEN coalesce(NEW.Réc_ter,'x') -- Forcer Réc_ter car Culture.Récolte_faite
+                     ELSE NEW.Réc_ter
+                     END,
         Notes=NEW.Notes
      WHERE (ID=OLD.ID)AND(NEW.Culture NOTNULL);
      --Suppression de la ligne de récolte si répartition.
@@ -1101,6 +1154,7 @@ BEGIN
         Espèce,
         Culture,
         Quantité,
+        Réc_ter,
         Notes)
     SELECT
         coalesce(NEW.Date,DATE('now')), -- min(Début_récolte,DATE('now'))
@@ -1111,6 +1165,11 @@ BEGIN
                                   (coalesce(NEW.Date,DATE('now')) BETWEEN CRR.Début_récolte_possible AND CRR.Fin_récolte_possible) AND
                                   ((NEW.Planche·s='*')OR(CRR.Planche LIKE NEW.Planche·s||'%'))
                             )*C.Longueur,3),
+        CASE WHEN (C.Récolte_faite LIKE 'x%')AND
+                  (coalesce(NEW.Date,DATE('now'))>=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=C.Culture))
+             THEN coalesce(NEW.Réc_ter,'x') -- Forcer Réc_ter car Culture.Récolte_faite
+             ELSE NEW.Réc_ter
+             END,
         NEW.Notes
     FROM Cu_répartir_récolte C
     WHERE (NEW.Culture ISNULL)AND
@@ -1129,13 +1188,15 @@ DROP TRIGGER IF EXISTS "Récoltes_INSERT";;
 CREATE TRIGGER "Récoltes_INSERT" AFTER INSERT ON Récoltes
 BEGIN
     UPDATE Cultures SET
-        Début_récolte=(SELECT Date_min FROM Rec_culture R WHERE R.Culture=NEW.Culture),
-        Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=NEW.Culture)>0
-                            THEN coalesce(Récolte_faite,'-') -- Récolte commencée
-                            ELSE NULL
-                            END),
-        Fin_récolte=max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=NEW.Culture),
-                        CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END), -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+        -- Début_récolte=(SELECT Date_min FROM Rec_culture R WHERE R.Culture=NEW.Culture),
+        -- Fin_récolte=max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=NEW.Culture),
+        --                 CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+        --                      ELSE DATE('2001-01-01') END),
+        -- Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=NEW.Culture)>0
+        --                     THEN coalesce(Récolte_faite,'-') -- Récolte commencée
+        --                     ELSE NULL
+        --                     END),
+        Récolte_faite='?', --||coalesce(Récolte_faite,''),
         Terminée=iif((coalesce(Terminée,'') NOT LIKE 'v%')AND(SELECT (E.Vivace NOTNULL) FROM Espèces E -- Passer la culture à Vivace.
                                                               WHERE E.Espèce=Cultures.Espèce),
                      iif(Terminée ISNULL,'v','v'||Terminée),
@@ -1147,15 +1208,15 @@ DROP TRIGGER IF EXISTS "Récoltes_UPDATE";;
 CREATE TRIGGER "Récoltes_UPDATE" AFTER UPDATE ON Récoltes
 BEGIN
     UPDATE Cultures SET
-        Début_récolte=(SELECT Date_min FROM Rec_culture R WHERE R.Culture=NEW.Culture),
-        Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=NEW.Culture)>0
-                            THEN coalesce(Récolte_faite,'-')
-                            ELSE NULL
-                            END),
-        Fin_récolte=max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=NEW.Culture),
-                        CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%')
-                             THEN Fin_récolte -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
-                             ELSE DATE('2001-01-01') END),
+        -- Début_récolte=(SELECT Date_min FROM Rec_culture R WHERE R.Culture=NEW.Culture),
+        -- Fin_récolte=max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=NEW.Culture),
+        --                 CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+        --                      ELSE DATE('2001-01-01') END),
+        -- Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=NEW.Culture)>0
+        --                     THEN coalesce(Récolte_faite,'-')
+        --                     ELSE NULL
+        --                     END),
+        Récolte_faite='?', --||coalesce(Récolte_faite,''),
         Terminée=iif((coalesce(Terminée,'') NOT LIKE 'v%')AND(SELECT (E.Vivace NOTNULL) FROM Espèces E -- Passer la culture à Vivace.
                                                               WHERE E.Espèce=Cultures.Espèce),
                      iif(Terminée ISNULL,'v','v'||Terminée),
@@ -1163,15 +1224,15 @@ BEGIN
     WHERE Culture=NEW.Culture;
 
     UPDATE Cultures SET
-        Début_récolte=(SELECT Date_min FROM Rec_culture R WHERE R.Culture=OLD.Culture),
-        Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
-                            THEN coalesce(Récolte_faite,'-')
-                            ELSE NULL
-                            END),
-        Fin_récolte=max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=OLD.Culture),
-                        CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%')
-                             THEN Fin_récolte
-                             ELSE DATE('2001-01-01') END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+        -- Début_récolte=(SELECT Date_min FROM Rec_culture R WHERE R.Culture=OLD.Culture),
+        -- Fin_récolte=max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=OLD.Culture),
+        --                 CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte
+        --                      ELSE DATE('2001-01-01') END), -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+        -- Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
+        --                     THEN coalesce(Récolte_faite,'-')
+        --                     ELSE NULL
+        --                     END)
+        Récolte_faite='?' --||coalesce(Récolte_faite,'')
     WHERE (NEW.Culture!=OLD.Culture)AND(Culture=OLD.Culture);
 END;;
 
@@ -1179,19 +1240,20 @@ DROP TRIGGER IF EXISTS "Récoltes_DELETE";;
 CREATE TRIGGER "Récoltes_DELETE" AFTER DELETE ON Récoltes
 BEGIN
     UPDATE Cultures SET
-        Début_récolte=CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
-                           THEN (SELECT Date_min FROM Rec_culture R WHERE R.Culture=OLD.Culture)
-                           ELSE (SELECT CP.Début_récolte FROM Cu_planif CP WHERE CP.Culture=Cultures.Culture) -- PlanifCultureCalcDate
-                           END,
-        Fin_récolte=CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
-                         THEN max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=OLD.Culture),
-                                  CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
-                         ELSE (SELECT CP.Fin_récolte FROM Cu_planif CP WHERE CP.Culture=Cultures.Culture) -- PlanifCultureCalcDate
-                         END,
-        Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
-                            THEN coalesce(Récolte_faite,'-')
-                            ELSE NULL
-                            END)
+        -- Début_récolte=CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
+        --                    THEN (SELECT Date_min FROM Rec_culture R WHERE R.Culture=OLD.Culture)
+        --                    ELSE (SELECT CP.Début_récolte FROM Cu_planif CP WHERE CP.Culture=Cultures.Culture) -- PlanifCultureCalcDate
+        --                    END,
+        -- Fin_récolte=CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
+        --                  THEN max((SELECT Date_max FROM Rec_culture R WHERE R.Culture=OLD.Culture),
+        --                           CASE WHEN (coalesce(Récolte_faite,'') NOT LIKE 'x%') THEN Fin_récolte ELSE 0 END) -- Si la culture n'est pas finie de récolter, ne pas effacer la date de fin de récolte prévue.
+        --                  ELSE (SELECT CP.Fin_récolte FROM Cu_planif CP WHERE CP.Culture=Cultures.Culture) -- PlanifCultureCalcDate
+        --                  END,
+        -- Récolte_faite=(CASE WHEN (SELECT Nb_réc FROM Rec_culture R WHERE R.Culture=OLD.Culture)>0
+        --                     THEN coalesce(Récolte_faite,'-')
+        --                     ELSE NULL
+        --                     END)
+        Récolte_faite='?' --||coalesce(Récolte_faite,'')
     WHERE Culture=OLD.Culture;
 END;;
 
@@ -1243,4 +1305,4 @@ BEGIN
 END;;
 
 -- COMMIT TRANSACTION;;
-)#");
+

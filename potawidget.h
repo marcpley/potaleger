@@ -50,6 +50,7 @@ public:
 
     int FieldIndex(QString sFieldName);
     QString FieldName(int index);
+    int childCount(int row, QString childTable="");
 
     bool SelectShowErr();
     bool SubmitAllShowErr();
@@ -489,13 +490,14 @@ public:
     bool isCommittingError=false;
     QLabel *lTabTitle;
     QTextEdit *editNotes;
-    QAction *aEditNotes;
+    QAction *aSaveNotes;
     QTextEdit *editSelInfo;
 
     QWidget *toolbar;
     QToolButton *pbRefresh;
     QToolButton *pbEdit;
     QToolButton *pbCommit;
+    QAction *aCommit;
     QToolButton *pbRollback;
     QSpinBox *sbInsertRows;
     QToolButton *pbInsertRow;
@@ -575,9 +577,12 @@ private:
     QString sPositionRow3="";
     QString sPositionRow4="";
     void FindFrom(int row, int column, bool Backward);
+    void importCSV(QString sFileName, QString enableFields="", bool enableResetTable=true, bool baseData=false);
+    int exportToFile(QString sFileName, QString format, QString baseDataName="");
 
 private slots:
     void dataChanged(const QModelIndex &topLeft);//,const QModelIndex &bottomRight,const QList<int> &roles
+    //void onVBarValueChanged(int value);
     void headerRowClicked();//int logicalIndex
     void pbCommitClick();
     void pbRollbackClick();
@@ -591,7 +596,6 @@ private slots:
     void cbPageFilterChanged();
     void showContextMenu(const QPoint& pos);
     void hDefColWidth();
-    void hEditNotes(const QModelIndex index);
 
 public slots:
     void curChanged(const QModelIndex cur, const QModelIndex pre);
@@ -603,8 +607,12 @@ public slots:
     void pbFindFirstClick();
     void pbFindNextClick();
     void pbFindPrevClick();
+    void setVisibleColumn(int col, bool visible);
     void showGraphDialog();
-
+    void importData();
+    void exportData();
+    void resetBaseData();
+    void toogleReadOnlyEditNotes(const QModelIndex index, bool discard=false);
 };
 
 #endif // POTAWIDGET_H

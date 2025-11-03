@@ -17,8 +17,8 @@ public:
     //QSqlDatabase *db;
     QLabel *lErr=nullptr;
     bool ExecShowErr(QString query);
-    bool ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool stopIfError=true); //, bool keepReturns=false
-    QVariant Selec0ShowErr(QString query);
+    bool ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool stopIfError=true, bool FDAInsert=false); //, bool keepReturns=false
+    QVariant Select0ShowErr(QString query);
 
     QSqlDatabase& database() { return m_db; }
 
@@ -37,13 +37,14 @@ QDate firstDayOffWeek(int year, int week);
 QDate firstDayOffWeek(QDate date);
 QVariant iif(bool bCond,QVariant Var1,QVariant Var2);
 bool isDarkTheme();
+QString loadSQLFromResource(QString fileName);
 void logMessage(const QString fileName, const QString message);
 float min(float a,float b);
 int min(int a,int b);
 void parseCSV(QString entry, QString sep, QStringList &list);
 //QString PrimaryKeyFieldName(QSqlDatabase *db, QString TableName);
 QString RemoveAccents(QString input);
-QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns=false);
+QString RemoveSQLcomment(QString sCde, bool keepReturns=false, QString *fda_cmd_from_comments=nullptr);
 void SetFontColor(QWidget* widget, QColor color);
 void SetFontWeight(QWidget* widget, QFont::Weight weight);
 void SetColoredText(QLabel *l, QString text, QString type);
@@ -55,7 +56,7 @@ QString StrFirst(QString s, int i);
 QString StrLast(QString s, int i);
 QString StrRemoveLasts(QString s, int i);
 QString StrReplace(QString s, const QString sTarg, const QString sRepl);
-QString SubString(QString s, int iDeb, int iFin);
+QString SubString(QString s, int iDeb, int iFin=-1);
 //bool dbSuspend(QSqlDatabase *db, bool bSuspend, bool bEditing, QLabel *ldbs);
 
 #endif // POTAUTILS_H

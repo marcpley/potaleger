@@ -1,412 +1,3 @@
-QString sDDL20250120=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-ALTER TABLE Rotations_détails DROP COLUMN Nb_planches;
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250227=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-CREATE TABLE Consommations (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                       Date DATE,
-                       Espèce TEXT,
-                       Quantité REAL,
-                       Prix REAL,
-                       Destination TEXT,
-                       Notes TEXT);
-
-CREATE TABLE Destinations (Destination TEXT PRIMARY KEY,
-                           Adresse TEXT,
-                           Site_web TEXT,
-                           Date_RAZ DATE,
-                           Active TEXT,
-                           Notes TEXT) WITHOUT ROWID;
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250305=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-ALTER TABLE Cultures ADD COLUMN Récolte_com BOOL;
-
-UPDATE Cultures SET Récolte_com='x'
-WHERE (Récolte_faite NOTNULL AND Début_récolte NOTNULL) OR
-      ((SELECT count(*) FROM Récoltes R WHERE R.Culture=Cultures.Culture)>0);
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250325=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-UPDATE Cultures SET Récolte_faite='x '||Récolte_faite
-WHERE Récolte_faite NOTNULL AND (coalesce(Récolte_faite,'') NOT LIKE 'x%');
-
-UPDATE Cultures SET Récolte_faite=iif(Récolte_com LIKE 'x%','-'||substr(Récolte_com,2),Récolte_com)
-WHERE Récolte_com NOTNULL AND Récolte_faite ISNULL;
-
--- ALTER TABLE Cultures DROP Récolte_com;
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250514=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-ALTER TABLE Espèces ADD COLUMN N REAL;
-ALTER TABLE Espèces ADD COLUMN P REAL;
-ALTER TABLE Espèces ADD COLUMN K REAL;
-
-CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY,
-                           Type TEXT,
-                           Fonction TEXT,
-                           pH REAL,
-                           N REAL,
-                           N_coef REAL,
-                           P REAL,
-                           P_coef REAL,
-                           K REAL,
-                           K_coef REAL,
-                           Ca REAL,
-                           Ca_coef REAL,
-                           Fe REAL,
-                           Fe_coef REAL,
-                           Mg REAL,
-                           Mg_coef REAL,
-                           Na REAL,
-                           Na_coef REAL,
-                           S REAL,
-                           S_coef REAL,
-                           Si REAL,
-                           Si_coef REAL) WITHOUT ROWID;
-
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Algues marines','Amendement','Oligo-éléments, stimule croissance et résistance');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Broyat de bois','Couvert','Structurant, aère et nourrit les micro-organismes lignivores');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Broyat de chanvre','Couvert','Structurant azoté, bonne source de K et MO');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Cendre de bois','Amendement','Alcalinisant potassique, hausse du pH, apport de K, Ca et oligos');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Compost de champignons','Amendement','Résidu organique enrichi, apport de MO et Ca, structure');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Compost de déchets verts demi-mûr','Amendement','Stimule la vie du sol, MO, structure, nutriments pas encore disponibles');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Compost de déchets verts mûr','Amendement','Apport de MO stable, structuration');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Copeaux de corne','Engrais','Azote lent');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Crottin d’ânes','Amendement','Amendement équilibré à décomposition modérée');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Farine d’os','Engrais','Apport durable de P et Ca');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Farine de poisson','Engrais','Organique complet, riche en NPK, action moyennement rapide');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Farine de sang','Engrais','Apport d’azote soluble, action rapide');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fiente de poules séchées','Engrais','Organique concentré, apport direct de NPK, action rapide');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Foin','Couvert','Biomasse carbonée, alimentation du sol et protection contre l’érosion');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de cheval','Amendement','Fertilisant organique fibreux, structuration du sol, fertilisation lente');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de lapin','Amendement','Fertilisant organique très riche, utilisable frais');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de mouton','Amendement','Fertilisant organique riche en NPK, chauffe bien');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de poules','Amendement','Fertilisant organique NPK + MO, forte activité microbienne');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de vache','Amendement','Fertilisant organique, apport de MO, effet structurant');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Guano','Engrais','Fertilisation rapide, riche en P et N');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Lombricompost','Amendement','Compost enrichi en microflore, stimulation biologique, fertilisation douce');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Paille','Couvert','Matière organique carbonée, structuration, alimentation des microbes');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de consoude','Engrais','Biostimulant, apport de K et oligo-éléments');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de pissenlit','Biostimulant','Stimulant racinaire et croissance');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de prêle','Biostimulant','Fongistatique siliceux, renforcement des défenses naturelles');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin d’ortie','Engrais','Biostimulant azoté, stimulation végétative, faible NPK');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Tourteau de ricin','Engrais','Organique lent, riche en N, répulsif naturel (nématicide)');
-INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Urine stockée','Engrais','Source d’azote minéral rapidement assimilable');
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250615=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
--- ALTER TABLE Espèces ADD COLUMN Vivace BOOL;
--- ALTER TABLE Espèces ADD COLUMN Favorable TEXT;
--- ALTER TABLE Espèces ADD COLUMN Défavorable TEXT;
--- ALTER TABLE Espèces ADD COLUMN Taille TEXT;
-
-INSERT INTO Espèces (Espèce,Notes)
-SELECT 'Inconnue','A supprimer après mise à jour des variétés.' WHERE (SELECT count() FROM Espèces WHERE Espèce='Inconnue')=0;
-
-UPDATE Variétés SET Espèce='Inconnue' WHERE Espèce ISNULL;
-
-DELETE FROM Espèces WHERE (Espèce='Inconnue')AND((SELECT count(*) FROM Variétés C WHERE C.Espèce='Inconnue')=0);
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250622=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-INSERT INTO Espèces (Espèce,Notes)
-SELECT 'Inconnue','A supprimer après mise à jour des variétés.' WHERE (SELECT count() FROM Espèces WHERE Espèce='Inconnue')=0;
-
-UPDATE Variétés SET Espèce='Inconnue' WHERE Espèce ISNULL;
-
-ALTER TABLE Cultures ADD COLUMN Espèce TEXT;
-
-UPDATE Cultures SET Espèce=(SELECT V.Espèce FROM Variétés V WHERE V.Variété=Cultures.Variété) WHERE Espèce ISNULL;
-UPDATE Cultures SET Espèce=(SELECT I.Espèce FROM ITP I WHERE I.IT_plante=Cultures.IT_plante) WHERE Espèce ISNULL;
-UPDATE Cultures SET Espèce='Inconnue' WHERE Espèce ISNULL;
-
-DELETE FROM Espèces WHERE (Espèce='Inconnue')AND
-                          ((SELECT count(*) FROM Cultures C WHERE C.Espèce='Inconnue')=0)AND
-                          ((SELECT count(*) FROM Variétés V WHERE V.Espèce='Inconnue')=0);
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250728=QStringLiteral(R"#(
-BEGIN TRANSACTION;
-
-DROP TABLE IF EXISTS sqlean_define;
-
-DROP TRIGGER IF EXISTS ITP_UPDATE_FinsPériodes;
-DROP TRIGGER IF EXISTS Variétés_UPDATE_FinsPériodes;
-
-ALTER TABLE ITP ADD COLUMN S_semis INTEGER;
-ALTER TABLE ITP ADD COLUMN S_plantation INTEGER;
-ALTER TABLE ITP ADD COLUMN S_récolte INTEGER;
-ALTER TABLE ITP ADD COLUMN D_récolte INTEGER;
-ALTER TABLE ITP ADD COLUMN Décal_max INTEGER;
-
-ALTER TABLE Variétés ADD COLUMN S_récolte INTEGER;
-ALTER TABLE Variétés ADD COLUMN D_récolte INTEGER;
-
-UPDATE ITP SET S_semis=1 WHERE Déb_semis='01-01';
-UPDATE ITP SET S_semis=3 WHERE Déb_semis='01-15';
-UPDATE ITP SET S_semis=5 WHERE Déb_semis='02-01';
-UPDATE ITP SET S_semis=7 WHERE Déb_semis='02-15';
-UPDATE ITP SET S_semis=10 WHERE Déb_semis='03-01';
-UPDATE ITP SET S_semis=12 WHERE Déb_semis='03-15';
-UPDATE ITP SET S_semis=14 WHERE Déb_semis='04-01';
-UPDATE ITP SET S_semis=16 WHERE Déb_semis='04-15';
-UPDATE ITP SET S_semis=18 WHERE Déb_semis='05-01';
-UPDATE ITP SET S_semis=20 WHERE Déb_semis='05-15';
-UPDATE ITP SET S_semis=23 WHERE Déb_semis='06-01';
-UPDATE ITP SET S_semis=25 WHERE Déb_semis='06-15';
-UPDATE ITP SET S_semis=27 WHERE Déb_semis='07-01';
-UPDATE ITP SET S_semis=29 WHERE Déb_semis='07-15';
-UPDATE ITP SET S_semis=31 WHERE Déb_semis='08-01';
-UPDATE ITP SET S_semis=33 WHERE Déb_semis='08-15';
-UPDATE ITP SET S_semis=36 WHERE Déb_semis='09-01';
-UPDATE ITP SET S_semis=38 WHERE Déb_semis='09-15';
-UPDATE ITP SET S_semis=40 WHERE Déb_semis='10-01';
-UPDATE ITP SET S_semis=42 WHERE Déb_semis='10-15';
-UPDATE ITP SET S_semis=45 WHERE Déb_semis='11-01';
-UPDATE ITP SET S_semis=47 WHERE Déb_semis='11-15';
-UPDATE ITP SET S_semis=49 WHERE Déb_semis='12-01';
-UPDATE ITP SET S_semis=51 WHERE Déb_semis='12-15';
-UPDATE ITP SET S_plantation=1 WHERE Déb_plantation='01-01';
-UPDATE ITP SET S_plantation=3 WHERE Déb_plantation='01-15';
-UPDATE ITP SET S_plantation=5 WHERE Déb_plantation='02-01';
-UPDATE ITP SET S_plantation=7 WHERE Déb_plantation='02-15';
-UPDATE ITP SET S_plantation=10 WHERE Déb_plantation='03-01';
-UPDATE ITP SET S_plantation=12 WHERE Déb_plantation='03-15';
-UPDATE ITP SET S_plantation=14 WHERE Déb_plantation='04-01';
-UPDATE ITP SET S_plantation=16 WHERE Déb_plantation='04-15';
-UPDATE ITP SET S_plantation=18 WHERE Déb_plantation='05-01';
-UPDATE ITP SET S_plantation=20 WHERE Déb_plantation='05-15';
-UPDATE ITP SET S_plantation=23 WHERE Déb_plantation='06-01';
-UPDATE ITP SET S_plantation=25 WHERE Déb_plantation='06-15';
-UPDATE ITP SET S_plantation=27 WHERE Déb_plantation='07-01';
-UPDATE ITP SET S_plantation=29 WHERE Déb_plantation='07-15';
-UPDATE ITP SET S_plantation=31 WHERE Déb_plantation='08-01';
-UPDATE ITP SET S_plantation=33 WHERE Déb_plantation='08-15';
-UPDATE ITP SET S_plantation=36 WHERE Déb_plantation='09-01';
-UPDATE ITP SET S_plantation=38 WHERE Déb_plantation='09-15';
-UPDATE ITP SET S_plantation=40 WHERE Déb_plantation='10-01';
-UPDATE ITP SET S_plantation=42 WHERE Déb_plantation='10-15';
-UPDATE ITP SET S_plantation=45 WHERE Déb_plantation='11-01';
-UPDATE ITP SET S_plantation=47 WHERE Déb_plantation='11-15';
-UPDATE ITP SET S_plantation=49 WHERE Déb_plantation='12-01';
-UPDATE ITP SET S_plantation=51 WHERE Déb_plantation='12-15';
-UPDATE ITP SET S_récolte=1 WHERE Déb_récolte='01-01';
-UPDATE ITP SET S_récolte=3 WHERE Déb_récolte='01-15';
-UPDATE ITP SET S_récolte=5 WHERE Déb_récolte='02-01';
-UPDATE ITP SET S_récolte=7 WHERE Déb_récolte='02-15';
-UPDATE ITP SET S_récolte=10 WHERE Déb_récolte='03-01';
-UPDATE ITP SET S_récolte=12 WHERE Déb_récolte='03-15';
-UPDATE ITP SET S_récolte=14 WHERE Déb_récolte='04-01';
-UPDATE ITP SET S_récolte=16 WHERE Déb_récolte='04-15';
-UPDATE ITP SET S_récolte=18 WHERE Déb_récolte='05-01';
-UPDATE ITP SET S_récolte=20 WHERE Déb_récolte='05-15';
-UPDATE ITP SET S_récolte=23 WHERE Déb_récolte='06-01';
-UPDATE ITP SET S_récolte=25 WHERE Déb_récolte='06-15';
-UPDATE ITP SET S_récolte=27 WHERE Déb_récolte='07-01';
-UPDATE ITP SET S_récolte=29 WHERE Déb_récolte='07-15';
-UPDATE ITP SET S_récolte=31 WHERE Déb_récolte='08-01';
-UPDATE ITP SET S_récolte=33 WHERE Déb_récolte='08-15';
-UPDATE ITP SET S_récolte=36 WHERE Déb_récolte='09-01';
-UPDATE ITP SET S_récolte=38 WHERE Déb_récolte='09-15';
-UPDATE ITP SET S_récolte=40 WHERE Déb_récolte='10-01';
-UPDATE ITP SET S_récolte=42 WHERE Déb_récolte='10-15';
-UPDATE ITP SET S_récolte=45 WHERE Déb_récolte='11-01';
-UPDATE ITP SET S_récolte=47 WHERE Déb_récolte='11-15';
-UPDATE ITP SET S_récolte=49 WHERE Déb_récolte='12-01';
-UPDATE ITP SET S_récolte=51 WHERE Déb_récolte='12-15';
-
-UPDATE ITP SET S_récolte=1 WHERE Déb_récolte ISNULL AND Fin_récolte='01-01';
-UPDATE ITP SET S_récolte=3 WHERE Déb_récolte ISNULL AND Fin_récolte='01-15';
-UPDATE ITP SET S_récolte=5 WHERE Déb_récolte ISNULL AND Fin_récolte='02-01';
-UPDATE ITP SET S_récolte=7 WHERE Déb_récolte ISNULL AND Fin_récolte='02-15';
-UPDATE ITP SET S_récolte=10 WHERE Déb_récolte ISNULL AND Fin_récolte='03-01';
-UPDATE ITP SET S_récolte=12 WHERE Déb_récolte ISNULL AND Fin_récolte='03-15';
-UPDATE ITP SET S_récolte=14 WHERE Déb_récolte ISNULL AND Fin_récolte='04-01';
-UPDATE ITP SET S_récolte=16 WHERE Déb_récolte ISNULL AND Fin_récolte='04-15';
-UPDATE ITP SET S_récolte=18 WHERE Déb_récolte ISNULL AND Fin_récolte='05-01';
-UPDATE ITP SET S_récolte=20 WHERE Déb_récolte ISNULL AND Fin_récolte='05-15';
-UPDATE ITP SET S_récolte=23 WHERE Déb_récolte ISNULL AND Fin_récolte='06-01';
-UPDATE ITP SET S_récolte=25 WHERE Déb_récolte ISNULL AND Fin_récolte='06-15';
-UPDATE ITP SET S_récolte=27 WHERE Déb_récolte ISNULL AND Fin_récolte='07-01';
-UPDATE ITP SET S_récolte=29 WHERE Déb_récolte ISNULL AND Fin_récolte='07-15';
-UPDATE ITP SET S_récolte=31 WHERE Déb_récolte ISNULL AND Fin_récolte='08-01';
-UPDATE ITP SET S_récolte=33 WHERE Déb_récolte ISNULL AND Fin_récolte='08-15';
-UPDATE ITP SET S_récolte=36 WHERE Déb_récolte ISNULL AND Fin_récolte='09-01';
-UPDATE ITP SET S_récolte=38 WHERE Déb_récolte ISNULL AND Fin_récolte='09-15';
-UPDATE ITP SET S_récolte=40 WHERE Déb_récolte ISNULL AND Fin_récolte='10-01';
-UPDATE ITP SET S_récolte=42 WHERE Déb_récolte ISNULL AND Fin_récolte='10-15';
-UPDATE ITP SET S_récolte=45 WHERE Déb_récolte ISNULL AND Fin_récolte='11-01';
-UPDATE ITP SET S_récolte=47 WHERE Déb_récolte ISNULL AND Fin_récolte='11-15';
-UPDATE ITP SET S_récolte=49 WHERE Déb_récolte ISNULL AND Fin_récolte='12-01';
-UPDATE ITP SET S_récolte=51 WHERE Déb_récolte ISNULL AND Fin_récolte='12-15';
-
-UPDATE ITP SET S_récolte=52 WHERE Déb_récolte ISNULL AND Fin_récolte ISNULL AND Type_culture IN('Engrais vert','Sans récolte');
-
-UPDATE ITP SET Décal_max=1-S_plantation WHERE Fin_plantation='01-01';
-UPDATE ITP SET Décal_max=3-S_plantation WHERE Fin_plantation='01-15';
-UPDATE ITP SET Décal_max=5-S_plantation WHERE Fin_plantation='02-01';
-UPDATE ITP SET Décal_max=7-S_plantation WHERE Fin_plantation='02-15';
-UPDATE ITP SET Décal_max=10-S_plantation WHERE Fin_plantation='03-01';
-UPDATE ITP SET Décal_max=12-S_plantation WHERE Fin_plantation='03-15';
-UPDATE ITP SET Décal_max=14-S_plantation WHERE Fin_plantation='04-01';
-UPDATE ITP SET Décal_max=16-S_plantation WHERE Fin_plantation='04-15';
-UPDATE ITP SET Décal_max=18-S_plantation WHERE Fin_plantation='05-01';
-UPDATE ITP SET Décal_max=20-S_plantation WHERE Fin_plantation='05-15';
-UPDATE ITP SET Décal_max=23-S_plantation WHERE Fin_plantation='06-01';
-UPDATE ITP SET Décal_max=25-S_plantation WHERE Fin_plantation='06-15';
-UPDATE ITP SET Décal_max=27-S_plantation WHERE Fin_plantation='07-01';
-UPDATE ITP SET Décal_max=29-S_plantation WHERE Fin_plantation='07-15';
-UPDATE ITP SET Décal_max=31-S_plantation WHERE Fin_plantation='08-01';
-UPDATE ITP SET Décal_max=33-S_plantation WHERE Fin_plantation='08-15';
-UPDATE ITP SET Décal_max=36-S_plantation WHERE Fin_plantation='09-01';
-UPDATE ITP SET Décal_max=38-S_plantation WHERE Fin_plantation='09-15';
-UPDATE ITP SET Décal_max=40-S_plantation WHERE Fin_plantation='10-01';
-UPDATE ITP SET Décal_max=42-S_plantation WHERE Fin_plantation='10-15';
-UPDATE ITP SET Décal_max=45-S_plantation WHERE Fin_plantation='11-01';
-UPDATE ITP SET Décal_max=47-S_plantation WHERE Fin_plantation='11-15';
-UPDATE ITP SET Décal_max=49-S_plantation WHERE Fin_plantation='12-01';
-UPDATE ITP SET Décal_max=51-S_plantation WHERE Fin_plantation='12-15';
-
-UPDATE ITP SET Décal_max=1-S_semis WHERE Décal_max ISNULL AND Fin_semis='01-01';
-UPDATE ITP SET Décal_max=3-S_semis WHERE Décal_max ISNULL AND Fin_semis='01-15';
-UPDATE ITP SET Décal_max=5-S_semis WHERE Décal_max ISNULL AND Fin_semis='02-01';
-UPDATE ITP SET Décal_max=7-S_semis WHERE Décal_max ISNULL AND Fin_semis='02-15';
-UPDATE ITP SET Décal_max=10-S_semis WHERE Décal_max ISNULL AND Fin_semis='03-01';
-UPDATE ITP SET Décal_max=12-S_semis WHERE Décal_max ISNULL AND Fin_semis='03-15';
-UPDATE ITP SET Décal_max=14-S_semis WHERE Décal_max ISNULL AND Fin_semis='04-01';
-UPDATE ITP SET Décal_max=16-S_semis WHERE Décal_max ISNULL AND Fin_semis='04-15';
-UPDATE ITP SET Décal_max=18-S_semis WHERE Décal_max ISNULL AND Fin_semis='05-01';
-UPDATE ITP SET Décal_max=20-S_semis WHERE Décal_max ISNULL AND Fin_semis='05-15';
-UPDATE ITP SET Décal_max=23-S_semis WHERE Décal_max ISNULL AND Fin_semis='06-01';
-UPDATE ITP SET Décal_max=25-S_semis WHERE Décal_max ISNULL AND Fin_semis='06-15';
-UPDATE ITP SET Décal_max=27-S_semis WHERE Décal_max ISNULL AND Fin_semis='07-01';
-UPDATE ITP SET Décal_max=29-S_semis WHERE Décal_max ISNULL AND Fin_semis='07-15';
-UPDATE ITP SET Décal_max=31-S_semis WHERE Décal_max ISNULL AND Fin_semis='08-01';
-UPDATE ITP SET Décal_max=33-S_semis WHERE Décal_max ISNULL AND Fin_semis='08-15';
-UPDATE ITP SET Décal_max=36-S_semis WHERE Décal_max ISNULL AND Fin_semis='09-01';
-UPDATE ITP SET Décal_max=38-S_semis WHERE Décal_max ISNULL AND Fin_semis='09-15';
-UPDATE ITP SET Décal_max=40-S_semis WHERE Décal_max ISNULL AND Fin_semis='10-01';
-UPDATE ITP SET Décal_max=42-S_semis WHERE Décal_max ISNULL AND Fin_semis='10-15';
-UPDATE ITP SET Décal_max=45-S_semis WHERE Décal_max ISNULL AND Fin_semis='11-01';
-UPDATE ITP SET Décal_max=47-S_semis WHERE Décal_max ISNULL AND Fin_semis='11-15';
-UPDATE ITP SET Décal_max=49-S_semis WHERE Décal_max ISNULL AND Fin_semis='12-01';
-UPDATE ITP SET Décal_max=51-S_semis WHERE Décal_max ISNULL AND Fin_semis='12-15';
-
-UPDATE ITP SET Décal_max=Décal_max+52 WHERE Décal_max<0;
-
-UPDATE ITP SET D_récolte=1-S_récolte WHERE Fin_récolte='01-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=3-S_récolte WHERE Fin_récolte='01-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=5-S_récolte WHERE Fin_récolte='02-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=7-S_récolte WHERE Fin_récolte='02-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=10-S_récolte WHERE Fin_récolte='03-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=12-S_récolte WHERE Fin_récolte='03-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=14-S_récolte WHERE Fin_récolte='04-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=16-S_récolte WHERE Fin_récolte='04-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=18-S_récolte WHERE Fin_récolte='05-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=20-S_récolte WHERE Fin_récolte='05-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=23-S_récolte WHERE Fin_récolte='06-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=25-S_récolte WHERE Fin_récolte='06-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=27-S_récolte WHERE Fin_récolte='07-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=29-S_récolte WHERE Fin_récolte='07-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=31-S_récolte WHERE Fin_récolte='08-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=33-S_récolte WHERE Fin_récolte='08-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=36-S_récolte WHERE Fin_récolte='09-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=38-S_récolte WHERE Fin_récolte='09-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=40-S_récolte WHERE Fin_récolte='10-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=42-S_récolte WHERE Fin_récolte='10-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=45-S_récolte WHERE Fin_récolte='11-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=47-S_récolte WHERE Fin_récolte='11-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=49-S_récolte WHERE Fin_récolte='12-01' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=51-S_récolte WHERE Fin_récolte='12-15' AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-
-UPDATE ITP SET D_récolte=max(D_récolte-Décal_max,1) WHERE D_récolte NOTNULL AND NOT(Type_culture IN('Engrais vert','Sans récolte'));
-UPDATE ITP SET D_récolte=D_récolte+52 WHERE D_récolte NOTNULL AND D_récolte<=0;
-
-UPDATE Variétés SET S_récolte=1 WHERE Déb_récolte='01-01';
-UPDATE Variétés SET S_récolte=3 WHERE Déb_récolte='01-15';
-UPDATE Variétés SET S_récolte=5 WHERE Déb_récolte='02-01';
-UPDATE Variétés SET S_récolte=7 WHERE Déb_récolte='02-15';
-UPDATE Variétés SET S_récolte=10 WHERE Déb_récolte='03-01';
-UPDATE Variétés SET S_récolte=12 WHERE Déb_récolte='03-15';
-UPDATE Variétés SET S_récolte=14 WHERE Déb_récolte='04-01';
-UPDATE Variétés SET S_récolte=16 WHERE Déb_récolte='04-15';
-UPDATE Variétés SET S_récolte=18 WHERE Déb_récolte='05-01';
-UPDATE Variétés SET S_récolte=20 WHERE Déb_récolte='05-15';
-UPDATE Variétés SET S_récolte=23 WHERE Déb_récolte='06-01';
-UPDATE Variétés SET S_récolte=25 WHERE Déb_récolte='06-15';
-UPDATE Variétés SET S_récolte=27 WHERE Déb_récolte='07-01';
-UPDATE Variétés SET S_récolte=29 WHERE Déb_récolte='07-15';
-UPDATE Variétés SET S_récolte=31 WHERE Déb_récolte='08-01';
-UPDATE Variétés SET S_récolte=33 WHERE Déb_récolte='08-15';
-UPDATE Variétés SET S_récolte=36 WHERE Déb_récolte='09-01';
-UPDATE Variétés SET S_récolte=38 WHERE Déb_récolte='09-15';
-UPDATE Variétés SET S_récolte=40 WHERE Déb_récolte='10-01';
-UPDATE Variétés SET S_récolte=42 WHERE Déb_récolte='10-15';
-UPDATE Variétés SET S_récolte=45 WHERE Déb_récolte='11-01';
-UPDATE Variétés SET S_récolte=47 WHERE Déb_récolte='11-15';
-UPDATE Variétés SET S_récolte=49 WHERE Déb_récolte='12-01';
-UPDATE Variétés SET S_récolte=51 WHERE Déb_récolte='12-15';
-
-UPDATE Variétés SET D_récolte=1-S_récolte WHERE Fin_récolte='01-01';
-UPDATE Variétés SET D_récolte=3-S_récolte WHERE Fin_récolte='01-15';
-UPDATE Variétés SET D_récolte=5-S_récolte WHERE Fin_récolte='02-01';
-UPDATE Variétés SET D_récolte=7-S_récolte WHERE Fin_récolte='02-15';
-UPDATE Variétés SET D_récolte=10-S_récolte WHERE Fin_récolte='03-01';
-UPDATE Variétés SET D_récolte=12-S_récolte WHERE Fin_récolte='03-15';
-UPDATE Variétés SET D_récolte=14-S_récolte WHERE Fin_récolte='04-01';
-UPDATE Variétés SET D_récolte=16-S_récolte WHERE Fin_récolte='04-15';
-UPDATE Variétés SET D_récolte=18-S_récolte WHERE Fin_récolte='05-01';
-UPDATE Variétés SET D_récolte=20-S_récolte WHERE Fin_récolte='05-15';
-UPDATE Variétés SET D_récolte=23-S_récolte WHERE Fin_récolte='06-01';
-UPDATE Variétés SET D_récolte=25-S_récolte WHERE Fin_récolte='06-15';
-UPDATE Variétés SET D_récolte=27-S_récolte WHERE Fin_récolte='07-01';
-UPDATE Variétés SET D_récolte=29-S_récolte WHERE Fin_récolte='07-15';
-UPDATE Variétés SET D_récolte=31-S_récolte WHERE Fin_récolte='08-01';
-UPDATE Variétés SET D_récolte=33-S_récolte WHERE Fin_récolte='08-15';
-UPDATE Variétés SET D_récolte=36-S_récolte WHERE Fin_récolte='09-01';
-UPDATE Variétés SET D_récolte=38-S_récolte WHERE Fin_récolte='09-15';
-UPDATE Variétés SET D_récolte=40-S_récolte WHERE Fin_récolte='10-01';
-UPDATE Variétés SET D_récolte=42-S_récolte WHERE Fin_récolte='10-15';
-UPDATE Variétés SET D_récolte=45-S_récolte WHERE Fin_récolte='11-01';
-UPDATE Variétés SET D_récolte=47-S_récolte WHERE Fin_récolte='11-15';
-UPDATE Variétés SET D_récolte=49-S_récolte WHERE Fin_récolte='12-01';
-UPDATE Variétés SET D_récolte=51-S_récolte WHERE Fin_récolte='12-15';
-
-UPDATE Variétés SET D_récolte=D_récolte+52 WHERE D_récolte NOTNULL AND D_récolte<=0;
-
-COMMIT TRANSACTION;
-)#");
-
-QString sDDL20250925=QStringLiteral(R"#(
 DROP TABLE IF EXISTS Cu_Fertilisants;
 
 ALTER TABLE Familles ADD COLUMN Effet TEXT;
@@ -451,128 +42,130 @@ UPDATE Familles SET Effet='Engrais et hôte d''insectes auxiliaires.' WHERE Fami
 UPDATE Familles SET Effet='Apauvri le sol' WHERE Famille='Solanaceae';
 
 ALTER TABLE Espèces ADD COLUMN Effet TEXT;
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Abricotier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe, lumière et froid en hiver, soleil en été'||x'0a'||'- Ne demande pas de forte fertilisation','Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Absinthe','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol riche et léger',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Allélopathique fort','Aromatique semi-persistante');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Achillée millefeuille','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol  bien drainé, tout type',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Actinidia','Actinidiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo abrité,est/sud-est.'||x'0a'||'- Sol frais, riche en humus.'||x'0a'||'- Très résistant au froid.','Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Ail','Alliaceae',0.7,'Facile',28,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,10,NULL,NULL,NULL,'Antibiotique, insectifuge, nématicide et antifongique',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Albizia','Fabaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Amandier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol profond, riche en calcaire'||x'0a'||'- Etés chauds et hivers courts'||x'0a'||'- Supporte sécheresse (200mm/an suffisant)','- Sol à humidité stagnante'||x'0a'||'- Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Amarante','Amaranthaceae',NULL,'Facile',6.25,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte des carabes',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Aneth','Apiaceae',NULL,'Difficile',5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Argousier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Artichaut','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol plutôt léger, riche et bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Asperge','Asparagaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol léger, bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Aubergine','Solanaceae',2,'Difficile',3.35,0.04,250,6,'24-30',6,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,16,7,21,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Bambou','Poaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Basilic','Lamiaceae',0.4,'Facile',3,NULL,600,NULL,NULL,10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,10,NULL,NULL,NULL,'Hôte d''insectes auxiliaires','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Betterave','Amaranthaceae',2.5,'Facile',50,1,50,6,'10-30',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,6,16,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Blette','Amaranthaceae',8,'Facile',3.2,1,60,5,'10-30',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,14,7,22,NULL,NULL,NULL,'Allélopathique',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Bourrache','Boraginaceae',NULL,'Facile',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Camomille','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé et sablonneux',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Capucine','Tropaeolaceae',NULL,'Facile',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,4,6,NULL,NULL,NULL,'Repousse les pucerons','Compagne');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Carotte','Apiaceae',3,'Difficile',80,0.35,925,4.5,'7-30',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,7,5,15,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Céleri','Apiaceae',5,'Moyen',5,0.02,2500,7,'16-21',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,16,7,21,NULL,NULL,NULL,'Repousse la piéride et la teigne du poireau',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Cerisier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol fertile, profond et bien drainé','Taille',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Châtaignier','Fabaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Chaleur','- Sol argileux et humide'||x'0a'||'- Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chayote','Cucurbitaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chénopode','Amaranthaceae',NULL,'Moyen',4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chénopode vivace','Amaranthaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo mi-ombragée'||x'0a'||'- Sol riche et léger, frais, riche en azote',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chicorée frisée','Asteraceae',NULL,'Facile',10,0.27,600,9,'25',4,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Scarole');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chicorée sauvage','Asteraceae',NULL,'Facile',12,0.27,700,8,'10',8.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou brocoli','Brassicaceae',1.5,'Moyen',4.2,0.03,250,4.5,'7-30',7.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,15,6,19,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou de Bruxelles','Brassicaceae',1,'Moyen',2,0.04,350,5.5,'7-20',7.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,13,6,16,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou de Chine','Brassicaceae',2,'Difficile',4,0.03,350,2.5,'7-30',5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,7,18,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou frisé','Brassicaceae',2,'Facile',5,0.03,300,5.5,'7-20',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,14,6,18,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou pommé','Brassicaceae',2,'Moyen',3,0.03,300,5,'7-30',6,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,14,8,21,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou-fleur','Brassicaceae',1.5,'Difficile',2.2,0.03,400,5.5,'7-30',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,19,8,26,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou-rave','Brassicaceae',2,'Facile',16,0.06,300,5,'7-30',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,6,17,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Ciboulette','Alliaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Citronnier','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Cognassier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol profond et frais'||x'0a'||'- Très résistant au froid'||x'0a'||'- Grosse chaleur',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Concombre','Cucurbitaceae',1.8,'Facile',3,0.125,35,10,'16-35',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,13,8,21,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Coriandre','Apiaceae',NULL,'Moyen',25,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,7,3,9,NULL,NULL,NULL,'Hôte d''insectes auxiliaires, repousse la mouche de la carotte','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Cosmos','Asteraceae',NULL,'Facile',8.5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Désoriente les pierides du chou et fait une ombre légère.',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Courge','Cucurbitaceae',5,'Difficile',1.3,0.4,4.58,5,'21-35',8,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,8,23,NULL,NULL,NULL,'Couvre sol, étouffe les petites plantes',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Courgette','Cucurbitaceae',4,'Facile',1.3,0.5,7.7,5,'21-35',8,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,15,8,17,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Echalote','Alliaceae',1.4,'Moyen',24,16,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,8,14,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Epinard','Amaranthaceae',2,'Moyen',70,0.75,110,4.5,'7-24',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,14,NULL,NULL,NULL,'Protège le chou de la hernie et des altises',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Feijoa','Myrtaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Tout type de sol'||x'0a'||'- Résistant au froid -10°C'||x'0a'||'- Besoin de chaleur pour fructifier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Fenouil','Apiaceae',2,'Moyen',12,0.5,200,4,'12',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,15,NULL,NULL,NULL,'Hôte d''insectes auxiliaires',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Fève','Fabaceae',4,'Moyen',17,45,0.75,5,'8',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,4,5,10,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Figuier','Moraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol frais et profond','Très sensible au gel',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Fraisier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée ou mi-ombre'||x'0a'||'- Sol riche et bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Framboisier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol léger, frais, riche en humus','- Sol à humidité stagnante'||x'0a'||'- Sécheresse excessive'||x'0a'||'- Concurrence des herbes',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Frêne','Oleaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Grenadier','Lythraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol très humide'||x'0a'||'- Résistant au froid -12°C'||x'0a'||'- Besoin de chaleur pour fructifier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Groseillier','Grossulariaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Froid en hiver','- Expo sud/sud-ouest'||x'0a'||'- Forte chaleur en été'||x'0a'||'- Concurrence des herbes',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Haricot à écosser','Fabaceae',0.2,'Moyen',8.65,10,3,3,'16-30',6.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,5,5,12,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Haricot mangetout','Fabaceae',1.5,'Moyen',7,10,7,3,'16-30',6.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,6,4,13,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Hibiscus','Malvaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Houblon','Cannabaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Kaki-pomme','Ebenaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Kumquat','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Laitue','Asteraceae',2.2,'Moyen',13,0.15,800,4.5,'5-27',7,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,5,17,NULL,NULL,NULL,'Maintien un micro-climat humide',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Lavande','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol léger, drainé, plutôt calcaire',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires et répulsive','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mâche','Valerianaceae',1,'Moyen',77,0.6,660,5,'15-20',13.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,5,2,7,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Maïs','Poaceae',1,'Moyen',10,4,4.5,2,'16-30',12.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,15,6,15,NULL,NULL,NULL,'Tuteur',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mandarinier','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Marjolaine','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol drainé, léger, sec, sablonneux',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mélange',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mélilot','Fabaceae',NULL,'Moyen',NULL,1.75,120,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,6,4,9,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mélisse','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Melon','Cucurbitaceae',1.6,'Difficile',1.8,0.15,35,7,'24-35',6.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,7,16,NULL,NULL,NULL,'Allélopathique',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Menthe','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée ou mi‑ombragée'||x'0a'||'- Tous types de sol, bien drainé, humifère',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires et répulsive','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Moutarde','Brassicaceae',NULL,'Facile',NULL,1.3,130,NULL,'3-5',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,8,4,11,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mûrier platane','Moraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol profond et frais'||x'0a'||'- Résistant au froid -18°C',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mûrier sans épine','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Navet','Brassicaceae',2.2,'Moyen',85,0.3,600,4.5,'7-30',5.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,5,15,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Néflier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Noisetier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol fertile limono-argileux',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Noyer','Juglandaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,'- Gelées printanières'||x'0a'||'- Taille',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Oignon','Alliaceae',3,'Moyen',44,0.4,264,2,'10-30',22.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,6,15,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Olivier','Oleaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Chaleur','-Froid'||x'0a'||'-Sol argileux humide',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Oranger','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Origan','Lamiaceae',NULL,'Facile',20,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique'||x'0a0a'||'Vivace craignant le froid, cultivée comme une annuelle');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Panais','Apiaceae',1.5,'Moyen',35,0.5,220,1,'20',17.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,5,16,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Patate douce','Convolvulaceae',2,'Difficile',3.2,NULL,NULL,NULL,'25',NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,10,6,18,NULL,NULL,NULL,'Allélopathique fort',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pêcher','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','-Expo ensoleillèe'||x'0a'||'-Sol fertile','- Sol à humidité stagnante'||x'0a'||'- Gelées printanières'||x'0a'||'- Concurrence des herbes',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Persil','Apiaceae',1,'Moyen',2,1,600,3,'16-30',20,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,4,11,NULL,NULL,NULL,'Répulsif','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Phacélie','Hydrophyllaceae',NULL,'Moyen',NULL,1.5,550,NULL,'4-5',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Physalis','Solanaceae',1,'Facile',2,NULL,825,8,'20-22',25,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,5,15,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Plaqueminier','Ebenaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol bien drainé, frais et fertile'||x'0a'||'- Résistant au froid -18°C','Gelées printanières ( jeunes arbres) -5°C',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Poireau','Alliaceae',1.8,'Moyen',47,0.17,300.3,2,'13-24',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,16,6,20,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Poirier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol profond et frais','Sol à humidité stagnante',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pois à écosser','Fabaceae',0.6,'Moyen',40,20,6,4,'5-24',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,2,5,8,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pois mangetout','Fabaceae',1.2,'Moyen',40,20,8,4,'5-24',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,2,5,8,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Poivron piment','Solanaceae',2.5,'Moyen',4.4,0.075,150,4,'18-35',12.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,13,10,21,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pomme de terre','Solanaceae',2.8,'Moyen',2.7,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,8,21,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pommier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol frais'||x'0a'||'- Fraîcheur',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Prunier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,'- Sol humide et froid'||x'0a'||'- Gelées printanières'||x'0a'||'- Taille',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pyracantha','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Radis','Brassicaceae',0.7,'Facile',160,4.5,120,4.5,'7-32',4,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,7,4,9,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Radis noir','Brassicaceae',2.5,'Facile',26.5,4.5,120,4.5,'7-32',3.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,6,4,10,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Raifort','Brassicaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée à mi‑ombre'||x'0a'||'- Sol bien drainé, tous types',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Envaissant','Stérile, multiplication par bout de récine avec bougeon.');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Ricin','Euphorbiaceae',NULL,'Moyen',0.4,0.5,1,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,10,5,12,NULL,NULL,NULL,'Nématicide (tomate), repousse les pucerons verts du pois.','Compagne');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Romarin','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Répulsif','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Roquette','Brassicaceae',2.5,'Facile',107,NULL,660,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,5,13,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Salsifis','Asteraceae',2.25,'Moyen',40,1.1,100,12,'15',14,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sarrasin','Polygonaceae',0.2,'Facile',NULL,5.5,5.5,NULL,'10-15',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,8,4,11,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sarriette','Lamiaceae',NULL,'Moyen',8,NULL,NULL,NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Répulsif. Mélifère.','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sauge','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Allélopathique fort','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sorgho','Poaceae',0.6,'Moyen',NULL,4.5,27,NULL,'20-30',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,14,6,15,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Souci','Asteraceae',NULL,'Facile',8.5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,10,8,10,NULL,NULL,NULL,NULL,'Compagne');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sureau',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol profond, riche en azote et en MO, un peu humide, fertile.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tagètes','Asteraceae',NULL,'Facile',16,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires, nématicide, répulsif.','Compagne'||x'0a0a'||'Œillet d’Inde');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Thym','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires, répulsif.','Aromatique');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tilleul','Malvaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tomate','Solanaceae',8,'Moyen',3.5,0.03,350,4,'16-30',7,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,17,8,24,NULL,NULL,NULL,'Allélopathique fort, répulsif.',NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Topinambour','Asteraceae',1,'Facile',3.3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,10,5,16,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tournesol','Apiaceae',1,'Facile',8,NULL,50,7,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,10,8,15,NULL,NULL,NULL,'Allélopathique fort','Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Trèfle blanc','Fabaceae',NULL,'Moyen',NULL,1,50,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Trèfle violet','Fabaceae',NULL,'Moyen',NULL,2,40,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Vesce','Fabaceae',0.4,'Moyen',NULL,12,45,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
-INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,Taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Vigne',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+ALTER TABLE Espèces ADD COLUMN S_taille INTEGER;
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Abricotier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe, lumière et froid en hiver, soleil en été'||x'0a'||'- Ne demande pas de forte fertilisation','Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Absinthe','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol riche et léger',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Allélopathique fort','Aromatique semi-persistante');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Achillée millefeuille','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol  bien drainé, tout type',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Actinidia','Actinidiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo abrité,est/sud-est.'||x'0a'||'- Sol frais, riche en humus.'||x'0a'||'- Très résistant au froid.','Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Ail','Alliaceae',0.85,'Moyen',28,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,10,NULL,NULL,NULL,'Antibiotique, insectifuge, nématicide et antifongique',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Albizia','Fabaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Amandier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol profond, riche en calcaire'||x'0a'||'- Etés chauds et hivers courts'||x'0a'||'- Supporte sécheresse (200mm/an suffisant)','- Sol à humidité stagnante'||x'0a'||'- Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Amarante','Amaranthaceae',NULL,'Facile',6.25,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte des carabes',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Aneth','Apiaceae',NULL,'Difficile',5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Argousier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Artichaut','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol plutôt léger, riche et bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Asperge','Asparagaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol léger, bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Aubergine','Solanaceae',3,'Difficile',2.4,0.04,250,6,'24-30',6,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,16,7,21,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Bambou','Poaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Basilic','Lamiaceae',0.4,'Facile',3,NULL,600,NULL,NULL,10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,10,NULL,NULL,NULL,'Hôte d''insectes auxiliaires','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Betterave','Amaranthaceae',2.5,'Facile',22,1,50,6,'10-30',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,6,16,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Blette','Amaranthaceae',8,'Facile',6,1,60,5,'10-30',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,14,7,22,NULL,NULL,NULL,'Allélopathique',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Bourrache','Boraginaceae',NULL,'Facile',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Camomille','Asteraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé et sablonneux',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Capucine','Tropaeolaceae',NULL,'Facile',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,4,4,6,NULL,NULL,NULL,'Repousse les pucerons','Compagne');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Carotte','Apiaceae',3,'Difficile',80,0.35,925,4.5,'7-30',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,7,5,15,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Céleri','Apiaceae',5,'Moyen',5,0.02,2500,7,'16-21',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,16,7,21,NULL,NULL,NULL,'Repousse la piéride et la teigne du poireau',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Cerisier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol fertile, profond et bien drainé','S_taille',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Châtaignier','Fabaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Chaleur','- Sol argileux et humide'||x'0a'||'- Gelées printanières',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chayote','Cucurbitaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chénopode','Amaranthaceae',NULL,'Moyen',4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chénopode vivace','Amaranthaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo mi-ombragée'||x'0a'||'- Sol riche et léger, frais, riche en azote',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chicorée frisée','Asteraceae',NULL,'Facile',10,0.27,600,9,'25',4,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Scarole');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chicorée sauvage','Asteraceae',NULL,'Facile',12,0.27,700,8,'10',8.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou brocoli','Brassicaceae',1.5,'Moyen',3.3,0.03,250,4.5,'7-30',7.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,15,6,19,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou de Bruxelles','Brassicaceae',1,'Moyen',2.5,0.04,350,5.5,'7-20',7.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,13,6,16,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou de Chine','Brassicaceae',2,'Difficile',4,0.03,350,2.5,'7-30',5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,7,18,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou frisé','Brassicaceae',2,'Facile',3,0.03,300,5.5,'7-20',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,14,6,18,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou pommé','Brassicaceae',2,'Moyen',3,0.03,300,5,'7-30',6,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,14,8,21,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou-fleur','Brassicaceae',1.5,'Difficile',2.2,0.03,400,5.5,'7-30',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,19,8,26,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Chou-rave','Brassicaceae',3.5,'Facile',16,0.06,300,5,'7-30',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,6,17,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Ciboulette','Alliaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Citronnier','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Cognassier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol profond et frais'||x'0a'||'- Très résistant au froid'||x'0a'||'- Grosse chaleur',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Concombre','Cucurbitaceae',5,'Facile',1.4,0.125,35,10,'16-35',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,13,8,21,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Coriandre','Apiaceae',NULL,'Moyen',25,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,7,3,9,NULL,NULL,NULL,'Hôte d''insectes auxiliaires, repousse la mouche de la carotte','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Cosmos','Asteraceae',NULL,'Facile',8.5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Désoriente les pierides du chou et fait une ombre légère.',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Courge','Cucurbitaceae',5,'Difficile',0.75,0.4,3,5,'21-35',8,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,8,23,NULL,NULL,NULL,'Couvre sol, étouffe les petites plantes',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Courgette','Cucurbitaceae',4.5,'Facile',0.8,0.5,7,5,'21-35',8,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,15,8,17,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Echalote','Alliaceae',1.4,'Moyen',24,16,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,8,14,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Epinard','Amaranthaceae',2,'Moyen',50,0.75,110,4.5,'7-24',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,14,NULL,NULL,NULL,'Protège le chou de la hernie et des altises',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Feijoa','Myrtaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Tout type de sol'||x'0a'||'- Résistant au froid -10°C'||x'0a'||'- Besoin de chaleur pour fructifier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Fenouil','Apiaceae',2,'Moyen',12,0.5,200,4,'12',9,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,4,15,NULL,NULL,NULL,'Hôte d''insectes auxiliaires',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Fève','Fabaceae',4,'Moyen',17,45,0.75,5,'8',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,4,5,10,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Figuier','Moraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol frais et profond','Très sensible au gel',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Fraisier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée ou mi-ombre'||x'0a'||'- Sol riche et bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Framboisier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol léger, frais, riche en humus','- Sol à humidité stagnante'||x'0a'||'- Sécheresse excessive'||x'0a'||'- Concurrence des herbes',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Frêne','Oleaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Grenadier','Lythraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol très humide'||x'0a'||'- Résistant au froid -12°C'||x'0a'||'- Besoin de chaleur pour fructifier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Groseillier','Grossulariaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Froid en hiver','- Expo sud/sud-ouest'||x'0a'||'- Forte chaleur en été'||x'0a'||'- Concurrence des herbes',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Haricot à écosser','Fabaceae',0.2,'Moyen',40,10,3,3,'16-30',6.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,5,5,12,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Haricot mangetout','Fabaceae',1.5,'Moyen',40,10,7,3,'16-30',6.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,6,4,13,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Hibiscus','Malvaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Houblon','Cannabaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Kaki-pomme','Ebenaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Kumquat','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Laitue','Asteraceae',2.2,'Moyen',13,0.15,800,4.5,'5-27',7,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,5,17,NULL,NULL,NULL,'Maintien un micro-climat humide',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Lavande','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol léger, drainé, plutôt calcaire',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires et répulsive','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mâche','Valerianaceae',1,'Moyen',100,0.6,660,5,'15-20',13.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,5,2,7,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Maïs','Poaceae',1,'Moyen',10,4,4.5,2,'16-30',12.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,15,6,15,NULL,NULL,NULL,'Tuteur',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mandarinier','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Marjolaine','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée'||x'0a'||'- Sol drainé, léger, sec, sablonneux',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mélange',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mélilot','Fabaceae',NULL,'Moyen',NULL,1.75,120,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,6,4,9,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mélisse','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Melon','Cucurbitaceae',2.5,'Difficile',1,0.15,35,7,'24-35',6.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,7,16,NULL,NULL,NULL,'Allélopathique',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Menthe','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée ou mi‑ombragée'||x'0a'||'- Tous types de sol, bien drainé, humifère',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires et répulsive','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Moutarde','Brassicaceae',NULL,'Facile',NULL,1.3,130,NULL,'3-5',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,8,4,11,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mûrier platane','Moraceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol profond et frais'||x'0a'||'- Résistant au froid -18°C',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Mûrier sans épine','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Navet','Brassicaceae',3,'Moyen',100,0.3,600,4.5,'7-30',5.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,9,5,15,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Néflier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Noisetier',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol fertile limono-argileux',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Noyer','Juglandaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,'- Gelées printanières'||x'0a'||'- S_taille',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Oignon','Alliaceae',3,'Moyen',44,0.4,264,2,'10-30',22.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,6,15,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Olivier','Oleaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Chaleur','-Froid'||x'0a'||'-Sol argileux humide',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Oranger','Rutaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé','- Sol humide'||x'0a'||'- Froid et vent',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Origan','Lamiaceae',NULL,'Facile',20,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Aromatique'||x'0a0a'||'Vivace craignant le froid, cultivée comme une annuelle');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Panais','Apiaceae',3,'Moyen',25,0.5,220,1,'20',17.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,5,16,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Patate douce','Convolvulaceae',2,'Difficile',3.2,NULL,NULL,NULL,'25',NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,10,6,18,NULL,NULL,NULL,'Allélopathique fort',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pêcher','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','-Expo ensoleillèe'||x'0a'||'-Sol fertile','- Sol à humidité stagnante'||x'0a'||'- Gelées printanières'||x'0a'||'- Concurrence des herbes',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Persil','Apiaceae',NULL,'Moyen',50,1,600,3,'16-30',20,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,4,11,NULL,NULL,NULL,'Répulsif','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Phacélie','Hydrophyllaceae',NULL,'Moyen',NULL,1.5,550,NULL,'4-5',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Physalis','Solanaceae',1,'Difficile',1,NULL,1000,8,'16-30',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,11,5,15,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Plaqueminier','Ebenaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol bien drainé, frais et fertile'||x'0a'||'- Résistant au froid -18°C','Gelées printanières ( jeunes arbres) -5°C',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Poireau','Alliaceae',3.5,'Moyen',35,0.17,300.3,2,'13-24',15,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,16,6,20,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Poirier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol profond et frais','Sol à humidité stagnante',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pois à écosser','Fabaceae',0.6,'Moyen',65,20,6,4,'5-24',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,2,5,8,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pois mangetout','Fabaceae',1.2,'Moyen',65,20,8,4,'5-24',10,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,2,5,8,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Poivron piment','Solanaceae',5.5,'Moyen',3.3,0.075,150,4,'18-35',12.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,13,10,21,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pomme de terre','Solanaceae',4,'Moyen',6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,8,21,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pommier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Sol frais'||x'0a'||'- Fraîcheur',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Potiron','Cucurbitaceae',6,'Facile',0.5,0.3,3,5,'16-35',9.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,12,8,23,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Prunier','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,'- Sol humide et froid'||x'0a'||'- Gelées printanières'||x'0a'||'- S_taille',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Pyracantha','Rosaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Radis','Brassicaceae',0.7,'Facile',125,4.5,120,4.5,'7-32',4,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,7,4,9,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Radis noir','Brassicaceae',2,'Facile',30,4.5,120,4.5,'7-32',3.5,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,6,4,10,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Raifort','Brassicaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillée à mi‑ombre'||x'0a'||'- Sol bien drainé, tous types',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Envaissant','Stérile, multiplication par bout de récine avec bougeon.');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Ricin','Euphorbiaceae',NULL,'Moyen',0.4,0.5,1,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,10,5,12,NULL,NULL,NULL,'Nématicide (tomate), repousse les pucerons verts du pois.','Compagne');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Romarin','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Répulsif','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Roquette','Brassicaceae',2.5,'Facile',107,NULL,660,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,8,5,13,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Salsifis','Asteraceae',2.25,'Moyen',32,1.1,100,12,'15',14,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sarrasin','Polygonaceae',0.2,'Facile',NULL,5.5,5.5,NULL,'10-15',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,8,4,11,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sarriette','Lamiaceae',NULL,'Moyen',8,NULL,NULL,NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Répulsif. Mélifère.','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sauge','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Allélopathique fort','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sorgho','Poaceae',0.6,'Moyen',NULL,4.5,27,NULL,'20-30',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,14,6,15,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Souci','Asteraceae',NULL,'Facile',8.5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,10,8,10,NULL,NULL,NULL,NULL,'Compagne');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Sureau',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Sol profond, riche en azote et en MO, un peu humide, fertile.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tagètes','Asteraceae',NULL,'Facile',16,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires, nématicide, répulsif.','Compagne'||x'0a0a'||'Œillet d’Inde');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Thym','Lamiaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','- Expo ensoleillèe'||x'0a'||'- Sol bien drainé',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Hôte d''insectes auxiliaires, répulsif.','Aromatique');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tilleul','Malvaceae',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tomate','Solanaceae',8,'Moyen',2.7,0.03,350,4,'16-30',7,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,17,8,24,NULL,NULL,NULL,'Allélopathique fort, répulsif.',NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Topinambour','Asteraceae',1,'Facile',3.3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,10,5,16,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Tournesol','Apiaceae',1,'Facile',8,NULL,50,7,NULL,NULL,NULL,NULL,'x',NULL,NULL,NULL,NULL,NULL,10,8,15,NULL,NULL,NULL,'Allélopathique fort','Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Trèfle blanc','Fabaceae',NULL,'Moyen',NULL,1,50,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Trèfle violet','Fabaceae',NULL,'Moyen',NULL,2,40,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Vesce','Fabaceae',0.4,'Moyen',NULL,12,45,NULL,'5-10',8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,5,4,8,NULL,NULL,NULL,NULL,'Engrais vert');
+INSERT INTO Espèces (Espèce,Famille,Rendement,Niveau,Densité,Dose_semis,Nb_graines_g,FG,T_germ,Levée,Irrig,Conservation,A_planifier,Vivace,Favorable,Défavorable,S_taille,Obj_annuel,N,P,K,Date_inv,Inventaire,Prix_kg,Effet,Notes) VALUES ('Vigne',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'x','Expo ensoleillèe',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
 UPDATE Espèces SET Effet='Allélopathique fort' WHERE Espèce='Absinthe';
 UPDATE Espèces SET Effet='Antibiotique, insectifuge, nématicide et antifongique' WHERE Espèce='Ail';
@@ -1199,4 +792,14 @@ INSERT INTO Associations_détails (Ind,Association,Espèce,Groupe,Famille,Requis
 INSERT INTO Associations_détails (Ind,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Vigne +1 -Prunier','Vigne +','Prunier',NULL,'Rosaceae',NULL,NULL);
 INSERT INTO Associations_détails (Ind,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Vigne +1 -Pêcher','Vigne +','Pêcher',NULL,'Rosaceae',NULL,NULL);
 
-)#");
+ALTER TABLE ITP ADD COLUMN Esp_rangs REAL;
+UPDATE ITP SET Esp_rangs=round((SELECT Valeur FROM Params WHERE Paramètre='Largeur_planches')*100/Nb_rangs/5)*5;
+
+ALTER TABLE ITP ADD COLUMN Nb_graines_plant REAL;
+UPDATE ITP SET Nb_graines_plant=Nb_graines_trou;
+
+ALTER TABLE Récoltes ADD COLUMN Réc_ter TEXT;
+UPDATE Récoltes SET Réc_ter='Auto'
+WHERE (SELECT (C.Terminée LIKE 'x%')OR(C.Récolte_faite LIKE 'x%') FROM Cultures C WHERE C.Culture=Récoltes.Culture)AND
+      (Récoltes.Date=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=Récoltes.Culture));
+

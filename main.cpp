@@ -22,12 +22,13 @@
 
 void MainWindow::SetEnabledDataMenuEntries(bool b)
 {
-    ui->mCopyBDD->setEnabled(b);
+    ui->mCopyDB->setEnabled(b);
     ui->mUpdateSchema->setEnabled(b);
     ui->mTableList->setEnabled(b);
     ui->mViewList->setEnabled(b);
     ui->mFKErrors->setEnabled(b);
-    ui->mSchemaBDD->setEnabled(b);
+    ui->mSQLiteSchema->setEnabled(b);
+    ui->mAddSchema->setEnabled(b);
     ui->mParam->setEnabled(b);
     ui->mNotes->setEnabled(b);
     for (int i=0; i < ui->mBaseData->actions().count(); i++)
@@ -161,7 +162,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         if (pQuery.ExecShowErr("SELECT Valeur FROM Info_Potaléger WHERE N=1")) {//Si la vue Info n'existe pas ou pas correcte, on tente pas de mettre cette BDD à jour.
             pQuery.next();
             sVerBDD=pQuery.value(0).toString();
-        } else if (pQuery.Selec0ShowErr("SELECT count() FROM sqlite_master WHERE (name='Cultures')OR(name='ITP')")==2) {//La vue Info n'existe pas ou pas correcte, mais cela semble une BDD Potaléger.
+        } else if (pQuery.Select0ShowErr("SELECT count() FROM sqlite_master WHERE (name='Cultures')OR(name='ITP')")==2) {//La vue Info n'existe pas ou pas correcte, mais cela semble une BDD Potaléger.
             sVerBDD="?";
         } else {
             MessageDlg("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
@@ -306,7 +307,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     // }
 
     if (result) {
-        setWindowTitle("Potaléger"+pQuery.Selec0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
+        setWindowTitle("Potaléger"+pQuery.Select0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
 
         //Activer les menus
         SetEnabledDataMenuEntries(true);
@@ -415,7 +416,7 @@ void MainWindow::RestaureParams()
                                         tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
                                        {tr("Sélectionner une base de données existante"),
                                         tr("Créer une BDD avec les données de base"),
-                                        tr("Créer une BDD vide")},1,QStyle::NStandardPixmap);
+                                        tr("Créer une BDD vide")},1,{},QStyle::NStandardPixmap);
         if (choice==0)
             on_mSelecDB_triggered();
         else if (choice==1)
@@ -425,10 +426,6 @@ void MainWindow::RestaureParams()
     }
      // else
      //    PotaDbOpen(settings.value("database_path").toString(),"",false);
-
-    PathExport=settings.value("PathExport").toString();
-    PathImport=settings.value("PathImport").toString();
-    TypeImport=settings.value("TypeImport").toInt();
 
 }
 
@@ -451,10 +448,6 @@ void MainWindow::SauvParams()
         if (file.exists())
             settings.setValue("database_path", ui->lDB->text());
     }
-
-    settings.setValue("PathExport",PathExport);
-    settings.setValue("PathImport",PathImport);
-    settings.setValue("TypeImport",TypeImport);
 }
 
 void MainWindow::SetUi(){
@@ -531,6 +524,7 @@ void MainWindow::SetMenuIcons() {
     //ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
     ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
     ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
+    ui->mUnitesProd->setIcon(QIcon(TablePixmap("Planches_Unités_prod","")));
 
     ui->mPlanifIlots->setIcon(QIcon(TablePixmap("Planif_ilots","")));
     ui->mPlanifEspeces->setIcon(QIcon(TablePixmap("Planif_espèces","")));
@@ -541,7 +535,6 @@ void MainWindow::SetMenuIcons() {
     ui->mPlants->setIcon(QIcon(TablePixmap("Variétés__cde_plants","")));
 
     ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
-    ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__couverture","")));
     ui->mASemer->setIcon(QIcon(TablePixmap("Cultures","")));
     ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
     ui->mCuASemerPep->setIcon(QIcon(TablePixmap("Cultures__à_semer_pep","")));
@@ -568,6 +561,8 @@ void MainWindow::SetMenuIcons() {
     ui->mEsSaisieConso->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
     ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
 
+    ui->mBilans->setIcon(QIcon(TablePixmap("Bilans_annuels","")));
+    ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__Bilans_annuels","")));
     ui->mAnaITPA->setIcon(QIcon(TablePixmap("ITP__analyse_a","")));
     ui->mAnaITPV->setIcon(QIcon(TablePixmap("ITP__analyse_v","")));
     ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__analyse","")));

@@ -1,4 +1,60 @@
-QString sUpdateBaseDataNPKE=QStringLiteral(R"#(
+BEGIN TRANSACTION;
+
+ALTER TABLE Espèces ADD COLUMN N REAL;
+ALTER TABLE Espèces ADD COLUMN P REAL;
+ALTER TABLE Espèces ADD COLUMN K REAL;
+
+CREATE TABLE Fertilisants (Fertilisant TEXT PRIMARY KEY,
+                           Type TEXT,
+                           Fonction TEXT,
+                           pH REAL,
+                           N REAL,
+                           N_coef REAL,
+                           P REAL,
+                           P_coef REAL,
+                           K REAL,
+                           K_coef REAL,
+                           Ca REAL,
+                           Ca_coef REAL,
+                           Fe REAL,
+                           Fe_coef REAL,
+                           Mg REAL,
+                           Mg_coef REAL,
+                           Na REAL,
+                           Na_coef REAL,
+                           S REAL,
+                           S_coef REAL,
+                           Si REAL,
+                           Si_coef REAL) WITHOUT ROWID;
+
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Algues marines','Amendement','Oligo-éléments, stimule croissance et résistance');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Broyat de bois','Couvert','Structurant, aère et nourrit les micro-organismes lignivores');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Broyat de chanvre','Couvert','Structurant azoté, bonne source de K et MO');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Cendre de bois','Amendement','Alcalinisant potassique, hausse du pH, apport de K, Ca et oligos');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Compost de champignons','Amendement','Résidu organique enrichi, apport de MO et Ca, structure');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Compost de déchets verts demi-mûr','Amendement','Stimule la vie du sol, MO, structure, nutriments pas encore disponibles');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Compost de déchets verts mûr','Amendement','Apport de MO stable, structuration');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Copeaux de corne','Engrais','Azote lent');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Crottin d’ânes','Amendement','Amendement équilibré à décomposition modérée');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Farine d’os','Engrais','Apport durable de P et Ca');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Farine de poisson','Engrais','Organique complet, riche en NPK, action moyennement rapide');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Farine de sang','Engrais','Apport d’azote soluble, action rapide');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fiente de poules séchées','Engrais','Organique concentré, apport direct de NPK, action rapide');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Foin','Couvert','Biomasse carbonée, alimentation du sol et protection contre l’érosion');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de cheval','Amendement','Fertilisant organique fibreux, structuration du sol, fertilisation lente');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de lapin','Amendement','Fertilisant organique très riche, utilisable frais');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de mouton','Amendement','Fertilisant organique riche en NPK, chauffe bien');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de poules','Amendement','Fertilisant organique NPK + MO, forte activité microbienne');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Fumier de vache','Amendement','Fertilisant organique, apport de MO, effet structurant');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Guano','Engrais','Fertilisation rapide, riche en P et N');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Lombricompost','Amendement','Compost enrichi en microflore, stimulation biologique, fertilisation douce');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Paille','Couvert','Matière organique carbonée, structuration, alimentation des microbes');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de consoude','Engrais','Biostimulant, apport de K et oligo-éléments');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de pissenlit','Biostimulant','Stimulant racinaire et croissance');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin de prêle','Biostimulant','Fongistatique siliceux, renforcement des défenses naturelles');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Purin d’ortie','Engrais','Biostimulant azoté, stimulation végétative, faible NPK');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Tourteau de ricin','Engrais','Organique lent, riche en N, répulsif naturel (nématicide)');
+INSERT INTO Fertilisants (Fertilisant, Type,Fonction) VALUES ('Urine stockée','Engrais','Source d’azote minéral rapidement assimilable');
 
 UPDATE Espèces SET N=9,P=4,K=10 WHERE Espèce LIKE 'Ail%';
 UPDATE Espèces SET N=16,P=7,K=21 WHERE Espèce LIKE 'Aubergine%';
@@ -64,10 +120,6 @@ UPDATE Espèces SET N=5,P=4,K=8 WHERE Espèce LIKE 'Trèfle blanc%';
 UPDATE Espèces SET N=5,P=4,K=8 WHERE Espèce LIKE 'Trèfle violet%';
 UPDATE Espèces SET N=5,P=4,K=8 WHERE Espèce LIKE 'Vesce%';
 
-)#");
-
-QString sUpdateBaseDataNPKF=QStringLiteral(R"#(
-
 UPDATE Fertilisants SET pH=7.8,N=1.3,N_coef=50,P=0.3,P_coef=35,K=2.3,K_coef=75,Ca=1.5,Ca_coef=55,Fe=0.08,Fe_coef=20,Na=1.5,Na_coef=75,Mg=0.75,Mg_coef=55,S=0.35,S_coef=70,Si=0.35,Si_coef=20 WHERE (Fertilisant LIKE 'Algues %');
 UPDATE Fertilisants SET pH=6,N=0.3,N_coef=15,P=0.08,P_coef=15,K=0.55,K_coef=45,Ca=0.35,Ca_coef=15,Fe=0.05,Fe_coef=10,Na=0.08,Na_coef=15,Mg=0.15,Mg_coef=20,S=0.08,S_coef=20,Si=0.08,Si_coef=10 WHERE (Fertilisant LIKE 'Broyat %')AND(Fertilisant LIKE '%bois%');
 UPDATE Fertilisants SET pH=6.4,N=1.2,N_coef=40,P=0.3,P_coef=25,K=1.3,K_coef=60,Ca=0.75,Ca_coef=40,Fe=0.08,Fe_coef=10,Na=0.08,Na_coef=50,Mg=0.35,Mg_coef=40,S=0.15,S_coef=50,Si=0.1,Si_coef=10 WHERE (Fertilisant LIKE 'Broyat %')AND(Fertilisant LIKE '%chanvre%');
@@ -97,5 +149,4 @@ UPDATE Fertilisants SET pH=6.5,N=0.43,N_coef=45,P=0.11,P_coef=25,K=0.85,K_coef=8
 UPDATE Fertilisants SET pH=6.4,N=4.8,N_coef=60,P=1.3,P_coef=30,K=1.1,K_coef=65,Ca=0.75,Ca_coef=45,Fe=0.08,Fe_coef=15,Na=0.08,Na_coef=50,Mg=0.4,Mg_coef=50,S=0.3,S_coef=65,Si=0.1,Si_coef=10 WHERE (Fertilisant LIKE 'Tourteau %')AND(Fertilisant LIKE '%ricin%');
 UPDATE Fertilisants SET pH=8.9,N=2.8,N_coef=85,P=0.55,P_coef=45,K=1.1,K_coef=90,Ca=0.27,Ca_coef=65,Fe=0.03,Fe_coef=25,Na=0.5,Na_coef=75,Mg=0.1,Mg_coef=70,S=0.4,S_coef=75,Si=0.05,Si_coef=5 WHERE (Fertilisant LIKE 'Urine%');
 
-
-)#");
+COMMIT TRANSACTION;

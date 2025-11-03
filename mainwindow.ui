@@ -501,10 +501,11 @@
      <addaction name="mTableList"/>
      <addaction name="mViewList"/>
      <addaction name="mFKErrors"/>
-     <addaction name="mSchemaBDD"/>
+     <addaction name="mSQLiteSchema"/>
+     <addaction name="mAddSchema"/>
     </widget>
     <addaction name="mSelecDB"/>
-    <addaction name="mCopyBDD"/>
+    <addaction name="mCopyDB"/>
     <addaction name="mUpdateSchema"/>
     <addaction name="mCreateDB"/>
     <addaction name="mCreateEmptyDB"/>
@@ -545,6 +546,7 @@
     <addaction name="mRotationManquants"/>
     <addaction name="mSuccessionParPlanche"/>
     <addaction name="mIlots"/>
+    <addaction name="mUnitesProd"/>
    </widget>
    <widget class="QMenu" name="mPlanif">
     <property name="title">
@@ -575,7 +577,6 @@
      <addaction name="mCuASemerEP"/>
     </widget>
     <addaction name="mCuNonTer"/>
-    <addaction name="mCouverture"/>
     <addaction name="separator"/>
     <addaction name="mASemer"/>
     <addaction name="mCuAPlanter"/>
@@ -593,6 +594,9 @@
     <property name="title">
      <string>Analyses</string>
     </property>
+    <addaction name="mBilans"/>
+    <addaction name="mCouverture"/>
+    <addaction name="separator"/>
     <addaction name="mAnaITPA"/>
     <addaction name="mAnaITPV"/>
     <addaction name="mAnaCultures"/>
@@ -607,8 +611,6 @@
     <addaction name="mCloseTabs"/>
     <addaction name="mParam"/>
     <addaction name="mNotes"/>
-    <addaction name="mImport"/>
-    <addaction name="mExport"/>
    </widget>
    <widget class="QMenu" name="mStock">
     <property name="title">
@@ -915,7 +917,7 @@
     <string>Créer une BDD vide</string>
    </property>
   </action>
-  <action name="mCopyBDD">
+  <action name="mCopyDB">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -985,16 +987,6 @@
     <string>Mettre à jour le schéma de BDD</string>
    </property>
   </action>
-  <action name="mImport">
-   <property name="text">
-    <string>Importer des données</string>
-   </property>
-  </action>
-  <action name="mExport">
-   <property name="text">
-    <string>Exporter les données</string>
-   </property>
-  </action>
   <action name="mIncDatesCultures">
    <property name="enabled">
     <bool>false</bool>
@@ -1048,7 +1040,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Couverture des objectifs</string>
+    <string>Bilans annuels par espèces</string>
    </property>
   </action>
   <action name="mNotes">
@@ -1239,7 +1231,7 @@
     <string>Liste des vues</string>
    </property>
   </action>
-  <action name="mSchemaBDD">
+  <action name="mSQLiteSchema">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -1247,7 +1239,7 @@
     <iconset theme="QIcon::ThemeIcon::DocumentPageSetup"/>
    </property>
    <property name="text">
-    <string>Schéma de la BDD</string>
+    <string>Schéma SQLite</string>
    </property>
   </action>
   <action name="mEspecesToutes">
@@ -1256,6 +1248,33 @@
    </property>
    <property name="text">
     <string>Toutes</string>
+   </property>
+  </action>
+  <action name="mAddSchema">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentPageSetup"/>
+   </property>
+   <property name="text">
+    <string>Schéma additionnel (bêta)</string>
+   </property>
+  </action>
+  <action name="mUnitesProd">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Unités de production</string>
+   </property>
+  </action>
+  <action name="mBilans">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Bilans annuels</string>
    </property>
   </action>
  </widget>

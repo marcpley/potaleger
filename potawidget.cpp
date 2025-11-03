@@ -5,6 +5,8 @@
 #include "qheaderview.h"
 #include "qlineedit.h"
 #include "qmenu.h"
+#include "qsettings.h"
+#include "qshortcut.h"
 #include "qsqlerror.h"
 #include "PotaUtils.h"
 #include <QStandardItemModel>
@@ -12,9 +14,11 @@
 #include <QList>
 #include <Qt>
 #include <QLabel>
-#include "PotaUtils.h"
 #include "potagraph.h"
-
+#include "qtimer.h"
+#include <QFileDialog>
+#include <QWidgetAction>
+#include <QScrollBar>
 
 PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 {
@@ -51,11 +55,11 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     pbCommit=new QToolButton(this);
     pbCommit->setIcon(QIcon(":/images/commit.svg"));
     // Associer plusieurs raccourcis
-    QAction *action=new QAction(pbCommit);
-    action->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Enter), QKeySequence(Qt::CTRL | Qt::Key_Return)});
-    QObject::connect(action, &QAction::triggered, pbCommit, &QToolButton::click);
-    pbCommit->addAction(action);
-    pbCommit->setToolTip(tr("Enregistrer les modifications en cours dans le fichier.")+"\n"+
+    aCommit=new QAction(pbCommit);
+    aCommit->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Enter), QKeySequence(Qt::CTRL | Qt::Key_Return)});
+    QObject::connect(aCommit, &QAction::triggered, pbCommit, &QToolButton::click);
+    pbCommit->addAction(aCommit);
+    pbCommit->setToolTip(tr("Enregistrer les modifications en cours dans la BDD.")+"\n"+
                          "Ctrl + Enter");
     pbCommit->setEnabled(false);
     pbCommit->setVisible(false);
@@ -200,6 +204,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     connect(tv->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PotaWidget::selChanged);
     connect(model, &PotaTableModel::dataChanged, this, &PotaWidget::dataChanged);
     connect(tv->verticalHeader(), &QHeaderView::sectionClicked,this, &PotaWidget::headerRowClicked);
+    //connect(tv->verticalScrollBar(), &QScrollBar::valueChanged, this, &PotaWidget::onVBarValueChanged, Qt::UniqueConnection);
 
     editNotes=new QTextEdit();
     editNotes->setParent(tv);
@@ -211,13 +216,20 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     palette.setColor(QPalette::Text, QApplication::palette().color(QPalette::ToolTipText));
     editNotes->setPalette(palette);
 
-    QAction* aEditNotes=new QAction(tv);
-    aEditNotes->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
-    connect(aEditNotes, &QAction::triggered, [this]() {
-        hEditNotes(tv->currentIndex());
+    aSaveNotes=new QAction(editNotes);
+    aSaveNotes->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_Enter), QKeySequence(Qt::CTRL | Qt::Key_Return)});
+    connect(aSaveNotes, &QAction::triggered, [this]() {
+        toogleReadOnlyEditNotes(tv->currentIndex());
     });
-    //connect(aEditNotes, &QAction::triggered, this, &PotaWidget::hEditNotes);
-    tv->addAction(aEditNotes);
+    aSaveNotes->setEnabled(false);
+    tv->addAction(aSaveNotes);
+
+    QAction* aEscapeNotes=new QAction(editNotes);
+    aEscapeNotes->setShortcut(Qt::Key_Escape);
+    connect(aEscapeNotes, &QAction::triggered, [this]() {
+        toogleReadOnlyEditNotes(tv->currentIndex(),true);
+    });
+    tv->addAction(aEscapeNotes);
 
     editSelInfo=new QTextEdit();
     editSelInfo->setParent(this);
@@ -427,7 +439,9 @@ void PotaWidget::Init(QString TableName)
 void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 {
     if (bUserCurrChanged){
-        tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
+
+        tv->viewport()->update();
+        //tv->clearSpans();//Force redraw of grid, for selected ligne visibility.
 
         // sbInsertRows->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
         // pbInsertRow->setEnabled(bAllowInsert and (model->rowsToRemove.count()==0));
@@ -460,9 +474,11 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
 
 
         if (pbEdit->isChecked() and !editNotes->isReadOnly()) {
-            hEditNotes(pre);
+            toogleReadOnlyEditNotes(pre);
         }
         editNotes->setReadOnly(true);
+        aSaveNotes->setEnabled(false);
+        aCommit->setEnabled(true);
 
         if (AcceptReturns(sFieldName)){
             QString text=model->data(cur,Qt::DisplayRole).toString();
@@ -485,7 +501,627 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
         //dbSuspend(model->db,true,pbEdit->isChecked(),model->label);//Normaly not necessary but could correct a case where suspend is wrongly OFF.
 
         editSelInfo->setVisible(false);
+
+        //Keep visible rows above and below the current line.
+        int autoScroll = 0;
+        if (tv->rowViewportPosition(cur.row())>tv->height()-7*tv->rowHeight(cur.row())) {
+            autoScroll=1; //tv->verticalScrollBar()->value()+
+        } else if (tv->rowViewportPosition(cur.row())<3*tv->rowHeight(cur.row())) {
+            autoScroll=-1; //tv->verticalScrollBar()->value()
+        }
+        if (autoScroll!=0 and
+            (autoScroll+tv->verticalScrollBar()->value()<=tv->verticalScrollBar()->maximum())and
+            (autoScroll+tv->verticalScrollBar()->value()>=0)) { //and !editNotes->isVisible()
+            if (editNotes->isVisible()) {
+                qDebug() << model->record(cur.row()).value(0).toString() << autoScroll << tv->rowHeight(cur.row());
+                editNotes->move(editNotes->x(),editNotes->y()-autoScroll*tv->rowHeight(cur.row()));
+            }
+            autoScroll+=tv->verticalScrollBar()->value();
+
+            QScrollBar *vbar = tv->verticalScrollBar();
+            QTimer::singleShot(0, this, [vbar, autoScroll, this]() {
+            vbar->setValue(autoScroll);
+            tv->viewport()->update();
+            });
+        }
     }
+}
+
+int PotaWidget::exportToFile(QString sFileName, QString format, QString baseDataName) {
+    QString sTableName=model->RealTableName();
+    if (sTableName=="Temp_UserSQL") {
+        QFileInfo fi(sFileName);
+        sTableName=fi.baseName();
+    }
+
+    QSqlTableModel *exportModel;
+    QSqlQuery exportQuery(*model->db);
+    if (!baseDataName.isEmpty()) {
+        if (format!="csv")
+            return -1;
+        exportModel=new QSqlTableModel();
+        exportQuery.exec("SELECT * FROM "+baseDataName+";");
+        exportModel->setQuery(exportQuery);
+        //exportModel->setHeaderData()
+        //exportModel->select();
+        for (int col=0; col < exportModel->columnCount(); ++col) {
+            exportModel->setHeaderData( col,Qt::Horizontal,exportModel->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString(),Qt::EditRole);
+        }
+    } else {
+        exportModel=model;
+    }
+
+    QByteArray data;
+    QStringList dataTypes;
+    PotaQuery pQuery(*model->db);
+    QString decimalSep;
+    QString header="";
+    decimalSep=pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Export_sep_decim'").toString();
+    if(decimalSep.isEmpty()) {
+        QLocale locale;
+        decimalSep=QString(locale.decimalPoint());
+    }
+    QString ColSep;
+    if (format=="csv") {
+        ColSep=pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Export_sep_col'").toString();
+        if(ColSep.isEmpty())
+            ColSep=";";
+    } else {
+        ColSep=",";
+    }
+
+
+    //Header export
+    QModelIndexList selectedIndexes=tv->selectionModel()->selectedIndexes();
+    QStringList selectedColumns;
+    bool updateAllColumns=false;
+    if (format=="INSERT") header.append("INSERT INTO "+sTableName+" (");
+    else if (format=="UPDATE") {
+        header.append("UPDATE "+sTableName+" SET ");
+        for (const QModelIndex &index : selectedIndexes) {
+            selectedColumns.append(model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString());
+        }
+        updateAllColumns=(selectedColumns.count()==0 or
+                          (selectedColumns.count()==1 and selectedColumns[0]==model->sPrimaryKey));
+    }
+    bool firstCol=true;
+    for (int col=0; col < exportModel->columnCount(); ++col) {
+        if (format=="csv") {
+            if (!firstCol) header.append(ColSep);
+            header.append(exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString());
+            dataTypes.append(DataType(model->db,sTableName,exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()));
+            firstCol=false;
+        } else if (!ReadOnly(model->db,sTableName,exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString())) {
+            if (format=="INSERT") { //All not readonly columns
+                if (!firstCol) header.append(ColSep);
+                header.append(exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString());
+                firstCol=false;
+                dataTypes.append(DataType(model->db,sTableName,exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()));
+            } else {
+                if ((updateAllColumns or selectedColumns.contains(exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()))and
+                    exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()!=model->sPrimaryKey) //Not PK column
+                    dataTypes.append(DataType(model->db,sTableName,exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()));
+                else
+                    dataTypes.append(""); //Not export this column
+            }
+        } else {
+            dataTypes.append(""); //Not export this column
+        }
+    }
+    if (format=="csv")
+        data.append(header.toUtf8()+"\n");
+    else if (format=="INSERT")
+        header.append(") VALUES (");
+
+    int exportedRow=-1;
+    int totalRow=exportModel->rowCount();
+    QFile FileExport(sFileName);
+    FileExport.open(QIODevice::WriteOnly);
+    if (FileExport.write(data)!=-1) {
+        data.clear();
+
+        AppBusy(true,model->progressBar,totalRow,lTabTitle->text().trimmed()+" %p%");
+
+        //Data export
+        exportedRow=0;
+        for (int row=0; row < exportModel->rowCount(); ++row) {
+            QString line="";
+            QString pkValue;
+            bool firstCol=true;
+            if (format!="csv") line.append(header);
+            for (int col=0; col < exportModel->columnCount(); ++col) {
+                if (format=="csv") {
+                    if (!firstCol) line.append(ColSep);
+                    if (dataTypes[col]=="REAL")
+                        line.append(EscapeCSV(StrReplace(exportModel->data(exportModel->index(row, col),Qt::EditRole).toString(),".",decimalSep),ColSep));
+                    else
+                        line.append(EscapeCSV(exportModel->data(exportModel->index(row, col),Qt::EditRole).toString(),ColSep));
+                    firstCol=false;
+                } else if (dataTypes[col]!="") {
+                    if (!firstCol) line.append(ColSep);
+                    if (exportModel->data(exportModel->index(row, col),Qt::EditRole).isNull())
+                        line.append(iif(format=="UPDATE",exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()+"=","").toString()+
+                                    "NULL");
+                    else if (dataTypes[col]=="REAL" or dataTypes[col].startsWith("INT"))
+                        line.append(iif(format=="UPDATE",exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()+"=","").toString()+
+                                    exportModel->data(exportModel->index(row, col),Qt::EditRole).toString());
+                    else
+                        line.append(iif(format=="UPDATE",exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()+"=","").toString()+
+                                    EscapeSQL(exportModel->data(exportModel->index(row, col),Qt::EditRole).toString()));
+                    firstCol=false;
+                }
+                if (format=="UPDATE" and model->sPrimaryKey==exportModel->headerData(col,Qt::Horizontal,Qt::EditRole).toString()) {
+                    if (dataTypes[col]=="REAL" or dataTypes[col].startsWith("INT"))
+                        pkValue=exportModel->data(exportModel->index(row, col),Qt::EditRole).toString();
+                    else
+                        pkValue=EscapeSQL(exportModel->data(exportModel->index(row, col),Qt::EditRole).toString());
+                }
+            }
+            if (format=="INSERT") line.append(");");
+            else if (format=="UPDATE") line.append(" WHERE "+model->sPrimaryKey+"="+pkValue+";");
+            data.append(line.toUtf8()+"\n");
+            if (FileExport.write(data)!=-1)
+                exportedRow+=1;
+            data.clear();
+            model->progressBar->setValue(row);
+        }
+
+        FileExport.close();
+        AppBusy(false,model->progressBar);
+    }
+    if (!baseDataName.isEmpty()) {
+        exportModel->clear();
+        exportQuery.clear();
+        delete exportModel;
+        exportModel = nullptr;
+    }
+
+    return exportedRow;
+}
+
+void PotaWidget::exportData() {
+    QSettings settings;
+    QString PathExport=settings.value("PathExport").toString();
+    if (PathExport.isEmpty())
+        PathExport=settings.value("PathImport").toString();
+
+    QString selectedFilter;
+    QString sFileName=QFileDialog::getSaveFileName(this, tr("Exporter les données dans un fichier %1").arg("CSV"),
+                                                     PathExport+lTabTitle->text().trimmed(),  "*.csv;;SQL INSERT (*.sql);;SQL UPDATE (*.sql)",
+                                                     &selectedFilter,QFileDialog::DontConfirmOverwrite);
+    //Check filename.
+    if (sFileName.endsWith("."))
+        sFileName.removeLast();
+    if (sFileName.isEmpty()) return;
+    QString format;
+    if (selectedFilter=="*.csv") {
+        if (StrLast(sFileName.toLower(),4)!=".csv") sFileName+=".csv";
+        format="csv";
+    } else {
+        if (StrLast(sFileName.toLower(),4)!=".sql") sFileName+=".sql";
+        if (selectedFilter=="SQL INSERT (*.sql)")
+            format="INSERT";
+        else
+            format="UPDATE";
+    }
+
+    QFileInfo FileInfoVerif;
+    FileInfoVerif.setFile(sFileName);
+    if (!FileInfoVerif.exists() or
+        OkCancelDialog("Potaléger",tr("Le fichier existe déjà")+"\n"+
+                           sFileName+"\n"+
+                           FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
+                           tr("Remplacer ?"),QStyle::SP_MessageBoxWarning,600)) {
+        QFile FileInfo2;
+        if (FileInfoVerif.exists()) {
+            FileInfo2.setFileName(sFileName);
+            if (!FileInfo2.remove()) {
+                MessageDlg("Potaléger",tr("Impossible de supprimer le fichier")+"\n"+
+                                  sFileName,"",QStyle::SP_MessageBoxCritical);
+                return;
+            }
+        }
+
+        PathExport=FileInfoVerif.absolutePath()+QDir::separator();
+
+        //Export
+        QFile FileExport(sFileName);
+        if (!FileExport.open(QIODevice::WriteOnly)) {// | QIODevice::Text
+            MessageDlg("Potaléger",tr("Impossible de créer le fichier")+"\n"+
+                              sFileName,"",QStyle::SP_MessageBoxCritical);
+            return;
+        }
+
+        int totalRow=model->rowCount();
+        int exportedRow=exportToFile(sFileName,format);
+
+        settings.setValue("PathExport",PathExport);
+
+        if (exportedRow==totalRow) {
+            MessageDlg("Potaléger",tr("%1 lignes exportées vers le fichier").arg(str(totalRow))+"\n"+
+                              sFileName,"",QStyle::SP_MessageBoxInformation);
+        } else
+            MessageDlg("Potaléger",tr("%1 sur %2 lignes exportées vers le fichier").arg(str(exportedRow)).arg(str(totalRow))+"\n"+
+                              sFileName,"",QStyle::SP_MessageBoxWarning);
+    }
+}
+
+void PotaWidget::importData() {
+    if (pbCommit->isEnabled()) {
+        if (YesNoDialog("Potaléger",lTabTitle->text().trimmed()+"\n\n"+
+                        tr("Valider les modifications en cours ?"))) {
+            if (!model->SubmitAllShowErr())
+                return;
+        } else {
+            if (!model->RevertAllShowErr())
+                return;
+        }
+    } else if (!pbEdit->isChecked()){
+        return;
+    }
+
+    QSettings settings;
+    QString PathImport=settings.value("PathImport").toString();
+
+    if (PathImport.isEmpty())
+        PathImport=settings.value("PathExport").toString();;
+
+    QString sFileName=QFileDialog::getOpenFileName(this, tr("Importer des données"),
+                                                     PathImport+lTabTitle->text().trimmed(), "*.csv");
+
+    //Check filename.
+    if (sFileName.isEmpty()) return;
+
+    importCSV(sFileName);
+}
+
+void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableResetTable, bool baseData) {
+    QFileInfo FileInfoVerif;
+    FileInfoVerif.setFile(sFileName);
+    QString PathImport=FileInfoVerif.absolutePath()+QDir::separator();
+
+    QFile FileImport(sFileName);
+    if (!FileImport.open(QIODevice::ReadOnly)) {
+        MessageDlg("Potaléger",tr("Impossible d'ouvrir le fichier")+"\n"+
+                   sFileName,"",QStyle::SP_MessageBoxCritical);
+        return;
+    }
+
+    QString data,info,info2;
+    QStringList lines,linesToImport,fieldNames,dataTypes,valuesToImport;
+    QList<int> fieldindexes;
+    data.append(FileImport.readAll().toStdString());
+    lines=data.split("\n");
+
+    //Header check
+    fieldNames=lines[0].split(";");
+    int nbColImport=fieldNames.count();
+    int primaryFieldImport=-1;
+    info="";
+    for (int col=0; col < nbColImport; ++col) {
+        fieldindexes.append(model->FieldIndex(fieldNames[col]));
+        if (fieldindexes[col]==-1 or//Column don't exists in the table.
+            model->nonEditableColumns.contains(fieldindexes[col]) or//Column is readonly
+            (!enableFields.isEmpty() and !enableFields.contains(fieldNames[col]))) {//Column must not be imported (not base data) .
+            dataTypes.append("");
+            fieldindexes[col]=-1;
+        } else {
+            dataTypes.append(DataType(model->db, model->tableName(),fieldNames[col]));
+            info+=iif(info.isEmpty(),"",", ").toString()+fieldNames[col]+" ("+dataTypes[col]+")";
+        }
+        if(fieldNames[col]==model->sPrimaryKey)
+            primaryFieldImport=col;
+    }
+
+    QSet<int> disabledChoices;
+    QSettings settings;
+    int TypeImport=0;
+    TypeImport=settings.value("TypeImport").toInt();
+    if (primaryFieldImport==-1) {
+        TypeImport=4; //Append only
+        disabledChoices.insert(0);
+        disabledChoices.insert(1);
+        disabledChoices.insert(2);
+        disabledChoices.insert(3);
+    }
+    if (!enableResetTable) {
+        disabledChoices.insert(5);
+        disabledChoices.insert(6);
+    }
+
+    int choice=-1;
+    if (info.isEmpty()) {
+        MessageDlg("Potaléger",QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
+                          .arg(FileInfoVerif.fileName())
+                          .arg(lTabTitle->text().trimmed()),"",QStyle::SP_MessageBoxWarning);
+        return;
+    // } else if (primaryFieldImport==-1) {
+    //     TypeImport=4; //Append only
+    //     MessageDlg(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+    //     return;
+    } else if (lines.count()<2) {
+        MessageDlg("Potaléger",QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+        return;
+    }
+    //Concat lines for each records.
+    parseCSV(data,"\n",linesToImport);
+    linesToImport.removeFirst();//Remove header
+    info2="";
+    for (int i=0;i<4;i++){
+        if (i<linesToImport.count())
+            info2+="<br>"+
+                     StrFirst(linesToImport[i],60)+iif(linesToImport[i].length()>60,"...","").toString();
+    }
+    if(linesToImport.count()>4)
+        info2+="<br>...";
+
+    choice=RadiobuttonDialog("Potaléger",lTabTitle->text().trimmed()+"<br><br>"+
+                                   iif(baseData,
+                                       tr("Réinitialiser les données de base."),
+                                       "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
+                                       sFileName).toString()+"<br><br>"+
+                                   "<b>"+tr("Les champs suivants vont être peuvent être mis à jour:")+"</b><br>"+info+"<br><br>"+
+                                   "<b>"+tr("%1 lignes à importer:").arg(linesToImport.count()-1)+"</b>"+info2+"<br>"+
+                                   tr("<u>Fusionner</u>: les lignes déjà présentes seront mises à jour, les autres seront créées.")+"<br>"+
+                                   tr("<u>Mettre à jour</u>: seules les lignes visibles seront mises à jour, aucune nouvelle ligne ne sera créée.")+"<br>"+
+                                   tr("<u>Supprimer</u>: les lignes visibles seront supprimées si elles ne sont pas utilisées ailleurs)."),
+                               {tr("Fusionner, priorité aux données importées"),                               //0
+                                tr("Fusionner, priorité aux données déjà présentes"),                          //1
+                                tr("Mettre à jour, priorité aux données importées"),                           //2
+                                tr("Mettre à jour, priorité aux données déjà présentes"),                      //3
+                                tr("Ajouter les lignes absentes, ne pas modifier les lignes déjà présentes"),  //4
+                                tr("Supprimer puis importer, priorité aux données importées"),                 //5
+                                tr("Supprimer puis importer, priorité aux données déjà présentes")},TypeImport,disabledChoices,true);//6
+    if (choice==-1) return;
+
+    TypeImport=choice;
+
+    if (primaryFieldImport==-1 and TypeImport!=4) {
+        MessageDlg("Potaléger",QObject::tr("Champ %1 non trouvée dans le fichier %2.\nSeul l'ajout de ligne est éventuellement possible.").arg(model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
+        return;
+    }
+
+    int TypeValid=0;
+    TypeValid=settings.value("TypeImportValid").toInt();
+
+    choice=RadiobuttonDialog("Potaléger",lTabTitle->text().trimmed()+"<br><br>"+
+                                   iif(baseData,
+                                       tr("Réinitialiser les données de base."),
+                                       "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
+                                       sFileName).toString()+"<br><br>"+
+                                   //"<b>"+tr("Les champs suivants vont être importés:")+"</b><br>"+info+"<br><br>"+
+                                   //"<b>"+tr("%1 lignes à importer:").arg(linesToImport.count()-1)+"</b>"+info2+"<br>"+
+                                   tr("<u>Enregistrer au fur et à mesure</u>: permet d'importer une partie des données malgrè des erreurs.")+"<br>"+
+                                   tr("<u>Ne rien enregistrer</u>: permet de visualiser les changements avant de les valider."),
+                               {tr("Enregistrer les modifications valides au fur et à mesure"),                           //0
+                                tr("Ne rien enregistrer, je tenterais une validation globale à la fin")},TypeValid);//1
+    if (choice==-1) return;
+    TypeValid=choice;
+
+    int nbDeletedRows=0;
+    int nbCreatedRows=0;
+    int nbModifiedRows=0;
+    int nbErrors=0;
+    int nbUndeletebaleRows=0;
+    bool bSubmit=(TypeValid==0);
+    QLocale locale;
+    QString decimalSep=QString(locale.decimalPoint());
+    if (TypeImport==5 or TypeImport==6) {//Delete selected lines
+        if(model->rowCount()>1 and
+            !OkCancelDialog("Potaléger",tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(model->rowCount()),QStyle::SP_MessageBoxWarning,600)) {
+           //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
+            return;
+        }
+        AppBusy(true,model->progressBar,model->rowCount(),"Delete %p%");
+        for (int i=model->rowCount()-1;i>=0;i--) {
+            model->progressBar->setValue(model->progressBar->value()+1);
+            if(model->childCount(i)==0) {
+                if(model->removeRow(i) and (!bSubmit or model->submitAll()))
+                    nbDeletedRows++;
+                else {
+                    qInfo() << "Import (delete) "+model->data(model->index(i,primaryFieldImport)).toString()+" : "+model->lastError().text();
+                    model->revertAll();
+                    nbErrors++;
+                }
+            } else {
+                    nbUndeletebaleRows++;
+            }
+        }
+        AppBusy(false,model->progressBar);
+    }
+
+    //Remove filter
+    if (TypeImport!=2 and TypeImport!=3 and pbFilter->isChecked()) {
+        pbFilterClick(false);
+        pbFilter->setChecked(false);
+    }
+    //Edit mode
+    if (!pbEdit->isChecked()) {
+        pbEdit->setChecked(true);
+        pbEditClick();
+    }
+
+
+    //Import
+    AppBusy(true,model->progressBar,linesToImport.count(),FileInfoVerif.fileName()+" %p%");
+
+    model->bBatch=true;
+
+    bool bModified;
+
+    for(int i=0;i<linesToImport.count();i++) {
+        model->progressBar->setValue(i);
+        if (!linesToImport[i].isEmpty()) {
+            parseCSV(linesToImport[i],";",valuesToImport);
+
+            int recordToUpdate=-1;
+            if(primaryFieldImport>-1 and valuesToImport.count()>primaryFieldImport and !valuesToImport[primaryFieldImport].isEmpty()){
+                //Search existing record
+                for (int i=0;i<model->rowCount();i++) {
+                    if (model->data(model->index(i,0),Qt::EditRole).toString()==valuesToImport[primaryFieldImport]){
+                        recordToUpdate=i;
+                        break;
+                    }
+                }
+            }
+            if(recordToUpdate>-1){
+                if(TypeImport!=4){
+                    //Update existing record.
+                    bModified=false;
+                    for (int col=0; col < valuesToImport.count(); col++) {
+                        if (fieldindexes[col]>-1){//Col exists in table.
+                            if(dataTypes[col]=="REAL")
+                                valuesToImport[col]=StrReplace(valuesToImport[col],decimalSep,".");
+                            if (TypeImport==0 or TypeImport==2 or TypeImport==5 or//Priority to imported data
+                                model->data(model->index(recordToUpdate,fieldindexes[col]),Qt::EditRole).toString()=="") {
+                                if (model->data(model->index(recordToUpdate,fieldindexes[col]),Qt::EditRole).toString()!=valuesToImport[col]){
+                                    model->setData(model->index(recordToUpdate,fieldindexes[col]),valuesToImport[col]);
+                                    bModified=true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (bModified) {
+                        if(!bSubmit or model->submitAll()) {
+                            nbModifiedRows++;
+                        } else {
+                            qInfo() << "Import (update) "+linesToImport[i]+" : "+model->lastError().text();
+                            model->revertAll();
+                            nbErrors++;
+                        }
+                    }
+                }
+            } else {
+                if(TypeImport!=2 and TypeImport!=3){
+                    //Create new record.
+                    int row=model->rowCount();
+                    if (model->insertRow(row)){
+                        for (int col=0; col < valuesToImport.count(); col++) {
+                            if (fieldindexes[col]>-1){//Col exists in table.
+                                if(dataTypes[col]=="REAL")
+                                    model->setData(model->index(row,fieldindexes[col]),StrReplace(valuesToImport[col],decimalSep,"."));
+                                else
+                                    model->setData(model->index(row,fieldindexes[col]),valuesToImport[col]);
+
+                            }
+                        }
+                        if (!bSubmit or model->submitAll()) {
+                            nbCreatedRows++;
+                        } else {
+                            qInfo() << "Import (create) "+linesToImport[i]+" : "+model->lastError().text();
+                            model->revertAll();
+                            nbErrors++;
+                        }
+                    } else {
+                        qInfo() << "Import (insert) "+linesToImport[i]+" : "+model->lastError().text();
+                        nbErrors++;
+                    }
+                }
+            }
+        }
+    }
+    model->bBatch=false;
+    AppBusy(false,model->progressBar);
+
+    if (bSubmit)
+        model->SubmitAllShowErr();//To deactivate commit and rollback buttons, and show modified cells.
+
+    settings.setValue("PathImport",PathImport);
+    settings.setValue("TypeImport",TypeImport);
+    settings.setValue("TypeImportValid",TypeValid);
+
+    MessageDlg("Potaléger",QObject::tr("%1 lignes supprimées").arg(nbDeletedRows)+"\n"+
+                           QObject::tr("%1 lignes non supprimables").arg(nbUndeletebaleRows)+"\n"+
+                           QObject::tr("%1 lignes créées").arg(nbCreatedRows)+"\n"+
+                           QObject::tr("%1 lignes modifiées").arg(nbModifiedRows)+"\n"+
+                           QObject::tr("%1 erreurs").arg(nbErrors));
+}
+
+void PotaWidget::resetBaseData() {
+    if (pbCommit->isEnabled()) {
+        if (YesNoDialog("Potaléger",lTabTitle->text().trimmed()+"\n\n"+
+                        tr("Valider les modifications en cours ?"))) {
+            if (!model->SubmitAllShowErr())
+                return;
+        } else {
+            if (!model->RevertAllShowErr())
+                return;
+        }
+    } else if (!pbEdit->isChecked()){
+        return;
+    }
+
+    //PotaQuery qDrop(*model->dbDrop);
+    //qDrop.ExecShowErr("DROP TABLE IF EXISTS Temp_Base_data;");
+
+    //Read fda_schema
+    PotaQuery query(*model->db);
+    query.exec("SELECT name,field_name,type,base_data FROM fda_schema WHERE (name='"+model->RealTableName()+"')AND(base_data='x')");
+    bool bResetTable=false;
+    QString fieldNames="";
+    //QString info;
+    while (query.next()){
+        if (query.value(1).isNull()) bResetTable=true;
+        else fieldNames+=query.value(1).toString()+";";
+    }
+
+    //Extract SQL statements for base data
+    int exportedRow=-2;
+    QString sBaseData=loadSQLFromResource("CreateBaseData");
+    QString sQuerys;
+    // PotaQuery query2(*model->db);
+    // query2.ExecShowErr("DROP TABLE IF EXISTS  Temp_Base_data;");
+    // PotaQuery query3(*model->db);
+    // PotaQuery query4(*model->db);
+    //query.exec("PRAGMA busy_timeout = 5000;");
+    QString tempBaseData="Base_data_"+QDateTime::currentDateTime().toString("hhmmss");
+    //sQuerys=query.Select0ShowErr("SELECT sql FROM sqlite_schema WHERE (type='table')AND(tbl_name='"+model->RealTableName()+"')").toString();//CREATE TABLE statement
+    // if (sQuerys.startsWith("CREATE TABLE "+model->RealTableName()+" ")) {
+        //sQuerys=sQuerys.replace("CREATE TABLE "+model->RealTableName()+" ","CREATE TEMP TABLE "+tempBaseData+" ")+";";
+        sQuerys="CREATE TEMP TABLE "+tempBaseData+" AS SELECT * FROM "+model->RealTableName()+" WHERE false;";
+        QStringList QuerysList;
+        QuerysList=sBaseData.split("\n");
+        for(int i=0;i<QuerysList.count();i++) {
+            if (QuerysList[i].startsWith("INSERT INTO "+model->RealTableName())) {
+                sQuerys+=QuerysList[i].replace("INSERT INTO "+model->RealTableName()+" ","INSERT INTO temp."+tempBaseData+" ");
+            }
+        }
+    // } else {
+    //     sQuerys="SQL statement not found for "+model->RealTableName();
+    // }
+
+    //Create temp CSV file with base data.
+    QString fileName=QApplication::applicationDirPath()+QDir::toNativeSeparators("/Temp_Base_data.csv");
+    QFile csvFile;
+    if (query.ExecMultiShowErr(sQuerys,";",model->progressBar)) {
+        csvFile.setFileName(fileName);
+        csvFile.remove();
+
+        if (query.Select0ShowErr("SELECT count() FROM "+tempBaseData).toInt()==0) {
+            MessageDlg("Potaléger",tr("Erreur %1 lors de la collecte des données de base.").arg("No_BaseData")+"\n"+
+                        fileName,"",QStyle::SP_MessageBoxCritical);
+            return;
+        }
+
+        exportedRow=exportToFile(fileName,"csv",tempBaseData);
+
+        //query.ExecShowErr("DROP TABLE IF EXISTS temp.Base_data;");
+    }
+
+    if (exportedRow==-2) {
+        MessageDlg("Potaléger",tr("Erreur %1 lors de la collecte des données de base.").arg("SQL"),"",QStyle::SP_MessageBoxCritical);
+        return;
+    } else if (exportedRow==-1) {
+        MessageDlg("Potaléger",tr("Erreur %1 lors de la collecte des données de base.").arg("CSV")+"\n"+
+                    fileName,"",QStyle::SP_MessageBoxCritical);
+        return;
+    }
+
+    //Import CSV dialog
+    importCSV(fileName,fieldNames,bResetTable,true);
+
+    csvFile.remove(fileName);
 }
 
 void PotaWidget::selChanged() {
@@ -560,35 +1196,70 @@ void PotaWidget::selChanged() {
 }
 
 void PotaWidget::showContextMenu(const QPoint& pos) {
-    QMenu contextMenu(tr("Context menu"), this);
+    QMenu contextMenu("Context menu", this);
 
     QAction mDefColWidth(QIcon::fromTheme("object-flip-horizontal"),tr("Largeurs de colonnes par défaut"), this);
-    QAction mEditNotes(tr("Editer texte muti-lignes"), this);
-    QAction mGraficView(tr("Graphique..."), this);
+    //QAction mEditNotes(tr("Editer texte muti-lignes"), this);
+    QAction mGraficView(QIcon::fromTheme("utilities-system-monitor"),tr("Graphique..."), this);
+    QAction mExport(tr("Exporter les données..."), this);
+    QAction mImport(tr("Importer des données..."), this);
+    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base..."), this);
 
     QModelIndex index=tv->indexAt(pos);
     QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
 
-    mEditNotes.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
-    mEditNotes.setCheckable(true);
-    mEditNotes.setChecked(!editNotes->isReadOnly());
+    // mEditNotes.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    // mEditNotes.setCheckable(true);
+    // mEditNotes.setChecked(!editNotes->isReadOnly());
     if (index.isValid()) {
-        mEditNotes.setEnabled(pbEdit->isChecked() and
-                              !model->nonEditableColumns.contains(index.column()) and AcceptReturns(sFieldName));
+        // mEditNotes.setEnabled(pbEdit->isChecked() and
+        //                       !model->nonEditableColumns.contains(index.column()) and AcceptReturns(sFieldName));
     } else {
         mDefColWidth.setEnabled(false);
-        mEditNotes.setEnabled(false);
+        // mEditNotes.setEnabled(false);
     }
 
+    mExport.setIcon(QIcon(TablePixmap(model->tableName(),"  >>")));
+    mImport.setIcon(QIcon(TablePixmap(model->tableName(),">>  ")));
+    mImport.setEnabled(pbInsertRow->isEnabled() and pbEdit->isChecked());
+    mResetBaseData.setEnabled(pbEdit->isChecked());
+    PotaQuery query(*model->db);
+    mResetBaseData.setVisible((query.Select0ShowErr("SELECT count() FROM fda_schema "
+                                                    "WHERE (name='"+model->RealTableName()+"')AND(field_name NOTNULL)AND(base_data='x')").toInt()>0)and
+                              (query.Select0ShowErr("SELECT count() FROM fda_schema "
+                                                    "WHERE (name='"+model->tableName()+"')AND(field_name ISNULL)AND(tbl_type IN('Table','View as table'))").toInt()>0));
+
     connect(&mDefColWidth, &QAction::triggered, this, &PotaWidget::hDefColWidth);
-    connect(&mEditNotes, &QAction::triggered, [this]() {
-        hEditNotes(tv->currentIndex());
-    });
+    // connect(&mEditNotes, &QAction::triggered, [this]() {
+    //     toogleReadOnlyEditNotes(tv->currentIndex());
+    // });
     connect(&mGraficView, &QAction::triggered, this, &PotaWidget::showGraphDialog);
+    connect(&mExport, &QAction::triggered, this, &PotaWidget::exportData);
+    connect(&mImport, &QAction::triggered, this, &PotaWidget::importData);
+    connect(&mResetBaseData, &QAction::triggered, this, &PotaWidget::resetBaseData);
+
+    //Select vivible columns menu entries.
+    QMenu *VisibleColMenu = contextMenu.addMenu(QIcon::fromTheme("preferences-system"),tr("Colonnes vivibles"));
+    for (int col = 0; col < model->columnCount(); ++col) {
+    //auto addCheckBoxToMenu = [&](QMenu *menu, const QString &text, bool checked,std::function<void(bool)> onToggled) {
+        QWidgetAction *wa = new QWidgetAction(VisibleColMenu);
+        QCheckBox *cb = new QCheckBox(model->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString(), VisibleColMenu);
+        cb->setChecked(!tv->isColumnHidden(col));
+        // cb->setFocusPolicy(Qt::NoFocus); //empêcher que la checkbox prenne le focus sur clic (selon comportement souhaité)
+        connect(cb, &QCheckBox::toggled, this, [this, col](bool checked){
+            PotaWidget::setVisibleColumn(col, checked);
+        });
+        wa->setDefaultWidget(cb);
+        VisibleColMenu->addAction(wa);
+    };
 
     contextMenu.addAction(&mDefColWidth);
-    contextMenu.addAction(&mEditNotes);
+    contextMenu.addMenu(VisibleColMenu);
+    //contextMenu.addAction(&mEditNotes);
     contextMenu.addAction(&mGraficView);
+    contextMenu.addAction(&mExport);
+    contextMenu.addAction(&mImport);
+    contextMenu.addAction(&mResetBaseData);
 
     QFont font=contextMenu.font();
     font.setPointSize(cbFontSize->currentText().toInt());
@@ -607,24 +1278,31 @@ void PotaWidget::hDefColWidth() {
     }
 }
 
-void PotaWidget::hEditNotes(const QModelIndex index) {
+void PotaWidget::toogleReadOnlyEditNotes(const QModelIndex index, bool discard) {
     if (pbEdit->isChecked() and
         !model->nonEditableColumns.contains(index.column())) {
-        // qDebug() << "toMarkdown: " << w->editNotes->toMarkdown();
-        // qDebug() << "toPlainText: " << w->editNotes->toPlainText();
         if (editNotes->isReadOnly()) { //Go to notes edit mode
             editNotes->setReadOnly(false);
-            editNotes->setPlainText(editNotes->toMarkdown().trimmed());
-            editNotes->setFocus();
+            aSaveNotes->setEnabled(true);
+            aCommit->setEnabled(false);
+        } else if (discard) {
+            editNotes->setReadOnly(true);
+            tv->setFocus();
+            aSaveNotes->setEnabled(false);
+            aCommit->setEnabled(true);
         } else { //Save data and return to notes read mode
             editNotes->setReadOnly(true);
-            QString save=editNotes->toPlainText().trimmed();
+            aSaveNotes->setEnabled(false);
+            aCommit->setEnabled(true);
+            QString save=editNotes->toPlainText().trimmed().replace("\n\n","\n").replace("\n","\n\n");
             int i=editNotes->toPlainText().count("<");
             editNotes->setMarkdown(editNotes->toPlainText().trimmed());
             if (i != editNotes->toMarkdown().count("<")) {
                 qDebug() << save;
                 editNotes->setPlainText(save);
                 editNotes->setReadOnly(false);
+                aSaveNotes->setEnabled(true);
+                aCommit->setEnabled(false);
                 MessageDlg(tr("Editeur"),tr("Les balises HTML ne sont pas accéptées."));
             } else {
                 if (save!=model->data(index).toString())
@@ -634,6 +1312,11 @@ void PotaWidget::hEditNotes(const QModelIndex index) {
         }
         SetVisibleEditNotes(true,false);
     }
+}
+
+void PotaWidget::setVisibleColumn(int col, bool visible) {
+    tv->setColumnHidden(col,!visible);
+    qDebug() << col << visible;
 }
 
 void PotaWidget::showGraphDialog()
@@ -715,33 +1398,23 @@ void PotaWidget::showSelInfo() {
 void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
     QColor tc=delegate->cTableColor;
     if (bVisible){
-        int x=tv->columnViewportPosition(tv->currentIndex().column())+5;
-        int y=tv->rowViewportPosition(tv->currentIndex().row())+
-                tv->horizontalHeader()->height()+
-                tv->rowHeight(tv->currentIndex().row());
         int EditNotesWidth=fmax(tv->columnWidth(tv->currentIndex().column()),400);
         int EditNotesHeight=200;
 
         if (editNotes->isReadOnly()) {
             editNotes->setMarkdown(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
-            // editNotes->setLineWidth(4);
-            // editNotes->setFrameShape(QFrame::Panel);
-            if (isDarkTheme())
-                tc.setAlpha(50);
-            else
-                tc.setAlpha(80);
+            tc.setAlpha(80);
         } else {
-            editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
-            // editNotes->setLineWidth(1);
-            // editNotes->setFrameShape(QFrame::StyledPanel);
+            editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString().replace("\n\n","\n"));
             tc.setAlpha(0);
+            editNotes->setFocus();
         }
         QPalette palette=editNotes->palette();
         palette.setColor(QPalette::Base, blendColors(tv->palette().color(QPalette::Base),tc));
         palette.setColor(QPalette::Text, tv->palette().color(QPalette::Text));
         editNotes->setPalette(palette);
 
-        if (autoSize) {
+        if (true) { //autoSize
             //editNotes->document()->setTextWidth(QWIDGETSIZE_MAX);
             QFontMetrics fm(editNotes->font());
             int maxWidth=0;
@@ -758,14 +1431,34 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
             // editNotes->setFixedSize(min(maxWidth+50,400),
             //                         min(lines.count()*22+5,200));
             EditNotesWidth=min((maxWidth*1.2)+50,EditNotesWidth);
-            EditNotesHeight=min((lines.count()+returns)*22+5,200);
+            EditNotesHeight=min((lines.count()+returns)*22/10*cbFontSize->currentText().toInt()+5,200);
+            //qDebug() << "autosize";
         }
+        int x=tv->columnViewportPosition(tv->currentIndex().column())+5;
+        int y=tv->rowViewportPosition(tv->currentIndex().row())+
+              tv->horizontalHeader()->height()+
+              tv->rowHeight(tv->currentIndex().row());
         x=min(x,tv->width()-EditNotesWidth-20);
+
+        //EditNotesHeight=EditNotesHeight/10*cbFontSize->currentText().toInt();
+        if (y+EditNotesHeight>tv->height()) { //Not enought room below
+            if (tv->height()-y>100) {
+                EditNotesHeight=tv->height()-y;
+            } else {
+                //Move EditNotes above curent line.
+                y=y-EditNotesHeight-tv->rowHeight(tv->currentIndex().row());
+                if (y<0) {//Not enought room above
+                    EditNotesHeight=EditNotesHeight+y;
+                    y=0;
+                }
+            }
+        }
         editNotes->setGeometry(x,y,EditNotesWidth,EditNotesHeight);
 
         editNotes->setVisible(true);
     } else {
         editNotes->setVisible(false);
+        tv->setFocus();
     }
 }
 
@@ -828,7 +1521,7 @@ void PotaWidget::RefreshHorizontalHeader() {
     delegate->PaintedColsTitles.clear();
     delegate->PaintedColsTypes.clear();
     PotaQuery query(*model->db);
-    int saison=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
+    int saison=query.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
     for (int i=0; i<model->columnCount();i++)             {
         delegate->PaintedColsTitles.append("");
         delegate->PaintedColsTypes.append("");
@@ -1027,6 +1720,11 @@ void PotaWidget::dataChanged(const QModelIndex &topLeft)//,const QModelIndex &bo
         model->setData(topLeft,QVariant(),Qt::EditRole);//To avoid empty non null values.
 }
 
+// void PotaWidget::onVBarValueChanged(int value) {
+//     // if (bUserCurrChanged and editNotes->isVisible())
+//     //     SetVisibleEditNotes(false,false);
+// }
+
 void PotaWidget::headerRowClicked() //int logicalIndex
 {
     //pbDeleteRow->setEnabled(true);
@@ -1057,9 +1755,10 @@ void PotaWidget::pbRefreshClick(){
     bUserCurrChanged=true;
 
     PotaQuery query(*model->db);
-    if (query.Selec0ShowErr("SELECT Valeur='Oui' FROM Params WHERE Paramètre='Montrer_modifs'").toBool()) {
-        query.ExecShowErr("DROP TABLE IF EXISTS temp."+model->tempTableName+";");
-        model->tempTableName="Temp"+QDateTime::currentDateTime().toString("hhmmss")+model->tableName();
+    if (query.Select0ShowErr("SELECT Valeur='Oui' FROM Params WHERE Paramètre='Montrer_modifs'").toBool()) {
+        if (!model->tempTableName.isEmpty())
+            query.ExecShowErr("DROP TABLE IF EXISTS temp."+model->tempTableName+";");
+        model->tempTableName="Temp_"+QDateTime::currentDateTime().toString("hhmmss")+model->tableName();
         query.ExecShowErr("CREATE TEMP TABLE "+model->tempTableName+" AS SELECT * FROM "+model->tableName());
         model->commitedCells.clear();
     }
@@ -1084,7 +1783,7 @@ void PotaWidget::pbEditClick(){
                 model->nonEditableColumns.insert(i);
         }
         pbEdit->setIcon(QIcon(":/images/editOn.svg"));
-
+        //mImport->setEnabled(pbInsertRow->isEnabled());
     } else {
         if (!pbCommit->isEnabled() or
             model->SubmitAllShowErr()){
@@ -1129,6 +1828,7 @@ void PotaWidget::pbCommitClick()
 void PotaWidget::pbRollbackClick()
 {
     bUserCurrChanged=false;
+    SetVisibleEditNotes(false,false);
     PositionSave();
     if (model->RevertAllShowErr()){
         //model->modifiedCells.clear();
@@ -1416,6 +2116,22 @@ QString PotaTableModel::FieldName(int index)
     }
 }
 
+int PotaTableModel::childCount(int row,QString childTable) {
+    PotaQuery childTables(*db);
+    PotaQuery query(*db);
+    childTables.exec("SELECT name,field_name,master_field FROM fda_schema "
+               "WHERE (tbl_type='Table')AND(master_table='"+RealTableName()+"')"+
+               iif(!childTable.isEmpty(),"AND(name='"+childTable+"')","").toString());
+    int result=0;
+    while (childTables.next()) {
+        const QString childTable = childTables.value(0).toString();
+        const QString childField = childTables.value(1).toString();
+        const QString masterField = childTables.value(2).toString();
+        const int masterCol=FieldIndex(sPrimaryKey);
+        result+=query.Select0ShowErr("SELECT count() FROM "+childTable+" WHERE "+childField+"='"+index(row,masterCol).data(Qt::EditRole).toString()+"'").toInt();
+    }
+    return result;
+}
 
 bool PotaTableModel::select()  {
     //return QSqlRelationalTableModel::select();
@@ -1547,7 +2263,7 @@ void PotaTableModel::setOrderBy(int column,Qt::SortOrder so)  {
                 sFieldName="replace("+sFieldName+",'"+accentList[i][0]+"','"+accentList[i][1]+"')";
         }
 
-        sOrderByClause="ORDER BY "+sFieldName;
+        sOrderByClause="ORDER BY "+sFieldName+" COLLATE NOCASE";
 
         if (column>0 and noAccentFields.contains(FieldName(0))) {
             sFieldName=FieldName(0);
@@ -1718,7 +2434,7 @@ bool PotaTableModel::DeleteRowShowErr()
         if (rowsToRemove.contains(index.row())) {
             revertRow(index.row());
             //rr--;
-        } else {
+        } else if (childCount(index.row())==0) {
             if (!removeRow(index.row()))
             //     rr++;
             // else
@@ -1747,7 +2463,11 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
 
     if ((event->key()==Qt::Key_Return || event->key()==Qt::Key_Enter) && !(event->modifiers()==Qt::ControlModifier)) {
         if (currentIndex.isValid()) {
-            edit(currentIndex);
+            PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
+            if (pw->editNotes->isVisible() and pw->editNotes->isReadOnly())
+                pw->toogleReadOnlyEditNotes(currentIndex);
+            else
+                edit(currentIndex);
         }
     } else if (event->key()==Qt::Key_Delete) {
         clearSelectionData();
@@ -2008,6 +2728,14 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
                 ColoText="R";
             else if (index.data(Qt::EditRole).toDouble()<0)
                 ColoText="G";
+        } else if(sFieldName=="Couv_réc_pc" or sFieldName=="Couv_obj_pc"){
+            if(index.data(Qt::EditRole).toDouble()<80) //todo : code métier à mettre ailleurs
+                ColoText="R";
+            else if (index.data(Qt::EditRole).toDouble()>120)
+                ColoText="G";
+        } else if(sFieldName=="Export_pc"){
+            if(index.data(Qt::EditRole).toDouble()>100) //todo : code métier à mettre ailleurs
+                ColoText="R";
         } else if(sTableName=="Analyses_de_sol"){
             if(sFieldName=="MO") {
                 if(index.data(Qt::EditRole).toDouble()<=15) ColoText="R";
@@ -2432,7 +3160,7 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         return comboBox;
     } else if (!sComboField.isEmpty()){
         PotaQuery query(*model->db);
-        QStringList TypeValues=query.Selec0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Combo_"+sComboField+"'").toString().split("|");
+        QStringList TypeValues=query.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Combo_"+sComboField+"'").toString().split("|");
         if (TypeValues.count()>1) {
             QComboBox *comboBox=new QComboBox(parent);
             comboBox->addItem("", QVariant()); // Option for setting a NULL

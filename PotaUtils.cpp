@@ -32,14 +32,14 @@ bool PotaQuery::ExecShowErr(QString query)
     return true;
 }
 
-bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar,bool stopIfError) //,bool keepReturns
+bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool stopIfError, bool FDAInsert) //,bool keepReturns
 {
     QStringList QueryList=querys.split(spliter);
     if (lErr) {
         QString s;
         s=lErr->text();
         if ((s.length()>11)and(s.last(11)==" statements"))
-            s=s.first(s.length()-11)+"+"+str(QueryList.count())+" statements";
+            s=str(s.first(s.length()-11).toInt()+QueryList.count())+" statements";
         else
             s=str(QueryList.count())+" statements";
         SetColoredText(lErr,s,"Info");
@@ -51,23 +51,31 @@ bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QP
     for (int i=0;i<QueryList.count();i++) {
         if (QueryList[i].trimmed().isEmpty())
             continue;
-        QString sQuery=RemoveComment(QueryList[i].trimmed(),"--",false); //keepReturns
+        QString fda_cmd="";
+        QString sQuery;
+        if (FDAInsert)
+            sQuery=RemoveSQLcomment(QueryList[i].trimmed(),false,&fda_cmd); //keepReturns
+        else
+            sQuery=RemoveSQLcomment(QueryList[i].trimmed(),false);
         clear();
         ExecShowErr(sQuery);
         if (progressBar) progressBar->setValue(progressBar->value()+1);
         if (lastError().type()!=QSqlError::NoError and stopIfError and !lastError().text().startsWith("UNIQUE constraint failed")) {
-            qWarning() << sQuery;
-            qWarning() << lastError().text();
+            //qWarning() << sQuery;
+            //qWarning() << lastError().text();
             if (lErr)
                 SetColoredText(lErr,QueryList[i].trimmed()+"\n"+lastError().text(),//+"\n"+DBInfo(db),
                                "Err");
             return false;
+        } else if (!fda_cmd.isEmpty()) {
+            clear();
+            ExecMultiShowErr(fda_cmd,";",nullptr);
         }
     }
     return true;
 }
 
-QVariant PotaQuery::Selec0ShowErr(QString query)
+QVariant PotaQuery::Select0ShowErr(QString query)
 {
     QVariant vNull;
     if (ExecShowErr(query)) {
@@ -120,7 +128,7 @@ QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
 
     if (result=="") {//Unknow view field.
         //ViewFieldIsDate(FieldName,Data)
-        QString sData=query.Selec0ShowErr("SELECT "+FieldName+" FROM "+TableName+" WHERE "+FieldName+" NOTNULL").toString();
+        QString sData=query.Select0ShowErr("SELECT "+FieldName+" FROM "+TableName+" WHERE "+FieldName+" NOTNULL").toString();
         if(!sData.isEmpty() and sData.length()==10 and sData[4]=='-' and sData[7]=='-')
             return "DATE";
         else if (QString::number(sData.toInt())==sData)
@@ -160,8 +168,10 @@ QString EscapeCSV(QString s,QString sep) {
 
 QString EscapeSQL(QString s) {
     s=StrReplace(s,"'","''");
-    s=StrReplace(s,"\n\n","'||x'0a0a'||'");
-    s=StrReplace(s,"\n","'||x'0a'||'");
+    s=StrReplace(s,"\\n\\n","'||x'0a0a'||'"); //For literal line returns.
+    s=StrReplace(s,"\\n","'||x'0a'||'"); //For literal line returns.
+    s=StrReplace(s,"\n\n","'||x'0a0a'||'"); //For real line returns.
+    s=StrReplace(s,"\n","'||x'0a'||'"); //For real line returns.
     s="'"+s+"'";
     return s;
 }
@@ -192,6 +202,19 @@ QVariant iif(bool bCond,QVariant Var1,QVariant Var2)
 bool isDarkTheme() {
     QColor backgroundColor=QApplication::palette().color(QPalette::Window);
     return backgroundColor.lightness() < 128;
+}
+
+QString loadSQLFromResource(QString fileName) {
+    QFile file(":/sql/"+fileName+".sql");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Fail open SQL ressource "+fileName;
+        return "";
+    }
+
+    QByteArray bytes = file.readAll();
+    QString queries = QString::fromUtf8(bytes);
+
+    return queries;
 }
 
 void logMessage(const QString fileName, const QString message)
@@ -262,21 +285,109 @@ QString RemoveAccents(QString input) {
     // return normalized;
 }
 
-QString RemoveComment(QString sCde, QString sCommentMarker, bool keepReturns)
+QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_comments)
 {
     QStringList LinesList=sCde.split("\n");
     QString s;
     QString sResult="";
-    int index;
-    for (int i=0;i<LinesList.count();i++)
-    {
+    QString tablename="";
+    QString fda_cmd="";
+    int comment_index;
+    //bool indent4;
+    bool bTable;
+    for (int i=0;i<LinesList.count();i++) {
         s=LinesList[i];
-        index=s.indexOf(sCommentMarker);
-        if (index!=-1)
-            sResult += iif(i>0 and keepReturns,"\n","").toString()+s.first(index).trimmed()+iif(s.first(index).trimmed().isEmpty(),""," ").toString();
-        else
+        //indent4=(s.startsWith("    ") and !s.startsWith("     "));//Line starts with 4 spaces.
+        s=s.trimmed();
+        QString comment="";
+        comment_index=s.indexOf("--");
+        if (comment_index!=-1) {
+            sResult += iif(i>0 and keepReturns,"\n","").toString()+s.first(comment_index).trimmed()+iif(s.first(comment_index).trimmed().isEmpty(),""," ").toString();
+            comment=SubString(s,comment_index);
+        } else {
             sResult += iif(i>0 and keepReturns,"\n","").toString()+s.trimmed()+iif(s.trimmed().isEmpty(),""," ").toString();
+        }
+        if (fda_cmd_from_comments and comment.startsWith("---")) {
+            if (comment.length()>3)
+                comment=EscapeSQL(SubString(comment,4));
+            else
+                comment="NULL";
+            if (s.startsWith("CREATE TABLE ")) {
+                bTable=true;
+                tablename=SubString(s,13);
+                int space_index=tablename.indexOf(" ");
+                tablename=tablename.first(space_index);
+                fda_cmd="INSERT INTO fda_schema (name,description,tbl_type) VALUES ('"+tablename+"',"+comment+",'Table');";
+            } else if (s.startsWith("CREATE VIEW ")) {
+                bTable=false;
+                tablename=SubString(s,12);
+                int space_index=tablename.indexOf(" ");
+                tablename=tablename.first(space_index);
+                fda_cmd="INSERT INTO fda_schema (name,description,tbl_type) VALUES ('"+tablename+"',"+comment+",'View');";
+            } else if (fda_cmd!="" and !s.startsWith("--")) {
+                if (bTable) { //Parse fields of a CREATE TABLE
+                if (s.startsWith("Notes "))
+                qDebug() << "s";
+                    int space_index=s.indexOf(" ");
+                    if (space_index>0) {
+                        QString fieldname=s.first(space_index);
+                        s=SubString(s,space_index).trimmed();
+                        int type_index1=s.indexOf(" ");
+                        int type_index2=s.indexOf(",");
+                        int type_index3=s.indexOf(")");
+                        if (type_index1==-1) type_index1=1000000;
+                        if (type_index2==-1) type_index2=1000000;
+                        if (type_index3==-1) type_index3=1000000;
+                        type_index1=fmin(fmin(type_index1,type_index2),type_index3);
+                        if (type_index1<1000000) {
+                            QString type=s.first(type_index1);
+                            QString readOnly=iif(s.toUpper().contains(" AS ("),"'Calculated'","NULL").toString();
+                            int ref_index=s.indexOf("REFERENCES ");
+                            QString masterTable="NULL";
+                            QString masterField="NULL";
+                            if (ref_index>0) {
+                                s=SubString(s,ref_index+11).trimmed();
+                                ref_index=s.indexOf(")");
+                                if (ref_index>1) {
+                                    masterTable=s.first(ref_index);
+                                    ref_index=masterTable.indexOf(" (");
+                                    masterField="'"+SubString(masterTable,ref_index+2)+"'";
+                                    masterTable="'"+masterTable.first(ref_index)+"'";
+                                }
+                            }
+                            fda_cmd+="INSERT INTO fda_schema (name,field_name,type,description,tbl_type,master_table,master_field,readOnly) VALUES ('"+tablename+"','"+fieldname+"','"+type+"',"+comment+",'Table',"+masterTable+","+masterField+","+readOnly+");";
+                        }
+                    } else {
+                        qWarning() << "SQL parse error 1: "+s;
+                    }
+                } else { //Parse fields of a CREATE VIEW
+                    int space_index=s.indexOf("---");
+                    if (space_index>0) {
+                        s=s.first(space_index).trimmed();
+                        int fieldIndex=s.lastIndexOf(" ");
+                        if (fieldIndex==-1) fieldIndex=s.lastIndexOf(".");
+                        QString fieldname="";
+                        if (fieldIndex>0)
+                            fieldname=SubString(s,fieldIndex+1);
+                        else if (fieldIndex==-1)
+                            fieldname=s;
+                        if (!fieldname.isEmpty()) {
+                            if (fieldname.endsWith(",")) fieldname.removeLast();
+                            fda_cmd+="INSERT INTO fda_schema (name,field_name,description,tbl_type) "
+                                     "VALUES ('"+tablename+"','"+fieldname+"',"+comment+",'View');";
+                        } else {
+                            qWarning() << "SQL parse error 2: "+s;
+                        }
+                    } else {
+                        qWarning() << "SQL parse error 3: "+s;
+                    }
+                }
+            }
+        }
     }
+    if (fda_cmd_from_comments)
+        *fda_cmd_from_comments=fda_cmd;
+
     return sResult;
 }
 
@@ -402,6 +513,8 @@ QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
 
 QString SubString(QString s, int iDeb, int iFin) {
     QString result="";
+
+    if (iFin==-1) iFin=s.length();
 
     if (iDeb>iFin)
         return "";

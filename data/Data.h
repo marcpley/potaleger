@@ -30,7 +30,7 @@ QString DynDDL(QString sQuery);
 bool FieldIsMoney(const QString sFieldName);
 QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sPageFilter, const QModelIndex &index, bool countFk=false);
 QString FkSortCol(const QString sTableName,const QString sFieldName);
-QString GeneratedFielnameForDummyFilter(const QString sTableName);
+//QString GeneratedFielnameForDummyFilter(const QString sTableName);
 bool lastRow(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
 QString NoData(const QString sTableName);
@@ -39,8 +39,8 @@ QColor RowColor(QString sValue, QString sTableName);
 QString RowSummary(QString TableName, const QSqlRecord &rec);
 QColor TableColor(QString sTName,QString sFName);
 QPixmap TablePixmap(QString sTName, QString text);
-QString ToolTipField(const QString sTableName, const QString sFieldName, const QString sDataType);
-QString ToolTipTable(const QString sTableName);
+QString ToolTipField(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sDataType);
+QString ToolTipTable(QSqlDatabase *db, const QString sTableName);
 //bool ViewFieldIsDate(const QString sFieldName, QString sData="");
 
 #endif // DATA_H

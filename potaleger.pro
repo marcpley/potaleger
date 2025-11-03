@@ -64,17 +64,11 @@ else: unix:!android: target.path=/opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    SQL/CreateBaseData.sql \
-    SQL/CreateTables.sql \
-    SQL/CreateTriggers.sql \
-    SQL/CreateViews.sql \
-    SQL/UpdateBaseData.sql \
-    SQL/UpdateStru.sql \
-    SQL/UpdateTableParams.sql \
     install/readme.md \
     zNoRepo/todo.txt
 
 RESOURCES += \
+    SQL/sql.qrc \
     images/images.qrc
 
 RC_ICONS=images/potaleger.ico

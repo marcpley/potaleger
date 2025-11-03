@@ -1,4 +1,3 @@
-QString sDDLTableParams=QStringLiteral(R"#(
 
 -- BEGIN TRANSACTION;
 
@@ -19,7 +18,8 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Associations', 'Asso_bénéfique', 'Les associations bénéfiques se terminent par', ' +', NULL),
             ('Associations', 'Nb_sem_croisement', 'Temps de croisement mini pour que l''association soit effective', 4, 'semaines'),
             ('Fournisseurs', 'Combo_Fournisseurs_Type', 'Types de fournisseur, séparés par des ''|'' (vide pour texte libre)', 'Semences|Irrigation|Outils|Autre', NULL),
-            ('Assolement', 'Ilot_nb_car', 'Nb de caractères du début du nom des planches qui désignent l''ilot de production.'||x'0a0a'||'Ex: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
+            ('Assolement', 'Ilot_nb_car', 'En début du nom des planches, nb de caractères qui désignent l''ilot de production.'||x'0a0a'||'Ex: la planche "No1A" fait parti de l''ilot "No" si le paramètre vaut 2.', '2', 'car'),
+            ('Assolement', 'UP_nb_car', 'Dans le nom des planches, après l''ilot, nb de caractères qui désignent l''unité de production.'||x'0a0a'||'Ex: la planche "No1A" fait parti de l''unité "No1" si le paramètre vaut 1 et que ''Ilot_nb_car'' vaut 2.', '1', 'car'),
             ('Assolement', 'Combo_Planches_Type', 'Types de planche, séparés par des ''|'' (vide pour texte libre)', 'Extérieur|Serre', NULL),
             ('Assolement', 'Largeur_planches', 'Largeur de planche par défaut', 0.8,'m'),
             ('Assolement', 'Rot_Rech_ass_poss', 'Dans les plans de rotation, toujours rechercher les associations possibles'||x'0a0a'||'Si non: rechercher seulement si ''Pc_planches'' < 100 et ''Occupation'' = R ou E', 'Oui', 'Oui/Non'),
@@ -69,5 +69,3 @@ UPDATE Params SET Valeur=coalesce((SELECT T.Valeur FROM Temp_Params T WHERE T.Pa
 DROP TABLE Temp_Params;
 
 -- COMMIT TRANSACTION;
-
-)#");

@@ -14,7 +14,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.4.0b2";
+QString const Version="1.4.0b6"; //Update date in whats new
 QString const DbVersion="2025-09-25";
 
 class MainWindow : public QMainWindow
@@ -31,9 +31,6 @@ public:
 
     //global variables.
     QSqlDatabase db=QSqlDatabase::addDatabase("QSQLITE");
-    QString PathExport="";
-    QString PathImport="";
-    int TypeImport=0;
     bool MarkdownFont=false;
     bool ReadOnlyDb=true;
 
@@ -48,7 +45,7 @@ private slots:
     void on_mParam_triggered();
     void on_mCloseTab_triggered();
     void on_mCloseTabs_triggered();
-    void on_mCopyBDD_triggered();
+    void on_mCopyDB_triggered();
     void on_mCreateDB_triggered();
     void on_mCreateEmptyDB_triggered();
 
@@ -83,8 +80,6 @@ private slots:
     void on_mPlanifPlanches_triggered();
     void on_mAbout_triggered();
     void on_mUpdateSchema_triggered();
-    void on_mExport_triggered();
-    void on_mImport_triggered();
     void on_mIncDatesCultures_triggered();
     void on_mDestinations_triggered();
     void on_mInventaire_triggered();
@@ -126,9 +121,15 @@ private slots:
 
     void on_mViewList_triggered();
 
-    void on_mSchemaBDD_triggered();
+    void on_mSQLiteSchema_triggered();
 
     void on_mEspecesToutes_triggered();
+
+    void on_mAddSchema_triggered();
+
+    void on_mUnitesProd_triggered();
+
+    void on_mBilans_triggered();
 
 private:
     void SetEnabledDataMenuEntries(bool b);

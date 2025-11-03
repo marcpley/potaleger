@@ -1,0 +1,5 @@
+BEGIN TRANSACTION;
+
+ALTER TABLE Rotations_détails DROP COLUMN Nb_planches;
+
+COMMIT TRANSACTION;

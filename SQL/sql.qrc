@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/sql">
+        <file>CreateBaseData.sql</file>
+        <file>CreateTables.sql</file>
+        <file>CreateTriggers.sql</file>
+        <file>CreateViews.sql</file>
+        <file>UpdateTableParams.sql</file>
+        <file>UpdateStru20250120.sql</file>
+        <file>UpdateStru20250227.sql</file>
+        <file>UpdateStru20250305.sql</file>
+        <file>UpdateStru20250325.sql</file>
+        <file>UpdateStru20250514.sql</file>
+        <file>UpdateStru20250615.sql</file>
+        <file>UpdateStru20250622.sql</file>
+        <file>UpdateStru20250728.sql</file>
+        <file>UpdateStru20250925.sql</file>
+    </qresource>
+</RCC>
