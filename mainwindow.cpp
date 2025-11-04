@@ -634,17 +634,19 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.4.0</b> - 03/11/2025<br>"
+                  "<b>Potaléger 1.4.0b7</b> - 04/11/2025<br>"
                   "<u>"+tr("Evolutions métiers")+" :</u><br>"+
                   "- "+tr("<b>Bilans annuels</b> avec pourcentages de réalisation des objectifs, surface occupée, etc.")+"<br>"+
                   "- "+tr("<b>Associations d'espèces ou familles de plante</b>, aide à la création des plans de rotation.")+"<br>"+
                   "- "+tr("<b>Plans de rotation avec échelonnage (en semaine) des cultures d'une même espèce</b>.")+"<br>"+
+                  "- "+tr("Champ 'Catégories' pour les espèces (légume fruit, feuille, etc).")+"<br>"+
                   "- "+tr("Cultures à fertiliser, les cultures dont la récolte est commencée ne sont plus incluses).")+"<br>"+
                   "- "+tr("Onglet 'Saisie des récoltes', possibilité d'indiquer que la récolte est terminée, plus affichage du total déjà récolté.")+"<br>"+
                   "- "+tr("Quantité restant en stock et total des sorties pour la destination dans l'onglet 'Saisie des consommations'.")+"<br>"+
                   "- "+tr("Recalcul des dates de plantation et récolte (Cultures à semer - Toutes) lors de la saisie de la date de semis.")+"<br>"+
                   "- "+tr("Dates Début_récolte et Fin_récolte (cultures) automatique en fonction des récoltes.")+"<br>"+
                   "<u>"+tr("Evolutions noyau et interface")+" :</u><br>"+
+                  "- "+tr("Affichage des champs Vrai/Faux avec ✔️ à la place de 'x'.")+"<br>"+
                   "- "+tr("Amélioration de l'affichage et l'édition des champs textes multi-lignes.")+"<br>"+
                   "- "+tr("Possibilité de masquer des colonnes.")+"<br>"+
                   "- "+tr("Possibilité de réinitialiser les données de base (fusion avec ou remplacement de vos données).")+"<br>"+

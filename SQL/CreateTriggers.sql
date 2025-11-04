@@ -553,16 +553,52 @@ BEGIN
     WHERE Destination=OLD.Destination;
 END;;
 
+DROP TRIGGER IF EXISTS Espèces_INSERT;;
+CREATE TRIGGER Espèces_INSERT AFTER INSERT ON Espèces
+    WHEN (NEW.Catégories NOTNULL)AND
+         ((NEW.Catégories LIKE '%r%')OR(NEW.Catégories LIKE '%b%')OR(NEW.Catégories LIKE '%f%')OR(NEW.Catégories LIKE '%u%')OR
+          (NEW.Catégories LIKE '%g%')OR(NEW.Catégories LIKE '%p%')OR(NEW.Catégories LIKE '%a%')OR(NEW.Catégories LIKE '%m%'))
+BEGIN
+    UPDATE Espèces SET Catégories=replace(replace(replace(replace(replace(replace(replace(replace(Catégories,
+                                  'r','🫜'),
+                                  'b','🧅'),
+                                  'f','🌿'),
+                                  'u','🍆'),
+                                  'g','🌽'),
+                                  'p','🫐'),
+                                  'a','🌳'),
+                                  'm','🏵️')
+    WHERE Espèce=NEW.Espèce;
+END;;
+
+DROP TRIGGER IF EXISTS Espèces_UPDATE;;
+CREATE TRIGGER Espèces_UPDATE AFTER UPDATE ON Espèces
+    WHEN (NEW.Catégories NOTNULL)AND(NEW.Catégories!=coalesce(OLD.Catégories,''))AND
+         ((NEW.Catégories LIKE '%r%')OR(NEW.Catégories LIKE '%b%')OR(NEW.Catégories LIKE '%f%')OR(NEW.Catégories LIKE '%u%')OR
+          (NEW.Catégories LIKE '%g%')OR(NEW.Catégories LIKE '%p%')OR(NEW.Catégories LIKE '%a%')OR(NEW.Catégories LIKE '%m%'))
+BEGIN
+    UPDATE Espèces SET Catégories=replace(replace(replace(replace(replace(replace(replace(replace(Catégories,
+                                  'r','🫜'),
+                                  'b','🧅'),
+                                  'f','🌿'),
+                                  'u','🍆'),
+                                  'g','🌽'),
+                                  'p','🫐'),
+                                  'a','🌳'),
+                                  'm','🏵️')
+    WHERE Espèce=NEW.Espèce;
+END;;
+
 DROP TRIGGER IF EXISTS Espèces__a_INSERT;;
 CREATE TRIGGER Espèces__a_INSERT INSTEAD OF INSERT ON Espèces__a
 BEGIN
     INSERT INTO Espèces (
         Espèce,
         Famille,
+        Catégories,
         Rendement,
         Niveau,
-        Favorable,
-        Défavorable,
+        Besoins,
         Densité,
         Dose_semis,
         Nb_graines_g,
@@ -582,10 +618,10 @@ BEGIN
     VALUES (
         NEW.Espèce,
         NEW.Famille,
+        NEW.Catégories,
         NEW.Rendement,
         NEW.Niveau,
-        NEW.Favorable,
-        NEW.Défavorable,
+        NEW.Besoins,
         NEW.Densité,
         NEW.Dose_semis,
         NEW.Nb_graines_g,
@@ -610,10 +646,10 @@ BEGIN
     UPDATE Espèces SET
         Espèce=NEW.Espèce,
         Famille=NEW.Famille,
+        Catégories=NEW.Catégories,
         Rendement=NEW.Rendement,
         Niveau=NEW.Niveau,
-        Favorable=NEW.Favorable,
-        Défavorable=NEW.Défavorable,
+        Besoins=NEW.Besoins,
         Densité=NEW.Densité,
         Dose_semis=NEW.Dose_semis,
         Nb_graines_g=NEW.Nb_graines_g,
@@ -656,9 +692,9 @@ BEGIN
     INSERT INTO Espèces (
         Espèce,
         Famille,
+        Catégories,
         Rendement,
-        Favorable,
-        Défavorable,
+        Besoins,
         S_taille,
         Effet,
         Usages,
@@ -674,9 +710,9 @@ BEGIN
     VALUES (
         NEW.Espèce,
         NEW.Famille,
+        NEW.Catégories,
         NEW.Rendement,
-        NEW.Favorable,
-        NEW.Défavorable,
+        NEW.Besoins,
         NEW.S_taille,
         NEW.Effet,
         NEW.Usages,
@@ -697,9 +733,9 @@ BEGIN
     UPDATE Espèces SET
         Espèce=NEW.Espèce,
         Famille=NEW.Famille,
+        Catégories=NEW.Catégories,
         Rendement=NEW.Rendement,
-        Favorable=NEW.Favorable,
-        Défavorable=NEW.Défavorable,
+        Besoins=NEW.Besoins,
         S_taille=NEW.S_taille,
         Effet=NEW.Effet,
         Usages=NEW.Usages,

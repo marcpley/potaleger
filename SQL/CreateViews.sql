@@ -621,8 +621,7 @@ CREATE VIEW Cultures__vivaces AS SELECT
     I.Notes N_IT_plante,
     PL.Notes N_Planche,
     E.Irrig Irrig_espèce,
-    E.Favorable,
-    E.Défavorable,
+    E.Besoins,
     E.Notes N_espèce
 FROM Cultures C
 LEFT JOIN Espèces E USING (Espèce)
@@ -968,13 +967,13 @@ CREATE VIEW Destinations__conso AS SELECT ---
 FROM Destinations D;
 UPDATE fda_schema SET tbl_type='View as table' WHERE (name='Destinations__conso');
 
-CREATE VIEW Espèces__a AS SELECT
+CREATE VIEW Espèces__a AS SELECT ---
     Espèce,
     Famille,
+    Catégories, ---
     Rendement,
     Niveau,
-    Favorable,
-    Défavorable,
+    Besoins,
     Densité,
     Dose_semis,
     Nb_graines_g,
@@ -1090,9 +1089,9 @@ WHERE (E.A_planifier NOTNULL)AND
 CREATE VIEW Espèces__v AS SELECT ---
     Espèce, ---
     Famille, ---
+    Catégories, ---
     Rendement, ---
-    Favorable, ---
-    Défavorable, ---
+    Besoins, ---
     S_taille, ---
     Effet, ---
     Usages, ---
@@ -1161,6 +1160,7 @@ CREATE VIEW ITP__Tempo AS SELECT ---
     I.S_récolte, ---
     I.D_récolte, ---
     I.Décal_max, ---
+    E.Catégories, ---
 
     coalesce((I.S_semis*7-6),0)||':'||
     coalesce(((I.S_semis+coalesce(I.Décal_max,0.5))*7-6),0)||':'||
@@ -1190,6 +1190,7 @@ CREATE VIEW ITP__Tempo AS SELECT ---
 FROM ITP I
 LEFT JOIN Espèces E USING(Espèce);
 UPDATE fda_schema SET tbl_type='View as table' WHERE (name='ITP__Tempo');
+UPDATE fda_schema SET readonly='x' WHERE (name='ITP__Tempo')AND(field_name IN('Catégories'));
 
 CREATE VIEW ITP__analyse_a AS SELECT
     I.IT_plante,
@@ -1751,6 +1752,7 @@ CREATE VIEW RD_ITP AS SELECT
     I.Espacement,
     I.Esp_rangs,
     E.Espèce,
+    E.Catégories,
     E.A_planifier,
     F.Famille,
     F.Intervalle
@@ -1833,6 +1835,8 @@ CREATE VIEW Rotations_détails__Tempo AS SELECT ---
      END) S_MEP, ---
 
     RI.S_Ferm-iif(RI.S_Ferm>52,52,0) S_Ferm, ---
+    RI.Catégories, ---
+
     coalesce((RI.S_semis+coalesce(R.Décalage,0)-iif(RI.S_semis>RI.S_plantation,52,0)) -- Semis année N-1.
              *7-6,0)||':'|| -- Conversion semaines -> jours puis se caler au lundi.
     coalesce((RI.S_semis+iif(R.Décalage ISNULL,coalesce(RI.Décal_max,0)+1, -- Montrer la période de semis.
@@ -1909,6 +1913,7 @@ FROM Rotations_détails R
 LEFT JOIN RD_ITP RI USING(ID)
 ORDER BY RI.Ind;
 UPDATE fda_schema SET tbl_type='View as table' WHERE (name='Rotations_détails__Tempo');
+UPDATE fda_schema SET readonly='x' WHERE (name='Rotations_détails__Tempo')AND(field_name IN('Catégories'));
 
 CREATE VIEW Récoltes__Saisies AS SELECT ---
     R.ID, ---

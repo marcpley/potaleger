@@ -143,6 +143,7 @@ CREATE TABLE Espèces ( ---
     Espèce TEXT PRIMARY KEY, ---
     -- _Espèce TEXT AS (#NoAccent(Espèce)NoAccent#),
     Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE, ---
+    Catégories TEXT, --- A qui nous sert cette espèce.\nLes lettres suivantes seront remplacées par des symboles:\nLégume racine 🫜 (r)\nLégume bulbe 🧅 (b)\nLégume feuille et branche 🌿 (f)\nLégume fruit 🍆 (u)\nGrain 🌽 (g)\nPetit fruit 🫐 (p)\nArbre 🌳 (a)\nPAM 🏵️ (m)
     Rendement REAL, ---
     Niveau TEXT, ---
     Densité REAL, ---
@@ -155,8 +156,7 @@ CREATE TABLE Espèces ( ---
     Conservation BOOL, ---
     A_planifier BOOL DEFAULT ('x'), ---
     Vivace BOOL, ---
-    Favorable TEXT, ---
-    Défavorable TEXT, ---
+    Besoins TEXT, ---
     S_taille INTEGER CONSTRAINT 'S_taille, semaine 1 à 52' CHECK (S_taille ISNULL OR S_taille BETWEEN 1 AND 52), --- N° de semaine (1 à 52) du début de la période de taille.
     Effet TEXT, --- Effet sur la croissance et la productionsur plantes proches (association).
     Usages TEXT, --- Propriété et usages de l'espèce (plantes aromatiques et médicinales).
@@ -172,7 +172,7 @@ CREATE TABLE Espèces ( ---
     Prix_kg REAL, ---
     Notes TEXT) ---
     WITHOUT ROWID;
-UPDATE fda_schema SET base_data='x' WHERE (name='Espèces')AND(field_name IN('Espèce','Famille','Rendement','Niveau','Densité','Dose_semis','Nb_graines_g','FG','T_germ','Levée','Vivace','Favorable','Défavorable','S_taille','Effet','Usages','N','P','K','Notes'));
+UPDATE fda_schema SET base_data='x' WHERE (name='Espèces')AND(field_name IN('Espèce','Famille','Catégories','Rendement','Niveau','Densité','Dose_semis','Nb_graines_g','FG','T_germ','Levée','Vivace','Besoins','S_taille','Effet','Usages','N','P','K','Notes'));
 
 CREATE TABLE Familles ( ---
     Famille TEXT PRIMARY KEY, ---

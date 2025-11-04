@@ -15,11 +15,10 @@ bool AcceptReturns(const QString sFieldName) {
            sFieldName.startsWith("Conflit_")or
            sFieldName.startsWith("Cultures")or
            sFieldName.startsWith("Dates_")or
-           sFieldName=="Défavorable" or
+           sFieldName=="Besoins" or
            sFieldName.toUpper().startsWith("DESCRIPTION")or
            sFieldName.startsWith("Espèces") or
            sFieldName=="Etats" or
-           sFieldName=="Favorable" or
            sFieldName=="Fertilisants" or
            sFieldName=="Fonction" or
            sFieldName=="Interprétation" or
@@ -288,6 +287,9 @@ QString NoData(const QString sTableName){
 bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
     bool bReadOnly=false;
     PotaQuery query(*db);
+
+    if (query.Select0ShowErr("SELECT (readonly NOTNULL) FROM fda_schema WHERE (name='"+sTableName+"')AND(field_name='"+sFieldName+"')").toBool())
+        return true;
 
     if (query.Select0ShowErr("SELECT count() FROM pragma_table_xinfo('"+sTableName+"') WHERE name='"+sFieldName+"'")==0)
         return true;
@@ -744,8 +746,8 @@ QColor TableColor(QString sTName,QString sFName)
     else if (sFName.startsWith("Espèce") or
         sFName.endsWith("_esp") or
         sFName=="A_planifier" or
-        sFName=="Défavorable" or
-        sFName=="Favorable" or
+        sFName=="Catégories" or
+        sFName=="Besoins" or
         sFName=="FG" or
         sFName=="Groupe" or
         sFName=="Irrig_espèce" or
@@ -1501,7 +1503,8 @@ QString ToolTipField(QSqlDatabase *db,const QString sTableName,const QString sFi
             if (!sToolTip.contains("'x' ") and !sToolTip.contains("'v' "))
                 sToolTip+=QObject::tr( "\n"
                                        "Saisie quelconque=Oui (ou vrai).\n"
-                                       "'X', 'Oui', 'Non', '0' ou n'importe quoi veulent dire OUI.");
+                                       "'x', 'Oui', 'Non', '0' ou n'importe quoi veulent dire OUI.\n"
+                                       "A l'affichage 'x' est remplacé par ✔️.");
         } else {
             sToolTip+=iif(sToolTip=="","","\n\n").toString()+
                       QObject::tr("Format : %1").arg(sDataType);
