@@ -227,7 +227,8 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     QAction* aEscapeNotes=new QAction(editNotes);
     aEscapeNotes->setShortcut(Qt::Key_Escape);
     connect(aEscapeNotes, &QAction::triggered, [this]() {
-        toogleReadOnlyEditNotes(tv->currentIndex(),true);
+        if (editNotes->isVisible() and !editNotes->isReadOnly())
+            toogleReadOnlyEditNotes(tv->currentIndex(),true);
     });
     tv->addAction(aEscapeNotes);
 
@@ -378,23 +379,31 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
 void PotaWidget::Init(QString TableName)
 {
+    AppBusy(true,model->progressBar,16,"Init");
+
     model->setTable(TableName);
 
     PotaQuery query(*model->db);
+    PotaQuery query2(*model->db);
 
-    qInfo() << "Open " << TableName; +" ("+model->RealTableName()+")";
+
+    qInfo() << "Open "+TableName+iif(TableName!=model->RealTableName()," ("+model->RealTableName()+")","").toString();
 
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
+
+    model->progressBar->setValue(1);
 
     //Primary Key
     query.ExecShowErr("PRAGMA table_xinfo("+model->RealTableName()+")");
     while (query.next()){
         if (query.value(5).toInt()==1) {
             model->sPrimaryKey=query.value(1).toString();
-            qDebug() << "sPrimaryKey : "+model->sPrimaryKey;
+            //qDebug() << "sPrimaryKey : "+model->sPrimaryKey;
             break;
         }
     }
+
+    model->progressBar->setValue(2);
 
     //FK
     query.ExecShowErr("PRAGMA foreign_key_list("+model->RealTableName()+");");
@@ -411,6 +420,8 @@ void PotaWidget::Init(QString TableName)
         }
     }
 
+    model->progressBar->setValue(3);
+
     //Generated columns
     query.clear();
     query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
@@ -418,6 +429,10 @@ void PotaWidget::Init(QString TableName)
         if (query.value(6).toInt()==2)
             model->generatedColumns.insert(query.value(1).toString());
         model->dataTypes.append(DataType(model->db,TableName,query.value(1).toString()));
+        model->baseDataFields.append(query2.Select0ShowErr("SELECT base_data FROM fda_schema "
+                                                           "WHERE (name='"+model->RealTableName()+"')AND"
+                                                                 "(field_name='"+query.value(1).toString()+"')").toString());
+        model->progressBar->setValue(model->progressBar->value()+1);
     }
 
     model->setOrderBy(-1,Qt::SortOrder::AscendingOrder);
@@ -432,8 +447,11 @@ void PotaWidget::Init(QString TableName)
     tv->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tv, &QTableView::customContextMenuRequested, this, &PotaWidget::showContextMenu);
 
+    model->progressBar->setValue(model->progressBar->value()+1);
+
     //widget width according to font size
     SetSizes();
+    AppBusy(false,model->progressBar);
 }
 
 void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
@@ -485,14 +503,7 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
             if (text.contains("\n")){
                 SetVisibleEditNotes(true,model->nonEditableColumns.contains(cur.column()));
             } else {
-                // QVariant fontVariant=tv->model()->data(cur, Qt::FontRole);
-                // QFont font=fontVariant.isValid() ? fontVariant.value<QFont>() : tv->font();
-                // QFontMetrics fontMetrics(font);
-                // QString elidedText=fontMetrics.elidedText(text, Qt::ElideRight, tv->columnWidth(cur.column())+65);
-                // SetVisibleEditNotes(elidedText != text,model->nonEditableColumns.contains(cur.column()));
-
                 QFontMetrics fm(editNotes->font());
-
                 SetVisibleEditNotes(fm.horizontalAdvance(text)>tv->columnWidth(cur.column())-3,model->nonEditableColumns.contains(cur.column()));
             }
         } else {
@@ -513,7 +524,7 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
             (autoScroll+tv->verticalScrollBar()->value()<=tv->verticalScrollBar()->maximum())and
             (autoScroll+tv->verticalScrollBar()->value()>=0)) { //and !editNotes->isVisible()
             if (editNotes->isVisible()) {
-                qDebug() << model->record(cur.row()).value(0).toString() << autoScroll << tv->rowHeight(cur.row());
+                //qDebug() << model->record(cur.row()).value(0).toString() << autoScroll << tv->rowHeight(cur.row());
                 editNotes->move(editNotes->x(),editNotes->y()-autoScroll*tv->rowHeight(cur.row()));
             }
             autoScroll+=tv->verticalScrollBar()->value();
@@ -578,7 +589,7 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
     if (format=="INSERT") header.append("INSERT INTO "+sTableName+" (");
     else if (format=="UPDATE") {
         header.append("UPDATE "+sTableName+" SET ");
-        for (const QModelIndex &index : selectedIndexes) {
+        for (const QModelIndex &index : selectedIndexes) { //todo: exporter les colonnes visibles.
             selectedColumns.append(model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString());
         }
         updateAllColumns=(selectedColumns.count()==0 or
@@ -1203,20 +1214,13 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     QAction mGraficView(QIcon::fromTheme("utilities-system-monitor"),tr("Graphique..."), this);
     QAction mExport(tr("Exporter les données..."), this);
     QAction mImport(tr("Importer des données..."), this);
-    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base..."), this);
+    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base (✴️)..."), this);
 
     QModelIndex index=tv->indexAt(pos);
     QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
 
-    // mEditNotes.setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
-    // mEditNotes.setCheckable(true);
-    // mEditNotes.setChecked(!editNotes->isReadOnly());
-    if (index.isValid()) {
-        // mEditNotes.setEnabled(pbEdit->isChecked() and
-        //                       !model->nonEditableColumns.contains(index.column()) and AcceptReturns(sFieldName));
-    } else {
+    if (!index.isValid()) {
         mDefColWidth.setEnabled(false);
-        // mEditNotes.setEnabled(false);
     }
 
     mExport.setIcon(QIcon(TablePixmap(model->tableName(),"  >>")));
@@ -1230,32 +1234,61 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
                                                     "WHERE (name='"+model->tableName()+"')AND(field_name ISNULL)AND(tbl_type IN('Table','View as table'))").toInt()>0));
 
     connect(&mDefColWidth, &QAction::triggered, this, &PotaWidget::hDefColWidth);
-    // connect(&mEditNotes, &QAction::triggered, [this]() {
-    //     toogleReadOnlyEditNotes(tv->currentIndex());
-    // });
     connect(&mGraficView, &QAction::triggered, this, &PotaWidget::showGraphDialog);
     connect(&mExport, &QAction::triggered, this, &PotaWidget::exportData);
     connect(&mImport, &QAction::triggered, this, &PotaWidget::importData);
     connect(&mResetBaseData, &QAction::triggered, this, &PotaWidget::resetBaseData);
 
-    //Select vivible columns menu entries.
-    QMenu *VisibleColMenu = contextMenu.addMenu(QIcon::fromTheme("preferences-system"),tr("Colonnes vivibles"));
-    for (int col = 0; col < model->columnCount(); ++col) {
-    //auto addCheckBoxToMenu = [&](QMenu *menu, const QString &text, bool checked,std::function<void(bool)> onToggled) {
-        QWidgetAction *wa = new QWidgetAction(VisibleColMenu);
-        QCheckBox *cb = new QCheckBox(model->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString(), VisibleColMenu);
-        cb->setChecked(!tv->isColumnHidden(col));
-        // cb->setFocusPolicy(Qt::NoFocus); //empêcher que la checkbox prenne le focus sur clic (selon comportement souhaité)
-        connect(cb, &QCheckBox::toggled, this, [this, col](bool checked){
-            PotaWidget::setVisibleColumn(col, checked);
+    //Vivible columns menu entries.
+    QMenu *VisibleColMenu = contextMenu.addMenu(QIcon::fromTheme("preferences-system"), tr("Colonnes visibles"));
+    if (true) {
+        QWidgetAction *allWa = new QWidgetAction(VisibleColMenu);
+        QCheckBox *allCb = new QCheckBox(tr("Toutes"), VisibleColMenu);
+        allWa->setDefaultWidget(allCb);
+        VisibleColMenu->addAction(allWa);
+        VisibleColMenu->addSeparator();
+
+        bool allVisible = true;
+        for (int col = 0; col < model->columnCount(); ++col) {
+            QWidgetAction *wa = new QWidgetAction(VisibleColMenu);
+            QCheckBox *cb = new QCheckBox(model->headerData(col, Qt::Horizontal, Qt::DisplayRole).toString(), VisibleColMenu);
+            cb->setChecked(!tv->isColumnHidden(col));
+            if (tv->isColumnHidden(col)) allVisible = false;
+            connect(cb, &QCheckBox::toggled, this, [this, col, VisibleColMenu, allCb, allWa](bool checked){
+                PotaWidget::setVisibleColumn(col, checked);
+                // Check if all columns are checked
+                bool every = true;
+                for (QAction *a : VisibleColMenu->actions()) {
+                    if (a == allWa) continue;
+                    QWidgetAction *w = qobject_cast<QWidgetAction*>(a);
+                    if (!w) continue;
+                    QCheckBox *c = qobject_cast<QCheckBox*>(w->defaultWidget());
+                    if (c && !c->isChecked()) { every = false; break; }
+                }
+                allCb->blockSignals(true);
+                allCb->setChecked(every);
+                allCb->blockSignals(false);
+            });
+
+            wa->setDefaultWidget(cb);
+            VisibleColMenu->addAction(wa);
+        }
+
+        connect(allCb, &QCheckBox::toggled, this, [VisibleColMenu, allWa](bool checked){
+            for (QAction *a : VisibleColMenu->actions()) {
+                if (a == allWa) continue;
+                QWidgetAction *w = qobject_cast<QWidgetAction*>(a);
+                if (!w) continue;
+                QCheckBox *c = qobject_cast<QCheckBox*>(w->defaultWidget());
+                if (!c) continue;
+                c->setChecked(checked); // Fire the menu action.
+            }
         });
-        wa->setDefaultWidget(cb);
-        VisibleColMenu->addAction(wa);
-    };
+        allCb->setChecked(allVisible);
+    }
 
     contextMenu.addAction(&mDefColWidth);
     contextMenu.addMenu(VisibleColMenu);
-    //contextMenu.addAction(&mEditNotes);
     contextMenu.addAction(&mGraficView);
     contextMenu.addAction(&mExport);
     contextMenu.addAction(&mImport);
@@ -1282,10 +1315,18 @@ void PotaWidget::toogleReadOnlyEditNotes(const QModelIndex index, bool discard) 
     if (pbEdit->isChecked() and
         !model->nonEditableColumns.contains(index.column())) {
         if (editNotes->isReadOnly()) { //Go to notes edit mode
+            //Move to keep unvalidated user input
+            QModelIndex mi=tv->currentIndex();
+            if (tv->currentIndex().column()+1<model->columnCount())
+                tv->setCurrentIndex(model->index(tv->currentIndex().row(),tv->currentIndex().column()+1));
+            else if (tv->currentIndex().column()>0)
+                tv->setCurrentIndex(model->index(tv->currentIndex().row(),tv->currentIndex().column()-1));
+            tv->setCurrentIndex(mi);
+
             editNotes->setReadOnly(false);
             aSaveNotes->setEnabled(true);
             aCommit->setEnabled(false);
-        } else if (discard) {
+        } else if (discard) {//Discard changes and return to notes read mode
             editNotes->setReadOnly(true);
             tv->setFocus();
             aSaveNotes->setEnabled(false);
@@ -1298,7 +1339,7 @@ void PotaWidget::toogleReadOnlyEditNotes(const QModelIndex index, bool discard) 
             int i=editNotes->toPlainText().count("<");
             editNotes->setMarkdown(editNotes->toPlainText().trimmed());
             if (i != editNotes->toMarkdown().count("<")) {
-                qDebug() << save;
+                //qDebug() << save;
                 editNotes->setPlainText(save);
                 editNotes->setReadOnly(false);
                 aSaveNotes->setEnabled(true);
@@ -1316,7 +1357,7 @@ void PotaWidget::toogleReadOnlyEditNotes(const QModelIndex index, bool discard) 
 
 void PotaWidget::setVisibleColumn(int col, bool visible) {
     tv->setColumnHidden(col,!visible);
-    qDebug() << col << visible;
+    //qDebug() << col << visible;
 }
 
 void PotaWidget::showGraphDialog()
@@ -1414,7 +1455,7 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
         palette.setColor(QPalette::Text, tv->palette().color(QPalette::Text));
         editNotes->setPalette(palette);
 
-        if (true) { //autoSize
+        if (editNotes->isReadOnly()) { //auto size
             //editNotes->document()->setTextWidth(QWIDGETSIZE_MAX);
             QFontMetrics fm(editNotes->font());
             int maxWidth=0;
@@ -1431,7 +1472,7 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible, bool autoSize){
             // editNotes->setFixedSize(min(maxWidth+50,400),
             //                         min(lines.count()*22+5,200));
             EditNotesWidth=min((maxWidth*1.2)+50,EditNotesWidth);
-            EditNotesHeight=min((lines.count()+returns)*22/10*cbFontSize->currentText().toInt()+5,200);
+            EditNotesHeight=min((lines.count()+returns)*22/10*cbFontSize->currentText().toInt()+7,200);
             //qDebug() << "autosize";
         }
         int x=tv->columnViewportPosition(tv->currentIndex().column())+5;
@@ -1814,6 +1855,15 @@ void PotaWidget::pbCommitClick()
 {
     bUserCurrChanged=false;
     AppBusy(true);
+
+    //Move to keep unvalidated user input
+    QModelIndex mi=tv->currentIndex();
+    if (tv->currentIndex().column()+1<model->columnCount())
+        tv->setCurrentIndex(model->index(tv->currentIndex().row(),tv->currentIndex().column()+1));
+    else if (tv->currentIndex().column()>0)
+        tv->setCurrentIndex(model->index(tv->currentIndex().row(),tv->currentIndex().column()-1));
+    tv->setCurrentIndex(mi);
+
     PositionSave();
     if (model->SubmitAllShowErr())
         PositionRestore();
@@ -2157,44 +2207,36 @@ bool PotaTableModel::select()  {
 
     qInfo() << sQuery;
 
-    PotaQuery query(*db);
-    if (!bBatch) {
-        query.ExecShowErr("SELECT COUNT(*) FROM "+tableName()+" TN"+
-                               iif(filter().toStdString()!=""," WHERE "+filter(),"").toString());
-        int totalRows=0;
-        if (query.next())
-            totalRows=query.value(0).toInt();
-        progressBar->setMaximum(totalRows);
-        qDebug() << "totalRows " << totalRows;
-    }
+    //PotaQuery query(*db);
+    //if (!bBatch) {
+        // progressBar->setValue(1);
+        // query.ExecShowErr("SELECT COUNT(*) FROM "+tableName()+" TN"+
+        //                        iif(filter().toStdString()!=""," WHERE "+filter(),"").toString());
+        //int totalRows=0;
+        //if (query.next())
+        //    totalRows=query.value(0).toInt();
+        //progressBar->setMaximum(totalRows);
+        //qDebug() << "totalRows " << totalRows;
+    //}
 
-    // QTimer *timer=new QTimer(this);
-    // connect(timer, &QTimer::timeout, this, &PotaTableModel::selectTimer);
-    // timer->start(1000);
 
     setLastError(QSqlError());
 
     QSqlRelationalTableModel::select();//Avoids duplicate display of inserted lines
-    // qDebug() << rowCount() << "(select)";
-    if (!bBatch)
-        progressBar->setValue(1);
+    // if (!bBatch)
+    //     progressBar->setValue(1);
     setQuery(sQuery);
-    if (!bBatch)
-        progressBar->setValue(rowCount());
-    // qDebug() << rowCount() << "(setQuery)";
+    // if (!bBatch)
+    //     progressBar->setValue(rowCount());
 
     while (canFetchMore()) {
         fetchMore();
-        if (!bBatch)
-            progressBar->setValue(rowCount());
-        // qDebug() << rowCount();
+        // if (!bBatch)
+        //     progressBar->setValue(rowCount());
     }
 
-    // timer->stop();
-    // timer->deleteLater();
-
     if (!bBatch) {
-        qInfo() << str(rowCount())+" "+tr("lignes");//Line necessary to make work lFilterResult->setText(...), don't know why!
+        qInfo() << str(rowCount())+" rows";//+tr("lignes");//Line necessary to make work lFilterResult->setText(...), don't know why!
         dynamic_cast<PotaWidget*>(parent())->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
         AppBusy(false,progressBar);
     }
@@ -2208,6 +2250,7 @@ bool PotaTableModel::select()  {
         AppBusy(true,progressBar,rowCount(),"Show commited cells %p%");
         //QString sPrimaryKey=PrimaryKeyFieldName(db,RealTableName());
         int jPrimaryKey=FieldIndex(sPrimaryKey);
+        PotaQuery query(*db);
         query.prepare("SELECT * "
                       "FROM temp."+tempTableName+" "+
                       "WHERE "+sPrimaryKey+"=:pk");
@@ -2324,7 +2367,7 @@ bool PotaTableModel::SubmitAllShowErr() {
         return true;
     } else {
         SetColoredText(pw->lErr,lastError().text(),"Err");
-        qDebug() <<  lastError().text();
+        qDebug() <<  "SubmitAllShowErr" << lastError().text();
         pw->isCommittingError=true;
         //dbSuspend(db,true,true,label);
         return false;
@@ -2466,6 +2509,8 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
             PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
             if (pw->editNotes->isVisible() and pw->editNotes->isReadOnly())
                 pw->toogleReadOnlyEditNotes(currentIndex);
+            else if (!pw->editNotes->isVisible() and AcceptReturns(currentIndex.model()->headerData(currentIndex.column(),Qt::Horizontal,Qt::EditRole).toString()))
+                pw->toogleReadOnlyEditNotes(currentIndex);
             else
                 edit(currentIndex);
         }
@@ -2485,8 +2530,13 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
                (event->modifiers() & Qt::ALT) &&
                (event->key() == Qt::Key_V)) {
         pasteFromClipboard(true,true);
-    } else {
+    } else if (event->key()==Qt::Key_Left or event->key()==Qt::Key_Right or event->key()==Qt::Key_Up or event->key()==Qt::Key_Down or
+               event->key()==Qt::Key_PageUp or event->key()==Qt::Key_PageDown or event->key()==Qt::Key_Back or event->key()==Qt::Key_End) {
         QTableView::keyPressEvent(event);
+    } else { //Do not modify data directly in tv if editNotes is Visible.
+        PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
+        if (!pw->editNotes->isVisible())
+            QTableView::keyPressEvent(event);
     }
 }
 

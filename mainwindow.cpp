@@ -69,6 +69,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->Init(sTableName);
 
         if (w->model->SelectShowErr()) {
+            AppBusy(true,w->model->progressBar,6+w->model->columnCount(),"UI");
             bool bEdit=false;
             PotaQuery query(db);
             if (!ReadOnlyDb and
@@ -96,28 +97,30 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                                                   "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0)) {
                 w->pbEdit->setVisible(false);
             }
-
+            w->model->progressBar->setValue(1);
             if(w->model->rowCount()==0) {
                 if (bEdit and(FkFilter(&db,w->model->RealTableName(),"","",w->model->index(0,0),true)!="NoFk")){
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName().replace("_"," ").toLower()));
                 } else {
                     SetColoredText(ui->lDBErr,"","");
+                    AppBusy(false,ui->progressBar);
                     MessageDlg(windowTitle(),sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
                     w->deleteLater();
                     return false;
                 }
             }
 
-            ui->tabWidget->addTab(w,sTitre);
-            ui->tabWidget->setCurrentWidget(w);
-
-            //w->lFilterResult->setText(str(w->model->rowCount())+" "+tr("lignes"));
+            w->model->progressBar->setValue(2);
 
             for (int i=0; i<w->model->columnCount();i++){
                 //Store field name in header EditRole.
                 w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole),Qt::EditRole);
                 //Store corrected field name in header DisplayRole.
-                w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString().replace("_pc","").replace("_"," "),Qt::DisplayRole);
+                QString headerDataDisplayRole=w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString();
+                headerDataDisplayRole=headerDataDisplayRole.replace("_pc",""); //'%' rigth added to the data.
+                headerDataDisplayRole=headerDataDisplayRole.replace("_"," ");
+                if (w->model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" ✴️";
+                w->model->setHeaderData(i,Qt::Horizontal,headerDataDisplayRole,Qt::DisplayRole);
 
                 //Table color.
                 w->delegate->cColColors[i]=TableColor(sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
@@ -130,14 +133,15 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                     w->delegate->RowColorCol=i;
 
                 //Tooltip
-                QString sTT=ToolTipField(&db,sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->model->dataTypes[i]);
+                QString sTT=ToolTipField(&db,sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),
+                                         w->model->dataTypes[i],w->model->baseDataFields[i]);
                 if (sTT!="")
                     w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
 
                 //All columns read only for start
                 w->model->nonEditableColumns.insert(i);
 
-                if (DataType(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString())=="DATE")
+                if (w->model->dataTypes[i]=="DATE")
                     w->model->dateColumns.insert(i);
                 else if (sTableName!="Params" and
                          FieldIsMoney(w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
@@ -146,9 +150,75 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 //Hide _columns
                 if (w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("_"))
                     w->tv->hideColumn(i);
+
+                w->model->progressBar->setValue(w->model->progressBar->value()+1);
+
             }
 
             w->RefreshHorizontalHeader();
+
+            w->model->progressBar->setValue(w->model->progressBar->value()+1);
+
+            //Tab user settings
+            QSettings settings;//("greli.net", "Potaléger");
+
+            //filter
+            settings.beginGroup("Filter");
+            w->iTypeText=settings.value(sTableName+"-FilterTypeText").toInt();
+            w->iTypeDate=settings.value(sTableName+"-FilterTypeDate").toInt();
+            w->iTypeReal=settings.value(sTableName+"-FilterTypeReal").toInt();
+            settings.endGroup();
+
+            w->model->progressBar->setValue(w->model->progressBar->value()+1);
+
+            //col width
+            settings.beginGroup("ColWidth");
+            for (int i=0; i<w->model->columnCount();i++) {
+                int iWidth;
+                if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_")){
+                    iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toInt(nullptr);
+                    if (iWidth<=0 or iWidth>700)
+                        iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
+                } else {
+                    iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
+                }
+                if (iWidth<=0 or iWidth>700)
+                    w->tv->resizeColumnToContents(i);
+                else
+                    w->tv->setColumnWidth(i,iWidth);
+                if (w->tv->columnWidth(i)>700)
+                    w->tv->setColumnWidth(i,700);
+
+            }
+            settings.endGroup();
+
+            w->model->progressBar->setValue(w->model->progressBar->value()+1);
+
+            settings.beginGroup("ColVisible");
+            for (int i=0; i<w->model->columnCount();i++) {
+                if (settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).isValid())
+                    w->tv->setColumnHidden(i,settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toBool());
+                settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->isColumnHidden(i));
+            }
+            settings.endGroup();
+
+            w->model->progressBar->setValue(w->model->progressBar->value()+1);
+
+            ui->mCloseTabs->setEnabled(true);
+            ui->mCloseTab->setEnabled(true);
+
+            w->tv->setFocus();
+            SetColoredText(ui->lDBErr,sTableName+
+                                      iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
+                                      iif(ReadOnlyDb,"Info","Ok").toString());
+
+            if (lastRow(sTableName)) // go to last row
+                w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+
+            AppBusy(false,ui->progressBar);
+
+            ui->tabWidget->addTab(w,sTitre);
+            ui->tabWidget->setCurrentWidget(w);
 
             //Colored tab title
             ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
@@ -179,57 +249,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),sDesc);
             else
                 ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(&db,w->model->tableName()));
-
-            //Tab user settings
-            QSettings settings;//("greli.net", "Potaléger");
-
-            //filter
-            settings.beginGroup("Filter");
-            w->iTypeText=settings.value(sTableName+"-FilterTypeText").toInt();
-            w->iTypeDate=settings.value(sTableName+"-FilterTypeDate").toInt();
-            w->iTypeReal=settings.value(sTableName+"-FilterTypeReal").toInt();
-            settings.endGroup();
-
-            //col width
-            settings.beginGroup("ColWidth");
-            for (int i=0; i<w->model->columnCount();i++) {
-                int iWidth;
-                if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_")){
-                    iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toInt(nullptr);
-                    if (iWidth<=0 or iWidth>700)
-                        iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
-                } else {
-                    iWidth=DefColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
-                }
-                if (iWidth<=0 or iWidth>700)
-                    w->tv->resizeColumnToContents(i);
-                else
-                    w->tv->setColumnWidth(i,iWidth);
-                if (w->tv->columnWidth(i)>700)
-                    w->tv->setColumnWidth(i,700);
-
-            }
-            settings.endGroup();
-
-            settings.beginGroup("ColVisible");
-            for (int i=0; i<w->model->columnCount();i++) {
-                if (settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).isValid())
-                    w->tv->setColumnHidden(i,settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toBool());
-                settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->isColumnHidden(i));
-            }
-            settings.endGroup();
-
-            ui->mCloseTabs->setEnabled(true);
-            ui->mCloseTab->setEnabled(true);
-
             w->tv->setFocus();
-            SetColoredText(ui->lDBErr,sTableName+
-                                      iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
-                                      iif(ReadOnlyDb,"Info","Ok").toString());
-
-            if (lastRow(sTableName)) // go to last row
-                w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
-
             return true;
         }
         else {
@@ -634,37 +654,41 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<b>Potaléger 1.4.0b7</b> - 04/11/2025<br>"
-                  "<u>"+tr("Evolutions métiers")+" :</u><br>"+
+                  "<h2>Potaléger 1.4.0b7</h2>04/11/2025<br>"
+                  "<br><u>"+tr("Evolutions métiers")+" :</u><br>"+
                   "- "+tr("<b>Bilans annuels</b> avec pourcentages de réalisation des objectifs, surface occupée, etc.")+"<br>"+
                   "- "+tr("<b>Associations d'espèces ou familles de plante</b>, aide à la création des plans de rotation.")+"<br>"+
                   "- "+tr("<b>Plans de rotation avec échelonnage (en semaine) des cultures d'une même espèce</b>.")+"<br>"+
+                  "- "+tr("Liste des cultures suivantes pour chaque culture à terminer.")+"<br>"+
+                  "- "+tr("Correction des infos récolte sur les cultures lors de leur passage à terminée.")+"<br>"+
                   "- "+tr("Champ 'Catégories' pour les espèces (légume fruit, feuille, etc).")+"<br>"+
                   "- "+tr("Cultures à fertiliser, les cultures dont la récolte est commencée ne sont plus incluses).")+"<br>"+
                   "- "+tr("Onglet 'Saisie des récoltes', possibilité d'indiquer que la récolte est terminée, plus affichage du total déjà récolté.")+"<br>"+
                   "- "+tr("Quantité restant en stock et total des sorties pour la destination dans l'onglet 'Saisie des consommations'.")+"<br>"+
                   "- "+tr("Recalcul des dates de plantation et récolte (Cultures à semer - Toutes) lors de la saisie de la date de semis.")+"<br>"+
                   "- "+tr("Dates Début_récolte et Fin_récolte (cultures) automatique en fonction des récoltes.")+"<br>"+
-                  "<u>"+tr("Evolutions noyau et interface")+" :</u><br>"+
+                  "<br><u>"+tr("Evolutions noyau et interface")+" :</u><br>"+
+                  "- "+tr("<b>Possibilité de masquer des colonnes.</b>")+"<br>"+
+                  "- "+tr("<b>Possibilité de réinitialiser les données de base</b> (fusion avec ou remplacement de vos données).")+"<br>"+
+                  "- "+tr("<b>Menu 'Maintenance'</b> avec listes des tables, des vues et des requêtes SQL constituant le schéma de la BDD.")+"<br>"+
+                  "- "+tr("Ouverture des onglets plus rapide.")+"<br>"+
                   "- "+tr("Affichage des champs Vrai/Faux avec ✔️ à la place de 'x'.")+"<br>"+
                   "- "+tr("Amélioration de l'affichage et l'édition des champs textes multi-lignes.")+"<br>"+
-                  "- "+tr("Possibilité de masquer des colonnes.")+"<br>"+
-                  "- "+tr("Possibilité de réinitialiser les données de base (fusion avec ou remplacement de vos données).")+"<br>"+
                   "- "+tr("Export des données au format SQL.")+"<br>"+
-                  "- "+tr("Menu 'Maintenance' avec listes des tables, des vues et des requêtes SQL constituant le schéma de la BDD.")+"<br>"+
                   "- "+tr("Possibilité de supprimer ET d'ajouter des lignes dans une même transaction.")+"<br>"+
                   "- "+tr("Surlignage des cellules modifiées depuis le dernier rechargement des données.")+"<br>"+
-                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "<br><u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("ITP, Nb_rangs alors que la largeur de planche n'est pas connue, remplacé par Esp_rang (espacement des rangs).")+"<br>"+
                   "- "+tr("Table temporaire pas supprimée dans certains cas lors de la mise à jour du schéma de BDD.")+"<br>"+
                   "- "+tr("Possibilité  d'ouvrir l'onglet 'Rot. (détails)' alors qu'il n'existe pas d'ITP d'annuelle.")+"<br>"+
                   "- "+tr("Surlignage des cellules modifiées dans l'onglet 'Saisie des récoltes'.")+"<br>"+
-                  "<br>"+
-                  "<b>Potaléger 1.3.1</b> - 4/10/2025<br>"
-                  "<u>"+tr("Corrections")+" :</u><br>"+
+
+                  "<h3>Potaléger 1.3.1</h3>4/10/2025<br>"
+                  "<br><u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Intégrités référentielles: modification d'une info pas transmise dans les tables enfants.")+"<br>"+
-                  "<b>Potaléger 1.3.0</b> - 17/09/2025<br>"
-                  "<u>"+tr("Evolutions")+" :</u><br>"+
+
+                  "<h3>Potaléger 1.3.0</h3>17/09/2025<br>"
+                  "<br><u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Graphique 'Récoltes prévues par semaine'</b> à partir des plans de rotation.")+"<br>"+
                   "- "+tr("<b>Graphiques paramétrables</b> à partir des données de tous les onglets.")+"<br>"+
                   "- "+tr("<b>Précision des ITP à la semaine</b> au lieu de 15 jours. Saisie de n° de semaine.")+"<br>"+
@@ -677,9 +701,9 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Amélioration affichage graphique des ITP (chevauchement des périodes semis/plantation/récolte).")+"<br>"+
                   "- "+tr("Chaque installation de Potaléger a ses propres paramètres (chemin BDD, dispositions fenêtres, etc).")+"<br>"+
                   "- "+tr("Séparateur de colonne et séparateur décimal paramétrables pour les exports de données.")+"<br>"+
-                  "<u>"+tr("Régressions (temporaires)")+" :</u><br>"+
+                  "<br><u>"+tr("Régressions (temporaires)")+" :</u><br>"+
                   "- "+tr("Conflits familles plus détectés dans les rotations.")+"<br>"+
-                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "<br><u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Erreur d'arrondi sur 'Qté prév' et 'Qté réc' dans l'onglet 'Couverture des objectifs'.")+"<br>"+
                   "- "+tr("Plantage sur requête SQL utilisateur sans titre ni description.")+"<br>"+
                   "- "+tr("Modification dans l'onglet 'Semis pépinière', des cultures dont le n° est la fin du n° de cultures modifiées sont modifiées aussi par erreur (ex 5 est la fin de 15).")+"<br>"+
@@ -690,9 +714,9 @@ void MainWindow::on_mWhatSNew_triggered()
                           "des cultures prévues 'semis en pépinière' et finalement plantées mais non semées (plant acheté) ; "
                           "des cultures sans date de récoltes ni date de destruction ; "
                           "des cultures semées l'année précédant l'année de leur mise en place.")+"<br>"+
-                  "<br>"+
-                  "<b>Potaléger 1.20</b> - 23/07/2025<br>"
-                  "<u>"+tr("Evolutions")+" :</u><br>"+
+
+                  "<h3>Potaléger 1.20</h3>23/07/2025<br>"
+                  "<br><u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Culture de vivaces</b>.")+"<br>"+
                   "- "+tr("Fonction calculatrice dans les cellules numériques.")+"<br>"+
                   "- "+tr("Alerte visuelle (cellule en rouge) si le contenu se termine par un '!'.")+"<br>"+
@@ -702,34 +726,34 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Planches en déficit de fertilisation.")+"<br>"+
                   "- "+tr("Bilan fertilisation planche pour les saisons passées.")+"<br>"+
                   "- "+tr("Requête SQL utilisateur (SELECT uniquement), permet par exemple de faire un export vers une plateforme de distribution.")+"<br>"+
-                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "<br><u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Cultures de la dernière année d'une rotation non planifiées l'année N+1.")+"<br>"+
                   "- "+tr("Choix de l'année de replanification d'une culture (en forçant une année dans 'D_planif').")+"<br>"+
                   "- "+tr("Affichage du nombre de lignes fonctionne (à coté du bouton 'Filtrer').")+"<br>"+
-                  "<br>"+
-                  "<b>Potaléger 1.10</b> - 06/06/2025<br>"
-                  "<u>"+tr("Evolutions")+" :</u><br>"+
+
+                  "<h3>Potaléger 1.10</h3>06/06/2025<br>"
+                  "<br><u>"+tr("Evolutions")+" :</u><br>"+
                   "- "+tr("<b>Gestion de l'irrigation</b>.")+"<br>"+
                   "- "+tr("Appellation 'Semis sous abris' remplacée par 'Semis pépinière'.")+"<br>"+
                   "- "+tr("Appellation 'Semis direct' remplacée par 'Semis en place'.")+"<br>"+
                   "- "+tr("<b>Fertilisations</b>: besoins NPK, fertilisants, bilan par culture et par planche pour la saison courante.")+"<br>"+
-                  "<u>"+tr("Corrections")+" :</u><br>"+
+                  "<br><u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Copier/Coller de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Import de données REAL avec séparateur décimal local différent du point ne produit plus une donnée TEXT.")+"<br>"+
                   "- "+tr("Plus de possibilité de saisir des récoltes avant la date de mise en place de la culture.")+"<br>"+
                   "- "+tr("Infos (min, max, etc) sur une sélection de pourcentages.")+"<br>"+
                   "- "+tr("Bugs minimes sur les fenêtres de dialogue..")+"<br>"+
-                  "<br>"+
-                  "<b>Potaléger 1.02</b> - 13/05/2025<br>"+
-                  "<u>"+tr("Corrections")+" :</u><br>"+
+
+                  "<h3>Potaléger 1.02</h3>13/05/2025<br>"+
+                  "<br><u>"+tr("Corrections")+" :</u><br>"+
                   "- "+tr("Cultures à planter: contient les 'Semis fait' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   "- "+tr("Cultures à récolter: contient les 'Semis fait'/'Plantation faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   "- "+tr("Cultures à terminer: contient les 'Semis fait'/'Plantation faite'/'Récolte faite' non nuls (et pas seulement commençant par 'x').")+"<br>"+
                   "- "+tr("Planification: les rotations sont maintenant correctement appliquées.")+"<br>"+
                   "- "+tr("Correction itinéraires techniques (création nouvelle BDD): navet.")+"<br>"+
                   "- "+tr("Amélioration de l'aide en ligne: saison et production.")+"<br>"+
-                  "<br>"+
-                  "<b>Potaléger 1.0</b> - 16/04/2025<br>"+
+
+                  "<h3>Potaléger 1.0</h3>16/04/2025<br><br>"+
                   "- "+tr("Données de base: Espèces, itinéraires techniques, variétés...")+"<br>"+
                   "- "+tr("Plans de rotation et planification des cultures.")+"<br>"+
                   "- "+tr("Gestion des cultures.")+"<br>"+

@@ -427,6 +427,10 @@ void MainWindow::RestaureParams()
      // else
      //    PotaDbOpen(settings.value("database_path").toString(),"",false);
 
+    if (settings.value("Version").toString()!=Version) {
+        on_mWhatSNew_triggered();
+        settings.setValue("Version",Version);
+    }
 }
 
 void MainWindow::SauvParams()
@@ -480,26 +484,26 @@ void MainWindow::SetUi(){
     SetMenuIcons();
 
 
-    if (false) {
-        QPalette palette=QApplication::palette();
+    // if (false) {
+    //     QPalette palette=QApplication::palette();
 
-        QList<QPalette::ColorRole> roles={
-            QPalette::Window, QPalette::WindowText, QPalette::Base, QPalette::AlternateBase,
-            QPalette::ToolTipBase, QPalette::ToolTipText, QPalette::Text, QPalette::Button,
-            QPalette::ButtonText, QPalette::BrightText, QPalette::Light, QPalette::Midlight,
-            QPalette::Dark, QPalette::Mid, QPalette::Shadow, QPalette::Highlight, QPalette::HighlightedText
-        };
+    //     QList<QPalette::ColorRole> roles={
+    //         QPalette::Window, QPalette::WindowText, QPalette::Base, QPalette::AlternateBase,
+    //         QPalette::ToolTipBase, QPalette::ToolTipText, QPalette::Text, QPalette::Button,
+    //         QPalette::ButtonText, QPalette::BrightText, QPalette::Light, QPalette::Midlight,
+    //         QPalette::Dark, QPalette::Mid, QPalette::Shadow, QPalette::Highlight, QPalette::HighlightedText
+    //     };
 
-        QList<QPalette::ColorGroup> groups={QPalette::Active,QPalette::Inactive,QPalette::Disabled};
+    //     QList<QPalette::ColorGroup> groups={QPalette::Active,QPalette::Inactive,QPalette::Disabled};
 
-        for (auto group : groups) {
-            qDebug() << "        // " << group;
-            for (auto role : roles) {
-                QColor color=palette.color(group, role);
-                qDebug() << "        palette.setColor(" << group << "," << role << ",QColor(" << color.name() << "));";
-            }
-        }
-    }
+    //     for (auto group : groups) {
+    //         qDebug() << "        // " << group;
+    //         for (auto role : roles) {
+    //             QColor color=palette.color(group, role);
+    //             qDebug() << "        palette.setColor(" << group << "," << role << ",QColor(" << color.name() << "));";
+    //         }
+    //     }
+    // }
 }
 
 void MainWindow::SetMenuIcons() {

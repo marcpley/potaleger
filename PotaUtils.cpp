@@ -78,11 +78,8 @@ bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QP
 QVariant PotaQuery::Select0ShowErr(QString query)
 {
     QVariant vNull;
-    if (ExecShowErr(query)) {
-        next();
-        //qDebug() << query+"->"+value(0).toString();
+    if (ExecShowErr(query) and next())
         return value(0);
-    }
     else
         return vNull;
 }
@@ -96,6 +93,7 @@ void AppBusy(bool busy,QProgressBar *pb,int max,QString text) {
             pb->setVisible(true);
         }
         QApplication::setOverrideCursor(Qt::WaitCursor);
+        //QCoreApplication::processEvents(); pire
     } else {
         if(pb) {
             pb->setVisible(false);
@@ -118,25 +116,32 @@ QColor blendColors(const QColor& baseColor, const QColor& overlayColor) {
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
     QString result="";
     PotaQuery query(*db);
-    query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
-    while (query.next()){
-        if (query.value(1).toString()==FieldName){
-            result=query.value(2).toString();
-            break;
-        }
-    }
+    // query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
+    // while (query.next()){
+    //     if (query.value(1).toString()==FieldName){
+    //         result=query.value(2).toString();
+    //         break;
+    //     }
+    // }
+    result=query.Select0ShowErr("SELECT type FROM pragma_table_xinfo('"+TableName+"') WHERE name='"+FieldName+"'").toString();
 
     if (result=="") {//Unknow view field.
         //ViewFieldIsDate(FieldName,Data)
         QString sData=query.Select0ShowErr("SELECT "+FieldName+" FROM "+TableName+" WHERE "+FieldName+" NOTNULL").toString();
-        if(!sData.isEmpty() and sData.length()==10 and sData[4]=='-' and sData[7]=='-')
-            return "DATE";
-        else if (QString::number(sData.toInt())==sData)
-            return "INT";
-        else if (QString::number(sData.toDouble())==sData)
-            return "REAL";
-        else
-            return "TEXT";
+        QString result="";
+        if(!sData.isEmpty()) {
+            if (sData.length()==10 and sData[4]=='-' and sData[7]=='-')
+                result="DATE";
+            else if (QString::number(sData.toInt())==sData)
+                result="INT";
+            else if (QString::number(sData.toDouble())==sData)
+                result="REAL";
+            else
+                result="TEXT";
+        }
+        if (result!="DATE") //CAST(... AS DATE) don't WORK fine: only year is displayed.
+            qWarning() << "Unknow field type for "+TableName+"."+FieldName+" : use CAST in view definition.";
+        return result;
     } else if (result.startsWith("NUM"))
         return "REAL";
     else
@@ -326,8 +331,6 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                 fda_cmd="INSERT INTO fda_schema (name,description,tbl_type) VALUES ('"+tablename+"',"+comment+",'View');";
             } else if (fda_cmd!="" and !s.startsWith("--")) {
                 if (bTable) { //Parse fields of a CREATE TABLE
-                if (s.startsWith("Notes "))
-                qDebug() << "s";
                     int space_index=s.indexOf(" ");
                     if (space_index>0) {
                         QString fieldname=s.first(space_index);

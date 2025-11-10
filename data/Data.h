@@ -39,7 +39,7 @@ QColor RowColor(QString sValue, QString sTableName);
 QString RowSummary(QString TableName, const QSqlRecord &rec);
 QColor TableColor(QString sTName,QString sFName);
 QPixmap TablePixmap(QString sTName, QString text);
-QString ToolTipField(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sDataType);
+QString ToolTipField(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sDataType, const QString sBaseData);
 QString ToolTipTable(QSqlDatabase *db, const QString sTableName);
 //bool ViewFieldIsDate(const QString sFieldName, QString sData="");
 

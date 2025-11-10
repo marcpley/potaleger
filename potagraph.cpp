@@ -228,7 +228,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
                         for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
-                        qDebug() << it.key();
+                            //qDebug() << it.key();
                             xMin=fmin(xMin,QDate::fromString(it.key(),"yyyy-MM-dd").year());
                             xMax=fmax(xMax,QDate::fromString(it.key(),"yyyy-MM-dd").year());
                         }
@@ -249,7 +249,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
                         for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
-                        qDebug() << it.key();
+                            //qDebug() << it.key();
                             xMin=fmin(xMin,QDate::fromString(it.key(),"yyyy-MM-dd").year()*12+QDate::fromString(it.key(),"yyyy-MM-dd").month());
                             xMax=fmax(xMax,QDate::fromString(it.key(),"yyyy-MM-dd").year()*12+QDate::fromString(it.key(),"yyyy-MM-dd").month());
                         }
@@ -271,7 +271,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
                         for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
-                        qDebug() << it.key();
+                            //qDebug() << it.key();
                             xMin=fmin(xMin,floor(QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay()/7));
                             xMax=fmax(xMax,floor(QDate::fromString(it.key(),"yyyy-MM-dd").toJulianDay()/7));
                         }

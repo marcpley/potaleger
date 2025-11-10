@@ -87,7 +87,7 @@ BEGIN
         coalesce(NEW.Date,DATE('now')),
         NEW.Espèce,
         NEW.Quantité,
-        coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)),
+        coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)*NEW.Quantité),
         NEW.Destination,
         NEW.Notes);
 END;;
@@ -99,7 +99,7 @@ BEGIN
         Date=coalesce(NEW.Date,DATE('now')),
         Espèce=NEW.Espèce,
         Quantité=NEW.Quantité,
-        Prix=coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)),
+        Prix=coalesce(NEW.Prix,(SELECT Prix_kg FROM Espèces WHERE Espèce=NEW.Espèce)*NEW.Quantité),
         Destination=NEW.Destination,
         Notes=NEW.Notes
      WHERE Consommations.ID=OLD.ID;
@@ -243,17 +243,19 @@ BEGIN
      WHERE Culture=NEW.Culture;
 END;;
 
+DROP TRIGGER IF EXISTS Cultures_UPDATE_Récolte_terminée;;
+CREATE TRIGGER Cultures_UPDATE_Récolte_terminée AFTER UPDATE ON Cultures
+          WHEN (NEW.Fin_récolte NOTNULL)AND NOT(coalesce(NEW.Récolte_faite,'') LIKE 'x%')AND(NEW.Terminée NOTNULL) -- Récolte commencée pas terminée et culture terminée.
+BEGIN
+    UPDATE Cultures SET
+        Récolte_faite='?'
+    WHERE (Culture=NEW.Culture);
+END;;
+
 DROP TRIGGER IF EXISTS Cultures_UPDATE_Récolte;;
 CREATE TRIGGER Cultures_UPDATE_Récolte AFTER UPDATE ON Cultures
           WHEN (NEW.Récolte_faite='?')
 BEGIN
-    -- -- Correction des récoltes si la culture indique récolte faite.
-    -- UPDATE Récoltes SET
-    --     Réc_ter=iif(Date=(SELECT R.Date_max FROM Rec_culture R WHERE R.Culture=Récoltes.Culture)),'x',NULL)
-    -- WHERE (NEW.Récolte_faite LIKE '?x%')AND -- La culture était déjà marqué récolte faite avant que la saisie de récolte ne force le recalcul de la culture.
-    --       (Culture=NEW.Culture);
-
-    -- Mise à jour de la culture maintenant que la dernière récolte est corrigée.
     UPDATE Cultures SET
         Début_récolte=coalesce((SELECT RC.Date_min FROM Rec_culture RC WHERE RC.Culture=NEW.Culture),-- Récolte commencée ou terminée -> plus petite date.
                                (SELECT CP.Début_récolte FROM Cu_planif CP WHERE CP.Culture=NEW.Culture), -- Récolte pas commencée -> date planifiée.
@@ -262,7 +264,8 @@ BEGIN
                              max((SELECT RC.Date_max FROM Rec_culture RC WHERE (RC.Culture=NEW.Culture)),Fin_récolte), -- Récolte commencée -> plus grande date y compris date prévue.
                              (SELECT CP.Fin_récolte FROM Cu_planif CP WHERE CP.Culture=NEW.Culture), -- Récolte pas commencée -> date planifiée.
                              Fin_récolte),
-        Récolte_faite=CASE WHEN (SELECT RC.Réc_ter NOTNULL FROM Rec_culture RC WHERE RC.Culture=NEW.Culture)
+        Récolte_faite=CASE WHEN ((Terminée NOTNULL)AND(Terminée!='v')AND(Terminée!='V')AND((SELECT count() FROM Rec_culture RC WHERE RC.Culture=NEW.Culture)>0))OR
+                                (SELECT RC.Réc_ter NOTNULL FROM Rec_culture RC WHERE RC.Culture=NEW.Culture)
                            THEN 'x'
                            WHEN (SELECT count() FROM Rec_culture RC WHERE RC.Culture=NEW.Culture)>0
                            THEN '-'
@@ -521,6 +524,7 @@ BEGIN
         Site_web,
         Date_RAZ,
         Active,
+        Interne,
         Notes)
     VALUES (
         NEW.Destination,
@@ -529,6 +533,7 @@ BEGIN
         NEW.Site_web,
         NEW.Date_RAZ,
         NEW.Active,
+        NEW.Interne,
         NEW.Notes);
 END;;
 
@@ -542,6 +547,7 @@ BEGIN
         Site_web=NEW.Site_web,
         Date_RAZ=NEW.Date_RAZ,
         Active=NEW.Active,
+        Interne=NEW.Interne,
         Notes=NEW.Notes
     WHERE Destination=OLD.Destination;
 END;;
@@ -556,36 +562,52 @@ END;;
 DROP TRIGGER IF EXISTS Espèces_INSERT;;
 CREATE TRIGGER Espèces_INSERT AFTER INSERT ON Espèces
     WHEN (NEW.Catégories NOTNULL)AND
-         ((NEW.Catégories LIKE '%r%')OR(NEW.Catégories LIKE '%b%')OR(NEW.Catégories LIKE '%f%')OR(NEW.Catégories LIKE '%u%')OR
-          (NEW.Catégories LIKE '%g%')OR(NEW.Catégories LIKE '%p%')OR(NEW.Catégories LIKE '%a%')OR(NEW.Catégories LIKE '%m%'))
+         ((NEW.Catégories LIKE '%ra%')OR(NEW.Catégories LIKE '%bu%')OR(NEW.Catégories LIKE '%fb%')OR(NEW.Catégories LIKE '%fl%')OR
+          (NEW.Catégories LIKE '%lf%')OR(NEW.Catégories LIKE '%gr%')OR(NEW.Catégories LIKE '%pf%')OR(NEW.Catégories LIKE '%fr%')OR
+          (NEW.Catégories LIKE '%ag%')OR(NEW.Catégories LIKE '%ev%')OR(NEW.Catégories LIKE '%me%')OR(NEW.Catégories LIKE '%bo%')OR
+          (NEW.Catégories LIKE '%ar%')OR(NEW.Catégories LIKE '%am%'))
 BEGIN
-    UPDATE Espèces SET Catégories=replace(replace(replace(replace(replace(replace(replace(replace(Catégories,
-                                  'r','🫜'),
-                                  'b','🧅'),
-                                  'f','🌿'),
-                                  'u','🍆'),
-                                  'g','🌽'),
-                                  'p','🫐'),
-                                  'a','🌳'),
-                                  'm','🏵️')
+    UPDATE Espèces SET Catégories=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(Catégories,
+                                  'ra','🥕'), -- Racine
+                                  'bu','🧅'), -- Bulbe
+                                  'fb','🌿'), -- Légume feuille et branche
+                                  'fl','🌼'), -- Légume fleur
+                                  'lf','🍆'), -- Légume fruit
+                                  'gr','🌽'), -- Grain
+                                  'pf','🍓'), -- Petit fruit
+                                  'fr','🍎'), -- Fruitier
+                                  'ag','🍊'), -- Agrume
+                                  'ev','🟩'), -- Engrais vert
+                                  'me','🐝'), -- Mellifère
+                                  'bo','🪓'), -- Bois
+                                  'ar','🌳'), -- Arbre
+                                  'am','🌺')  -- PAM
     WHERE Espèce=NEW.Espèce;
 END;;
 
 DROP TRIGGER IF EXISTS Espèces_UPDATE;;
 CREATE TRIGGER Espèces_UPDATE AFTER UPDATE ON Espèces
     WHEN (NEW.Catégories NOTNULL)AND(NEW.Catégories!=coalesce(OLD.Catégories,''))AND
-         ((NEW.Catégories LIKE '%r%')OR(NEW.Catégories LIKE '%b%')OR(NEW.Catégories LIKE '%f%')OR(NEW.Catégories LIKE '%u%')OR
-          (NEW.Catégories LIKE '%g%')OR(NEW.Catégories LIKE '%p%')OR(NEW.Catégories LIKE '%a%')OR(NEW.Catégories LIKE '%m%'))
+         ((NEW.Catégories LIKE '%ra%')OR(NEW.Catégories LIKE '%bu%')OR(NEW.Catégories LIKE '%fb%')OR(NEW.Catégories LIKE '%fl%')OR
+          (NEW.Catégories LIKE '%lf%')OR(NEW.Catégories LIKE '%gr%')OR(NEW.Catégories LIKE '%pf%')OR(NEW.Catégories LIKE '%fr%')OR
+          (NEW.Catégories LIKE '%ag%')OR(NEW.Catégories LIKE '%ev%')OR(NEW.Catégories LIKE '%me%')OR(NEW.Catégories LIKE '%bo%')OR
+          (NEW.Catégories LIKE '%ar%')OR(NEW.Catégories LIKE '%am%'))
 BEGIN
-    UPDATE Espèces SET Catégories=replace(replace(replace(replace(replace(replace(replace(replace(Catégories,
-                                  'r','🫜'),
-                                  'b','🧅'),
-                                  'f','🌿'),
-                                  'u','🍆'),
-                                  'g','🌽'),
-                                  'p','🫐'),
-                                  'a','🌳'),
-                                  'm','🏵️')
+    UPDATE Espèces SET Catégories=replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(Catégories,
+                                  'ra','🥕'), -- Racine
+                                  'bu','🧅'), -- Bulbe
+                                  'fb','🌿'), -- Légume feuille et branche
+                                  'fl','🌼'), -- Légume fleur
+                                  'lf','🍆'), -- Légume fruit
+                                  'gr','🌽'), -- Grain
+                                  'pf','🍓'), -- Petit fruit
+                                  'fr','🍎'), -- Fruitier
+                                  'ag','🍊'), -- Agrume
+                                  'ev','🟩'), -- Engrais vert
+                                  'me','🐝'), -- Mellifère
+                                  'bo','🪓'), -- Bois
+                                  'ar','🌳'), -- Arbre
+                                  'am','🌺')  -- PAM
     WHERE Espèce=NEW.Espèce;
 END;;
 
@@ -990,9 +1012,9 @@ BEGIN
         Notes=NEW.Notes
      WHERE IT_plante=OLD.IT_plante;
 
-     UPDATE Espèces SET
-        Notes=NEW.N_espèce
-     WHERE (Espèce=NEW.Espèce)AND(NEW.Espèce=OLD.Espèce);--If Espèce changed on ITP, can't know what Espèce.Notes have to be update.
+     -- UPDATE Espèces SET
+     --    Notes=NEW.N_espèce
+     -- WHERE (Espèce=NEW.Espèce)AND(NEW.Espèce=OLD.Espèce);--If Espèce changed on ITP, can't know what Espèce.Notes have to be update.
 END;;
 
 DROP TRIGGER IF EXISTS ITP__Tempo_DELETE;;
@@ -1077,7 +1099,6 @@ BEGIN
         CASE WHEN (NEW.Pc_planches<100)AND(substr(upper(NEW.Occupation),1,1) IN('L','R','E')) THEN substr(upper(NEW.Occupation),1,1)
              WHEN (NEW.Pc_planches<100) THEN 'L' END,
         NEW.Fi_planches,
-        -- NEW.Décalage, -- todo Impossible de faire le min !
         min(NEW.Décalage,(SELECT I.Décal_max FROM ITP I WHERE I.IT_plante=NEW.IT_plante)),
         NEW.Notes);
 END;;
@@ -1330,14 +1351,14 @@ BEGIN
         Notes=NEW.Notes
     WHERE Variété=OLD.Variété;
 
-    UPDATE Espèces SET
-        FG=NEW.FG,
-        Notes=NEW.N_espèce
-    WHERE (Espèce=NEW.Espèce)AND(NEW.Espèce=OLD.Espèce);
+    -- UPDATE Espèces SET
+    --     FG=NEW.FG,
+    --     Notes=NEW.N_espèce
+    -- WHERE (Espèce=NEW.Espèce)AND(NEW.Espèce=OLD.Espèce);
 
-    UPDATE Familles SET
-        Notes=NEW.N_famille
-    WHERE Famille=NEW.Famille;
+    -- UPDATE Familles SET
+    --     Notes=NEW.N_famille
+    -- WHERE Famille=NEW.Famille;
 END;;
 
 -- COMMIT TRANSACTION;;

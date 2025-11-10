@@ -38,6 +38,7 @@ public:
     QString sOrderByClause="";
     QSet<QString> generatedColumns;
     QStringList dataTypes;
+    QStringList baseDataFields;
     QSet<int> nonEditableColumns,dateColumns,moneyColumns;
     //QSet<QModelIndex> modifiedCells;
     QSet<QModelIndex> commitedCells;

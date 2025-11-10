@@ -65,12 +65,12 @@ CREATE TABLE Associations_détails ( ---
     Notes TEXT); ---
 UPDATE fda_schema SET base_data='x' WHERE name='Associations_détails';
 
-CREATE TABLE Consommations (
+CREATE TABLE Consommations ( ---
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     Date DATE NOT NULL, -- DEFAULT (DATE('now'))
     Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
     Quantité REAL NOT NULL,
-    Prix REAL,
+    Prix REAL, --- Prix total pour cette consommassion.
     Destination TEXT REFERENCES Destinations (Destination) ON DELETE SET NULL ON UPDATE CASCADE,
     Notes TEXT);
 
@@ -125,25 +125,25 @@ CREATE TABLE Cultures (
     Terminée BOOL,
     Longueur REAL,
     Nb_rangs REAL,
-    Espacement REAL,
+    Espacement INTEGER,
     A_faire TEXT,
     Notes TEXT);
 
-CREATE TABLE Destinations (
+CREATE TABLE Destinations ( ---
     Destination TEXT PRIMARY KEY,
     Type TEXT,
     Adresse TEXT,
     Site_web TEXT,
     Date_RAZ DATE,
     Active BOOL DEFAULT ('x'),
+    Interne BOOL, --- Auto-consommation.
     Notes TEXT) ---
     WITHOUT ROWID;
 
 CREATE TABLE Espèces ( ---
     Espèce TEXT PRIMARY KEY, ---
-    -- _Espèce TEXT AS (#NoAccent(Espèce)NoAccent#),
     Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE, ---
-    Catégories TEXT, --- A qui nous sert cette espèce.\nLes lettres suivantes seront remplacées par des symboles:\nLégume racine 🫜 (r)\nLégume bulbe 🧅 (b)\nLégume feuille et branche 🌿 (f)\nLégume fruit 🍆 (u)\nGrain 🌽 (g)\nPetit fruit 🫐 (p)\nArbre 🌳 (a)\nPAM 🏵️ (m)
+    Catégories TEXT, --- Ce qui nous intéresse chez cette espèce.\nLes lettres suivantes seront remplacées par des symboles:\nLégume racine 🥕 (ra)\nLégume bulbe 🧅 (bu)\nLégume feuille et branche 🌿 (fb)\nLégume fleur 🌼 (fl)\nLégume fruit 🍆 (lf)\nGrain 🌽 (gr)\nPAM 🌺 (am)\nPetit fruit 🍓 (pf)\nFruitier 🍎 (fr)\nAgrume 🍊 (ag)\nEngrais vert 🟩 (ev)\nMellifère 🐝 (me)\nBois 🪓 (bo)\nArbre 🌳 (ar)
     Rendement REAL, ---
     Niveau TEXT, ---
     Densité REAL, ---
@@ -172,7 +172,7 @@ CREATE TABLE Espèces ( ---
     Prix_kg REAL, ---
     Notes TEXT) ---
     WITHOUT ROWID;
-UPDATE fda_schema SET base_data='x' WHERE (name='Espèces')AND(field_name IN('Espèce','Famille','Catégories','Rendement','Niveau','Densité','Dose_semis','Nb_graines_g','FG','T_germ','Levée','Vivace','Besoins','S_taille','Effet','Usages','N','P','K','Notes'));
+UPDATE fda_schema SET base_data='x' WHERE (name='Espèces')AND(field_name IN('Espèce','Famille','Catégories','Rendement','Niveau','Densité','Dose_semis','Nb_graines_g','FG','T_germ','Levée','Vivace','Besoins','S_taille','Effet','Usages','N','P','K'));
 
 CREATE TABLE Familles ( ---
     Famille TEXT PRIMARY KEY, ---
@@ -261,8 +261,8 @@ CREATE TABLE ITP ( ---
     D_récolte INTEGER CONSTRAINT 'D_récolte, 1 à 52 semaines' CHECK (D_récolte ISNULL OR D_récolte BETWEEN 1 AND 52), ---
     Décal_max INTEGER CONSTRAINT 'Décal_max, 0 à 52 semaines' CHECK (Décal_max ISNULL OR Décal_max BETWEEN 0 AND 52), ---
     -- Nb_rangs REAL,
-    Espacement REAL, ---
-    Esp_rangs REAL, ---
+    Espacement INTEGER, ---
+    Esp_rangs INTEGER, ---
     Nb_graines_plant REAL, ---
     Dose_semis REAL, ---
     Notes TEXT) ---
