@@ -547,7 +547,7 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
 
     QSqlTableModel *exportModel;
     QSqlQuery exportQuery(*model->db);
-    if (!baseDataName.isEmpty()) {
+    if (!baseDataName.isEmpty()) { //Program export for reset base data.
         if (format!="csv")
             return -1;
         exportModel=new QSqlTableModel();
@@ -568,7 +568,7 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
     QString decimalSep;
     QString header="";
     decimalSep=pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Export_sep_decim'").toString();
-    if(decimalSep.isEmpty()) {
+    if (decimalSep.isEmpty()) {
         QLocale locale;
         decimalSep=QString(locale.decimalPoint());
     }
@@ -680,7 +680,7 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
         FileExport.close();
         AppBusy(false,model->progressBar);
     }
-    if (!baseDataName.isEmpty()) {
+    if (!baseDataName.isEmpty()) { //Program export for reset base data.
         exportModel->clear();
         exportQuery.clear();
         delete exportModel;
@@ -1103,7 +1103,9 @@ void PotaWidget::resetBaseData() {
     // }
 
     //Create temp CSV file with base data.
-    QString fileName=QApplication::applicationDirPath()+QDir::toNativeSeparators("/Temp_Base_data.csv");
+    //QString fileName=QApplication::applicationDirPath()+QDir::toNativeSeparators("/Temp_Base_data.csv");
+    QFileInfo file(model->db->databaseName());
+    QString fileName=file.absolutePath()+QDir::toNativeSeparators("/Temp_Base_data.csv");
     QFile csvFile;
     if (query.ExecMultiShowErr(sQuerys,";",model->progressBar)) {
         csvFile.setFileName(fileName);
@@ -1214,7 +1216,7 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     QAction mGraficView(QIcon::fromTheme("utilities-system-monitor"),tr("Graphique..."), this);
     QAction mExport(tr("Exporter les données..."), this);
     QAction mImport(tr("Importer des données..."), this);
-    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base (✴️)..."), this);
+    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base (⭐️)..."), this);
 
     QModelIndex index=tv->indexAt(pos);
     QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();

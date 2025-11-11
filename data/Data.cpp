@@ -1509,7 +1509,7 @@ QString ToolTipField(QSqlDatabase *db,const QString sTableName,const QString sFi
 
     if (sBaseData=="x")
         sToolTip+=iif(sToolTip=="","","\n\n").toString()+
-                  "✴️ : "+QObject::tr("Ce champ fait partie des données de base (fournies avec l'application).\n"
+                  "⭐ : "+QObject::tr("Ce champ fait partie des données de base (fournies avec l'application).\n"
                               "Si vous modifiez les données de base, vous pourrez revenir à leurs valeurs initiales (clic droit).");
 
     if (!sDataType.isEmpty()) {

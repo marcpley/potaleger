@@ -119,7 +119,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 QString headerDataDisplayRole=w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString();
                 headerDataDisplayRole=headerDataDisplayRole.replace("_pc",""); //'%' rigth added to the data.
                 headerDataDisplayRole=headerDataDisplayRole.replace("_"," ");
-                if (w->model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" ✴️";
+                if (w->model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" ⭐️";
                 w->model->setHeaderData(i,Qt::Horizontal,headerDataDisplayRole,Qt::DisplayRole);
 
                 //Table color.
@@ -654,7 +654,7 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<h2>Potaléger 1.4.0b7</h2>04/11/2025<br>"
+                  "<h2>Potaléger 1.4.0b10</h2>11/11/2025<br>"
                   "<br><u>"+tr("Evolutions métiers")+" :</u><br>"+
                   "- "+tr("<b>Bilans annuels</b> avec pourcentages de réalisation des objectifs, surface occupée, etc.")+"<br>"+
                   "- "+tr("<b>Associations d'espèces ou familles de plante</b>, aide à la création des plans de rotation.")+"<br>"+
