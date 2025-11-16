@@ -52,9 +52,9 @@ jobs:
             mkdir artifact/bin/plugins/platforms
             mkdir artifact/bin/plugins/platformthemes
             mkdir artifact/bin/plugins/sqldrivers
-            cp ./install/ubuntu2004/install.sh    ./artifact/
-            cp ./install/ubuntu2004/potaleger.sh  ./artifact/
-            cp ./install/potaleger.svg       ./artifact/
+            cp ./install/ubuntu2004/install.sh    ./artifact/bin/
+            cp ./install/ubuntu2004/potaleger.sh  ./artifact/bin/
+            cp ./install/potaleger.svg       ./artifact/bin/
             cp ./install/readme.md           ./artifact/bin/
             cp ./install/infotab1.png        ./artifact/bin/
             cp ./build/potaleger             ./artifact/bin/

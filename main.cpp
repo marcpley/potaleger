@@ -300,12 +300,6 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         result=false;
     }
 
-    // if (result and !pQuery.ExecMultiShowErr("CREATE TEMP TABLE LocParams (Paramètre TEXT PRIMARY KEY, Valeur TEXT);"
-    //                                         "INSERT INTO LocParams VALUES ('Saison',(SELECT Valeur FROM Params WHERE Paramètre='Année_culture'))",";",nullptr)) {
-    //     dbClose();
-    //     result=false;
-    // }
-
     if (result) {
         setWindowTitle("Potaléger"+pQuery.Select0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
 
@@ -431,6 +425,13 @@ void MainWindow::RestaureParams()
         on_mWhatSNew_triggered();
         settings.setValue("Version",Version);
     }
+
+    settings.beginGroup("Tabs");
+    for (int i=0;i<10;i++) {
+        if (!settings.value("tab "+QString::number(i)).isNull()) { //Open this tab.
+
+        }
+    }
 }
 
 void MainWindow::SauvParams()
@@ -452,6 +453,13 @@ void MainWindow::SauvParams()
         if (file.exists())
             settings.setValue("database_path", ui->lDB->text());
     }
+
+    settings.beginGroup("Tabs");
+    settings.group().clear();
+    for (int i=0;i<min(ui->tabWidget->count(),10);i++) {
+        settings.setValue("tab "+QString::number(i),ui->tabWidget->widget(i)->objectName());
+    }
+    settings.endGroup();
 }
 
 void MainWindow::SetUi(){

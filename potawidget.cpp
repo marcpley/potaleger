@@ -199,6 +199,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     //header->setParent(tv);
     tv->setHorizontalHeader(header);
     //tv->setLocale(QLocale::C ); ???
+    //tv->setGridStyle()
 
     connect(tv->selectionModel(), &QItemSelectionModel::currentChanged, this, &PotaWidget::curChanged);
     connect(tv->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PotaWidget::selChanged);
@@ -379,7 +380,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 
 void PotaWidget::Init(QString TableName)
 {
-    AppBusy(true,model->progressBar,16,"Init");
+    //AppBusy(true,model->progressBar,16,"Init");
 
     model->setTable(TableName);
 
@@ -391,7 +392,7 @@ void PotaWidget::Init(QString TableName)
 
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 
-    model->progressBar->setValue(1);
+    model->progressBar->setValue(model->progressBar->value()+1);
 
     //Primary Key
     query.ExecShowErr("PRAGMA table_xinfo("+model->RealTableName()+")");
@@ -403,7 +404,7 @@ void PotaWidget::Init(QString TableName)
         }
     }
 
-    model->progressBar->setValue(2);
+    model->progressBar->setValue(model->progressBar->value()+1);
 
     //FK
     query.ExecShowErr("PRAGMA foreign_key_list("+model->RealTableName()+");");
@@ -420,9 +421,10 @@ void PotaWidget::Init(QString TableName)
         }
     }
 
-    model->progressBar->setValue(3);
+    model->progressBar->setValue(model->progressBar->value()+1);
 
     //Generated columns
+
     query.clear();
     query.ExecShowErr("PRAGMA table_xinfo("+TableName+")");
     while (query.next()){
@@ -451,7 +453,7 @@ void PotaWidget::Init(QString TableName)
 
     //widget width according to font size
     SetSizes();
-    AppBusy(false,model->progressBar);
+    //AppBusy(false,model->progressBar);
 }
 
 void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
@@ -478,7 +480,10 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
                 //Filtering
                 sFieldNameFilter=sFieldName;
                 sDataTypeFilter=model->dataTypes[cur.column()];
-                sDataFilter=model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString();
+                if (sDataTypeFilter=="DATE")
+                    sDataFilter=model->index(cur.row(),cur.column()).data(Qt::DisplayRole).toString();
+                else
+                    sDataFilter=model->index(cur.row(),cur.column()).data(Qt::EditRole).toString();
 
                 lFilterOn->setText(sFieldNameFilter);
 
@@ -545,16 +550,15 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
         sTableName=fi.baseName();
     }
 
-    QSqlTableModel *exportModel;
-    QSqlQuery exportQuery(*model->db);
+    PotaTableModel *exportModel;
     if (!baseDataName.isEmpty()) { //Program export for reset base data.
         if (format!="csv")
             return -1;
-        exportModel=new QSqlTableModel();
-        exportQuery.exec("SELECT * FROM "+baseDataName+";");
-        exportModel->setQuery(exportQuery);
+        exportModel=new PotaTableModel();
+        exportModel->setTable(baseDataName);
         //exportModel->setHeaderData()
-        //exportModel->select();
+        exportModel->select();
+        qDebug() << "exportModel->rowCount()" << exportModel->rowCount();
         for (int col=0; col < exportModel->columnCount(); ++col) {
             exportModel->setHeaderData( col,Qt::Horizontal,exportModel->headerData(col,Qt::Horizontal,Qt::DisplayRole).toString(),Qt::EditRole);
         }
@@ -631,10 +635,11 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
     if (FileExport.write(data)!=-1) {
         data.clear();
 
-        AppBusy(true,model->progressBar,totalRow,lTabTitle->text().trimmed()+" %p%");
+        AppBusy(true,model->progressBar,totalRow,0,lTabTitle->text().trimmed()+" %p%");
 
         //Data export
         exportedRow=0;
+        qDebug() << "exportModel->rowCount()" << exportModel->rowCount();
         for (int row=0; row < exportModel->rowCount(); ++row) {
             QString line="";
             QString pkValue;
@@ -682,7 +687,6 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
     }
     if (!baseDataName.isEmpty()) { //Program export for reset base data.
         exportModel->clear();
-        exportQuery.clear();
         delete exportModel;
         exportModel = nullptr;
     }
@@ -798,11 +802,16 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
         return;
     }
 
+    QByteArray ba = FileImport.readAll();
+
     QString data,info,info2;
     QStringList lines,linesToImport,fieldNames,dataTypes,valuesToImport;
     QList<int> fieldindexes;
-    data.append(FileImport.readAll().toStdString());
+    data = QString::fromUtf8(ba);
+    //data.append(FileImport.readAll().toString());
     lines=data.split("\n");
+    qDebug() << "data" << data.count();
+    qDebug() << "lines" << lines.count();
 
     //Header check
     fieldNames=lines[0].split(";");
@@ -923,7 +932,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
            //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
             return;
         }
-        AppBusy(true,model->progressBar,model->rowCount(),"Delete %p%");
+        AppBusy(true,model->progressBar,model->rowCount(),0,"Delete %p%");
         for (int i=model->rowCount()-1;i>=0;i--) {
             model->progressBar->setValue(model->progressBar->value()+1);
             if(model->childCount(i)==0) {
@@ -954,7 +963,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
 
 
     //Import
-    AppBusy(true,model->progressBar,linesToImport.count(),FileInfoVerif.fileName()+" %p%");
+    AppBusy(true,model->progressBar,linesToImport.count(),0,FileInfoVerif.fileName()+" %p%");
 
     model->bBatch=true;
 
@@ -1063,15 +1072,11 @@ void PotaWidget::resetBaseData() {
         return;
     }
 
-    //PotaQuery qDrop(*model->dbDrop);
-    //qDrop.ExecShowErr("DROP TABLE IF EXISTS Temp_Base_data;");
-
     //Read fda_schema
     PotaQuery query(*model->db);
     query.exec("SELECT name,field_name,type,base_data FROM fda_schema WHERE (name='"+model->RealTableName()+"')AND(base_data='x')");
     bool bResetTable=false;
     QString fieldNames="";
-    //QString info;
     while (query.next()){
         if (query.value(1).isNull()) bResetTable=true;
         else fieldNames+=query.value(1).toString()+";";
@@ -1081,29 +1086,19 @@ void PotaWidget::resetBaseData() {
     int exportedRow=-2;
     QString sBaseData=loadSQLFromResource("CreateBaseData");
     QString sQuerys;
-    // PotaQuery query2(*model->db);
-    // query2.ExecShowErr("DROP TABLE IF EXISTS  Temp_Base_data;");
-    // PotaQuery query3(*model->db);
-    // PotaQuery query4(*model->db);
-    //query.exec("PRAGMA busy_timeout = 5000;");
     QString tempBaseData="Base_data_"+QDateTime::currentDateTime().toString("hhmmss");
-    //sQuerys=query.Select0ShowErr("SELECT sql FROM sqlite_schema WHERE (type='table')AND(tbl_name='"+model->RealTableName()+"')").toString();//CREATE TABLE statement
-    // if (sQuerys.startsWith("CREATE TABLE "+model->RealTableName()+" ")) {
-        //sQuerys=sQuerys.replace("CREATE TABLE "+model->RealTableName()+" ","CREATE TEMP TABLE "+tempBaseData+" ")+";";
-        sQuerys="CREATE TEMP TABLE "+tempBaseData+" AS SELECT * FROM "+model->RealTableName()+" WHERE false;";
-        QStringList QuerysList;
-        QuerysList=sBaseData.split("\n");
-        for(int i=0;i<QuerysList.count();i++) {
-            if (QuerysList[i].startsWith("INSERT INTO "+model->RealTableName())) {
-                sQuerys+=QuerysList[i].replace("INSERT INTO "+model->RealTableName()+" ","INSERT INTO temp."+tempBaseData+" ");
-            }
+    sQuerys="CREATE TEMP TABLE "+tempBaseData+" AS SELECT * FROM "+model->RealTableName()+" WHERE false;";
+    QStringList QuerysList;
+    QuerysList=sBaseData.split("\n");
+    int iBaseData=0;
+    for(int i=0;i<QuerysList.count();i++) {
+        if (QuerysList[i].startsWith("INSERT INTO "+model->RealTableName())) {
+            sQuerys+=QuerysList[i].replace("INSERT INTO "+model->RealTableName()+" ","INSERT INTO temp."+tempBaseData+" ");
+            iBaseData++;
         }
-    // } else {
-    //     sQuerys="SQL statement not found for "+model->RealTableName();
-    // }
+    }
 
     //Create temp CSV file with base data.
-    //QString fileName=QApplication::applicationDirPath()+QDir::toNativeSeparators("/Temp_Base_data.csv");
     QFileInfo file(model->db->databaseName());
     QString fileName=file.absolutePath()+QDir::toNativeSeparators("/Temp_Base_data.csv");
     QFile csvFile;
@@ -1111,15 +1106,17 @@ void PotaWidget::resetBaseData() {
         csvFile.setFileName(fileName);
         csvFile.remove();
 
-        if (query.Select0ShowErr("SELECT count() FROM "+tempBaseData).toInt()==0) {
-            MessageDlg("Potaléger",tr("Erreur %1 lors de la collecte des données de base.").arg("No_BaseData")+"\n"+
+        int iBaseData2=query.Select0ShowErr("SELECT count() FROM "+tempBaseData).toInt();
+
+        if (iBaseData2!=iBaseData) {
+            MessageDlg("Potaléger",tr("Erreur %1 lors de la collecte des données de base.").arg("RowCount")+"\n"+
+                        QString::number(iBaseData)+" in CreateBaseData.sql\n"+
+                        QString::number(iBaseData2)+" ready to import\n"+
                         fileName,"",QStyle::SP_MessageBoxCritical);
             return;
         }
 
         exportedRow=exportToFile(fileName,"csv",tempBaseData);
-
-        //query.ExecShowErr("DROP TABLE IF EXISTS temp.Base_data;");
     }
 
     if (exportedRow==-2) {
@@ -1216,7 +1213,7 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     QAction mGraficView(QIcon::fromTheme("utilities-system-monitor"),tr("Graphique..."), this);
     QAction mExport(tr("Exporter les données..."), this);
     QAction mImport(tr("Importer des données..."), this);
-    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base (⭐️)..."), this);
+    QAction mResetBaseData(QIcon::fromTheme("system-reboot"),tr("Réinitialiser les données de base (🔺️)..."), this);
 
     QModelIndex index=tv->indexAt(pos);
     QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
@@ -1642,7 +1639,7 @@ void PotaWidget::SetSizes() {
     pbFindFirst->setFixedWidth(40*UserFont/10);
     pbFindNext->setFixedWidth(70*UserFont/10);
     pbFindPrev->setFixedWidth(70*UserFont/10);
-    cbPageFilter->setFixedWidth(80*UserFont/10);
+    cbPageFilter->setFixedWidth(120*UserFont/10);
     tv->horizontalHeader()->setMinimumHeight(24*UserFont/10);
     tv->horizontalHeader()->setMaximumHeight(24*UserFont/10);
     tv->verticalHeader()->setDefaultSectionSize(0);//Mini.
@@ -1940,11 +1937,11 @@ void PotaWidget::pbFilterClick(bool checked)
                 if (cbFilterType->currentText()==tr("contient"))
                     filter=raField+" LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
                 else if (cbFilterType->currentText()==tr("ne contient pas"))
-                    filter=raField+" NOT LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
+                    filter="coalesce("+raField+",'') NOT LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"%'";
                 else if (cbFilterType->currentText()==tr("égal à"))
                     filter=raField+" LIKE '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else if (cbFilterType->currentText()==tr("différent de"))
-                    filter=raField+" NOT LIKE '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
+                    filter="coalesce("+raField+",'') NOT LIKE '"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else if (cbFilterType->currentText()==tr("fini par"))
                     filter=raField+" LIKE '%"+StrReplace(RemoveAccents(leFilter->text()),"'","''")+"'";
                 else//commence par
@@ -2192,7 +2189,7 @@ bool PotaTableModel::select()  {
     //dbSuspend(db,false,true,label);
 
     if (!bBatch) {
-        AppBusy(true,progressBar,0,tableName()+" %p%");
+        AppBusy(true,progressBar,-1,-1,tableName()+" - SELECT...");// +" %p%"
         //modifiedCells.clear();
         commitedCells.clear();
         //copiedCells.clear(); Danger
@@ -2239,7 +2236,9 @@ bool PotaTableModel::select()  {
 
     if (!bBatch) {
         qInfo() << str(rowCount())+" rows";//+tr("lignes");//Line necessary to make work lFilterResult->setText(...), don't know why!
-        dynamic_cast<PotaWidget*>(parent())->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
+        PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
+        if (pw)
+            pw->lFilterResult->setText(str(rowCount())+" "+tr("lignes"));
         AppBusy(false,progressBar);
     }
     bool result=(lastError().type()==QSqlError::NoError);
@@ -2249,7 +2248,7 @@ bool PotaTableModel::select()  {
         !bBatch) {
         //Show modified cells
         //qDebug() << "culture ligne 1" << query.Selec0ShowErr("SELECT Culture FROM temp."+tempTableName+" WHERE Culture=1700");
-        AppBusy(true,progressBar,rowCount(),"Show commited cells %p%");
+        AppBusy(true,progressBar,rowCount(),0,tableName()+" - Commited cells %p%");
         //QString sPrimaryKey=PrimaryKeyFieldName(db,RealTableName());
         int jPrimaryKey=FieldIndex(sPrimaryKey);
         PotaQuery query(*db);
@@ -2727,7 +2726,21 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         painter->fillRect(option.rect,b);
     }
 
-    if (index.column()==FilterCol or //Filtering column.
+    // Stronger horizontal line.
+    if (isDarkTheme())
+        c=QColor("#2A2A2A");
+    else
+        c=QColor(Qt::white);
+    c.setAlpha(255);
+    b.setColor(c);
+    QRect r;
+    r.setTop(option.rect.bottom());
+    r.setHeight(1);
+    r.setLeft(option.rect.left());
+    r.setRight(option.rect.right());
+    painter->fillRect(r,b);
+
+    if (index.column()==FilterCol or //Filtering column and search match.
         (!FindText.isEmpty() and RemoveAccents(index.data(Qt::DisplayRole).toString()).contains(FindText,Qt::CaseInsensitive))) { //Find
         if (!isDarkTheme())
             cFiltered=QColor("#000000");

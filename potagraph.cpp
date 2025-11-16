@@ -225,6 +225,8 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
 
                 if  (m_xAxisDataType=="DATE") { //Add zero value if point will missing on xAxis
                     if (m_xAxisGroup==xAxisGroupYear) {
+                        if (!abscisseName.contains(" ("+tr("année")+")"))
+                            abscisseName+=" ("+tr("année")+")";
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
                         for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
@@ -246,6 +248,8 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                             x++;
                         }
                     } else if (m_xAxisGroup==xAxisGroupMonth) {
+                        if (!abscisseName.contains(" ("+tr("mois")+")"))
+                            abscisseName+=" ("+tr("mois")+")";
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
                         for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {
@@ -268,6 +272,8 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                             x++;
                         }
                     } else if (m_xAxisGroup==xAxisGroupWeek) {
+                        if (!abscisseName.contains(" ("+tr("semaine")+")"))
+                            abscisseName+=" ("+tr("semaine")+")";
                         int xMin=std::numeric_limits<int>::max();
                         int xMax=std::numeric_limits<int>::min();
                         for (auto it=abscissaVarNotGrouped.begin(); it != abscissaVarNotGrouped.end(); ++it) {

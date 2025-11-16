@@ -22,7 +22,8 @@ CREATE TABLE fda_schema ( --- Extended schema of the DB.
     natural_sort BOOL, --- Header column where a blue down arow is displayed if user did'nt set another sort.
     readonly BOOL, --- User can't modify the data via this table or view.
     summary_order INT, --- If not empty the data is used to construct a row summary.
-    unit TEXT); --- Unit of the data.
+    unit TEXT) --- Unit of the data.
+    ;
 
 CREATE TABLE Analyses_de_sol ( --- Analyses de sol effectuées.
     Analyse TEXT PRIMARY KEY,
@@ -56,22 +57,23 @@ CREATE TABLE Analyses_de_sol ( --- Analyses de sol effectuées.
     WITHOUT ROWID;
 
 CREATE TABLE Associations_détails ( ---
-    Ind TEXT PRIMARY KEY, --- Clé calculée: Association||iif(Requise NOTNULL,'0'||Requise,'1 ')||'-'||coalesce(Espèce,Groupe,Famille)
+    IdxAsReEsGrFa TEXT PRIMARY KEY, --- Clé calculée: Association||iif(Requise NOTNULL,'0'||Requise,'1 ')||'-'||coalesce(Espèce,Groupe,Famille)
     Association TEXT NOT NULL, --- Nom de l'association.
     Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE, ---
     Groupe TEXT, ---
     Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE, ---
     Requise BOOL, ---
-    Notes TEXT); ---
+    Notes TEXT) ---
+    ;
 UPDATE fda_schema SET base_data='x' WHERE name='Associations_détails';
 
 CREATE TABLE Consommations ( ---
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     Date DATE NOT NULL, -- DEFAULT (DATE('now'))
-    Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+    Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL,
     Quantité REAL NOT NULL,
     Prix REAL, --- Prix total pour cette consommassion.
-    Destination TEXT REFERENCES Destinations (Destination) ON DELETE SET NULL ON UPDATE CASCADE,
+    Destination TEXT REFERENCES Destinations (Destination) ON UPDATE CASCADE, -- ON DELETE SET NULL
     Notes TEXT);
 
 CREATE TABLE Cultures (
@@ -225,9 +227,9 @@ UPDATE fda_schema SET base_data='x' WHERE (name='Fertilisants')AND(field_name IN
 CREATE TABLE Fertilisations (
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     Date DATE NOT NULL, -- DEFAULT (DATE('now'))
-    Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+    Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL,
+    Culture INTEGER REFERENCES Cultures (Culture) ON UPDATE CASCADE NOT NULL,
+    Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON UPDATE CASCADE NOT NULL,
     Quantité REAL NOT NULL,
     N REAL,
     P REAL,
@@ -317,14 +319,15 @@ CREATE TABLE Rotations_détails ( ---
     Occupation TEXT, ---
     Fi_planches TEXT, ---
     Décalage INTEGER, ---
-    Notes TEXT); ---
+    Notes TEXT) ---
+    ;
 UPDATE fda_schema SET base_data='Example' WHERE (name='Rotations_détails')AND(field_name IN('Rotation','Année','IT_plante','Pc_planches','Occupation','Fi_planches','Décalage'));
 
 CREATE TABLE Récoltes ( --- Récoltes pour chaque culture.
     ID INTEGER PRIMARY KEY AUTOINCREMENT,
     Date DATE NOT NULL, -- DEFAULT (DATE('now'))
-    Espèce TEXT REFERENCES Espèces (Espèce) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
-    Culture INTEGER REFERENCES Cultures (Culture) ON DELETE CASCADE ON UPDATE CASCADE NOT NULL,
+    Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL,
+    Culture INTEGER REFERENCES Cultures (Culture) ON UPDATE CASCADE NOT NULL,
     Quantité REAL NOT NULL,
     Réc_ter BOOL, --- La récolte est terminée pour cette culture.\n\nIl suffit d'une seule ligne de récolte avec une valeur non vide pour que le champ 'Récolte faite' de la culture passe à 'x'.
     Notes TEXT);

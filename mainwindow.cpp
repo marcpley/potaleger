@@ -35,6 +35,7 @@ MainWindow::~MainWindow()
 }
 
 bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, QString const sTitre, QString const sDesc) {
+    AppBusy(true,ui->progressBar,0,0,sTitre);
     //Recherche parmis les onglets existants.
     for (int i=0; i < ui->tabWidget->count(); i++) {
         if (ui->tabWidget->widget(i)->objectName()=="PW"+sObjName ) {
@@ -50,7 +51,13 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
             }
         }
     }
-    if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName) {
+    AppBusy(false,ui->progressBar);
+
+    if (ui->tabWidget->currentWidget()->objectName()!="PW"+sObjName) { //Existing tab not found.
+        AppBusy(true,ui->progressBar,100,0,sTableName+" - init");
+        PotaQuery query(db);
+        int fieldCount=query.Select0ShowErr("SELECT count(*) FROM pragma_table_xinfo('"+sTableName+"')").toInt();
+        ui->progressBar->setMaximum(fieldCount*2+12);
         //Create tab
         PotaWidget *w=new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sObjName);
@@ -58,18 +65,16 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
         w->cbFontSize=ui->cbFont;
         w->model->db=&db;
         w->model->progressBar=ui->progressBar;
-        //w->query->lErr=ui->lDBErr;
-        //w->query->db
-        //w->userDataEditing=&userDataEditing;
-
-       //dbSuspend(&db,false,userDataEditing,ui->lDBErr);
-
         w->delegate->cTableColor=TableColor(sTableName,"");//before init
+        w->model->progressBar->setValue(w->model->progressBar->value()+1);
 
         w->Init(sTableName);
 
+        int pos=ui->progressBar->value();
+        AppBusy(false,ui->progressBar);
+
         if (w->model->SelectShowErr()) {
-            AppBusy(true,w->model->progressBar,6+w->model->columnCount(),"UI");
+            AppBusy(true,ui->progressBar,fieldCount*2+12,pos,sTableName+" - UI");
             bool bEdit=false;
             PotaQuery query(db);
             if (!ReadOnlyDb and
@@ -97,20 +102,20 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                                                   "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0)) {
                 w->pbEdit->setVisible(false);
             }
-            w->model->progressBar->setValue(1);
+            w->model->progressBar->setValue(w->model->progressBar->value()+1);
             if(w->model->rowCount()==0) {
                 if (bEdit and(FkFilter(&db,w->model->RealTableName(),"","",w->model->index(0,0),true)!="NoFk")){
                     w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName().replace("_"," ").toLower()));
                 } else {
                     SetColoredText(ui->lDBErr,"","");
                     AppBusy(false,ui->progressBar);
-                    MessageDlg(windowTitle(),sTitre,NoData(w->model->tableName()),QStyle::SP_MessageBoxInformation);
+                    MessageDlg(windowTitle(),sTitre,NoData(&db,w->model->tableName()),QStyle::SP_MessageBoxInformation,450);
                     w->deleteLater();
                     return false;
                 }
             }
 
-            w->model->progressBar->setValue(2);
+            w->model->progressBar->setValue(w->model->progressBar->value()+1);
 
             for (int i=0; i<w->model->columnCount();i++){
                 //Store field name in header EditRole.
@@ -119,7 +124,7 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 QString headerDataDisplayRole=w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString();
                 headerDataDisplayRole=headerDataDisplayRole.replace("_pc",""); //'%' rigth added to the data.
                 headerDataDisplayRole=headerDataDisplayRole.replace("_"," ");
-                if (w->model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" ⭐️";
+                if (w->model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" 🔺️";
                 w->model->setHeaderData(i,Qt::Horizontal,headerDataDisplayRole,Qt::DisplayRole);
 
                 //Table color.
@@ -212,10 +217,8 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                                       iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
                                       iif(ReadOnlyDb,"Info","Ok").toString());
 
-            if (lastRow(sTableName)) // go to last row
-                w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
-
             AppBusy(false,ui->progressBar);
+            AppBusy(true);
 
             ui->tabWidget->addTab(w,sTitre);
             ui->tabWidget->setCurrentWidget(w);
@@ -249,12 +252,17 @@ bool MainWindow::OpenPotaTab(QString const sObjName, QString const sTableName, Q
                 ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),sDesc);
             else
                 ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),ToolTipTable(&db,w->model->tableName()));
+
+            if (lastRow(sTableName)) // go to last row
+                w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+
             w->tv->setFocus();
+            AppBusy(false);
             return true;
         }
         else {
             w->deleteLater();//Echec de la création de l'onglet.
-           //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
+            return false;
         }
     }
     return false;
@@ -654,7 +662,7 @@ void MainWindow::on_mWhatSNew_triggered()
 {
     MessageDlg("Potaléger "+ui->lVer->text(),
                   tr("Evolutions et corrections de bugs"),
-                  "<h2>Potaléger 1.4.0b10</h2>11/11/2025<br>"
+                  "<h2>Potaléger 1.4.0</h2>16/11/2025<br>"
                   "<br><u>"+tr("Evolutions métiers")+" :</u><br>"+
                   "- "+tr("<b>Bilans annuels</b> avec pourcentages de réalisation des objectifs, surface occupée, etc.")+"<br>"+
                   "- "+tr("<b>Associations d'espèces ou familles de plante</b>, aide à la création des plans de rotation.")+"<br>"+
@@ -671,6 +679,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("<b>Possibilité de masquer des colonnes.</b>")+"<br>"+
                   "- "+tr("<b>Possibilité de réinitialiser les données de base</b> (fusion avec ou remplacement de vos données).")+"<br>"+
                   "- "+tr("<b>Menu 'Maintenance'</b> avec listes des tables, des vues et des requêtes SQL constituant le schéma de la BDD.")+"<br>"+
+                  "- "+tr("Lignes horizontales plus visibles dans les tableaux de données.")+"<br>"+
                   "- "+tr("Ouverture des onglets plus rapide.")+"<br>"+
                   "- "+tr("Affichage des champs Vrai/Faux avec ✔️ à la place de 'x'.")+"<br>"+
                   "- "+tr("Amélioration de l'affichage et l'édition des champs textes multi-lignes.")+"<br>"+
@@ -678,6 +687,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Possibilité de supprimer ET d'ajouter des lignes dans une même transaction.")+"<br>"+
                   "- "+tr("Surlignage des cellules modifiées depuis le dernier rechargement des données.")+"<br>"+
                   "<br><u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Calcul du nombre de plants dans la simulation de planification.")+"<br>"+
                   "- "+tr("ITP, Nb_rangs alors que la largeur de planche n'est pas connue, remplacé par Esp_rang (espacement des rangs).")+"<br>"+
                   "- "+tr("Table temporaire pas supprimée dans certains cas lors de la mise à jour du schéma de BDD.")+"<br>"+
                   "- "+tr("Possibilité  d'ouvrir l'onglet 'Rot. (détails)' alors qu'il n'existe pas d'ITP d'annuelle.")+"<br>"+
@@ -876,6 +886,8 @@ void MainWindow::on_mITPTempo_triggered()
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         w->cbPageFilter->addItem(tr("Génériques"));
         w->pageFilterFilters.append("(Espèce ISNULL)");
+        w->cbPageFilter->addItem(tr("A planifier"));
+        w->pageFilterFilters.append("(SELECT (E.A_planifier NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         QSettings settings;//("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("ITP__Tempo-pageFilter").toInt());
         w->pageFilterFrame->setVisible(true);
@@ -901,6 +913,7 @@ void MainWindow::on_mDetailsRotations_triggered()
     if (OpenPotaTab("Rotations_Tempo","Rotations_détails__Tempo",tr("Rot. (détails)"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
+        w->tv->hideColumn(1);//IdxAsReEsGrFa, débug use.
     }
 }
 
@@ -1191,8 +1204,6 @@ void MainWindow::on_mCuSaisieRecoltes_triggered()
     if (OpenPotaTab("Recoltes__Saisies","Récoltes__Saisies",tr("Récoltes"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
-        //Go to last row.
-        //w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
     }
 }
 
@@ -1266,10 +1277,19 @@ void MainWindow::on_mCuToutes_triggered()
         w->lPageFilter->setText(tr("Voir"));
         w->cbPageFilter->addItem(tr("Toutes"));
         w->pageFilterFilters.append("TRUE");
+        PotaQuery query(db);
+        int smin,smax;
+        smin=query.Select0ShowErr("SELECT min(Saison) FROM Cultures WHERE coalesce(Terminée,'') NOT LIKE ('v%')").toInt();
+        smax=query.Select0ShowErr("SELECT max(Saison) FROM Cultures WHERE coalesce(Terminée,'') NOT LIKE ('v%')").toInt();
+        for (int i=smin; i <= smax; ++i) {
+            w->cbPageFilter->addItem(tr("Annuelles")+" "+str(i));
+            w->pageFilterFilters.append("(Saison='"+str(i)+"')AND(coalesce(Terminée,'') NOT LIKE ('v%'))");
+        }
         w->cbPageFilter->addItem(tr("Annuelles"));
         w->pageFilterFilters.append("(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
         w->cbPageFilter->addItem(tr("Vivaces"));
         w->pageFilterFilters.append("(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)");
+
         QSettings settings;//("greli.net", "Potaléger");
         w->cbPageFilter->setCurrentIndex(settings.value("Cultures-pageFilter").toInt());
         w->pageFilterFrame->setVisible(true);
@@ -1304,8 +1324,6 @@ void MainWindow::on_mFertilisations_triggered()
     if (OpenPotaTab("Fertilisations__Saisies","Fertilisations__Saisies",tr("Fertilisations"))) {
         PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
         w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
-        //Go to last row.
-        w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
     }
 }
 
@@ -1318,8 +1336,8 @@ void MainWindow::on_mBilanPlanches_triggered()
         PotaQuery query(db);
         int saison,smin,smax;
         saison=query.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
-        smin=query.Select0ShowErr("SELECT min(Saison) FROM Planches__bilan_fert").toInt();
-        smax=query.Select0ShowErr("SELECT max(Saison) FROM Planches__bilan_fert").toInt();
+        smin=query.Select0ShowErr("SELECT min(Saison) FROM Cultures").toInt();
+        smax=query.Select0ShowErr("SELECT max(Saison) FROM Cultures").toInt();
         for (int i=smin; i <= smax; ++i) {
             w->cbPageFilter->addItem(str(i));
             w->pageFilterFilters.append("Saison='"+str(i)+"'");
@@ -1346,8 +1364,6 @@ void MainWindow::on_mEsSaisieConso_triggered()
     if (OpenPotaTab( "Consommations__Saisies","Consommations__Saisies",tr("Consommations"))) {
             PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
             w->tv->hideColumn(0);//ID, necessary in the view for the triggers to update the real table.
-            //Go to last row.
-            w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
         }
 }
 
@@ -1372,8 +1388,8 @@ void MainWindow::on_mCouverture_triggered()
         PotaQuery query(db);
         int saison,smin,smax;
         saison=query.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toInt();
-        smin=query.Select0ShowErr("SELECT min(Saison) FROM Espèces__Bilans_annuels").toInt();
-        smax=query.Select0ShowErr("SELECT max(Saison) FROM Espèces__Bilans_annuels").toInt();
+        smin=query.Select0ShowErr("SELECT min(Saison) FROM Cultures WHERE coalesce(Terminée,'') NOT LIKE ('v%')").toInt();
+        smax=query.Select0ShowErr("SELECT max(Saison) FROM Cultures WHERE coalesce(Terminée,'') NOT LIKE ('v%')").toInt();
         for (int i=smin; i <= smax; ++i) {
             w->cbPageFilter->addItem(str(i));
             w->pageFilterFilters.append("Saison='"+str(i)+"'");

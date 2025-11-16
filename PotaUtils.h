@@ -26,7 +26,7 @@ private:
     QSqlDatabase& m_db;
 };
 
-void AppBusy(bool busy, QProgressBar *pb=nullptr, int max=0, QString text="%p%");
+void AppBusy(bool busy, QProgressBar *pb=nullptr, int max=0, int pos=0, QString text="%p%");
 QColor blendColors(const QColor& baseColor, const QColor& overlayColor);
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName);
 //QString SQLiteDate();

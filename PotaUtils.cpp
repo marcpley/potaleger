@@ -16,6 +16,9 @@ bool PotaQuery::ExecShowErr(QString query)
     if (!query.startsWith("PRAGMA ") and !query.startsWith("SELECT "))
         logMessage("sql.log",query.trimmed());
 
+    if (query.contains("ADD COLUMN Réc_ter"))
+        qDebug() << "stop";
+
     exec(query);
 
     if (lastError().type() != QSqlError::NoError) {
@@ -84,13 +87,14 @@ QVariant PotaQuery::Select0ShowErr(QString query)
         return vNull;
 }
 
-void AppBusy(bool busy,QProgressBar *pb,int max,QString text) {
+void AppBusy(bool busy,QProgressBar *pb,int max,int pos,QString text) {
     if (busy) {
         if(pb) {
-            pb->setValue(0);
-            pb->setMaximum(max);
+            if (max>-1) pb->setMaximum(max);
+            if (pos>-1) pb->setValue(pos);
             pb->setFormat(text);
             pb->setVisible(true);
+            QCoreApplication::processEvents();
         }
         QApplication::setOverrideCursor(Qt::WaitCursor);
         //QCoreApplication::processEvents(); pire

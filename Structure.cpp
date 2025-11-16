@@ -20,7 +20,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     // bool bUpdateBaseData=false;
     QString sResult="";
 
-    AppBusy(true,ui->progressBar,0,"%p%");
+    AppBusy(true,ui->progressBar,0,0,"%p%");
 
     if (bResult){ //Set exclusive access.
         bResult=query->ExecShowErr("PRAGMA locking_mode=EXCLUSIVE;")and

@@ -33,7 +33,7 @@ QString FkSortCol(const QString sTableName,const QString sFieldName);
 //QString GeneratedFielnameForDummyFilter(const QString sTableName);
 bool lastRow(const QString sTableName);
 int NaturalSortCol(const QString sTableName);
-QString NoData(const QString sTableName);
+QString NoData(QSqlDatabase *db, const QString sTableName);
 bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);
 QColor RowColor(QString sValue, QString sTableName);
 QString RowSummary(QString TableName, const QSqlRecord &rec);
