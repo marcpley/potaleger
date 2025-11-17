@@ -20,7 +20,7 @@ INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Fami
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail +1 -Laitue','Ail +','Laitue',NULL,'Asteraceae',NULL,'Cycle court');
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail +1 -Rosaceae','Ail +',NULL,NULL,'Rosaceae',NULL,NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail +1 -Topinambour','Ail +','Topinambour',NULL,'Asteraceae',NULL,NULL);
-INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail Concombre +0+-Ail','Ail Concombre +','Ail',NULL,'Alliaceae','x',NULL);
+INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail Concombre +0x-Ail','Ail Concombre +','Ail',NULL,'Alliaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail Concombre +0x-Concombre','Ail Concombre +','Concombre',NULL,'Cucurbitaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail Haricot !0x-Ail','Ail Haricot !','Ail',NULL,'Alliaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Ail Haricot !1 -Haricot','Ail Haricot !',NULL,'Haricot','Fabaceae',NULL,NULL);
@@ -64,7 +64,7 @@ INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Fami
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Betterave Panais +0x-Betterave','Betterave Panais +','Betterave',NULL,'Amaranthaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Betterave Panais +0x-Panais','Betterave Panais +','Panais',NULL,'Apiaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Betterave Tomate !0x-Betterave','Betterave Tomate !','Betterave',NULL,'Amaranthaceae','x',NULL);
-INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Betterave Tomate !0x-Tomate','Betterave Tomate !','Tomate',NULL,'Solanaceae','x','x');
+INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Betterave Tomate !0x-Tomate','Betterave Tomate !','Tomate',NULL,'Solanaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Blette !0x-Blette','Blette !','Blette',NULL,'Amaranthaceae','x',NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Blette !1 -Absinthe','Blette !','Absinthe',NULL,'Asteraceae',NULL,NULL);
 INSERT INTO Associations_détails (IdxAsReEsGrFa,Association,Espèce,Groupe,Famille,Requise,Notes) VALUES ('Blette +0x-Blette','Blette +','Blette',NULL,'Amaranthaceae','x',NULL);
