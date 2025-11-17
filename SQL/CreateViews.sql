@@ -679,9 +679,9 @@ CREATE VIEW Cultures__à_fertiliser AS SELECT
     min(C.Début_récolte) Début_récolte,
     max(C.Fin_récolte) Fin_récolte,
     CAST(sum(C.Surface) AS INT) Surface,
-    CAST(min(sum(coalesce(C.N_fert,0))/sum(C.N_esp*C.Surface*C.Densité_pc/100),
-             sum(coalesce(C.P_fert,0))/sum(C.P_esp*C.Surface*C.Densité_pc/100),
-             sum(coalesce(C.K_fert,0))/sum(C.K_esp*C.Surface*C.Densité_pc/100))*100 AS INTEGER) Fert_pc,
+    CAST(min(sum(coalesce(C.N_fert,0))/total(C.N_esp*C.Surface*C.Densité_pc/100),
+             sum(coalesce(C.P_fert,0))/total(C.P_esp*C.Surface*C.Densité_pc/100),
+             sum(coalesce(C.K_fert,0))/total(C.K_esp*C.Surface*C.Densité_pc/100))*100 AS INTEGER) Fert_pc,
     CAST(CAST(sum(C.N_esp*C.Surface*C.Densité_pc/100) AS INTEGER)||'-'||
          CAST(sum(C.P_esp*C.Surface*C.Densité_pc/100) AS INTEGER)||'-'||
          CAST(sum(C.K_esp*C.Surface*C.Densité_pc/100) AS INTEGER) AS TEXT) Besoins_NPK,
@@ -1064,7 +1064,7 @@ CREATE VIEW Bilans_annuels AS SELECT ---
     CAST(sum(Qté_réc_saison) AS INT) Qté_réc_saison, --- Quantités récoltées cette année (cultures de la saison courante et de la précédente).
     CAST(sum(Qté_exp) AS INT) Qté_exp, --- Quantités exportées cette année.
     CAST(sum(Valeur) AS REAL) Valeur,
-    CAST(sum(Qté_exp)/sum(Qté_réc_saison)*100 AS INT) Export_pc --- Quantités exportées par rapport aux quantités récoltées cette année.
+    CAST(sum(Qté_exp)/total(Qté_réc_saison)*100 AS INT) Export_pc --- Quantités exportées par rapport aux quantités récoltées cette année.
 FROM Espèces__Bilans_annuels B
 GROUP BY Saison;
 
@@ -1079,7 +1079,7 @@ CREATE VIEW Espèces__Bilans_annuels AS SELECT ---
     -- CAST(sum(C.Qté_prév)/C.Obj_annuel*100 AS INT) Couv_prév_pc,
     CAST(sum(C.Qté_réc) AS INT) Qté_réc, --- Quantités récoltées pour les cultures mises en place cette saison.
     CAST(sum(iif(C.Terminée ISNULL,max(C.Qté_prév-C.Qté_réc,0),0)) AS INT) Reste_à_réc, --- Estimation des quantités restant à récolter pour les cultures mises en place cette saison et non terminées (qté prévu moins déja réc).
-    -- CAST(sum(C.Qté_réc)/sum(C.Qté_prév)*100 AS INT) Couv_réc_pc,
+    -- CAST(sum(C.Qté_réc)/total(C.Qté_prév)*100 AS INT) Couv_réc_pc,
     CAST(sum(C.Qté_réc)/C.Obj_annuel*100 AS INT) Couv_obj_pc, --- Quantités récoltées par rapport aux objectifs.
     CAST(sum(C.Qté_réc+iif(C.Terminée ISNULL,max(C.Qté_prév-C.Qté_réc,0),0))/
          ((SELECT Prod_possible FROM Planif_espèces P WHERE P.Espèce=C.Espèce))*100 AS INT) Couv_pla_pc, --- Quantités récoltées + restant à récolter par rapport à la planification.
@@ -1513,9 +1513,9 @@ CREATE VIEW Planches__bilan_fert AS SELECT
          coalesce(A.Interprétation,'Pas d''interprétation') AS TEXT) Analyse_sol,
     CAST(group_concat(P.Fertilisants,x'0a0a') AS TEXT) Fertilisants,
     CAST(CAST(sum(P.N_fert) AS INTEGER)||'-'||CAST(sum(P.P_fert) AS INTEGER)||'-'||CAST(sum(P.K_fert) AS INTEGER) AS TEXT) Apports_NPK,
-    CAST(round(min(sum(coalesce(P.N_fert,0))/sum(P.N_esp*P.Densité_pc/100),
-    sum(coalesce(P.P_fert,0))/sum(P.P_esp*P.Densité_pc/100),
-    sum(coalesce(P.K_fert,0))/sum(P.K_esp*P.Densité_pc/100))*100) AS INTEGER) Fert_pc,
+    CAST(round(min(sum(coalesce(P.N_fert,0))/total(P.N_esp*P.Densité_pc/100),
+    sum(coalesce(P.P_fert,0))/total(P.P_esp*P.Densité_pc/100),
+    sum(coalesce(P.K_fert,0))/total(P.K_esp*P.Densité_pc/100))*100) AS INTEGER) Fert_pc,
     CAST(sum(P.N_esp*P.Densité_pc/100)-sum(P.N_fert) AS INT) N_manq,
     CAST(sum(P.P_esp*P.Densité_pc/100)-sum(P.P_fert) AS INT) P_manq,
     CAST(sum(P.K_esp*P.Densité_pc/100)-sum(P.K_fert) AS INT) K_manq,
