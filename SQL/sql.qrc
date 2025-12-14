@@ -14,5 +14,8 @@
         <file>UpdateStru20250622.sql</file>
         <file>UpdateStru20250728.sql</file>
         <file>UpdateStru20250925.sql</file>
+        <file>UpdateStru20251128.sql</file>
+        <file>UpdateFdaSchema.sql</file>
+        <file>CreateFDATables.sql</file>
     </qresource>
 </RCC>

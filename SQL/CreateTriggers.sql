@@ -242,7 +242,7 @@ END;;
 
 DROP TRIGGER IF EXISTS Cultures_UPDATE_Récolte_terminée;;
 CREATE TRIGGER Cultures_UPDATE_Récolte_terminée AFTER UPDATE ON Cultures
-          WHEN (NEW.Fin_récolte NOTNULL)AND NOT(coalesce(NEW.Récolte_faite,'') LIKE 'x%')AND(NEW.Terminée NOTNULL) -- Récolte commencée pas terminée et culture terminée.
+          WHEN (NEW.Fin_récolte NOTNULL)AND(NEW.Récolte_faite NOTNULL)AND NOT(NEW.Récolte_faite LIKE 'x%')AND(NEW.Terminée NOTNULL) -- Récolte commencée pas terminée et culture terminée.
 BEGIN
     UPDATE Cultures SET
         Récolte_faite='?'
@@ -269,6 +269,23 @@ BEGIN
                            ELSE NULL
                            END
     WHERE (Culture=NEW.Culture);
+END;;
+
+DROP TRIGGER IF EXISTS Cultures__inc_dates_UPDATE;;
+CREATE TRIGGER Cultures__inc_dates_UPDATE INSTEAD OF UPDATE ON Cultures__inc_dates
+BEGIN
+    UPDATE Cultures SET
+        Date_semis=NEW.Date_semis,
+        Semis_fait=NEW.Semis_fait,
+        Date_plantation=NEW.Date_plantation,
+        Plantation_faite=NEW.Plantation_faite,
+        Début_récolte=NEW.Début_récolte,
+        Fin_récolte=NEW.Fin_récolte,
+        Récolte_faite=NEW.Récolte_faite,
+        Terminée=NEW.Terminée,
+        A_faire=NEW.A_faire,
+        Notes=NEW.Notes
+    WHERE Culture=OLD.Culture;
 END;;
 
 DROP TRIGGER IF EXISTS Cultures__non_terminées_INSERT;;
@@ -818,12 +835,12 @@ BEGIN
         C.Culture,
         NEW.Fertilisant,
         NEW.Quantité, -- kg
-        NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10 -- g
-                    *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100,
-        NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
-                    *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100,
-        NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
-                    *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100,
+        round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10 -- g
+                          *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100,3),
+        round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
+                          *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100,3),
+        round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
+                          *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100,3),
         NEW.Notes
     FROM Cultures C
     WHERE (NEW.Culture NOTNULL)AND
@@ -842,32 +859,40 @@ BEGIN
         C.Espèce, -- Si pas d'espèce saisie, répartition sur TOUTES les cultures.
         C.Culture,
         NEW.Fertilisant,
-        round(NEW.Quantité/(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+        round(NEW.Quantité/(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface)) -- 1 par défaut pour les planches qui n'ont pas de surface.
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*
+                           iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100
-                          /(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+                          /(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface))
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100
-                          /(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+                          /(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface))
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100
-                          /(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+                          /(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface))
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         NEW.Notes
     FROM Cu_répartir_fertilisation C
     WHERE (NEW.Culture ISNULL)AND
@@ -889,12 +914,12 @@ BEGIN
         Culture=NEW.Culture,
         Fertilisant=NEW.Fertilisant,
         Quantité=NEW.Quantité,
-        N=NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
-                      *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100,
-        P=NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
-                      *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100,
-        K=NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
-                      *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100,
+        N=round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                            *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100,3),
+        P=round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                            *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100,3),
+        K=round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
+                            *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100,3),
         Notes=NEW.Notes
     WHERE (ID=OLD.ID)AND(NEW.Culture NOTNULL);
     --Suppression de la ligne fertilisation si répartition.
@@ -913,32 +938,40 @@ BEGIN
         C.Espèce, -- Si pas d'espèce saisie, répartition sur TOUTES les cultures.
         C.Culture,
         NEW.Fertilisant,
-        round(NEW.Quantité/(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+        round(NEW.Quantité/(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface)) -- 1 par défaut pour les planches qui n'ont pas de surface.
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100
-                          /(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+                          /(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface))
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100
-                          /(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+                          /(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface))
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100
-                          /(SELECT sum(Surface) FROM Cu_répartir_fertilisation CRF
-                                                WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
-                                                      (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
-                                                                                              CRF.Fin_fertilisation_possible) AND
-                                                      ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))*C.Surface,3),
+                          /(SELECT sum(iif((CRF.Surface ISNULL)OR(CRF.Surface=0),1.0,CRF.Surface))
+                            FROM Cu_répartir_fertilisation CRF
+                            WHERE ((NEW.Espèce ISNULL)OR(CRF.Espèce=NEW.Espèce))AND
+                                  (coalesce(NEW.Date,DATE('now')) BETWEEN CRF.Début_fertilisation_possible AND
+                                                                          CRF.Fin_fertilisation_possible) AND
+                                  ((NEW.Planche·s='*')OR(CRF.Planche LIKE NEW.Planche·s||'%')))
+                          *iif((C.Surface ISNULL)OR(C.Surface=0),1.0,C.Surface),3),
         NEW.Notes
     FROM Cu_répartir_fertilisation C
     WHERE (NEW.Culture ISNULL)AND
@@ -1037,6 +1070,15 @@ BEGIN
     WHERE (ID=NEW.ID)AND(SELECT Valeur!='Oui' FROM Params WHERE Paramètre='Notes_Modif_dates');
 END;;
 
+DROP TRIGGER IF EXISTS Params_UPDATE;;
+CREATE TRIGGER Params_UPDATE AFTER UPDATE ON Params
+WHEN NEW.Paramètre='C_modif_N_culture'
+BEGIN
+    UPDATE fda_f_schema SET
+        readonly=iif(NEW.Valeur!='Oui','x',NULL)
+    WHERE ((name='Cultures')OR(name LIKE 'Cultures__%'))AND(field_name='Culture');
+END;;
+
 DROP TRIGGER IF EXISTS Planches_INSERT_Largeur;;
 CREATE TRIGGER Planches_INSERT_Largeur AFTER INSERT ON Planches
           WHEN (NEW.Largeur ISNULL OR NEW.Largeur='?') AND (SELECT Valeur NOTNULL FROM Params WHERE Paramètre='Largeur_planches')
@@ -1053,6 +1095,16 @@ BEGIN
     UPDATE Planches SET
         Largeur=(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Largeur_planches')
     WHERE Planche=NEW.Planche;
+END;;
+
+DROP TRIGGER IF EXISTS Planif_planches_UPDATE;;
+CREATE TRIGGER Planif_planches_UPDATE INSTEAD OF UPDATE ON Planif_planches
+BEGIN
+    DELETE FROM Planif_validations WHERE IdxIdPl NOT IN(SELECT IdxIdPl FROM Planif_planches);
+    INSERT INTO Planif_validations (IdxIdPl) SELECT PP.IdxIdPl FROM Planif_planches PP WHERE PP.IdxIdPl NOT IN(SELECT IdxIdPl FROM Planif_validations);
+    UPDATE Planif_validations SET
+        Validée=NEW.Validée
+    WHERE IdxIdPl=NEW.IdxIdPl;
 END;;
 
 DROP TRIGGER IF EXISTS "Rotations_détails_INSERT";;
@@ -1113,7 +1165,7 @@ BEGIN
         Fi_planches=NEW.Fi_planches,
         Décalage=min(NEW.Décalage,(SELECT I.Décal_max FROM ITP I WHERE I.IT_plante=NEW.IT_plante)),
         Notes=NEW.Notes
-     WHERE ID=OLD.ID;
+    WHERE ID=OLD.ID;
 END;;
 
 DROP TRIGGER IF EXISTS Rotations_détails__Tempo_DELETE;;
@@ -1162,11 +1214,12 @@ BEGIN
         coalesce(NEW.Date,DATE('now')), --min(Début_récolte,DATE('now'))
         NEW.Espèce,
         C.Culture,
-        round(NEW.Quantité/(SELECT sum(CRR.Longueur) FROM Cu_répartir_récolte CRR
+        round(NEW.Quantité/(SELECT sum(iif((CRR.Longueur ISNULL)OR(CRR.Longueur=0),1.0,CRR.Longueur)) -- 1 par défaut pour les planches qui n'ont pas de longueur.
+                            FROM Cu_répartir_récolte CRR
                             WHERE ((NEW.Espèce ISNULL)OR(CRR.Espèce=NEW.Espèce))AND
                                   (coalesce(NEW.Date,DATE('now')) BETWEEN CRR.Début_récolte_possible AND CRR.Fin_récolte_possible) AND
                                   ((NEW.Planche·s='*')OR(CRR.Planche LIKE NEW.Planche·s||'%'))
-                           )*C.Longueur,3),
+                           )*iif((C.Longueur ISNULL)OR(C.Longueur=0),1.0,C.Longueur),3),
         CASE WHEN (C.Récolte_faite LIKE 'x%')AND(coalesce(C.Terminée,'') NOT LIKE 'v%')AND
                   (coalesce(NEW.Date,DATE('now'))>=(SELECT R.Date_max FROM Cu_récolte R WHERE R.Culture=C.Culture))
              THEN coalesce(NEW.Réc_ter,'x') -- Forcer Réc_ter car Culture.Récolte_faite
@@ -1216,11 +1269,12 @@ BEGIN
         coalesce(NEW.Date,DATE('now')), -- min(Début_récolte,DATE('now'))
         NEW.Espèce,
         C.Culture,
-        round(NEW.Quantité/(SELECT sum(CRR.Longueur) FROM Cu_répartir_récolte CRR
+        round(NEW.Quantité/(SELECT sum(iif((CRR.Longueur ISNULL)OR(CRR.Longueur=0),1.0,CRR.Longueur)) -- 1 par défaut pour les planches qui n'ont pas de longueur.
+                            FROM Cu_répartir_récolte CRR
                             WHERE ((NEW.Espèce ISNULL)OR(CRR.Espèce=NEW.Espèce))AND
                                   (coalesce(NEW.Date,DATE('now')) BETWEEN CRR.Début_récolte_possible AND CRR.Fin_récolte_possible) AND
                                   ((NEW.Planche·s='*')OR(CRR.Planche LIKE NEW.Planche·s||'%'))
-                            )*C.Longueur,3),
+                            )*iif((C.Longueur ISNULL)OR(C.Longueur=0),1.0,C.Longueur),3),
         CASE WHEN (C.Récolte_faite LIKE 'x%')AND(coalesce(C.Terminée,'') NOT LIKE 'v%')AND
                   (coalesce(NEW.Date,DATE('now'))>=(SELECT R.Date_max FROM Cu_récolte R WHERE R.Culture=C.Culture))
              THEN coalesce(NEW.Réc_ter,'x') -- Forcer Réc_ter car Culture.Récolte_faite

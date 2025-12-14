@@ -28,6 +28,7 @@ private:
 
 void AppBusy(bool busy, QProgressBar *pb=nullptr, int max=0, int pos=0, QString text="%p%");
 QColor blendColors(const QColor& baseColor, const QColor& overlayColor);
+QString DataType(QString sValue);
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName);
 //QString SQLiteDate();
 //QString DBInfo(QSqlDatabase *db);
@@ -56,6 +57,7 @@ QString StrFirst(QString s, int i);
 QString StrLast(QString s, int i);
 QString StrRemoveLasts(QString s, int i);
 QString StrReplace(QString s, const QString sTarg, const QString sRepl);
+QString StrReplaceAll(QString s, const QString sTarg, const QString sRepl);
 QString SubString(QString s, int iDeb, int iFin=-1);
 //bool dbSuspend(QSqlDatabase *db, bool bSuspend, bool bEditing, QLabel *ldbs);
 

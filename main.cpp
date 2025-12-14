@@ -20,47 +20,6 @@
 #include <QImage>
 #include "PotaUtils.h"
 
-void MainWindow::SetEnabledDataMenuEntries(bool b)
-{
-    ui->mCopyDB->setEnabled(b);
-    ui->mUpdateSchema->setEnabled(b);
-    ui->mTableList->setEnabled(b);
-    ui->mViewList->setEnabled(b);
-    ui->mFKErrors->setEnabled(b);
-    ui->mSQLiteSchema->setEnabled(b);
-    ui->mAddSchema->setEnabled(b);
-    ui->mParam->setEnabled(b);
-    ui->mNotes->setEnabled(b);
-    for (int i=0; i < ui->mBaseData->actions().count(); i++)
-        ui->mBaseData->actions().at(i)->setEnabled(b);
-
-    ui->mEspeces->setEnabled(b);
-    for (int i=0; i < ui->mEspeces->actions().count(); i++)
-        ui->mEspeces->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mAssolement->actions().count(); i++)
-        ui->mAssolement->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mPlanif->actions().count(); i++)
-        ui->mPlanif->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mCultures->actions().count(); i++)
-        ui->mCultures->actions().at(i)->setEnabled(b);
-
-    ui->mASemer->setEnabled(b);
-    for (int i=0; i < ui->mASemer->actions().count(); i++)
-        ui->mASemer->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mFertilisation->actions().count(); i++)
-        ui->mFertilisation->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mStock->actions().count(); i++)
-        ui->mStock->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mAnalyses->actions().count(); i++)
-        ui->mAnalyses->actions().at(i)->setEnabled(b);
-}
-
 bool MainWindow::dbOpen(QString sFichier, bool bNew, bool SetFkOn)
 {
     //qInfo() << "SQLite version:" << sqlite3_libversion();
@@ -515,71 +474,130 @@ void MainWindow::SetUi(){
 }
 
 void MainWindow::SetMenuIcons() {
-    ui->mNotes->setIcon(QIcon(TablePixmap("Notes","T")));
 
-    ui->mFamilles->setIcon(QIcon(TablePixmap("Familles","T")));
-    ui->mEspeces->setIcon(QIcon(TablePixmap("Espèces","")));
-    ui->mEspecesA->setIcon(QIcon(TablePixmap("Espèces","")));
-    ui->mEspecesV->setIcon(QIcon(TablePixmap("Espèces","")));
-    ui->mEspecesToutes->setIcon(QIcon(TablePixmap("Espèces","T")));
-    ui->mAssociations->setIcon(QIcon(TablePixmap("Associations_détails","T")));
-    ui->mVarietes->setIcon(QIcon(TablePixmap("Variétés","T")));
-    //ui->mApports->setIcon(QIcon(TablePixmap("Apports","T")));
-    ui->mFournisseurs->setIcon(QIcon(TablePixmap("Fournisseurs","T")));
-    // ui->mTypes_de_planche->setIcon(QIcon(TablePixmap("Types_planche","T")));
-    ui->mITPTempo->setIcon(QIcon(TablePixmap("ITP__Tempo","T")));
+    if (db.isOpen()) {
+        ui->mNotes->setIcon(QIcon(TablePixmap(&db,"Notes","T")));
 
-    ui->mRotations->setIcon(QIcon(TablePixmap("Rotations","T")));
-    ui->mDetailsRotations->setIcon(QIcon(TablePixmap("Rotations_détails__Tempo","T")));
-    ui->mRotationManquants->setIcon(QIcon(TablePixmap("Espèces__manquantes","")));
-    ui->mPlanches->setIcon(QIcon(TablePixmap("Planches","T")));
-    //ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Successions_par_planche","")));
-    ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap("Cultures__Tempo","")));
-    ui->mIlots->setIcon(QIcon(TablePixmap("Planches_Ilots","")));
-    ui->mUnitesProd->setIcon(QIcon(TablePixmap("Planches_Unités_prod","")));
+        ui->mFamilles->setIcon(QIcon(TablePixmap(&db,"Familles","T")));
+        ui->mEspeces->setIcon(QIcon(TablePixmap(&db,"Espèces","")));
+        ui->mEspecesA->setIcon(QIcon(TablePixmap(&db,"Espèces","")));
+        ui->mEspecesV->setIcon(QIcon(TablePixmap(&db,"Espèces","")));
+        ui->mEspecesToutes->setIcon(QIcon(TablePixmap(&db,"Espèces","T")));
+        ui->mAssociations->setIcon(QIcon(TablePixmap(&db,"Associations_détails","T")));
+        ui->mVarietes->setIcon(QIcon(TablePixmap(&db,"Variétés","T")));
+        ui->mFournisseurs->setIcon(QIcon(TablePixmap(&db,"Fournisseurs","T")));
+        ui->mITPTempo->setIcon(QIcon(TablePixmap(&db,"ITP__Tempo","T")));
 
-    ui->mPlanifIlots->setIcon(QIcon(TablePixmap("Planif_ilots","")));
-    ui->mPlanifEspeces->setIcon(QIcon(TablePixmap("Planif_espèces","")));
-    ui->mPlanifPlanches->setIcon(QIcon(TablePixmap("Planif_planches","")));
-    ui->mPlanifAsso->setIcon(QIcon(TablePixmap("Planif_associations","")));
-    ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap("Planif_récoltes","")));
-    ui->mSemences->setIcon(QIcon(TablePixmap("Variétés__inv_et_cde","")));
-    ui->mPlants->setIcon(QIcon(TablePixmap("Variétés__cde_plants","")));
+        ui->mRotationsMenu->setIcon(QIcon(TablePixmap(&db,"Rotations","")));
+        ui->mRotationsEntetes->setIcon(QIcon(TablePixmap(&db,"Rotations","T")));
+        ui->mRotationsSaisie->setIcon(QIcon(TablePixmap(&db,"Rotations_détails__Tempo","T")));
+        ui->mRotationsOccup->setIcon(QIcon(TablePixmap(&db,"Rotations_détails__Tempo_occup","")));
+        ui->mRotationManquants->setIcon(QIcon(TablePixmap(&db,"Espèces__manquantes","")));
+        ui->mPlanches->setIcon(QIcon(TablePixmap(&db,"Planches","T")));
+        ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap(&db,"Cultures__Tempo","")));
+        ui->mIlots->setIcon(QIcon(TablePixmap(&db,"Assolement_Ilots","")));
+        ui->mUnitesProd->setIcon(QIcon(TablePixmap(&db,"Assolement_Unités_prod","")));
 
-    ui->mCuNonTer->setIcon(QIcon(TablePixmap("Cultures__non_terminées","")));
-    ui->mASemer->setIcon(QIcon(TablePixmap("Cultures","")));
-    ui->mCuASemer->setIcon(QIcon(TablePixmap("Cultures__à_semer","")));
-    ui->mCuASemerPep->setIcon(QIcon(TablePixmap("Cultures__à_semer_pep","")));
-    ui->mCuASemerEP->setIcon(QIcon(TablePixmap("Cultures__à_semer_EP","")));
-    ui->mCuAPlanter->setIcon(QIcon(TablePixmap("Cultures__à_planter","")));
-    ui->mCuAIrriguer->setIcon(QIcon(TablePixmap("Cultures__à_irriguer","")));
-    ui->mCuARecolter->setIcon(QIcon(TablePixmap("Cultures__à_récolter","")));
-    ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap("Récoltes__Saisies","T")));
-    ui->mCuATerminer->setIcon(QIcon(TablePixmap("Cultures__à_terminer","")));
-    ui->mCuAFaire->setIcon(QIcon(TablePixmap("Cultures__A_faire","")));
-    ui->mCuVivaces->setIcon(QIcon(TablePixmap("Cultures__vivaces","")));
-    ui->mCuAssociations->setIcon(QIcon(TablePixmap("Associations__présentes","")));
-    ui->mCuToutes->setIcon(QIcon(TablePixmap("Cultures","T")));
+        ui->mPlanifIlots->setIcon(QIcon(TablePixmap(&db,"Planif_ilots","")));
+        ui->mPlanifEspeces->setIcon(QIcon(TablePixmap(&db,"Planif_espèces","")));
+        ui->mPlanifPlanches->setIcon(QIcon(TablePixmap(&db,"Planif_planches","")));
+        ui->mPlanifAsso->setIcon(QIcon(TablePixmap(&db,"Planif_associations","")));
+        ui->mRecoltesParMois->setIcon(QIcon(TablePixmap(&db,"Planif_récoltes_m","")));
+        ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap(&db,"Planif_récoltes_s","")));
+        ui->mSemences->setIcon(QIcon(TablePixmap(&db,"Variétés__inv_et_cde","")));
+        ui->mPlants->setIcon(QIcon(TablePixmap(&db,"Variétés__cde_plants","")));
 
-    ui->mAnalysesSol->setIcon(QIcon(TablePixmap("Analyses_de_sol","T")));
-    ui->mFertilisants->setIcon(QIcon(TablePixmap("Fertilisants","T")));
-    ui->mInventaireFert->setIcon(QIcon(TablePixmap("Fertilisants__inventaire","")));
-    ui->mCuAFertiliser->setIcon(QIcon(TablePixmap("Cultures__à_fertiliser","")));
-    ui->mFertilisations->setIcon(QIcon(TablePixmap("Fertilisations__Saisies","T")));
-    ui->mBilanPlanches->setIcon(QIcon(TablePixmap("Planches__bilan_fert","")));
-    ui->mPlanchesDeficit->setIcon(QIcon(TablePixmap("Planches__deficit_fert","")));
+        ui->mCuNonTer->setIcon(QIcon(TablePixmap(&db,"Cultures__non_terminées","")));
+        ui->mASemer->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mCuASemer->setIcon(QIcon(TablePixmap(&db,"Cultures__à_semer","")));
+        ui->mCuASemerPep->setIcon(QIcon(TablePixmap(&db,"Cultures__à_semer_pep","")));
+        ui->mCuASemerEP->setIcon(QIcon(TablePixmap(&db,"Cultures__à_semer_EP","")));
+        ui->mCuAPlanter->setIcon(QIcon(TablePixmap(&db,"Cultures__à_planter","")));
+        ui->mCuAIrriguer->setIcon(QIcon(TablePixmap(&db,"Cultures__à_irriguer","")));
+        ui->mCuARecolter->setIcon(QIcon(TablePixmap(&db,"Cultures__à_récolter","")));
+        ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap(&db,"Récoltes__Saisies","T")));
+        ui->mCuATerminer->setIcon(QIcon(TablePixmap(&db,"Cultures__à_terminer","")));
+        ui->mCuAFaire->setIcon(QIcon(TablePixmap(&db,"Cultures__A_faire","")));
+        ui->mCuVivaces->setIcon(QIcon(TablePixmap(&db,"Cultures__vivaces","")));
+        ui->mCuAssociations->setIcon(QIcon(TablePixmap(&db,"Associations__présentes","")));
+        ui->mCuToutes->setIcon(QIcon(TablePixmap(&db,"Cultures","T")));
 
-    ui->mDestinations->setIcon(QIcon(TablePixmap("Destinations","T")));
-    ui->mEsSaisieConso->setIcon(QIcon(TablePixmap("Consommations__Saisies","T")));
-    ui->mInventaire->setIcon(QIcon(TablePixmap("Espèces__inventaire","")));
+        ui->mAnalysesSol->setIcon(QIcon(TablePixmap(&db,"Analyses_de_sol","T")));
+        ui->mFertilisants->setIcon(QIcon(TablePixmap(&db,"Fertilisants","T")));
+        ui->mInventaireFert->setIcon(QIcon(TablePixmap(&db,"Fertilisants__inventaire","")));
+        ui->mCuAFertiliser->setIcon(QIcon(TablePixmap(&db,"Cultures__à_fertiliser","")));
+        ui->mFertilisations->setIcon(QIcon(TablePixmap(&db,"Fertilisations__Saisies","T")));
+        ui->mBilanPlanches->setIcon(QIcon(TablePixmap(&db,"Planches__bilan_fert","")));
+        ui->mPlanchesDeficit->setIcon(QIcon(TablePixmap(&db,"Planches__deficit_fert","")));
 
-    ui->mBilans->setIcon(QIcon(TablePixmap("Bilans_annuels","")));
-    ui->mCouverture->setIcon(QIcon(TablePixmap("Espèces__Bilans_annuels","")));
-    ui->mAnaITPA->setIcon(QIcon(TablePixmap("ITP__analyse_a","")));
-    ui->mAnaITPV->setIcon(QIcon(TablePixmap("ITP__analyse_v","")));
-    ui->mAnaCultures->setIcon(QIcon(TablePixmap("Cultures__analyse","")));
-    ui->mIncDatesCultures->setIcon(QIcon(TablePixmap("Cultures__inc_dates","")));
-    ui->mRequeteSQL->setIcon(QIcon(TablePixmap("","")));
+        ui->mDestinations->setIcon(QIcon(TablePixmap(&db,"Destinations","T")));
+        ui->mEsSaisieConso->setIcon(QIcon(TablePixmap(&db,"Consommations__Saisies","T")));
+        ui->mInventaire->setIcon(QIcon(TablePixmap(&db,"Espèces__inventaire","")));
+
+        ui->mBilans->setIcon(QIcon(TablePixmap(&db,"Bilans_annuels","")));
+        ui->mCouverture->setIcon(QIcon(TablePixmap(&db,"Espèces__Bilans_annuels","")));
+        ui->mAnaITPA->setIcon(QIcon(TablePixmap(&db,"ITP__analyse_a","")));
+        ui->mAnaITPV->setIcon(QIcon(TablePixmap(&db,"ITP__analyse_v","")));
+        ui->mAnaCulturesA->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mAnaCulture->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mAnaCultureEsp->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mAnaCultureEspSaison->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mAnaCultureEspTypeP->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mAnaCultureITP->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mAnaCultureVar->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
+        ui->mIncDatesCultures->setIcon(QIcon(TablePixmap(&db,"Cultures__inc_dates","")));
+        ui->mRequeteSQL->setIcon(QIcon(TablePixmap(&db,"","")));
+    }
+}
+
+void MainWindow::SetEnabledDataMenuEntries(bool b)
+{
+    ui->mCopyDB->setEnabled(b);
+    ui->mUpdateSchema->setEnabled(b);
+    ui->mTableList->setEnabled(b);
+    ui->mViewList->setEnabled(b);
+    ui->mFKErrors->setEnabled(b);
+    ui->mSQLiteSchema->setEnabled(b);
+    ui->mFdaTSchema->setEnabled(b);
+    ui->mFdaFSchema->setEnabled(b);
+    ui->mParam->setEnabled(b);
+    ui->mNotes->setEnabled(b);
+    for (int i=0; i < ui->mBaseData->actions().count(); i++)
+        ui->mBaseData->actions().at(i)->setEnabled(b);
+
+    ui->mEspeces->setEnabled(b);
+    for (int i=0; i < ui->mEspeces->actions().count(); i++)
+        ui->mEspeces->actions().at(i)->setEnabled(b);
+
+    for (int i=0; i < ui->mAssolement->actions().count(); i++)
+        ui->mAssolement->actions().at(i)->setEnabled(b);
+
+    ui->mRotationsMenu->setEnabled(b);
+    for (int i=0; i < ui->mRotationsMenu->actions().count(); i++)
+        ui->mRotationsMenu->actions().at(i)->setEnabled(b);
+
+    for (int i=0; i < ui->mPlanif->actions().count(); i++)
+        ui->mPlanif->actions().at(i)->setEnabled(b);
+
+    for (int i=0; i < ui->mCultures->actions().count(); i++)
+        ui->mCultures->actions().at(i)->setEnabled(b);
+
+    ui->mASemer->setEnabled(b);
+    for (int i=0; i < ui->mASemer->actions().count(); i++)
+        ui->mASemer->actions().at(i)->setEnabled(b);
+
+    for (int i=0; i < ui->mFertilisation->actions().count(); i++)
+        ui->mFertilisation->actions().at(i)->setEnabled(b);
+
+    for (int i=0; i < ui->mStock->actions().count(); i++)
+        ui->mStock->actions().at(i)->setEnabled(b);
+
+    for (int i=0; i < ui->mAnalyses->actions().count(); i++)
+        ui->mAnalyses->actions().at(i)->setEnabled(b);
+
+    ui->mAnaCulturesA->setEnabled(b);
+    for (int i=0; i < ui->mAnaCulturesA->actions().count(); i++)
+        ui->mAnaCulturesA->actions().at(i)->setEnabled(b);
 }
 
 void MainWindow::showIfDdOpen() {

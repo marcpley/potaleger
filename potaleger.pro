@@ -21,6 +21,7 @@ SOURCES += \
     Dialogs.cpp \
     PotaUtils.cpp \
     Structure.cpp \
+    classes/fdasqlformat.cpp \
     classes/zoomgraphicsview.cpp \
     data/Data.cpp \
     main.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
 HEADERS += \
     Dialogs.h \
     PotaUtils.h \
+    classes/fdasqlformat.h \
     classes/zoomgraphicsview.h \
     data/Data.h \
     mainwindow.h \

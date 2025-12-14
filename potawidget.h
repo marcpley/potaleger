@@ -36,6 +36,7 @@ public:
     QSqlDatabase *db;
     QString sPrimaryKey;
     QString sOrderByClause="";
+    QString sRowSummary="";
     QSet<QString> generatedColumns;
     QStringList dataTypes;
     QStringList baseDataFields;
@@ -96,12 +97,12 @@ public:
             return font;
         }
         if (role==Qt::DisplayRole and !data(index,Qt::EditRole).isNull()) {
-            if (dateColumns.contains(index.column())) {// #DateFormat
+            if (dateColumns.contains(index.column())) {// Date format
                 if (data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy").isEmpty())
                     return data(index,Qt::EditRole).toString()+"!"; //Not date format
                 else
                     return data(index,Qt::EditRole).toDate().toString("dd/MM/yyyy");
-            } else if (moneyColumns.contains(index.column())) {
+            } else if (moneyColumns.contains(index.column())) { //Money format.
                 if (data(index,Qt::EditRole).toFloat()==0 and data(index,Qt::EditRole).toString()!="0")
                     return data(index,Qt::EditRole).toString()+"!"; //Not number format
                 else
@@ -113,8 +114,16 @@ public:
                     return data(index,Qt::EditRole).toString()+" ("+QDate(2001,1,1).addDays((data(index,Qt::EditRole).toInt()-1)*7).toString("dd/MM")+")";
             } else if (data(index,Qt::EditRole).toString().startsWith(".") and data(index,Qt::EditRole).toString().length()>1) {//Invisible data
                 return QVariant();
-            } else if (data(index,Qt::EditRole).toString()=='x')
+            } else if (data(index,Qt::EditRole).toString()=='x') {
                 return "✔️";
+            } else if (data(index,Qt::EditRole).toString().contains('#') and //Special color cell. Remove rgb color code.
+                       data(index,Qt::EditRole).toString().length()>7) {
+                QString value=data(index,Qt::EditRole).toString().first(data(index,Qt::EditRole).toString().indexOf('#'));
+                //Data type is lost because of adding the color code -> wrong format of REAL.
+                if (value.endsWith(".0"))
+                    value=value.first(value.length()-2);
+                return value;
+            }
         }
         if (role==Qt::TextAlignmentRole) {
             if (StrLast(data(index,Qt::EditRole).toString(),1)=='%' or

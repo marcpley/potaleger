@@ -61,6 +61,7 @@ void setYAxisCalc(QComboBox *cb, QString dataType);
 // void setYAxisType(QComboBox *cb, int axisType);
 
 QString QueryDialog(const QString &titre, const QString &message, QSqlDatabase db);
+
 bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
 int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, const QSet<int> disabledOptions={}, const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
 bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);

@@ -23,24 +23,28 @@ const QColor cRecolte=QColor("#bf00ff");//Violet
 const QColor cATerminer=QColor("#007aff");//Bleu
 const QColor cTerminee=QColor("#808080");//Gris
 
-bool AcceptReturns(const QString sFieldName);
-QString ComboField(const QString sTableName, const QString sFieldName);
+bool AcceptReturns(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
+QString ComboValues(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 int DefColWidth(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 QString DynDDL(QString sQuery);
-bool FieldIsMoney(const QString sFieldName);
-QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sPageFilter, const QModelIndex &index, bool countFk=false);
-QString FkSortCol(const QString sTableName,const QString sFieldName);
+bool FieldIsMoney(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
+bool canOpenTab(QSqlDatabase *db, const QString sTableName);
+QString FkFilter(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QModelIndex &index);
+QString FkSortCol(QSqlDatabase *db, const QString sTableName, const QString sFieldName);
 //QString GeneratedFielnameForDummyFilter(const QString sTableName);
-bool lastRow(const QString sTableName);
-int NaturalSortCol(const QString sTableName);
+bool hiddenField(QSqlDatabase *db, QString sTName,QString sFName);
+bool lastRow(QSqlDatabase *db, const QString sTableName);
+QString NaturalSortCol(QSqlDatabase *db, const QString sTableName);
 QString NoData(QSqlDatabase *db, const QString sTableName);
 bool ReadOnly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);
-QColor RowColor(QString sValue, QString sTableName);
-QString RowSummary(QString TableName, const QSqlRecord &rec);
-QColor TableColor(QString sTName,QString sFName);
-QPixmap TablePixmap(QString sTName, QString text);
+//QColor RowColor(QString sValue, QString sTableName);
+QString RowSummary(QSqlDatabase *db, const QString sTableName, const QString rowSummaryModel, const QSqlTableModel *model, const int row);
+QString RowSummaryModel(QSqlDatabase *db, QString sTableName);
+QColor TableColor(QSqlDatabase *db, QString sTName, QString sFName);
+QPixmap TablePixmap(QSqlDatabase *db, QString sTName, QString text);
 QString ToolTipField(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const QString sDataType, const QString sBaseData);
 QString ToolTipTable(QSqlDatabase *db, const QString sTableName);
+QString Unit(QSqlDatabase *db, const QString sTableName, const QString sFieldName, const bool bSpaceBefore=false);
 //bool ViewFieldIsDate(const QString sFieldName, QString sData="");
 
 #endif // DATA_H

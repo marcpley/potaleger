@@ -1,6 +1,7 @@
 #include "Dialogs.h"
 #include <QApplication>
 #include <QMessageBox>
+#include "classes/fdasqlformat.h"
 #include "qcheckbox.h"
 #include "qcombobox.h"
 #include "qmenu.h"
@@ -24,6 +25,8 @@
 #include <QGuiApplication>
 #include <QFileDialog>
 #include <QColorDialog>
+#include <QToolTip>
+
 
 class SqlHighlighter : public QSyntaxHighlighter {
 public:
@@ -146,6 +149,15 @@ void highlightParentheses(QPlainTextEdit* SQLEdit) {
     }
 
     SQLEdit->setExtraSelections(extraSelections);
+}
+
+QString selectionInfo(QPlainTextEdit* SQLEdit) {
+    QString result="";
+    result="Caracters "+str(SQLEdit->toPlainText().length())+" - "+
+           "Lines "+str(SQLEdit->blockCount())+" - "+
+           "Cursor "+str(SQLEdit->textCursor().blockNumber()+1)+","+str(SQLEdit->textCursor().positionInBlock())+" - "+
+           "Selection "+str(SQLEdit->textCursor().selectedText().length());
+    return result;
 }
 
 } // namespace
@@ -323,9 +335,15 @@ QStringList GraphDialog(const QString &titre, const QString &message, QStringLis
         setYAxis(y3Axis,xAxisGroup->currentIndex()!=xAxisGroupNo, columns, dataTypes,xAxis->currentIndex(),true);
         setYAxis(y4Axis,xAxisGroup->currentIndex()!=xAxisGroupNo, columns, dataTypes,xAxis->currentIndex(),true);
         y1AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y1Axis->currentText()!=QObject::tr("Nombre de lignes"));
-        y2AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y2Axis->currentText()!=QObject::tr("Nombre de lignes"));
-        y3AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y3Axis->currentText()!=QObject::tr("Nombre de lignes"));
-        y4AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y4Axis->currentText()!=QObject::tr("Nombre de lignes"));
+        if (!xAxisYearsSeries->isChecked()) {
+            y2AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y2Axis->currentText()!=QObject::tr("Nombre de lignes"));
+            y3AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y3Axis->currentText()!=QObject::tr("Nombre de lignes"));
+            y4AxisCalc->setVisible(xAxisGroup->currentIndex()!=xAxisGroupNo and y4Axis->currentText()!=QObject::tr("Nombre de lignes"));
+        } else {
+            y2AxisCalc->setVisible(false);
+            y3AxisCalc->setVisible(false);
+            y4AxisCalc->setVisible(false);
+        }
         bComboSetting=false;
     });
 
@@ -814,20 +832,25 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     monospaceFont.setStyleHint(QFont::Monospace);
     monospaceFont.setFamily("Monospace");
     SQLEdit->setFont(monospaceFont);
+    SQLEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
 
     QSettings settings;//("greli.net", "Potaléger");
     SQLEdit->setPlainText(settings.value("SQL").toString());
+
     layout->addWidget(SQLEdit);
     QSize screenSize=QGuiApplication::primaryScreen()->size();
     int maxHeight=screenSize.height()-200;
     SQLEdit->setMaximumHeight(maxHeight);
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QLabel *lInfo=new QLabel();
+    //lInfo->setText("Loading...");
     QPushButton *okButton=new QPushButton(QObject::tr("OK"));
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
     okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
+    buttonLayout->addWidget(lInfo);
     buttonLayout->addStretch();
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
@@ -916,6 +939,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
     });
     QObject::connect(SQLEdit, &QPlainTextEdit::cursorPositionChanged, [&]() {
         highlightParentheses(SQLEdit);
+        lInfo->setText(selectionInfo(SQLEdit));
     });
 
     // Highlight initial si texte déjà présent
@@ -923,8 +947,17 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
 
     //Menu contextuel
     SQLEdit->setContextMenuPolicy(Qt::CustomContextMenu);
-    QObject::connect(SQLEdit, &QPlainTextEdit::customContextMenuRequested, SQLEdit, [SQLEdit, &dialog]() {
+    QObject::connect(SQLEdit, &QPlainTextEdit::customContextMenuRequested, SQLEdit, [SQLEdit]() {
         QMenu menu;
+        QAction* formatAction=menu.addAction(QObject::tr("Formater la requête SQL"));
+        formatAction->setToolTip(QObject::tr("Des retours à la ligne sont injectés pour que les lignes ne dépassent pas 80 caractères.\n"
+                                             "Mettez des espaces autour des opérateurs pour forcer un retour à la ligne:\n"
+                                             "'Val1 + Val2' est scindé en 2 lignes, 'Val1+Val2' non.\n"
+                                             "Mettez les opérateurs booléens en majuscules pour forcer un retour à la ligne:\n"
+                                             "'Val1 AND Val2' est scindé en 2 lignes, 'Val1 and Val2' non."));
+        QAbstractEventDispatcher::connect(formatAction, &QAction::hovered, &menu, [formatAction, &menu]() {
+                QToolTip::showText(QCursor::pos(), formatAction->toolTip(), &menu);
+        });
         QAction* openAction=menu.addAction(QObject::tr("Ouvrir un fichier SQL"));
         QAction* saveAction=menu.addAction(QObject::tr("Enregistrer dans un fichier SQL"));
         menu.addSeparator();
@@ -933,7 +966,11 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
         QSettings settings;//("greli.net", "Potaléger");
 
         QAction* chosen=menu.exec(QCursor::pos());
-        if (chosen==openAction) {
+        if (chosen==formatAction) {
+            fdaSqlFormat formatter(&menu);
+            SQLEdit->setPlainText(formatter.formatSql(SQLEdit->toPlainText()));//+"\n\n"+sql
+            //formatter.deleteLater();
+        } else if (chosen==openAction) {
             QString fileName=QFileDialog::getOpenFileName(SQLEdit, QObject::tr("Ouvrir un fichier SQL"),settings.value("SQLdir").toString(),"*.sql");
             if (!fileName.isEmpty()) {
                 QFile file(fileName);
@@ -944,7 +981,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
                     SQLEdit->setPlainText(in.readAll());
                     file.close();
                 } else {
-                    QMessageBox::warning(&dialog, QObject::tr("Erreur"), QObject::tr("Impossible d'ouvrir le fichier"));
+                    QMessageBox::warning(&menu, QObject::tr("Erreur"), QObject::tr("Impossible d'ouvrir le fichier"));
                 }
             }
         } else if (chosen==saveAction) {
@@ -958,7 +995,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
                     out << SQLEdit->toPlainText();
                     file.close();
                 } else {
-                    QMessageBox::warning(&dialog, QObject::tr("Erreur"), QObject::tr("Impossible d'enregistrer le fichier."));
+                    QMessageBox::warning(&menu, QObject::tr("Erreur"), QObject::tr("Impossible d'enregistrer le fichier."));
                 }
             }
         }
@@ -985,6 +1022,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
         return "";
     }
 }
+
 
 bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
 {

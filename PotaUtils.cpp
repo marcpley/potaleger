@@ -2,7 +2,7 @@
 #include "qcolor.h"
 #include "qdir.h"
 #include "qlabel.h"
-#include "qregularexpression.h"
+//#include "qregularexpression.h"
 #include "qsqlerror.h"
 #include "PotaUtils.h"
 #include <QFont>
@@ -16,8 +16,8 @@ bool PotaQuery::ExecShowErr(QString query)
     if (!query.startsWith("PRAGMA ") and !query.startsWith("SELECT "))
         logMessage("sql.log",query.trimmed());
 
-    if (query.contains("ADD COLUMN Réc_ter"))
-        qDebug() << "stop";
+    // if (query.contains("ADD COLUMN Réc_ter"))
+    //     qDebug() << "stop";
 
     exec(query);
 
@@ -117,6 +117,23 @@ QColor blendColors(const QColor& baseColor, const QColor& overlayColor) {
     return QColor(red, green, blue);
 }
 
+QString DataType(QString sValue){
+    if (sValue.isEmpty())
+        return "";
+    else if (sValue.length()==10 and sValue[4]=='-' and sValue[7]=='-')
+        return "DATE";
+    else if (QString::number(sValue.toInt())==sValue)
+        return "INT";
+    else {
+        bool ok = false;
+        double d=sValue.toDouble(&ok);
+        if (ok)
+            return "REAL";
+        else
+            return "TEXT";
+    }
+}
+
 QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
     QString result="";
     PotaQuery query(*db);
@@ -134,14 +151,7 @@ QString DataType(QSqlDatabase *db, QString TableName, QString FieldName){
         QString sData=query.Select0ShowErr("SELECT "+FieldName+" FROM "+TableName+" WHERE "+FieldName+" NOTNULL").toString();
         QString result="";
         if(!sData.isEmpty()) {
-            if (sData.length()==10 and sData[4]=='-' and sData[7]=='-')
-                result="DATE";
-            else if (QString::number(sData.toInt())==sData)
-                result="INT";
-            else if (QString::number(sData.toDouble())==sData)
-                result="REAL";
-            else
-                result="TEXT";
+            result=DataType(sData);
         }
         if (result!="DATE") //CAST(... AS DATE) don't WORK fine: only year is displayed.
             qWarning() << "Unknow field type for "+TableName+"."+FieldName+" : use CAST in view definition.";
@@ -176,13 +186,17 @@ QString EscapeCSV(QString s,QString sep) {
 }
 
 QString EscapeSQL(QString s) {
-    s=StrReplace(s,"'","''");
-    s=StrReplace(s,"\\n\\n","'||x'0a0a'||'"); //For literal line returns.
-    s=StrReplace(s,"\\n","'||x'0a'||'"); //For literal line returns.
-    s=StrReplace(s,"\n\n","'||x'0a0a'||'"); //For real line returns.
-    s=StrReplace(s,"\n","'||x'0a'||'"); //For real line returns.
-    s="'"+s+"'";
-    return s;
+    if (s.isEmpty()) {
+        return "NULL";
+    } else {
+        s=StrReplace(s,"'","''");
+        s=StrReplace(s,"\\n\\n","'||x'0a0a'||'"); //For literal line returns.
+        s=StrReplace(s,"\\n","'||x'0a'||'"); //For literal line returns.
+        s=StrReplace(s,"\n\n","'||x'0a0a'||'"); //For real line returns.
+        s=StrReplace(s,"\n","'||x'0a'||'"); //For real line returns.
+        s="'"+s+"'";
+        return s;
+    }
 }
 
 QDate firstDayOffWeek(int year, int week) {
@@ -296,98 +310,187 @@ QString RemoveAccents(QString input) {
 
 QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_comments)
 {
-    QStringList LinesList=sCde.split("\n");
-    QString s;
-    QString sResult="";
+    QStringList cdeLines=sCde.split("\n");
+    QString cdeLine;
+    QString resultWithoutComment="";
     QString tablename="";
     QString fda_cmd="";
     int comment_index;
-    //bool indent4;
+    int field_index=1;
     bool bTable;
-    for (int i=0;i<LinesList.count();i++) {
-        s=LinesList[i];
-        //indent4=(s.startsWith("    ") and !s.startsWith("     "));//Line starts with 4 spaces.
-        s=s.trimmed();
+    for (int i=0;i<cdeLines.count();i++) {
+        cdeLine=cdeLines[i];
+        cdeLine=cdeLine.trimmed();
         QString comment="";
-        comment_index=s.indexOf("--");
+        comment_index=cdeLine.indexOf("--");
         if (comment_index!=-1) {
-            sResult += iif(i>0 and keepReturns,"\n","").toString()+s.first(comment_index).trimmed()+iif(s.first(comment_index).trimmed().isEmpty(),""," ").toString();
-            comment=SubString(s,comment_index);
+            resultWithoutComment+=iif(i>0 and keepReturns,"\n","").toString()+
+                     cdeLine.first(comment_index).trimmed()+
+                     iif(cdeLine.first(comment_index).trimmed().isEmpty(),""," ").toString();
+            comment=cdeLine.mid(comment_index);
         } else {
-            sResult += iif(i>0 and keepReturns,"\n","").toString()+s.trimmed()+iif(s.trimmed().isEmpty(),""," ").toString();
+            resultWithoutComment+=iif(i>0 and keepReturns,"\n","").toString()+
+                     cdeLine.trimmed()+
+                     iif(cdeLine.trimmed().isEmpty(),""," ").toString();
         }
-        if (fda_cmd_from_comments and comment.startsWith("---")) {
-            if (comment.length()>3)
-                comment=EscapeSQL(SubString(comment,4));
-            else
-                comment="NULL";
-            if (s.startsWith("CREATE TABLE ")) {
+
+        if (fda_cmd_from_comments and comment.startsWith("---")) { //FDA comment
+            comment=comment.trimmed().mid(3);
+            cdeLine=cdeLine.first(comment_index).trimmed();
+
+            if (comment.contains("--")) // Description comment (---) ends with dév comment (--).
+                comment=comment.first(comment.indexOf("--"));
+
+            //Read multiline FDA comment.
+            for (int j=i+1;j<cdeLines.count();j++) {
+                if (cdeLines[j].trimmed().startsWith("--")) {
+                    if (cdeLines[j].trimmed().startsWith("---"))
+                        comment+="\n"+cdeLines[j].trimmed().mid(3);
+                    i++;//don't read again those comment lines next loop.
+                } else {
+                    break;
+                }
+            }
+
+            //extract properties from multiline FDA comment.
+            QStringList commentLines=comment.split("\n");
+            QString description="";
+            QList<QStringList> properties={{},{}};
+            for (int j=0;j<commentLines.count();j++) {
+                // if (commentLines[j]=="goto_last")
+                //     qDebug() << "stop";
+                if (commentLines[j].contains("--")) // FDA comment (---) ends with dév comment (--).
+                    commentLines[j]=commentLines[j].first(commentLines[j].indexOf("--"));
+                if (commentLines[j].startsWith(" ") or commentLines[j].isEmpty()) { //No keyword
+                    description+=iif(!description.isEmpty(),"\n\n","").toString()+commentLines[j].trimmed();
+                } else {
+                    int keyWordPos=commentLines[j].indexOf(" ");
+                    QString keyWord,sValue;
+                    if (keyWordPos==-1) {
+                        keyWord=commentLines[j];
+                        sValue="x";
+                    } else {
+                        keyWord=commentLines[j].first(keyWordPos);
+                        sValue=commentLines[j].mid(keyWordPos+1);
+                    }
+                    if (properties[0].contains(keyWord)) {
+                        properties[1][properties[0].indexOf(keyWord)]+="\n\n"+iif(sValue=="x","",sValue).toString();
+                    } else {
+                        properties[0].append(keyWord);
+                        properties[1].append(sValue);
+                    }
+                }
+            }
+
+            if (cdeLine.startsWith("CREATE TABLE ")) {
                 bTable=true;
-                tablename=SubString(s,13);
+                tablename=SubString(cdeLine,13);
                 int space_index=tablename.indexOf(" ");
                 tablename=tablename.first(space_index);
-                fda_cmd="INSERT INTO fda_schema (name,description,tbl_type) VALUES ('"+tablename+"',"+comment+",'Table');";
-            } else if (s.startsWith("CREATE VIEW ")) {
+                fda_cmd="INSERT INTO fda_t_schema (name,tbl_type,description) "
+                        "VALUES ('"+tablename+"','Table',"+EscapeSQL(description)+");";
+                for (int j=0;j<properties[0].count();j++) {
+                    fda_cmd+="UPDATE fda_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                             "WHERE name='"+tablename+"';";
+                }
+
+            } else if (cdeLine.startsWith("CREATE VIEW ")) {
                 bTable=false;
-                tablename=SubString(s,12);
+                tablename=SubString(cdeLine,12);
                 int space_index=tablename.indexOf(" ");
                 tablename=tablename.first(space_index);
-                fda_cmd="INSERT INTO fda_schema (name,description,tbl_type) VALUES ('"+tablename+"',"+comment+",'View');";
-            } else if (fda_cmd!="" and !s.startsWith("--")) {
+
+                fda_cmd="INSERT INTO fda_t_schema (name,tbl_type,description) "
+                        "VALUES ('"+tablename+"','View',"+EscapeSQL(description)+");";
+                for (int j=0;j<properties[0].count();j++) {
+                    fda_cmd+="UPDATE fda_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                             "WHERE name='"+tablename+"';";
+                }
+
+            } else if (fda_cmd!="" and !cdeLine.startsWith("--")) {  //Parse fields.
                 if (bTable) { //Parse fields of a CREATE TABLE
-                    int space_index=s.indexOf(" ");
+                    int space_index=cdeLine.indexOf(" ");
                     if (space_index>0) {
-                        QString fieldname=s.first(space_index);
-                        s=SubString(s,space_index).trimmed();
-                        int type_index1=s.indexOf(" ");
-                        int type_index2=s.indexOf(",");
-                        int type_index3=s.indexOf(")");
+                        QString fieldname=cdeLine.first(space_index);
+                        cdeLine=SubString(cdeLine,space_index).trimmed();
+                        int type_index1=cdeLine.indexOf(" ");
+                        int type_index2=cdeLine.indexOf(",");
+                        int type_index3=cdeLine.indexOf(")");
                         if (type_index1==-1) type_index1=1000000;
                         if (type_index2==-1) type_index2=1000000;
                         if (type_index3==-1) type_index3=1000000;
                         type_index1=fmin(fmin(type_index1,type_index2),type_index3);
                         if (type_index1<1000000) {
-                            QString type=s.first(type_index1);
-                            QString readOnly=iif(s.toUpper().contains(" AS ("),"'Calculated'","NULL").toString();
-                            int ref_index=s.indexOf("REFERENCES ");
+                            QString fieldtype=cdeLine.first(type_index1);
+                            bool pk=cdeLine.toUpper().contains("PRIMARY KEY");
+                            QString readOnly=iif(cdeLine.toUpper().contains(" AS "),"'Calculated'","NULL").toString();
+                            if (cdeLine.contains(" AUTOINCREMENT")) {
+                                fieldtype="AUTOINCREMENT";
+                                readOnly="'x'";
+                            }
+                            int ref_index=cdeLine.indexOf("REFERENCES ");
                             QString masterTable="NULL";
                             QString masterField="NULL";
                             if (ref_index>0) {
-                                s=SubString(s,ref_index+11).trimmed();
-                                ref_index=s.indexOf(")");
+                                cdeLine=SubString(cdeLine,ref_index+11).trimmed();
+                                ref_index=cdeLine.indexOf(")");
                                 if (ref_index>1) {
-                                    masterTable=s.first(ref_index);
+                                    masterTable=cdeLine.first(ref_index);
                                     ref_index=masterTable.indexOf(" (");
                                     masterField="'"+SubString(masterTable,ref_index+2)+"'";
                                     masterTable="'"+masterTable.first(ref_index)+"'";
                                 }
                             }
-                            fda_cmd+="INSERT INTO fda_schema (name,field_name,type,description,tbl_type,master_table,master_field,readOnly) VALUES ('"+tablename+"','"+fieldname+"','"+type+"',"+comment+",'Table',"+masterTable+","+masterField+","+readOnly+");";
+                            fda_cmd+="INSERT INTO fda_f_schema (name,field_index,field_name,field_type,description,"
+                                                               "natural_sort,master_table,master_field,readonly) "
+                                     "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"','"+fieldtype+"',"+EscapeSQL(description)+","+
+                                              iif(pk,"'x'","NULL").toString()+","+masterTable+","+masterField+","+readOnly+");";
+                            field_index++;
+                            for (int j=0;j<properties[0].count();j++) {
+                                fda_cmd+="UPDATE fda_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                                         "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');";
+                            }
+                        } else {
+                            qWarning() << "SQL parse error 0: "+cdeLine;
+                            qWarning() << tablename+"."+fieldname;
                         }
                     } else {
-                        qWarning() << "SQL parse error 1: "+s;
+                        qWarning() << "SQL parse error 1: "+cdeLine;
                     }
-                } else { //Parse fields of a CREATE VIEW
-                    int space_index=s.indexOf("---");
-                    if (space_index>0) {
-                        s=s.first(space_index).trimmed();
-                        int fieldIndex=s.lastIndexOf(" ");
-                        if (fieldIndex==-1) fieldIndex=s.lastIndexOf(".");
+                } else { //Parse CREATE VIEW
+                    if (cdeLine.toUpper().startsWith("ORDER BY ")) {
+                        QStringList orderBy=cdeLine.mid(9).split(",");
+                        QString sOrderBy="";
+                        for (int j=0;j<orderBy.count();j++) {
+                            if (orderBy[j].endsWith(")")) orderBy[j].removeLast();
+                            if (orderBy[j].contains("."))
+                                orderBy[j]=orderBy[j].split(".")[1];
+                            fda_cmd+="UPDATE fda_f_schema SET natural_sort="+str(j)+" "
+                                     "WHERE (name='"+tablename+"')AND(field_name='"+orderBy[j]+"');";
+                        }
+                    } else { //Parse fields of a CREATE VIEW
+                        int fieldIndex=cdeLine.lastIndexOf(" ");
+                        if (fieldIndex==-1) fieldIndex=cdeLine.lastIndexOf(".");
                         QString fieldname="";
                         if (fieldIndex>0)
-                            fieldname=SubString(s,fieldIndex+1);
+                            fieldname=SubString(cdeLine,fieldIndex+1);
                         else if (fieldIndex==-1)
-                            fieldname=s;
+                            fieldname=cdeLine;
                         if (!fieldname.isEmpty()) {
                             if (fieldname.endsWith(",")) fieldname.removeLast();
-                            fda_cmd+="INSERT INTO fda_schema (name,field_name,description,tbl_type) "
-                                     "VALUES ('"+tablename+"','"+fieldname+"',"+comment+",'View');";
+                            QString readOnly=iif(cdeLine.contains("(") or cdeLine.contains(")"),"'Calculated'","'x'").toString();
+                            fda_cmd+="INSERT INTO fda_f_schema (name,field_index,field_name,description,readonly) "
+                                     "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"',"+EscapeSQL(description)+","+readOnly+");";
+                            field_index++;
+                            for (int j=0;j<properties[0].count();j++) {
+                                fda_cmd+="UPDATE fda_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                                         "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');";
+                            }
                         } else {
-                            qWarning() << "SQL parse error 2: "+s;
+                            qWarning() << "SQL parse error 2: "+cdeLine;
                         }
-                    } else {
-                        qWarning() << "SQL parse error 3: "+s;
                     }
+
                 }
             }
         }
@@ -395,7 +498,9 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
     if (fda_cmd_from_comments)
         *fda_cmd_from_comments=fda_cmd;
 
-    return sResult;
+    //qDebug() << fda_cmd;
+
+    return resultWithoutComment;
 }
 
 void SetColoredText(QLabel *l, QString text, QString type)
@@ -514,6 +619,16 @@ QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
     while ((index=s.indexOf(sTarg, index2)) != -1) {
         s.replace(index, sTarg.length(), sRepl);
         index2=index+sRepl.length();  // To avoid infinite loop
+    }
+    return s;
+}
+
+QString StrReplaceAll(QString s, const QString sTarg, const QString sRepl) {
+    int i=0;
+    while (s.contains(sTarg)) {
+        s=s.replace(sTarg,sRepl);
+        i++;
+        if (i>1000) break;
     }
     return s;
 }

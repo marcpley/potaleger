@@ -60,7 +60,7 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     QObject::connect(aCommit, &QAction::triggered, pbCommit, &QToolButton::click);
     pbCommit->addAction(aCommit);
     pbCommit->setToolTip(tr("Enregistrer les modifications en cours dans la BDD.")+"\n"+
-                         "Ctrl + Enter");
+                            "Ctrl + Enter");
     pbCommit->setEnabled(false);
     pbCommit->setVisible(false);
     connect(pbCommit, &QToolButton::released, this, &PotaWidget::pbCommitClick);
@@ -392,6 +392,8 @@ void PotaWidget::Init(QString TableName)
 
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);//OnFieldChange
 
+    model->sRowSummary=RowSummaryModel(model->db,TableName);
+
     model->progressBar->setValue(model->progressBar->value()+1);
 
     //Primary Key
@@ -399,7 +401,6 @@ void PotaWidget::Init(QString TableName)
     while (query.next()){
         if (query.value(5).toInt()==1) {
             model->sPrimaryKey=query.value(1).toString();
-            //qDebug() << "sPrimaryKey : "+model->sPrimaryKey;
             break;
         }
     }
@@ -416,8 +417,8 @@ void PotaWidget::Init(QString TableName)
 
         if (localColumnIndex>-1){
             model->setRelation(localColumnIndex, QSqlRelation(referencedTable, referencedClumn, referencedClumn));//Issue #2
-            model->relationModel(localColumnIndex)->setFilter(FkFilter(model->db,model->RealTableName(),localColumn,"",model->index(0,0)));
-            model->relationModel(localColumnIndex)->setSort(model->relationModel(localColumnIndex)->fieldIndex(FkSortCol(model->RealTableName(),localColumn)),Qt::SortOrder::AscendingOrder);
+            model->relationModel(localColumnIndex)->setFilter(FkFilter(model->db,model->RealTableName(),localColumn,model->index(0,0)));
+            model->relationModel(localColumnIndex)->setSort(model->relationModel(localColumnIndex)->fieldIndex(FkSortCol(model->db,model->RealTableName(),localColumn)),Qt::SortOrder::AscendingOrder);
         }
     }
 
@@ -431,7 +432,7 @@ void PotaWidget::Init(QString TableName)
         if (query.value(6).toInt()==2)
             model->generatedColumns.insert(query.value(1).toString());
         model->dataTypes.append(DataType(model->db,TableName,query.value(1).toString()));
-        model->baseDataFields.append(query2.Select0ShowErr("SELECT base_data FROM fda_schema "
+        model->baseDataFields.append(query2.Select0ShowErr("SELECT base_data FROM fda_f_schema "
                                                            "WHERE (name='"+model->RealTableName()+"')AND"
                                                                  "(field_name='"+query.value(1).toString()+"')").toString());
         model->progressBar->setValue(model->progressBar->value()+1);
@@ -443,8 +444,11 @@ void PotaWidget::Init(QString TableName)
     tv->verticalHeader()->setDefaultAlignment(Qt::AlignTop);
     tv->verticalHeader()->hide();
     tv->setTabKeyNavigation(false);
-    dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->iSortCol=NaturalSortCol(TableName);
-    dynamic_cast<PotaHeaderView*>(tv->horizontalHeader())->model()->setHeaderData(NaturalSortCol(TableName), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
+    // QString natSortCols=NaturalSortCol(model->db,TableName);
+    // PotaHeaderView *phv=dynamic_cast<PotaHeaderView*>(tv->horizontalHeader());
+    // phv->iSortCol=model->FieldIndex(natSortCols.split(',')[0]);
+    // for (int i=0;i<natSortCols.split(',').count();i++)
+    //     phv->model()->setHeaderData(model->FieldIndex(natSortCols.split(',')[i]), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
 
     tv->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tv, &QTableView::customContextMenuRequested, this, &PotaWidget::showContextMenu);
@@ -469,7 +473,7 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
         // pbDeleteRow->setEnabled(bAllowDelete and (model->rowsToInsert.count()==0));
 
         if (cur.row()>-1)
-            lRowSummary->setText(RowSummary(model->tableName(),model->record(cur.row())));
+            lRowSummary->setText(RowSummary(model->db,model->tableName(),model->sRowSummary,model,cur.row()));
         else
             lRowSummary->setText("...");
 
@@ -503,7 +507,8 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
         aSaveNotes->setEnabled(false);
         aCommit->setEnabled(true);
 
-        if (AcceptReturns(sFieldName)){
+        // if (AcceptReturns(model->db,model->tableName(),sFieldName)){
+        if (model->dataTypes[cur.column()]=="TEXT") {
             QString text=model->data(cur,Qt::DisplayRole).toString();
             if (text.contains("\n")){
                 SetVisibleEditNotes(true,model->nonEditableColumns.contains(cur.column()));
@@ -514,7 +519,6 @@ void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
         } else {
             SetVisibleEditNotes(false,false);
         }
-        //dbSuspend(model->db,true,pbEdit->isChecked(),model->label);//Normaly not necessary but could correct a case where suspend is wrongly OFF.
 
         editSelInfo->setVisible(false);
 
@@ -829,8 +833,13 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
             dataTypes.append(DataType(model->db, model->tableName(),fieldNames[col]));
             info+=iif(info.isEmpty(),"",", ").toString()+fieldNames[col]+" ("+dataTypes[col]+")";
         }
-        if(fieldNames[col]==model->sPrimaryKey)
-            primaryFieldImport=col;
+        if(fieldNames[col]==model->sPrimaryKey) {
+            PotaQuery query(*model->db);
+            if (query.Select0ShowErr("SELECT field_type FROM fda_f_schema "
+                                     "WHERE (name='"+model->RealTableName()+"')AND"
+                                           "(field_name='"+fieldNames[col]+"')").toString()!="AUTOINCREMENT")
+                primaryFieldImport=col;
+        }
     }
 
     QSet<int> disabledChoices;
@@ -855,10 +864,6 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
                           .arg(FileInfoVerif.fileName())
                           .arg(lTabTitle->text().trimmed()),"",QStyle::SP_MessageBoxWarning);
         return;
-    // } else if (primaryFieldImport==-1) {
-    //     TypeImport=4; //Append only
-    //     MessageDlg(QObject::tr("Champ %1 non trouvée dans le fichier %2.").arg(model->sPrimaryKey).arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
-    //     return;
     } else if (lines.count()<2) {
         MessageDlg("Potaléger",QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
         return;
@@ -1072,9 +1077,9 @@ void PotaWidget::resetBaseData() {
         return;
     }
 
-    //Read fda_schema
+    //Read fda schema
     PotaQuery query(*model->db);
-    query.exec("SELECT name,field_name,type,base_data FROM fda_schema WHERE (name='"+model->RealTableName()+"')AND(base_data='x')");
+    query.exec("SELECT name,field_name FROM fda_f_schema WHERE (name='"+model->RealTableName()+"')AND(base_data='x')"); //,field_type,base_data
     bool bResetTable=false;
     QString fieldNames="";
     while (query.next()){
@@ -1222,15 +1227,15 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
         mDefColWidth.setEnabled(false);
     }
 
-    mExport.setIcon(QIcon(TablePixmap(model->tableName(),"  >>")));
-    mImport.setIcon(QIcon(TablePixmap(model->tableName(),">>  ")));
+    mExport.setIcon(QIcon(TablePixmap(model->db,model->tableName(),"  >>")));
+    mImport.setIcon(QIcon(TablePixmap(model->db,model->tableName(),">>  ")));
     mImport.setEnabled(pbInsertRow->isEnabled() and pbEdit->isChecked());
     mResetBaseData.setEnabled(pbEdit->isChecked());
     PotaQuery query(*model->db);
-    mResetBaseData.setVisible((query.Select0ShowErr("SELECT count() FROM fda_schema "
-                                                    "WHERE (name='"+model->RealTableName()+"')AND(field_name NOTNULL)AND(base_data='x')").toInt()>0)and
-                              (query.Select0ShowErr("SELECT count() FROM fda_schema "
-                                                    "WHERE (name='"+model->tableName()+"')AND(field_name ISNULL)AND(tbl_type IN('Table','View as table'))").toInt()>0));
+    mResetBaseData.setVisible((query.Select0ShowErr("SELECT count() FROM fda_f_schema "
+                                                    "WHERE (name='"+model->RealTableName()+"')AND(base_data='x')").toInt()>0)and
+                              (query.Select0ShowErr("SELECT count() FROM fda_t_schema "
+                                                    "WHERE (name='"+model->tableName()+"')AND(tbl_type IN('Table','View as table'))").toInt()>0));
 
     connect(&mDefColWidth, &QAction::triggered, this, &PotaWidget::hDefColWidth);
     connect(&mGraficView, &QAction::triggered, this, &PotaWidget::showGraphDialog);
@@ -1402,6 +1407,11 @@ void PotaWidget::showGraphDialog()
             //     graph->m_yAxisDataType[i]=model->dataTypes[graph->m_yAxisFieldNum[i]];
             graph->m_yAxisCalc[i]=sGraph[i*5+start+1].toInt();
             graph->m_yAxisType[i]=sGraph[i*5+start+2].toInt();
+            qDebug() << "111";
+            qDebug() << sGraph[i*5+start+2];
+            qDebug() << sGraph[i*5+start+3];
+            qDebug() << sGraph[i*5+start+4];
+            qDebug() << QColor(sGraph[i*5+start+3]);
             if (QColor(sGraph[i*5+start+3]).isValid())
                 graph->m_yColor[i]=QColor(sGraph[i*5+start+3]);
             graph->m_yRightAxis[i]=(sGraph[i*5+start+4].toInt()==1);
@@ -1548,10 +1558,10 @@ void PotaWidget::PositionRestore() {
     }
     if (rowRestore>-1)
         tv->setCurrentIndex(model->index(rowRestore,iPositionCol));
-    else if (lastRow(model->tableName()))
+    else if (lastRow(model->db,model->tableName()))
         tv->setCurrentIndex(model->index(model->rowCount()-1,1));
 
-    lRowSummary->setText(RowSummary(model->tableName(),model->record(tv->currentIndex().row())));
+    lRowSummary->setText(RowSummary(model->db,model->tableName(),model->sRowSummary,model,tv->currentIndex().row()));
     lSelect->setText("");
 }
 
@@ -1813,10 +1823,10 @@ void PotaWidget::pbEditClick(){
     if (pbEdit->isChecked()){
         pbCommit->setVisible(true);
         pbRollback->setVisible(true);
-        sbInsertRows->setVisible(true);
-        pbInsertRow->setVisible(true);
-        pbDuplicRow->setVisible(true);
-        pbDeleteRow->setVisible(true);
+        sbInsertRows->setVisible(sbInsertRows->isEnabled());
+        pbInsertRow->setVisible(pbInsertRow->isEnabled());
+        pbDuplicRow->setVisible(pbDuplicRow->isEnabled());
+        pbDeleteRow->setVisible(pbDeleteRow->isEnabled());
         model->nonEditableColumns.clear();
         for (int i=0; i<model->columnCount();i++) {
             if (ReadOnly(model->db, model->tableName(),model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
@@ -2013,7 +2023,7 @@ void PotaWidget::pbFilterClick(bool checked)
     if (pageFilterFrame->isVisible()) {
         QString pageFilter;
         //pageFilter=pageFilterField+"='"+cbPageFilter->currentText()+"'";
-        pageFilter=pageFilterFilters[cbPageFilter->currentIndex()];
+        pageFilter=pageFilterFilters[fmax(cbPageFilter->currentIndex(),0)];
         if (filter.isEmpty())
             filter=pageFilter;
         else
@@ -2168,7 +2178,7 @@ QString PotaTableModel::FieldName(int index)
 int PotaTableModel::childCount(int row,QString childTable) {
     PotaQuery childTables(*db);
     PotaQuery query(*db);
-    childTables.exec("SELECT name,field_name,master_field FROM fda_schema "
+    childTables.exec("SELECT name,field_name,master_field FROM fda_f_schema "
                "WHERE (tbl_type='Table')AND(master_table='"+RealTableName()+"')"+
                iif(!childTable.isEmpty(),"AND(name='"+childTable+"')","").toString());
     int result=0;
@@ -2247,9 +2257,7 @@ bool PotaTableModel::select()  {
     if (!tempTableName.isEmpty() and
         !bBatch) {
         //Show modified cells
-        //qDebug() << "culture ligne 1" << query.Selec0ShowErr("SELECT Culture FROM temp."+tempTableName+" WHERE Culture=1700");
         AppBusy(true,progressBar,rowCount(),0,tableName()+" - Commited cells %p%");
-        //QString sPrimaryKey=PrimaryKeyFieldName(db,RealTableName());
         int jPrimaryKey=FieldIndex(sPrimaryKey);
         PotaQuery query(*db);
         query.prepare("SELECT * "
@@ -2257,22 +2265,12 @@ bool PotaTableModel::select()  {
                       "WHERE "+sPrimaryKey+"=:pk");
         for (int i=0;i<rowCount();i++) {
             progressBar->setValue(i);
-            //query.bindValue(":pk",StrReplace(data(index(i,jPrimaryKey),Qt::EditRole).toString(),"'","''"));
             query.bindValue(":pk",data(index(i,jPrimaryKey),Qt::EditRole).toString());
             query.exec();
             query.next();
-            //if (i==0)
-            //    qDebug() << query.executedQuery() << data(index(i,jPrimaryKey)).toString();
-            //break;
             for (int j=0;j<columnCount();j++) {
-                //if (i+j==0)
-                //    qDebug() << data(index(i,j),Qt::EditRole).toString() << query.value(j).toString();
                 if (data(index(i,j),Qt::EditRole).toString()!=query.value(j).toString()){
-                    // query.Selec0ShowErr("SELECT "+FieldName(j)+" "+
-                    //                      "FROM temp."+tempTableName+" "+
-                    //                      "WHERE "+sPrimaryKey+"='"+StrReplace(data(index(i,jPrimaryKey)).toString(),"'","''")+"'").toString())
                     commitedCells.insert(index(i,j));
-                    //qDebug() << data(index(i,j),Qt::EditRole).toString() << query.value(j).toString();
                 }
             }
         }
@@ -2287,7 +2285,7 @@ void PotaTableModel::setOrderBy(int column,Qt::SortOrder so)  {
 
     if (column<0) {//Natural sort
         if (noAccentFields.contains(FieldName(0)) and //Col 0 is noAccent
-            NaturalSortCol(RealTableName())==0)
+            FieldIndex(NaturalSortCol(db,RealTableName()).split(",")[0])==0)
             column=0; //Explicit sort on column 0 for accent removal
     }
 
@@ -2510,7 +2508,7 @@ void PotaTableView::keyPressEvent(QKeyEvent *event) {
             PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
             if (pw->editNotes->isVisible() and pw->editNotes->isReadOnly())
                 pw->toogleReadOnlyEditNotes(currentIndex);
-            else if (!pw->editNotes->isVisible() and AcceptReturns(currentIndex.model()->headerData(currentIndex.column(),Qt::Horizontal,Qt::EditRole).toString()))
+            else if (!pw->editNotes->isVisible() and AcceptReturns(pw->model->db,pw->model->tableName(),currentIndex.model()->headerData(currentIndex.column(),Qt::Horizontal,Qt::EditRole).toString()))
                 pw->toogleReadOnlyEditNotes(currentIndex);
             else
                 edit(currentIndex);
@@ -2640,20 +2638,27 @@ void PotaHeaderView::mouseDoubleClickEvent(QMouseEvent *event)  {
             if (iSortCol==logicalIndex) {//Already sorted on this column.
                 if (!bSortDes) {
                     pw->model->setOrderBy(logicalIndex,Qt::SortOrder::DescendingOrder);
+                    for (int col=0; col < pw->model->columnCount(); ++col)
+                        pw->model->setHeaderData(col, Qt::Horizontal, 0, Qt::DecorationRole);
                     pw->model->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_RedUp.svg")), Qt::DecorationRole);
                     bSortDes=true;
                 } else {//Reset sorting.
                     pw->model->setOrderBy( -1,Qt::SortOrder::AscendingOrder);
-                    pw->model->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
-                    int iCol=NaturalSortCol(pw->model->tableName());
-                    //int iCol=NaturalSortCol(dynamic_cast<PotaTableModel*>(model())->tableName());
-                    pw->model->setHeaderData(iCol, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
-                    iSortCol=iCol;
+                    //pw->model->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
+
+                    QStringList natSortCols=NaturalSortCol(pw->model->db,pw->model->tableName()).split(",");
+                    iSortCol=pw->model->FieldIndex(natSortCols[0]);
+                    for (int col=0; col < pw->model->columnCount(); ++col)
+                        pw->model->setHeaderData(col, Qt::Horizontal, 0, Qt::DecorationRole);
+                    for (int i=0;i<natSortCols.count();i++)
+                        pw->model->setHeaderData(pw->model->FieldIndex(natSortCols[i]), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown"+str(i)+".svg")), Qt::DecorationRole);
+
                     bSortDes=false;
                 }
             } else {//Actual sort on another column.
                 pw->model->setOrderBy(logicalIndex,Qt::SortOrder::AscendingOrder);
-                pw->model->setHeaderData(iSortCol, Qt::Horizontal, 0, Qt::DecorationRole);
+                for (int col=0; col < pw->model->columnCount(); ++col)
+                    pw->model->setHeaderData(col, Qt::Horizontal, 0, Qt::DecorationRole);
                 pw->model->setHeaderData(logicalIndex, Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_GreenDown.svg")), Qt::DecorationRole);
                 iSortCol=logicalIndex;
                 bSortDes=false;
@@ -2693,10 +2698,12 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         //Hightlight not null empty value. They are not normal, it causes SQL failure.
         c=Qt::red;
         c.setAlpha(150);
-    // } else if (index.data(Qt::EditRole).toString().startsWith("Err") or
-    //            index.data(Qt::DisplayRole).toString().startsWith("Err")) {
-    //     c=Qt::red;
-    //     c.setAlpha(150);
+    } else if (decimalSep!="." and
+               pw->model->dataTypes[index.column()]=="REAL" and
+               index.data(Qt::EditRole).toString().contains(decimalSep)) {
+        //Hightlight wrond decimal value.
+        c=Qt::red;
+        c.setAlpha(150);
     } else if (index.data(Qt::EditRole).toString().endsWith("!") or
                index.data(Qt::DisplayRole).toString().endsWith("!")) {
         c=Qt::red;
@@ -2704,13 +2711,20 @@ void PotaItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     } else if (index.data(Qt::EditRole).toString().startsWith(".") and index.data(Qt::EditRole).toString().length()>1) {//Invisible data
         c=Qt::gray;
         c.setAlpha(50);
-    } else if (decimalSep!="." and
-               pw->model->dataTypes[index.column()]=="REAL" and
-               index.data(Qt::EditRole).toString().contains(decimalSep)) {
-        c=Qt::red;
-        c.setAlpha(150);
+    } else if (index.data(Qt::EditRole).toString().length()>7 and
+               index.data(Qt::EditRole).toString().contains("#") and
+               QColor(index.data(Qt::EditRole).toString().last(7)).isValid()) { //Special color cell.
+        c=QColor(index.data(Qt::EditRole).toString().last(7));
+        c.setAlpha(50);
     } else if (RowColorCol>-1) {
-        c=RowColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString(),pw->model->tableName());
+        //c=RowColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString(),pw->model->tableName());
+        c=QColor(index.model()->index(index.row(),RowColorCol).data(Qt::DisplayRole).toString());
+        int alpha;
+        if (isDarkTheme())
+            alpha=60;
+        else
+            alpha=80;
+        c.setAlpha(alpha);
     }
     if (!c.isValid()) {//Table color.
         c=cColColors[index.column()];
@@ -3196,7 +3210,7 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
     PotaTableModel *model=const_cast<PotaTableModel *>(constModel);
     QString sFieldName=model->headerData(index.column(),Qt::Horizontal,Qt::EditRole).toString();
     QString sDataType=model->dataTypes[index.column()];
-    QString sComboField=ComboField(model->RealTableName(),sFieldName);
+    QString sComboValues=ComboValues(model->db,model->RealTableName(),sFieldName);
     if (model->relation(index.column()).isValid()) {
         //Create QComboBox for relational columns
         PotaWidget* pw=dynamic_cast<PotaWidget*>(this->parent());
@@ -3205,13 +3219,12 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         int relationIndex=relationModel->fieldIndex(model->relation(index.column()).displayColumn());
         QString filter;
         if (pw->pageFilterFilters.count()>0)
-            filter=FkFilter(model->db,model->RealTableName(),sFieldName,pw->pageFilterFilters[pw->cbPageFilter->currentIndex()],index);
+            filter=FkFilter(model->db,model->RealTableName(),sFieldName,index);
         else
-            filter=FkFilter(model->db,model->RealTableName(),sFieldName,"",index);
-        //if (filter!="") {
+            filter=FkFilter(model->db,model->RealTableName(),sFieldName,index);
         model->relationModel(index.column())->setFilter(filter);
-        //}
         comboBox->addItem("", QVariant()); // Option for setting a NULL
+        QString sRelRowSummary=RowSummaryModel(model->db,relationModel->tableName());
         for (int i=0; i < relationModel->rowCount(); ++i) {
             QString value=relationModel->record(i).value(relationIndex).toString();
             QString displayValue;//=relationModel->record(i).value(0).toString();
@@ -3219,18 +3232,18 @@ QWidget *PotaItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             //     displayValue+=" | "+relationModel->record(i).value(1).toString();
             // if (!relationModel->record(i).value(2).toString().isEmpty())
             //     displayValue+=" | "+relationModel->record(i).value(2).toString();
-            displayValue=RowSummary(relationModel->tableName(),relationModel->record(i));
+            displayValue=RowSummary(model->db,relationModel->tableName(),sRelRowSummary,relationModel,i);
             comboBox->addItem( displayValue,value);
         }
         return comboBox;
-    } else if (!sComboField.isEmpty()){
-        PotaQuery query(*model->db);
-        QStringList TypeValues=query.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Combo_"+sComboField+"'").toString().split("|");
-        if (TypeValues.count()>1) {
+    } else if (!sComboValues.isEmpty()){
+        //PotaQuery query(*model->db);
+        QStringList slComboValues=sComboValues.split("|");
+        if (slComboValues.count()>1) {
             QComboBox *comboBox=new QComboBox(parent);
             comboBox->addItem("", QVariant()); // Option for setting a NULL
-            for (int i=0; i < TypeValues.count(); ++i)
-                comboBox->addItem(TypeValues[i],TypeValues[i]);
+            for (int i=0; i < slComboValues.count(); ++i)
+                comboBox->addItem(slComboValues[i],slComboValues[i]);
             return comboBox;
         }
     } else if (sDataType=="REAL"){

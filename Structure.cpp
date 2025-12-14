@@ -39,7 +39,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("CREATE TABLES %p%");
-            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateTables")),";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateTables")),";",ui->progressBar,true,true);
             sResult.append("Create tables (").append(DbVersion).append(") : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -61,15 +61,15 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("DROP TRIGGER %p%");
-            QString sDropTrigger="BEGIN TRANSACTION;";
+            QString sDropTrigger=""; //"BEGIN TRANSACTION;";
             query->clear();
-            query->ExecShowErr("SELECT * FROM sqlite_master ORDER BY name;");
+            query->ExecShowErr("SELECT * FROM sqlite_schema ORDER BY name;");
             while (query->next()) {
                 if (query->value("type").toString()=="trigger"){
                     sDropTrigger=sDropTrigger + "DROP TRIGGER IF EXISTS \""+query->value("name").toString()+"\";";
                 }
             }
-            sDropTrigger+="COMMIT TRANSACTION;";
+            //sDropTrigger+="COMMIT TRANSACTION;";
             bResult=query->ExecMultiShowErr(sDropTrigger,";",ui->progressBar);
             if (!bResult)
                 sResult.append("Reset triggers : Err");
@@ -78,15 +78,15 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("DROP VIEWS %p%");
-            QString sDropViews="BEGIN TRANSACTION;";
+            QString sDropViews="";//"BEGIN TRANSACTION;";
             query->clear();
-            query->ExecShowErr("SELECT * FROM sqlite_master ORDER BY name;");
+            query->ExecShowErr("SELECT * FROM sqlite_schema ORDER BY name;");
             while (query->next()) {
                 if (query->value("type").toString()=="view"){
                     sDropViews=sDropViews + "DROP VIEW IF EXISTS \""+query->value("name").toString()+"\";";
                 }
             }
-            sDropViews+="COMMIT TRANSACTION;";
+            //sDropViews+="COMMIT TRANSACTION;";
             bResult=query->ExecMultiShowErr(sDropViews,";",ui->progressBar);
             if (!bResult)
                 sResult.append("Reset views : Err");
@@ -182,8 +182,27 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(sDBVersion+" -> 2025-09-25 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-09-25";
         }
+        if (bResult and(sDBVersion=="2025-09-25")) { //Adding field: Rotations.Active.
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20251128"),";",ui->progressBar,false);
+            sResult.append(sDBVersion+" -> 2025-11-28 : "+iif(bResult,"ok","Err").toString()+"\n");
+            if (bResult) sDBVersion="2025-11-28";
+        }
 
-        if (bResult) { //Update schema (general).
+        //Update schema (general).
+
+        if (bResult){ //Create fda tables
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("FDA schema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFDATables"),";",ui->progressBar, true,true);
+            //bResult=false;
+            sResult.append("Init FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+
+        if (bResult) { //Other tables.
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Update shema %p%");
@@ -194,7 +213,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             while (query->next()) {
                 if (query->value("type").toString()=="table" and
                     query->value("name").toString()!="Params" and
-                    query->value("name").toString()!="fda_schema" and
+                    !query->value("name").toString().startsWith("fda_") and
                     !query->value("name").toString().startsWith("sqlite")) {//No sqlite tables.
                     if (query->value("name").toString().startsWith("Temp_"))
                         sUpdateSchema +="DROP TABLE IF EXISTS "+query->value("name").toString()+";";
@@ -272,22 +291,16 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
             ui->progressBar->setFormat("Views %p%");
-            //Update View fields info with same field info in the table.
-            QString addSchema="UPDATE fda_schema SET "
-                                "type=(SELECT A1.type FROM fda_schema A1 "
-                                      "WHERE (A1.tbl_type='Table')AND"
-                                            "(A1.field_name=fda_schema.field_name)AND"
-                                            "(fda_schema.name LIKE A1.name||'__%')) "
-                              "WHERE (type ISNULL)AND(tbl_type='View as table')AND(field_name NOTNULL);"
-                              "UPDATE fda_schema SET "
-                                "description=(SELECT A1.description FROM fda_schema A1 "
-                                             "WHERE (A1.tbl_type='Table')AND"
-                                                   "(A1.field_name=fda_schema.field_name)AND"
-                                                   "(fda_schema.name LIKE A1.name||'__%')) "
-                              "WHERE (description ISNULL)AND(tbl_type LIKE 'View%')AND(field_name NOTNULL);" //todo
-                              ;
-            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateViews"))+addSchema,";",ui->progressBar,true,true);
+            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateViews")),";",ui->progressBar,true,true);
             sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+
+        if (bResult){ //Update params table
+            ui->progressBar->setValue(0);
+            ui->progressBar->setMaximum(0);
+            ui->progressBar->setFormat("Params %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateTableParams"),";",ui->progressBar,false,true);
+            sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){ //Create triggers
@@ -297,13 +310,12 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateTriggers"),";;",ui->progressBar);//";" exists in CREATE TRIGGER statments
             sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-
-        if (bResult){ //Update params table
+        if (bResult){ //Update fda schema
             ui->progressBar->setValue(0);
             ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Params %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateTableParams"),";",ui->progressBar,false);
-            sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
+            ui->progressBar->setFormat("FDA schema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateFdaSchema"),";",ui->progressBar, true,false);
+            sResult.append("FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }
 

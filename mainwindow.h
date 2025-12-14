@@ -14,8 +14,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.4.0"; //Update date in what's new
-QString const DbVersion="2025-09-25";
+QString const Version="1.5.0b11"; //Update in what's new
+QString const DbVersion="2025-11-28"; //Update CREATE VIEW Info_Potaléger
 
 class MainWindow : public QMainWindow
 {
@@ -56,8 +56,6 @@ private slots:
     //void on_mApports_triggered();
     void on_mFertilisants_triggered();
     void on_mFournisseurs_triggered();
-    void on_mRotations_triggered();
-    void on_mDetailsRotations_triggered();
     void on_mPlanches_triggered();
     void on_mIlots_triggered();
     void on_mSuccessionParPlanche_triggered();
@@ -73,7 +71,6 @@ private slots:
     void on_mCuATerminer_triggered();
     void on_mCuToutes_triggered();
     void on_mAnaITPA_triggered();
-    void on_mAnaCultures_triggered();
     void on_mITPTempo_triggered();
     void on_mCreerCultures_triggered();
     void on_tabWidget_currentChanged(int index);
@@ -107,6 +104,7 @@ private slots:
 
     void on_mPlants_triggered();
 
+    void on_mRecoltesParMois_triggered();
     void on_mRecoltesParSemaine_triggered();
 
     void on_mAssociations_triggered();
@@ -125,11 +123,31 @@ private slots:
 
     void on_mEspecesToutes_triggered();
 
-    void on_mAddSchema_triggered();
+    void on_mFdaTSchema_triggered();
 
     void on_mUnitesProd_triggered();
 
     void on_mBilans_triggered();
+
+    void on_mAnaCulture_triggered();
+
+    void on_mAnaCultureVar_triggered();
+
+    void on_mAnaCultureITP_triggered();
+
+    void on_mAnaCultureEspSaison_triggered();
+
+    void on_mAnaCultureEspTypeP_triggered();
+
+    void on_mAnaCultureEsp_triggered();
+
+    void on_mRotationsEntetes_triggered();
+
+    void on_mRotationsSaisie_triggered();
+
+    void on_mRotationsOccup_triggered();
+
+    void on_mFdaFSchema_triggered();
 
 private:
     void SetEnabledDataMenuEntries(bool b);
@@ -139,7 +157,7 @@ private:
     void dbClose();
     bool PotaDbOpen(QString sFichier, QString sNew, bool bUpdate);
     void PotaDbClose();
-    bool OpenPotaTab(QString const sObjName, QString sTableName, QString const sTitre, const QString sDesc="");
+    bool OpenPotaTab(QString sTableName, QString const sTitre, const QString sDesc="");
     void ClosePotaTab(QWidget *Tab);
     void ClosePotaTabs();
     void CreateNewDB(bool bEmpty);

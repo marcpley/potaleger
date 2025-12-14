@@ -129,6 +129,7 @@ void PotaGraph::fillSeries(QAbstractItemModel* model)
                 yAxisType=m_yAxisType[i];
                 yRightAxis=m_yRightAxis[i];
                 yColor=m_yColor[i];
+                //yColor.setAlpha(100);
             }
 
             if (yAxisFieldNum==-1) {

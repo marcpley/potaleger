@@ -9,12 +9,15 @@
         <file>insert_row.svg</file>
         <file>toCommit.svg</file>
         <file>potaleger.svg</file>
-        <file>Arrow_BlueDown.svg</file>
         <file>edit.svg</file>
         <file>editOn.svg</file>
         <file>duplicate_row.svg</file>
         <file>help.svg</file>
         <file>potaleger.ico</file>
         <file>potaleger.png</file>
+        <file>Arrow_BlueDown0.svg</file>
+        <file>Arrow_BlueDown1.svg</file>
+        <file>Arrow_BlueDown2.svg</file>
+        <file>Arrow_BlueDown3.svg</file>
     </qresource>
 </RCC>

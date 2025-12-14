@@ -491,25 +491,26 @@
     <property name="title">
      <string>Fichiers</string>
     </property>
-    <widget class="QMenu" name="mMaintenance">
+    <widget class="QMenu" name="mSchema">
      <property name="enabled">
       <bool>true</bool>
      </property>
      <property name="title">
-      <string>Maintenance</string>
+      <string>Schéma de la BDD</string>
      </property>
      <addaction name="mTableList"/>
      <addaction name="mViewList"/>
      <addaction name="mFKErrors"/>
      <addaction name="mSQLiteSchema"/>
-     <addaction name="mAddSchema"/>
+     <addaction name="mFdaTSchema"/>
+     <addaction name="mFdaFSchema"/>
     </widget>
     <addaction name="mSelecDB"/>
     <addaction name="mCopyDB"/>
     <addaction name="mUpdateSchema"/>
     <addaction name="mCreateDB"/>
     <addaction name="mCreateEmptyDB"/>
-    <addaction name="mMaintenance"/>
+    <addaction name="mSchema"/>
     <addaction name="mAbout"/>
     <addaction name="mWhatSNew"/>
    </widget>
@@ -540,10 +541,20 @@
     <property name="title">
      <string>Assolement</string>
     </property>
-    <addaction name="mRotations"/>
-    <addaction name="mDetailsRotations"/>
+    <widget class="QMenu" name="mRotationsMenu">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>Rotations</string>
+     </property>
+     <addaction name="mRotationsEntetes"/>
+     <addaction name="mRotationsSaisie"/>
+     <addaction name="mRotationsOccup"/>
+     <addaction name="mRotationManquants"/>
+    </widget>
+    <addaction name="mRotationsMenu"/>
     <addaction name="mPlanches"/>
-    <addaction name="mRotationManquants"/>
     <addaction name="mSuccessionParPlanche"/>
     <addaction name="mIlots"/>
     <addaction name="mUnitesProd"/>
@@ -555,6 +566,7 @@
     <addaction name="mPlanifEspeces"/>
     <addaction name="mPlanifIlots"/>
     <addaction name="mPlanifPlanches"/>
+    <addaction name="mRecoltesParMois"/>
     <addaction name="mRecoltesParSemaine"/>
     <addaction name="mPlanifAsso"/>
     <addaction name="mCreerCultures"/>
@@ -594,12 +606,26 @@
     <property name="title">
      <string>Analyses</string>
     </property>
+    <widget class="QMenu" name="mAnaCulturesA">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>Cultures annuelles</string>
+     </property>
+     <addaction name="mAnaCulture"/>
+     <addaction name="mAnaCultureVar"/>
+     <addaction name="mAnaCultureITP"/>
+     <addaction name="mAnaCultureEspSaison"/>
+     <addaction name="mAnaCultureEspTypeP"/>
+     <addaction name="mAnaCultureEsp"/>
+    </widget>
     <addaction name="mBilans"/>
     <addaction name="mCouverture"/>
     <addaction name="separator"/>
     <addaction name="mAnaITPA"/>
     <addaction name="mAnaITPV"/>
-    <addaction name="mAnaCultures"/>
+    <addaction name="mAnaCulturesA"/>
     <addaction name="mIncDatesCultures"/>
     <addaction name="mRequeteSQL"/>
    </widget>
@@ -701,20 +727,12 @@
     <bool>false</bool>
    </property>
   </action>
-  <action name="mRotations">
+  <action name="mRotationsSaisie">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
     <string>Rotations</string>
-   </property>
-  </action>
-  <action name="mDetailsRotations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Détails des rotations</string>
    </property>
   </action>
   <action name="mParam">
@@ -830,7 +848,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Saisie des récoltes</string>
+    <string>Récoltes</string>
    </property>
   </action>
   <action name="mCuATerminer">
@@ -855,14 +873,6 @@
    </property>
    <property name="text">
     <string>Itinéraires techniques annuelles</string>
-   </property>
-  </action>
-  <action name="mAnaCultures">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures annuelles</string>
    </property>
   </action>
   <action name="mCuNonTer">
@@ -1250,7 +1260,7 @@
     <string>Toutes</string>
    </property>
   </action>
-  <action name="mAddSchema">
+  <action name="mFdaTSchema">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -1258,7 +1268,7 @@
     <iconset theme="QIcon::ThemeIcon::DocumentPageSetup"/>
    </property>
    <property name="text">
-    <string>Schéma additionnel (bêta)</string>
+    <string>Schéma additionnel (tables et vues)</string>
    </property>
   </action>
   <action name="mUnitesProd">
@@ -1275,6 +1285,77 @@
    </property>
    <property name="text">
     <string>Bilans annuels</string>
+   </property>
+  </action>
+  <action name="mAnaCulture">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>par culture</string>
+   </property>
+  </action>
+  <action name="mAnaCultureEsp">
+   <property name="text">
+    <string>par espèce</string>
+   </property>
+  </action>
+  <action name="mAnaCultureITP">
+   <property name="text">
+    <string>par itinéraire</string>
+   </property>
+  </action>
+  <action name="mAnaCultureVar">
+   <property name="text">
+    <string>par variété</string>
+   </property>
+  </action>
+  <action name="mAnaCultureEspSaison">
+   <property name="text">
+    <string>par espèce et saison</string>
+   </property>
+  </action>
+  <action name="mAnaCultureEspTypeP">
+   <property name="text">
+    <string>par espèce type de planche</string>
+   </property>
+  </action>
+  <action name="mRotationsOccup">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Occupation des planches</string>
+   </property>
+  </action>
+  <action name="mRotationsEntetes">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Entêtes</string>
+   </property>
+  </action>
+  <action name="mRecoltesParMois">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Récoltes prévues par mois</string>
+   </property>
+  </action>
+  <action name="mFdaFSchema">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentPageSetup"/>
+   </property>
+   <property name="text">
+    <string>Schéma additionnel (champs)</string>
    </property>
   </action>
  </widget>
