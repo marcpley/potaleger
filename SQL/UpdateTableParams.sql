@@ -49,8 +49,8 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Destinations', 'Combo_Destinations_Type', 'Types de destination, séparés par des ''|'' (vide pour texte libre)', 'Magasin|Particulier|Autre', NULL),
             ('Consommations', 'Conso_historique', 'Voir les consommations anciennes de', '90', 'jours'),
             ('Fertilisation', 'Combo_Fertilisants_Type', 'Types de fertilisants, séparés par des ''|'' (vide pour texte libre)', 'Amendement|Biostimulant|Couvert|Engrais', NULL),
-            ('Fertilisation', 'C_horizon_fertiliser', 'Voir les cultures à fertiliser dont la date de mise en place est dans moins de', '90', 'jours'),
-            ('Fertilisation', 'Ferti_historique', 'Voir les fertilisation anciennes de', '90', 'jours'),
+            ('Fertilisation', 'C_horizon_fertiliser', 'Voir les cultures à fertiliser dont la date de mise en place est dans moins de', '90', 'jours'), --todo a virer
+            ('Fertilisation', 'Ferti_historique', 'Voir les fertilisation anciennes de', '365', 'jours'),
             ('Fertilisation', 'Ferti_avance', 'Fertilisations avant la date mise en place, avance possible de', '60', 'jours'),
             ('Fertilisation', 'Ferti_retard', 'Fertilisations après la date ''Début_récolte'', retard possible de', '30', 'jours'),
             ('Fertilisation', 'Ferti_coef_N',  'Coefficient de disponibilité de l''azote (dépend fortement de la minéralisation de la matière organique donc très lié à l''activité biologique)', '70', '%'),

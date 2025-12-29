@@ -3,8 +3,8 @@
 #include "ui_mainwindow.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQueryModel>
-#include "PotaUtils.h"
-#include "data/Data.h"
+#include "FdaUtils.h"
+#include "data/FdaCalls.h"
 
 bool MainWindow::UpdateDBShema(QString sDBVersion)
 {
@@ -20,7 +20,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     // bool bUpdateBaseData=false;
     QString sResult="";
 
-    AppBusy(true,ui->progressBar,0,0,"%p%");
+    QProgressBar *pb;
+    pb=ui->progressBar;
+
+    AppBusy(true,pb,0,0,"%p%");
 
     if (bResult){ //Set exclusive access.
         bResult=query->ExecShowErr("PRAGMA locking_mode=EXCLUSIVE;")and
@@ -35,19 +38,28 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
     }
 
     if (sDBVersion=="New" or sDBVersion=="NewWithBaseData") { //Create new DB.
+
+        if (bResult){ //Create fda tables
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("FDA schema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFDATables"),";",pb, true, true);
+            sResult.append("Init FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+
         if (bResult){ //Create empty tables.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("CREATE TABLES %p%");
-            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateTables")),";",ui->progressBar,true,true);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("CREATE TABLES %p%");
+            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateTables")),";",pb,true,true);
             sResult.append("Create tables (").append(DbVersion).append(") : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult and(sDBVersion=="NewWithBaseData")) { //Insert general base data.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("BASE DATA %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateBaseData"),";",ui->progressBar); //keepReturns true
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("BASE DATA %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateBaseData"),";",pb); //keepReturns true
             sResult.append("Base data : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
@@ -58,9 +70,9 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
     } else { //Update existing db.
         if (bResult){ //DROP all trigers
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("DROP TRIGGER %p%");
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("DROP TRIGGER %p%");
             QString sDropTrigger=""; //"BEGIN TRANSACTION;";
             query->clear();
             query->ExecShowErr("SELECT * FROM sqlite_schema ORDER BY name;");
@@ -70,14 +82,14 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 }
             }
             //sDropTrigger+="COMMIT TRANSACTION;";
-            bResult=query->ExecMultiShowErr(sDropTrigger,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(sDropTrigger,";",pb);
             if (!bResult)
                 sResult.append("Reset triggers : Err");
         }
         if (bResult){ //DROP all views
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("DROP VIEWS %p%");
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("DROP VIEWS %p%");
             QString sDropViews="";//"BEGIN TRANSACTION;";
             query->clear();
             query->ExecShowErr("SELECT * FROM sqlite_schema ORDER BY name;");
@@ -87,7 +99,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 }
             }
             //sDropViews+="COMMIT TRANSACTION;";
-            bResult=query->ExecMultiShowErr(sDropViews,";",ui->progressBar);
+            bResult=query->ExecMultiShowErr(sDropViews,";",pb);
             if (!bResult)
                 sResult.append("Reset views : Err");
         }
@@ -102,34 +114,34 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
         // Update shema (specific).
         if (bResult and(sDBVersion=="2024-12-30")) { //Useless specific update shema.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250120"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250120"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-01-20 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-01-20";
         }
         if (bResult and(sDBVersion=="2025-01-20")) { //Adding tables: Destinations, Consommations.
-            // ui->progressBar->setValue(0);
-            // ui->progressBar->setMaximum(0);
-            // ui->progressBar->setFormat("Specific update shema %p%");
-            // bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250227"),";",ui->progressBar);
+            // pb->setValue(0);
+            // pb->setMaximum(0);
+            // pb->setFormat("Specific update shema %p%");
+            // bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250227"),";",pb);
             sResult.append(sDBVersion+" -> 2025-02-27 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-02-27";
         }
         if (bResult and(sDBVersion=="2025-02-27")) { //Adding field: Culture.Récolte_comm.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250305"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250305"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-03-05 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-03-05";
         }
         if (bResult and(sDBVersion=="2025-03-05")) { //Drop field: Culture.Récolte_comm.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250325"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250325"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-03-25 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-03-25";
         }
@@ -146,10 +158,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             if (bResult) sDBVersion="2025-05-13";
         }
         if (bResult and(sDBVersion=="2025-05-13")) { //Adding field: Espèces.N P K.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250514"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250514"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-05-14 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-05-14";
         }
@@ -158,35 +170,35 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             if (bResult) sDBVersion="2025-06-08";
         }
         if (bResult and(sDBVersion=="2025-06-08")) { //Adding field: Espèces.Vivace.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250622"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250622"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-06-22 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-06-22";
         }
         if (bResult and(sDBVersion=="2025-06-22")) { //Adding field: S_xxx,D_récolte,Décal_max
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250728"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250728"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-07-28 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-07-28";
         }
         if (bResult and(sDBVersion=="2025-07-28")) { //Adding field: Rotations_détails.Décalage. Adding associations.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250925"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20250925"),";",pb,false);
             //bUpdateBaseData=true;
             sResult.append(sDBVersion+" -> 2025-09-25 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-09-25";
         }
         if (bResult and(sDBVersion=="2025-09-25")) { //Adding field: Rotations.Active.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Specific update shema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20251128"),";",ui->progressBar,false);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Specific update shema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateStru20251128"),";",pb,false);
             sResult.append(sDBVersion+" -> 2025-11-28 : "+iif(bResult,"ok","Err").toString()+"\n");
             if (bResult) sDBVersion="2025-11-28";
         }
@@ -194,18 +206,18 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
         //Update schema (general).
 
         if (bResult){ //Create fda tables
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("FDA schema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFDATables"),";",ui->progressBar, true,true);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("FDA schema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFDATables"),";",pb, true,true);
             //bResult=false;
             sResult.append("Init FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult) { //Other tables.
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Update shema %p%");
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Update shema %p%");
             QString sUpdateSchema="BEGIN TRANSACTION;";
             //SQL statements for renaming old tables.
             query->clear();
@@ -229,13 +241,13 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sUpdateSchema += DynDDL(loadSQLFromResource("CreateTables"));
 
             //Execute SQL.
-            bResult=query->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar,true,true);
+            bResult=query->ExecMultiShowErr(sUpdateSchema,";",pb,true,true);
 
             if (bResult) { //Import data from old to new tables.
                 sUpdateSchema="";
-                ui->progressBar->setValue(0);
-                ui->progressBar->setMaximum(0);
-                ui->progressBar->setFormat("Data transfert %p%");
+                pb->setValue(0);
+                pb->setMaximum(0);
+                pb->setFormat("Data transfert %p%");
 
                 QString sFieldsList;
                 query->clear();
@@ -277,7 +289,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
                 //Execute SQL.
                 sUpdateSchema += "COMMIT TRANSACTION;";
-                bResult=query->ExecMultiShowErr(sUpdateSchema,";",ui->progressBar);
+                bResult=query->ExecMultiShowErr(sUpdateSchema,";",pb);
 
                 if (bResult and sDBVersion=="?")
                     sDBVersion=DbVersion;
@@ -288,49 +300,111 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
     if (bResult and(sDBVersion==DbVersion)) { //Tables shema ok, create views, triggers and update params table..
         if (bResult){ //Create views
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Views %p%");
-            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateViews")),";",ui->progressBar,true,true);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Views %p%");
+            bResult=query->ExecMultiShowErr(DynDDL(loadSQLFromResource("CreateViews")),";",pb,true,true);
             sResult.append("Views : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){ //Update params table
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Params %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateTableParams"),";",ui->progressBar,false,true);
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Params %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateTableParams"),";",pb,false,true);
             sResult.append("Params : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){ //Create triggers
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("Triggers %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateTriggers"),";;",ui->progressBar);//";" exists in CREATE TRIGGER statments
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Triggers %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateTriggers"),";;",pb);//";" exists in CREATE TRIGGER statments
             sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-        if (bResult){ //Update fda schema
-            ui->progressBar->setValue(0);
-            ui->progressBar->setMaximum(0);
-            ui->progressBar->setFormat("FDA schema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateFdaSchema"),";",ui->progressBar, true,false);
-            sResult.append("FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
+        if (bResult){ //Update fda schema model properties
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("FDA model properties %p%");
+
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateFdaSchema")+
+                                            loadSQLFromResource("UpdateFdaSchemaModel"),";",pb, true,false);
+            sResult.append("FDA model properties : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+        if (bResult){ //Update fda table with SQLite info
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("SQLite info %p%");
+            QString sAddSQLiteInfoInFdaSchema="";
+            PotaQuery query2(db);
+
+            query->ExecShowErr("SELECT name,tbl_type FROM fda_t_schema;");
+            while (query->next()) {
+                QString sTableName=query->value("name").toString();
+                QString sPK="";
+                int fieldCount=0;
+
+                query2.ExecShowErr("PRAGMA table_xinfo("+sTableName+")");
+                while (query2.next()){
+                    fieldCount+=1;
+                    if (sPK.isEmpty() and query2.value(5).toInt()==1) {
+                        sPK=query2.value(1).toString();
+                    }
+                }
+
+                int FdaFieldCount=query2.Select0ShowErr("SELECT count() FROM fda_f_schema "
+                                                        "WHERE (name='"+sTableName+"')").toInt();
+
+                int triggerCount=query2.Select0ShowErr("SELECT count() FROM sqlite_schema "
+                                                      "WHERE (tbl_name='"+sTableName+"')AND"
+                                                            "(type='trigger')").toInt();
+                int useCount=query2.Select0ShowErr("SELECT count() FROM sqlite_schema "
+                                                  "WHERE (tbl_name!='"+sTableName+"')AND "
+                                                        "NOT(tbl_name LIKE 'Temp_%')AND"
+                                                        "((sql LIKE '% "+sTableName+" %')OR"
+                                                         "(sql LIKE '% "+sTableName+")%')OR"
+                                                         "(sql LIKE '% "+sTableName+"'))").toInt();
+                sAddSQLiteInfoInFdaSchema+="UPDATE fda_t_schema SET "
+                         "PK_field_name="+iif(sPK.isEmpty(),"NULL","'"+sPK+"'").toString()+","+
+                         "SQLite_field_count="+str(fieldCount)+","+
+                         "FDA_field_count="+str(FdaFieldCount)+","+
+                         "Trigger_count="+str(triggerCount)+","+
+                         "Internal_use_count="+str(useCount)+","+
+                         "Menu_use_count="+str(0)+","+
+                         "Total_use_count="+str(useCount)+","+
+                         "Rec_count="+str(0)+" "+
+                         "WHERE Name='"+sTableName+"';";
+            }
+
+
+
+
+            bResult=query->ExecMultiShowErr(sAddSQLiteInfoInFdaSchema,";",pb, true,false);
+            sResult.append("SQLite info : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+        if (bResult){ //Create launchers
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("FDA launchers %p%");
+
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateLaunchers")+
+                                            loadSQLFromResource("UpdateLaunchers"),";",pb,true,false);
+            sResult.append("FDA launchers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }
 
     // if (bResult and bInsertBaseData) { //Insert base data.
-    //     ui->progressBar->setValue(0);
-    //     ui->progressBar->setMaximum(0);
-    //     ui->progressBar->setFormat("Insert base data %p%");
-    //     bResult=query->ExecMultiShowErr(sInsertBaseData,";",ui->progressBar);
+    //     pb->setValue(0);
+    //     pb->setMaximum(0);
+    //     pb->setFormat("Insert base data %p%");
+    //     bResult=query->ExecMultiShowErr(sInsertBaseData,";",pb);
     // }
 
     // if (bResult and bUpdateBaseData) { //Update base data.
-    //     ui->progressBar->setValue(0);
-    //     ui->progressBar->setMaximum(0);
-    //     ui->progressBar->setFormat("Insert base data %p%");
-    //     bResult=query->ExecMultiShowErr(sUpdateBaseData,";",ui->progressBar);
+    //     pb->setValue(0);
+    //     pb->setMaximum(0);
+    //     pb->setFormat("Insert base data %p%");
+    //     bResult=query->ExecMultiShowErr(sUpdateBaseData,";",pb);
     // }
 
     if (bResult){ //Set FK ON.
@@ -344,7 +418,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             sResult.append(tr("Impossible d'annuler l'accès exclusif.")+"\n");
     }
 
-    AppBusy(false,ui->progressBar);
+    AppBusy(false,pb);
 
     if (bResult) { //Final user dialog.
         if (sDBVersion==DbVersion) {

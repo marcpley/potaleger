@@ -17,5 +17,8 @@
         <file>UpdateStru20251128.sql</file>
         <file>UpdateFdaSchema.sql</file>
         <file>CreateFDATables.sql</file>
+        <file>UpdateFdaSchemaModel.sql</file>
+        <file>CreateLaunchers.sql</file>
+        <file>UpdateLaunchers.sql</file>
     </qresource>
 </RCC>

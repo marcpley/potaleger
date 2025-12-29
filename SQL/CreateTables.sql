@@ -18,49 +18,64 @@ CREATE TABLE Analyses_de_sol ( --- Analyses de sol effectuées.
         ---unit %
     pH REAL, --- Potentiel hydrogène, à l'eau, du prélèvement.
              --- Valeurs de référence: 6,5 < pH < 7,5
+        ---cond_formats (::>=8)||(::<=6) #darkRed# #lightRed#
     MO REAL, --- Teneur en matière organique du prélèvement.
              --- Valeurs de référence: 15 < MO < 20
         ---unit g/kg
+        ---cond_formats ::<=15 #darkRed# #lightRed#,::>=20 #darkGreen# #lightGreen#
     IB REAL, --- Indice de battance.
              --- Risque de désagrégation du sol sous l'action de la pluie et de formation d'une croûte superficielle lors du ressuyage.
              --- Valeurs de référence: IB < 1,4
+        ---cond_formats ::>=1.4 #darkRed# #lightRed#,::<=0.7 #darkGreen# #lightGreen#
     CEC REAL, --- Capacité d’Echange Cationique du prélèvement.
               --- Mesure le pouvoir fixateur de cations du sol.
               --- Valeurs de référence: 10 < CEC < 20
         ---unit cmol+/kg
+        ---cond_formats ::<10 #darkRed# #lightRed#,::>15 #darkGreen# #lightGreen#
     Cations REAL, --- Teneur en cations du prélèvement.
                   --- Valeurs de référence: Cations >= CEC
         ---unit cmol+/kg
     N REAL, --- Teneur en azote (Kjeldhal) du prélèvement.
             --- Valeurs de référence: 0,9 < N < 1,1
         ---unit g/kg
+        ---cond_formats ::<=0.9 #darkRed# #lightRed#,::>=1.1 #darkGreen# #lightGreen#
     ☆N TEXT AS (CASE WHEN N >= 1.1 THEN 'Elevé' WHEN N <= 0.9 THEN 'Faible' WHEN N NOTNULL THEN 'Moyen' END), --- Teneur qualitative du sol.
+        ---cond_formats "::"=="Faible" #darkRed# #lightRed#,"::"=="Elevé" #darkGreen# #lightGreen#
     P REAL, --- Teneur en phosphore du prélèvement.
             --- Valeurs de référence: 0,08 < P2O5 < 0,12
         ---unit g/kg
+        ---cond_formats ::<=0.08 #darkRed# #lightRed#,::>=0.12 #darkGreen# #lightGreen#
     ☆P TEXT AS (CASE WHEN P >= 0.12 THEN 'Elevé' WHEN P <= 0.08 THEN 'Faible' WHEN P NOTNULL THEN 'Moyen' END), --- Teneur qualitative du sol.
+        ---cond_formats "::"=="Faible" #darkRed# #lightRed#,"::"=="Elevé" #darkGreen# #lightGreen#
     K REAL, --- Potassium.
             --- Teneur en potasse du prélèvement.
             --- Valeurs de référence: 0,12 < K2O < 0,15
         ---unit g/kg
+        ---cond_formats ::<=0.12 #darkRed# #lightRed#,::>=0.15 #darkGreen# #lightGreen#
     ☆K TEXT AS (CASE WHEN K >= 0.15 THEN 'Elevé' WHEN K <= 0.12 THEN 'Faible' WHEN K NOTNULL THEN 'Moyen' END), --- Teneur qualitative du sol.
+        ---cond_formats "::"=="Faible" #darkRed# #lightRed#,"::"=="Elevé" #darkGreen# #lightGreen#
     C REAL, --- Teneur en carbone du prélèvement.
             --- Valeurs de référence: 9 < C < 11
         ---unit g/kg
+        ---cond_formats ::<=9 #darkRed# #lightRed#,::>=11 #darkGreen# #lightGreen#
     CN REAL, --- Rapport Carbone/Azote.
-             --- Valeurs de référence: "8 < C/N < 11
+             --- Valeurs de référence: 8 < C/N < 11
+        ---cond_formats (::<=8)||(::>=11) #darkRed# #lightRed#
     Ca REAL, --- Calcium
              --- Teneur en chaux du prélèvement.
              --- Valeurs de référence: 3,7 < CaO < 3,9
         ---unit g/kg
+        ---cond_formats ::<=3.7 #darkRed# #lightRed#,::>=3.9 #darkGreen# #lightGreen#
     Mg REAL, --- Magnésium
              --- Teneur en magnésie du prélèvement.
              --- Valeurs de référence: 0,09 < MgO < 0,14
         ---unit g/kg
+        ---cond_formats ::<=0.09 #darkRed# #lightRed#,::>=0.14 #darkGreen# #lightGreen#
     Na REAL, --- Sodium
              --- Teneur en oxyde de sodium du prélèvement.
              --- Valeurs de référence: 0.02 < Na2O < 0,24
         ---unit g/kg
+        ---cond_formats ::>=0.24 #darkRed# #lightRed#,::<=0.02 #darkGreen# #lightGreen#
     Interprétation TEXT, ---multiline
     Référence TEXT, ---
     Organisme TEXT, ---
@@ -82,7 +97,7 @@ CREATE TABLE Associations_détails ( --- Associations d'espèces ou de familles 
     Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE, ---
     Groupe TEXT, --- Espèces dont le nom commence par.
     Famille TEXT REFERENCES Familles (Famille) ON UPDATE CASCADE, ---
-        ---fk_filter (coalesce(::Espèce,'x')='x')OR(Famille=(SELECT Famille FROM Espèces WHERE Espèce=::Espèce))
+        ---fk_filter (coalesce(:Espèce:,'x')='x')OR(Famille=(SELECT Famille FROM Espèces WHERE Espèce=:Espèce:))
     Requise BOOL, --- L'espèce doit obligatoirement être présente pour que l'association fasse son effet.
     Notes TEXT) --- ::Familles.Notes
         ---multiline
@@ -117,9 +132,9 @@ CREATE TABLE Cultures ( --- Une 'culture' c'est une plante (espèce,variété) s
                                                                  --- Sur une variété, vous pouvez sélectionner parmis les ITP de l'espèce concernée ou parmis les ITP qui n'ont pas d'espèce.
                                                                  --- Dans un plan de rotation, vous pouvez sélectionner parmis les ITP qui ont une espèce (annuelle ou vivace).
                                                                  --- Pour une culture, vous pouvez sélectionner parmis les ITP de l'espèce cultivée ou parmis les ITP qui n'ont pas d'espèce.
-        ---fk_filter (Espèce ISNULL)OR(Espèce=::Espèce)
+        ---fk_filter (Espèce ISNULL)OR(Espèce=:Espèce:)
     Variété TEXT REFERENCES Variétés (Variété) ON UPDATE CASCADE, ---
-        ---fk_filter Espèce=::Espèce
+        ---fk_filter Espèce=:Espèce:
     Fournisseur TEXT REFERENCES Fournisseurs (Fournisseur)  ON UPDATE CASCADE, ---
     Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE, ---
     Type TEXT AS --- Automatique, en fonction des date de semis, plantation et récolte.
@@ -257,8 +272,8 @@ CREATE TABLE Espèces ( --- Plante pouvant se reproduire et engendrer une descen
     Niveau TEXT, --- Niveau de difficulté.
                  --- Pour information, non utilisé pour le moment.
     Densité REAL, --- Nombre de plants par m² si l'espèce est seule sur la planche.
-        ---unit plants/m²
                   --- Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.
+        ---unit plants/m²
     Dose_semis REAL, --- Quantité de semence.
                      --- Valeur par défaut pour les itinéraires techniques.
         ---unit g/m²
@@ -292,16 +307,19 @@ CREATE TABLE Espèces ( --- Plante pouvant se reproduire et engendrer une descen
         ---unit g/m²
     ★N TEXT AS (CASE WHEN N > 10 THEN 'Elevé' WHEN N < 5 THEN 'Faible' WHEN N NOTNULL THEN 'Moyen' END), --- Besoin qualitatif en azote.
                                                                                                          --- Valeurs de référence: 5 < N < 10
+        ---cond_formats "::"=="Elevé" #darkRed# #lightRed#,"::"=="Faible" #darkGreen# #lightGreen#
     P REAL, --- Besoin en phosphore.
             --- Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.
         ---unit g/m²
     ★P TEXT AS (CASE WHEN P > 5 THEN 'Elevé' WHEN P < 2.55 THEN 'Faible' WHEN P NOTNULL THEN 'Moyen' END), --- Besoin qualitatif en phosphore.
                                                                                                            --- Valeurs de référence: 2.5 < P < 5
+        ---cond_formats "::"=="Elevé" #darkRed# #lightRed#,"::"=="Faible" #darkGreen# #lightGreen#
     K REAL, --- Besoin en potassium.
             --- Les besoins NPK pour une culture tiennent compte de la densité réelle de la culture.
         ---unit g/m²
     ★K TEXT AS (CASE WHEN K > 12 THEN 'Elevé' WHEN K < 7 THEN 'Faible' WHEN K NOTNULL THEN 'Moyen' END), --- Besoin qualitatif en potassium.
                                                                                                          --- Valeurs de référence: 7 < K < 12
+        ---cond_formats "::"=="Elevé" #darkRed# #lightRed#,"::"=="Faible" #darkGreen# #lightGreen#
     Date_inv DATE, --- Date d'inventaire.
     Inventaire REAL, --- Quantité en stock à la date d'inventaire.
         ---unit kg
@@ -349,6 +367,12 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
         ---multiline
     Utilisation TEXT, ---
         ---multiline
+    Délai INTEGER, --- Temps depuis la date de fertilisation avant libération des nutriments.
+                   --- 1 semaine si vide.
+        ---unit semaines
+    Durée INTEGER, --- Temps de disponibilité des nutriments après date de fertilisation + délai.
+                   --- 1 semaine si vide.
+        ---unit semaines
     pH REAL, --- Potentiel hydrogène.
              --- pH < 7 : acide
              --- pH > 7 : basique
@@ -362,6 +386,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                --- Valeurs de référence: 0.2 < N disp < 1
         ---unit %
+        ---cond_formats ::<0.2 #darkRed# #lightRed#,::>1 #darkGreen# #lightGreen#
     P REAL, --- Teneur en phosphore du fertilisant (%).
     P_coef REAL, --- Coefficient de disponibilité du phosphore en conditions optimales.
         ---unit %
@@ -370,6 +395,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                --- Valeurs de référence: 0.1 < P disp < 0.5
         ---unit %
+        ---cond_formats ::<0.1 #darkRed# #lightRed#,::>0.5 #darkGreen# #lightGreen#
     K REAL, --- Teneur en potassium du fertilisant (%).
     K_coef REAL, --- Coefficient de disponibilité du potassium en conditions optimales.
         ---unit %
@@ -378,12 +404,15 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                --- Valeurs de référence: 0.4 < K disp < 2
         ---unit %
+        ---cond_formats ::<0.4 #darkRed# #lightRed#,::>2 #darkGreen# #lightGreen#
     Ca REAL, --- Teneur en calcium du fertilisant (%).
     Ca_coef REAL, --- Coefficient de disponibilité (%) du calcium en conditions optimales.
     Ca_disp_pc REAL AS (round(Ca*Ca_coef/100,2)), --- Teneur en calcium disponible pour les plantes (% du poids de fertilisant) en conditions optimales.
                                                   --- Diponible=teneur x coefficient / 100
                                                   --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                   --- Valeurs de référence: 0.4 < Ca disp < 2
+        ---unit %
+        ---cond_formats ::<0.4 #darkRed# #lightRed#,::>2 #darkGreen# #lightGreen#
     Fe REAL, --- Teneur en fer du fertilisant (%).
     Fe_coef REAL, --- Coefficient de disponibilité du fer en conditions optimales.
         ---unit %
@@ -392,6 +421,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                   --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                   --- Valeurs de référence: 0.02 < Fe disp < 0.1
         ---unit %
+        ---cond_formats ::<0.02 #darkRed# #lightRed#,::>0.1 #darkGreen# #lightGreen#
     Mg REAL, --- Teneur en magnésium du fertilisant (%).
     Mg_coef REAL, --- Coefficient de disponibilité du magnésium en conditions optimales.
         ---unit %
@@ -400,6 +430,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                   --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                   --- Valeurs de référence: 0.2 < Mg disp < 1
         ---unit %
+        ---cond_formats ::<0.2 #darkRed# #lightRed#,::>1 #darkGreen# #lightGreen#
     Na REAL, --- Teneur en sodium du fertilisant (%).
     Na_coef REAL, --- Coefficient de disponibilité du sodium en conditions optimales.
         ---unit %
@@ -408,6 +439,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                   --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                   --- Valeurs de référence: 0.04 < Na disp < 0.2
         ---unit %
+        ---cond_formats ::>0.2 #darkRed# #lightRed#,::<0.04 #darkGreen# #lightGreen#
     S REAL, --- Teneur en souffre du fertilisant (%).
     S_coef REAL, --- Coefficient de disponibilité du souffre en conditions optimales.
         ---unit %
@@ -416,6 +448,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                --- Valeurs de référence: 0.04 < S disp < 0.2
         ---unit %
+        ---cond_formats ::<0.04 #darkRed# #lightRed#,::>0.2 #darkGreen# #lightGreen#
     Si REAL, --- Teneur en silicium du fertilisant (%).
     Si_coef REAL, --- Coefficient de disponibilité du silicium en conditions optimales.
         ---unit %
@@ -424,6 +457,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
                                                   --- Un autre coefficient relatif au sol et aux pratiques culturales sera appliqué pour estimer les quantités de fertilisant nécessaires (paramètre 'Ferti_coef_...').
                                                   --- Valeurs de référence: 0.1 < Si disp < 0.5
         ---unit %
+        ---cond_formats ::<0.1 #darkRed# #lightRed#,::>0.5 #darkGreen# #lightGreen#
     Date_inv DATE, ---
     Inventaire REAL, ---
         ---unit kg
@@ -435,26 +469,27 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
     WITHOUT ROWID;
 UPDATE fda_f_schema SET base_data='x' WHERE (name='Fertilisants')AND(field_name IN('Fertilisant','Type','Fonction','pH','N','N_coef','P','P_coef','K','K_coef','Ca','Ca_coef','Fe','Fe_coef','Mg','Mg_coef','Na','Na_coef','S','S_coef','Si','Si_coef'));
 
-CREATE TABLE Fertilisations ( --- Quantités de fertilisant apportées par culture.
-    ---row_summary Date,Espèce,Culture,Fertilisant,Quantité
-    ---can_open_tab SELECT (count(*)>0) FROM Cu_répartir_fertilisation WHERE (DATE('now') BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible)
+CREATE TABLE Fertilisations ( --- Quantités de fertilisant apportées par planche.
+    ---row_summary Date,Planche,Fertilisant,Quantité
+    -- ---can_open_tab SELECT (count(*)>0) FROM Cu_répartir_fertilisation WHERE (DATE('now') BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible)
     ID INTEGER PRIMARY KEY AUTOINCREMENT, ---
     Date DATE NOT NULL, --- Date de fertilisation.
                         --- Laisser vide pour avoir automatiquement la date du jour.
-    Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL, --- Les espèces possibles pour saisir une fertilisation sont celles pour qui il existe des cultures à venir ou en place avant récolte.
-                                                                        --- Voir infobulle 'Culture'.
-        ---fk_filter Espèce IN (SELECT Espèce FROM Cu_répartir_fertilisation
-        ---fk_filter            WHERE (DATE(coalesce(::Date,'now')) BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible))
-    Culture INTEGER REFERENCES Cultures (Culture) ON UPDATE CASCADE NOT NULL, --- Les cultures possibles pour saisir une fertilisation sont celles qui:
-                                                                              --- - Date de mise en place (semis en place ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance')
-                                                                              --- - Début de récolte (Début_récolte) >= date du jour moins délai de saisie de fertilisation (paramètre 'Ferti_retard')
-                                                                              ---
-                                                                              --- Le paramètre 'Ferti_avance' permet de saisir des fertilisations avant la date de mise en place de la culture.
-                                                                              --- Le paramètre 'Ferti_retard' permet de saisir les fertilisation après le début de récolte (Début_récolte).
-        ---fk_filter Culture IN (SELECT Culture FROM Cu_répartir_fertilisation
-        ---fk_filter             WHERE (Espèce=::Espèce)AND
-        ---fk_filter                   (DATE(coalesce(::Date,'now')) BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible))
-        ---fk_sort_field Planche
+    Planche TEXT REFERENCES Planches (Planche) ON UPDATE CASCADE, ---
+    -- Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL, --- Les espèces possibles pour saisir une fertilisation sont celles pour qui il existe des cultures à venir ou en place avant récolte.
+    --                                                                     --- Voir infobulle 'Culture'.
+    --     ---fk_filter Espèce IN (SELECT Espèce FROM Cu_répartir_fertilisation
+    --     ---fk_filter            WHERE (DATE(coalesce(:Date:,'now')) BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible))
+    -- Culture INTEGER REFERENCES Cultures (Culture) ON UPDATE CASCADE NOT NULL, --- Les cultures possibles pour saisir une fertilisation sont celles qui:
+    --                                                                           --- - Date de mise en place (semis en place ou plantation) <= date du jour plus avance de fertilisation (paramètre 'Ferti_avance')
+    --                                                                           --- - Début de récolte (Début_récolte) >= date du jour moins délai de saisie de fertilisation (paramètre 'Ferti_retard')
+    --                                                                           ---
+    --                                                                           --- Le paramètre 'Ferti_avance' permet de saisir des fertilisations avant la date de mise en place de la culture.
+    --                                                                           --- Le paramètre 'Ferti_retard' permet de saisir les fertilisation après le début de récolte (Début_récolte).
+    --     ---fk_filter Culture IN (SELECT Culture FROM Cu_répartir_fertilisation
+    --     ---fk_filter             WHERE (Espèce=:Espèce:)AND
+    --     ---fk_filter                   (DATE(coalesce(:Date:,'now')) BETWEEN Début_fertilisation_possible AND Fin_fertilisation_possible))
+    --     ---fk_sort_field Planche
     Fertilisant TEXT REFERENCES Fertilisants (Fertilisant) ON UPDATE CASCADE NOT NULL, ---
     Quantité REAL NOT NULL, --- Quantité apportée sur la planche.
         ---unit kg
@@ -558,7 +593,7 @@ CREATE TABLE Planches ( --- Planches de cultures.\n"
     Irrig TEXT, --- Irrigation actuellement installée sur la planche (paramétre 'Combo_Planches_Irrig').
         ---combo Combo_Planches_Irrig
     Rotation TEXT REFERENCES Rotations (Rotation) ON UPDATE CASCADE, --- Rotation de cultures qui utilisent cette planche.
-        ---fk_filter Type_planche=::Type
+        ---fk_filter Type_planche=:Type:
     Année INTEGER, ---
     Analyse TEXT REFERENCES Analyses_de_sol (Analyse) ON DELETE SET NULL ON UPDATE CASCADE, ---
     Planches_influencées TEXT, --- Planches pouvant être influencées par une culture de vivace sur la planche courante (associations).
@@ -642,7 +677,7 @@ CREATE TABLE Récoltes ( --- Récoltes pour chaque culture.
     Espèce TEXT REFERENCES Espèces (Espèce) ON UPDATE CASCADE NOT NULL, --- Les espèces possibles pour saisir une récolte sont celles pour qui il existe des cultures en cours de récolte.
                                                                         --- Voir infobulle 'Culture'.
         ---fk_filter Espèce IN (SELECT Espèce FROM Cu_répartir_récolte
-        ---fk_filter            WHERE (DATE(coalesce(::Date,'now')) BETWEEN Début_récolte_possible AND Fin_récolte_possible))
+        ---fk_filter            WHERE (DATE(coalesce(:Date:,'now')) BETWEEN Début_récolte_possible AND Fin_récolte_possible))
     Culture INTEGER REFERENCES Cultures (Culture) ON UPDATE CASCADE NOT NULL, --- Les cultures possibles pour saisir une récolte sont celles qui:
                                                                               --- - ont des dates de début et fin de récolte (réelles ou prévues)
                                                                               --- - Début récolte <= date du jour plus avance de saisie de récolte (paramètre 'C_récolte_avance')
@@ -651,8 +686,8 @@ CREATE TABLE Récoltes ( --- Récoltes pour chaque culture.
                                                                               --- Le paramètre 'C_récolte_avance' permet de saisir des récoltes faites avant leur date prévue.
                                                                               --- Le paramètre 'C_récolte_prolongation' permet de saisir les récoltes après que celles-ci aient été faites.
         ---fk_filter Culture IN (SELECT Culture FROM Cu_répartir_récolte
-        ---fk_filter             WHERE (Espèce=::Espèce)AND
-        ---fk_filter                   (DATE(coalesce(::Date,'now')) BETWEEN Début_récolte_possible AND Fin_récolte_possible))
+        ---fk_filter             WHERE (Espèce=:Espèce:)AND
+        ---fk_filter                   (DATE(coalesce(:Date:,'now')) BETWEEN Début_récolte_possible AND Fin_récolte_possible))
         ---fk_sort_field Planche
     Quantité REAL NOT NULL, --- Quantité récoltée sur la planche.
         ---unit kg

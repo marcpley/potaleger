@@ -1,5 +1,5 @@
 #include "Dialogs.h"
-#include "data/Data.h"
+#include "data/FdaCalls.h"
 #include "mainwindow.h"
 #include "qdir.h"
 #include "qsqldriver.h"
@@ -10,7 +10,7 @@
 #include <QtSql/QSqlQueryModel>
 #include <QtSql/QSqlError>
 #include "QDebug"
-#include "PotaUtils.h"
+#include "FdaUtils.h"
 #include <QWindow>
 #include <QStyleFactory>
 //#include <QLocale>
@@ -18,7 +18,7 @@
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
 #include <QImage>
-#include "PotaUtils.h"
+#include "FdaUtils.h"
 
 bool MainWindow::dbOpen(QString sFichier, bool bNew, bool SetFkOn)
 {
@@ -263,46 +263,47 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         setWindowTitle("Potaléger"+pQuery.Select0ShowErr("SELECT ' - '||Valeur FROM Params WHERE Paramètre='Utilisateur'").toString());
 
         //Activer les menus
-        SetEnabledDataMenuEntries(true);
+        SetLaunchers(true);
         ui->lDBErr->clear();
     }
 
-
-    //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
-
     QFileInfo file(sFichier);
     QFile imgFile(file.absolutePath()+QDir::toNativeSeparators("/imgtab1.png"));
-    if (result and imgFile.exists()) {
+    if (result and imgFile.exists()) { //Final user image found un db folder.
         QPixmap pixmap(imgFile.fileName());
         ui->graphicsView->setImage(pixmap);
+        fitSplittersToPixmap(pixmap);
     } else {
         imgFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
-        if (imgFile.exists()) {
+        if (imgFile.exists()) { //Model image found in app folder.
             //Image on first tab.
             QPixmap pixmap(imgFile.fileName());
             ui->graphicsView->setImage(pixmap);
+            fitSplittersToPixmap(pixmap);
         } else {
-            // ui->graphicsView->setVisible(false);
-            QGraphicsScene *scene=new QGraphicsScene(this);
-            QPixmap pixmap(700,40);
-            pixmap.fill(Qt::transparent);
-            QColor cPen=QColor();
-            if (!isDarkTheme())
-                cPen=QColor("#000000");
-            else
-                cPen=QColor("#ffffff");
-            cPen=QApplication::palette().color(QPalette::WindowText);
-            QPainter painter(&pixmap);
-            painter.setPen(cPen);
-            QFont font( "Arial", 10); //, QFont::Bold
-            painter.setFont(font);
+            QPixmap pixmap(":/images/FDAtext.svg");
+            ui->graphicsView->setImage(pixmap);
+            fitSplittersToPixmap(pixmap);
+            // QGraphicsScene *scene=new QGraphicsScene(this);
+            // QPixmap pixmap(700,40);
+            // pixmap.fill(Qt::transparent);
+            // QColor cPen=QColor();
+            // if (!isDarkTheme())
+            //     cPen=QColor("#000000");
+            // else
+            //     cPen=QColor("#ffffff");
+            // cPen=QApplication::palette().color(QPalette::WindowText);
+            // QPainter painter(&pixmap);
+            // painter.setPen(cPen);
+            // QFont font( "Arial", 10); //, QFont::Bold
+            // painter.setFont(font);
 
-            QRect rect(5, 2, 690, 15);
-            painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
-            rect.setRect(5, 17, 690, 15);
-            painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
-            scene->addPixmap(pixmap);
-            ui->graphicsView->setScene(scene);
+            // QRect rect(5, 2, 690, 15);
+            // painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
+            // rect.setRect(5, 17, 690, 15);
+            // painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
+            // scene->addPixmap(pixmap);
+            // ui->graphicsView->setScene(scene);
         }
     }
 
@@ -331,10 +332,19 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
     return result;
 }
 
+void MainWindow::fitSplittersToPixmap(QPixmap pixmap) {
+    int frame = ui->graphicsView->frameWidth();
+    QMargins margins = ui->graphicsView->contentsMargins();
+    int w=(pixmap.width()/pixmap.devicePixelRatio()+2*frame+margins.left()+margins.right());
+    int h=(pixmap.height()/pixmap.devicePixelRatio()+2*frame+margins.top()+margins.bottom());
+    ui->hSplitter->setSizes({w,1});
+    ui->vSplitter->setSizes({h,1});
+}
+
 void MainWindow::PotaDbClose()
 {
     ClosePotaTabs();
-    SetEnabledDataMenuEntries(false);
+    SetLaunchers(false);
 
     dbClose();
     //userDataEditing=false;
@@ -352,6 +362,10 @@ void MainWindow::RestaureParams()
     else
         restoreGeometry(geometry);
     settings.endGroup();
+
+    // centralWidget()->layout()->invalidate();
+    // centralWidget()->layout()->activate();
+    // QCoreApplication::processEvents();
 
     if (settings.value("theme").toString()=="dark")
         ui->cbTheme->setCurrentIndex(1);
@@ -427,7 +441,7 @@ void MainWindow::SetUi(){
     //customLocale.setNumberOptions(QLocale::RejectGroupSeparator);
     //customLocale.setNumberOptions(QLocale::OmitGroupSeparator);
     //QLocale::setDefault(customLocale);
-    //std::setlocale(LC_NUMERIC, "C");
+    std::setlocale(LC_NUMERIC, "C"); //Necessary to muParserX deal with decimal separator
 
     ui->progressBar->setVisible(false);
     ui->progressBar->setMinimumSize(300,ui->progressBar->height());
@@ -476,81 +490,12 @@ void MainWindow::SetUi(){
 void MainWindow::SetMenuIcons() {
 
     if (db.isOpen()) {
-        ui->mNotes->setIcon(QIcon(TablePixmap(&db,"Notes","T")));
-
-        ui->mFamilles->setIcon(QIcon(TablePixmap(&db,"Familles","T")));
-        ui->mEspeces->setIcon(QIcon(TablePixmap(&db,"Espèces","")));
-        ui->mEspecesA->setIcon(QIcon(TablePixmap(&db,"Espèces","")));
-        ui->mEspecesV->setIcon(QIcon(TablePixmap(&db,"Espèces","")));
-        ui->mEspecesToutes->setIcon(QIcon(TablePixmap(&db,"Espèces","T")));
-        ui->mAssociations->setIcon(QIcon(TablePixmap(&db,"Associations_détails","T")));
-        ui->mVarietes->setIcon(QIcon(TablePixmap(&db,"Variétés","T")));
-        ui->mFournisseurs->setIcon(QIcon(TablePixmap(&db,"Fournisseurs","T")));
-        ui->mITPTempo->setIcon(QIcon(TablePixmap(&db,"ITP__Tempo","T")));
-
-        ui->mRotationsMenu->setIcon(QIcon(TablePixmap(&db,"Rotations","")));
-        ui->mRotationsEntetes->setIcon(QIcon(TablePixmap(&db,"Rotations","T")));
-        ui->mRotationsSaisie->setIcon(QIcon(TablePixmap(&db,"Rotations_détails__Tempo","T")));
-        ui->mRotationsOccup->setIcon(QIcon(TablePixmap(&db,"Rotations_détails__Tempo_occup","")));
-        ui->mRotationManquants->setIcon(QIcon(TablePixmap(&db,"Espèces__manquantes","")));
-        ui->mPlanches->setIcon(QIcon(TablePixmap(&db,"Planches","T")));
-        ui->mSuccessionParPlanche->setIcon(QIcon(TablePixmap(&db,"Cultures__Tempo","")));
-        ui->mIlots->setIcon(QIcon(TablePixmap(&db,"Assolement_Ilots","")));
-        ui->mUnitesProd->setIcon(QIcon(TablePixmap(&db,"Assolement_Unités_prod","")));
-
-        ui->mPlanifIlots->setIcon(QIcon(TablePixmap(&db,"Planif_ilots","")));
-        ui->mPlanifEspeces->setIcon(QIcon(TablePixmap(&db,"Planif_espèces","")));
-        ui->mPlanifPlanches->setIcon(QIcon(TablePixmap(&db,"Planif_planches","")));
-        ui->mPlanifAsso->setIcon(QIcon(TablePixmap(&db,"Planif_associations","")));
-        ui->mRecoltesParMois->setIcon(QIcon(TablePixmap(&db,"Planif_récoltes_m","")));
-        ui->mRecoltesParSemaine->setIcon(QIcon(TablePixmap(&db,"Planif_récoltes_s","")));
-        ui->mSemences->setIcon(QIcon(TablePixmap(&db,"Variétés__inv_et_cde","")));
-        ui->mPlants->setIcon(QIcon(TablePixmap(&db,"Variétés__cde_plants","")));
-
-        ui->mCuNonTer->setIcon(QIcon(TablePixmap(&db,"Cultures__non_terminées","")));
-        ui->mASemer->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mCuASemer->setIcon(QIcon(TablePixmap(&db,"Cultures__à_semer","")));
-        ui->mCuASemerPep->setIcon(QIcon(TablePixmap(&db,"Cultures__à_semer_pep","")));
-        ui->mCuASemerEP->setIcon(QIcon(TablePixmap(&db,"Cultures__à_semer_EP","")));
-        ui->mCuAPlanter->setIcon(QIcon(TablePixmap(&db,"Cultures__à_planter","")));
-        ui->mCuAIrriguer->setIcon(QIcon(TablePixmap(&db,"Cultures__à_irriguer","")));
-        ui->mCuARecolter->setIcon(QIcon(TablePixmap(&db,"Cultures__à_récolter","")));
-        ui->mCuSaisieRecoltes->setIcon(QIcon(TablePixmap(&db,"Récoltes__Saisies","T")));
-        ui->mCuATerminer->setIcon(QIcon(TablePixmap(&db,"Cultures__à_terminer","")));
-        ui->mCuAFaire->setIcon(QIcon(TablePixmap(&db,"Cultures__A_faire","")));
-        ui->mCuVivaces->setIcon(QIcon(TablePixmap(&db,"Cultures__vivaces","")));
-        ui->mCuAssociations->setIcon(QIcon(TablePixmap(&db,"Associations__présentes","")));
-        ui->mCuToutes->setIcon(QIcon(TablePixmap(&db,"Cultures","T")));
-
-        ui->mAnalysesSol->setIcon(QIcon(TablePixmap(&db,"Analyses_de_sol","T")));
-        ui->mFertilisants->setIcon(QIcon(TablePixmap(&db,"Fertilisants","T")));
-        ui->mInventaireFert->setIcon(QIcon(TablePixmap(&db,"Fertilisants__inventaire","")));
-        ui->mCuAFertiliser->setIcon(QIcon(TablePixmap(&db,"Cultures__à_fertiliser","")));
-        ui->mFertilisations->setIcon(QIcon(TablePixmap(&db,"Fertilisations__Saisies","T")));
-        ui->mBilanPlanches->setIcon(QIcon(TablePixmap(&db,"Planches__bilan_fert","")));
-        ui->mPlanchesDeficit->setIcon(QIcon(TablePixmap(&db,"Planches__deficit_fert","")));
-
-        ui->mDestinations->setIcon(QIcon(TablePixmap(&db,"Destinations","T")));
-        ui->mEsSaisieConso->setIcon(QIcon(TablePixmap(&db,"Consommations__Saisies","T")));
-        ui->mInventaire->setIcon(QIcon(TablePixmap(&db,"Espèces__inventaire","")));
-
-        ui->mBilans->setIcon(QIcon(TablePixmap(&db,"Bilans_annuels","")));
-        ui->mCouverture->setIcon(QIcon(TablePixmap(&db,"Espèces__Bilans_annuels","")));
-        ui->mAnaITPA->setIcon(QIcon(TablePixmap(&db,"ITP__analyse_a","")));
-        ui->mAnaITPV->setIcon(QIcon(TablePixmap(&db,"ITP__analyse_v","")));
-        ui->mAnaCulturesA->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mAnaCulture->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mAnaCultureEsp->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mAnaCultureEspSaison->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mAnaCultureEspTypeP->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mAnaCultureITP->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mAnaCultureVar->setIcon(QIcon(TablePixmap(&db,"Cultures","")));
-        ui->mIncDatesCultures->setIcon(QIcon(TablePixmap(&db,"Cultures__inc_dates","")));
-        ui->mRequeteSQL->setIcon(QIcon(TablePixmap(&db,"","")));
+        ui->mNotes->setIcon(QIcon(FdaMenuPixmap(&db,"Notes","T")));
+        ui->mRequeteSQL->setIcon(QIcon(FdaMenuPixmap(&db,"","")));
     }
 }
 
-void MainWindow::SetEnabledDataMenuEntries(bool b)
+void MainWindow::SetLaunchers(bool b)
 {
     ui->mCopyDB->setEnabled(b);
     ui->mUpdateSchema->setEnabled(b);
@@ -560,44 +505,76 @@ void MainWindow::SetEnabledDataMenuEntries(bool b)
     ui->mSQLiteSchema->setEnabled(b);
     ui->mFdaTSchema->setEnabled(b);
     ui->mFdaFSchema->setEnabled(b);
+    ui->mLaunchers->setEnabled(b);
     ui->mParam->setEnabled(b);
     ui->mNotes->setEnabled(b);
-    for (int i=0; i < ui->mBaseData->actions().count(); i++)
-        ui->mBaseData->actions().at(i)->setEnabled(b);
+    ui->mRequeteSQL->setEnabled(b);
 
-    ui->mEspeces->setEnabled(b);
-    for (int i=0; i < ui->mEspeces->actions().count(); i++)
-        ui->mEspeces->actions().at(i)->setEnabled(b);
+    if (b)
+        CreateLaunchers("Main menu",ui->menubar);
+    else
+        DeleteLaunchers(ui->menubar);
+}
 
-    for (int i=0; i < ui->mAssolement->actions().count(); i++)
-        ui->mAssolement->actions().at(i)->setEnabled(b);
+void MainWindow::CreateLaunchers(QString parentName,QWidget *parent) {
+    PotaQuery query(db);
+    PotaQuery query2(db);
+    query.exec("SELECT * FROM fda_l_schema WHERE parent='"+parentName+"' ORDER BY item_index;");
+    while (query.next()) {
 
-    ui->mRotationsMenu->setEnabled(b);
-    for (int i=0; i < ui->mRotationsMenu->actions().count(); i++)
-        ui->mRotationsMenu->actions().at(i)->setEnabled(b);
+        if (query.value("type").toString()=="Menu item") {
+            if (!query.value("launcher_name").isNull() and !query.value("name").isNull()) {
+                QAction *mainMenuLauncher = new QAction(query.value("launcher_name").toString(), parent);
+                QString text;
+                if (!query.value("graph").isNull()) {
+                    text="G";
+                } else {
+                    QString tblType=query2.Select0ShowErr("SELECT tbl_type FROM fda_t_schema "
+                                                          "WHERE (name='"+query.value("name").toString()+"')").toString();
+                    if (tblType=="Table" or tblType=="View as table") text="T";
+                    else if (tblType=="View") text="V";
+                }
+                mainMenuLauncher->setProperty("modelMenu",true);
+                mainMenuLauncher->setIcon(QIcon(FdaMenuPixmap(&db,query.value("launcher_name").toString(),text)));
+                mainMenuLauncher->setData(QStringList{query.value("name").toString(),
+                                                      iif(query.value("title").isNull(),query.value("launcher_name"),query.value("title")).toString(),
+                                                      query.value("description").toString(),
+                                                      query.value("filters").toString(),
+                                                      query.value("graph").toString()});
+                connect(mainMenuLauncher, &QAction::triggered, this, [this,mainMenuLauncher](){
+                    QStringList args = mainMenuLauncher->data().toStringList();
+                    if (args.size() == 5)
+                        this->on_FdaMenu(args[0],args[1],args[2],args[3],args[4]);
+                });
+                parent->addAction(mainMenuLauncher);
+            }
 
-    for (int i=0; i < ui->mPlanif->actions().count(); i++)
-        ui->mPlanif->actions().at(i)->setEnabled(b);
+        } else if (query.value("type").toString()=="Submenu") {
+            if (!query.value("launcher_name").isNull()) {
+                QMenu *mainMenuLauncher = new QMenu(query.value("launcher_name").toString(), parent);
+                mainMenuLauncher->setProperty("modelMenu",true);
+                if (parent!=ui->menubar)
+                    mainMenuLauncher->setIcon(QIcon(FdaMenuPixmap(&db,query.value("launcher_name").toString(),"")));
+                if (auto mb = qobject_cast<QMenuBar*>(parent))
+                    mb->addMenu(mainMenuLauncher);
+                else if (auto m = qobject_cast<QMenu*>(parent))
+                    m->addMenu(mainMenuLauncher);
+                //Create children.
+                CreateLaunchers(query.value("launcher_name").toString(),mainMenuLauncher);
+            }
 
-    for (int i=0; i < ui->mCultures->actions().count(); i++)
-        ui->mCultures->actions().at(i)->setEnabled(b);
+        } else if (query.value("type").toString()=="Spacer") {
+            if (auto m = qobject_cast<QMenu*>(parent))
+                    m->addSeparator();
+        }
+    }
+}
 
-    ui->mASemer->setEnabled(b);
-    for (int i=0; i < ui->mASemer->actions().count(); i++)
-        ui->mASemer->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mFertilisation->actions().count(); i++)
-        ui->mFertilisation->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mStock->actions().count(); i++)
-        ui->mStock->actions().at(i)->setEnabled(b);
-
-    for (int i=0; i < ui->mAnalyses->actions().count(); i++)
-        ui->mAnalyses->actions().at(i)->setEnabled(b);
-
-    ui->mAnaCulturesA->setEnabled(b);
-    for (int i=0; i < ui->mAnaCulturesA->actions().count(); i++)
-        ui->mAnaCulturesA->actions().at(i)->setEnabled(b);
+void MainWindow::DeleteLaunchers(QWidget *parent) {
+    for (int i=parent->children().count()-1;i>=0;i--) {
+        if (parent->children()[i]->property("modelMenu").toBool())
+            parent->children()[i]->deleteLater();
+    }
 }
 
 void MainWindow::showIfDdOpen() {
@@ -634,9 +611,11 @@ int main(int argc, char *argv[])
 
     logMessage("sql.log","Start");
 
-    w.SetUi(); // Restaure params et open db.
 
     w.show();
+
+    w.SetUi();
+
     return a.exec();
 
 }

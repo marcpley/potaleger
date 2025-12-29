@@ -163,6 +163,9 @@
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>
             </property>
+            <property name="handleWidth">
+             <number>4</number>
+            </property>
             <widget class="ZoomGraphicsView" name="graphicsView">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -498,12 +501,11 @@
      <property name="title">
       <string>Schéma de la BDD</string>
      </property>
-     <addaction name="mTableList"/>
-     <addaction name="mViewList"/>
      <addaction name="mFKErrors"/>
      <addaction name="mSQLiteSchema"/>
      <addaction name="mFdaTSchema"/>
      <addaction name="mFdaFSchema"/>
+     <addaction name="mLaunchers"/>
     </widget>
     <addaction name="mSelecDB"/>
     <addaction name="mCopyDB"/>
@@ -514,121 +516,6 @@
     <addaction name="mAbout"/>
     <addaction name="mWhatSNew"/>
    </widget>
-   <widget class="QMenu" name="mBaseData">
-    <property name="title">
-     <string>Données de base</string>
-    </property>
-    <widget class="QMenu" name="mEspeces">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="title">
-      <string>Espèces</string>
-     </property>
-     <addaction name="mEspecesA"/>
-     <addaction name="mEspecesV"/>
-     <addaction name="mEspecesToutes"/>
-    </widget>
-    <addaction name="mFamilles"/>
-    <addaction name="mEspeces"/>
-    <addaction name="mAssociations"/>
-    <addaction name="mFournisseurs"/>
-    <addaction name="mVarietes"/>
-    <addaction name="mITP"/>
-    <addaction name="mITPTempo"/>
-   </widget>
-   <widget class="QMenu" name="mAssolement">
-    <property name="title">
-     <string>Assolement</string>
-    </property>
-    <widget class="QMenu" name="mRotationsMenu">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="title">
-      <string>Rotations</string>
-     </property>
-     <addaction name="mRotationsEntetes"/>
-     <addaction name="mRotationsSaisie"/>
-     <addaction name="mRotationsOccup"/>
-     <addaction name="mRotationManquants"/>
-    </widget>
-    <addaction name="mRotationsMenu"/>
-    <addaction name="mPlanches"/>
-    <addaction name="mSuccessionParPlanche"/>
-    <addaction name="mIlots"/>
-    <addaction name="mUnitesProd"/>
-   </widget>
-   <widget class="QMenu" name="mPlanif">
-    <property name="title">
-     <string>Planification</string>
-    </property>
-    <addaction name="mPlanifEspeces"/>
-    <addaction name="mPlanifIlots"/>
-    <addaction name="mPlanifPlanches"/>
-    <addaction name="mRecoltesParMois"/>
-    <addaction name="mRecoltesParSemaine"/>
-    <addaction name="mPlanifAsso"/>
-    <addaction name="mCreerCultures"/>
-    <addaction name="mSemences"/>
-    <addaction name="mPlants"/>
-   </widget>
-   <widget class="QMenu" name="mCultures">
-    <property name="title">
-     <string>Cultures</string>
-    </property>
-    <widget class="QMenu" name="mASemer">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="title">
-      <string>A semer</string>
-     </property>
-     <addaction name="mCuASemer"/>
-     <addaction name="mCuASemerPep"/>
-     <addaction name="mCuASemerEP"/>
-    </widget>
-    <addaction name="mCuNonTer"/>
-    <addaction name="separator"/>
-    <addaction name="mASemer"/>
-    <addaction name="mCuAPlanter"/>
-    <addaction name="mCuAIrriguer"/>
-    <addaction name="mCuARecolter"/>
-    <addaction name="mCuSaisieRecoltes"/>
-    <addaction name="mCuATerminer"/>
-    <addaction name="mCuAFaire"/>
-    <addaction name="separator"/>
-    <addaction name="mCuVivaces"/>
-    <addaction name="mCuAssociations"/>
-    <addaction name="mCuToutes"/>
-   </widget>
-   <widget class="QMenu" name="mAnalyses">
-    <property name="title">
-     <string>Analyses</string>
-    </property>
-    <widget class="QMenu" name="mAnaCulturesA">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="title">
-      <string>Cultures annuelles</string>
-     </property>
-     <addaction name="mAnaCulture"/>
-     <addaction name="mAnaCultureVar"/>
-     <addaction name="mAnaCultureITP"/>
-     <addaction name="mAnaCultureEspSaison"/>
-     <addaction name="mAnaCultureEspTypeP"/>
-     <addaction name="mAnaCultureEsp"/>
-    </widget>
-    <addaction name="mBilans"/>
-    <addaction name="mCouverture"/>
-    <addaction name="separator"/>
-    <addaction name="mAnaITPA"/>
-    <addaction name="mAnaITPV"/>
-    <addaction name="mAnaCulturesA"/>
-    <addaction name="mIncDatesCultures"/>
-    <addaction name="mRequeteSQL"/>
-   </widget>
    <widget class="QMenu" name="mEdition">
     <property name="title">
      <string>Édition</string>
@@ -637,36 +524,10 @@
     <addaction name="mCloseTabs"/>
     <addaction name="mParam"/>
     <addaction name="mNotes"/>
-   </widget>
-   <widget class="QMenu" name="mStock">
-    <property name="title">
-     <string>Stock</string>
-    </property>
-    <addaction name="mDestinations"/>
-    <addaction name="mEsSaisieConso"/>
-    <addaction name="mInventaire"/>
-   </widget>
-   <widget class="QMenu" name="mFertilisation">
-    <property name="title">
-     <string>Fertilisation</string>
-    </property>
-    <addaction name="mAnalysesSol"/>
-    <addaction name="mFertilisants"/>
-    <addaction name="mInventaireFert"/>
-    <addaction name="mCuAFertiliser"/>
-    <addaction name="mFertilisations"/>
-    <addaction name="mBilanPlanches"/>
-    <addaction name="mPlanchesDeficit"/>
+    <addaction name="mRequeteSQL"/>
    </widget>
    <addaction name="mFichiers"/>
    <addaction name="mEdition"/>
-   <addaction name="mBaseData"/>
-   <addaction name="mAssolement"/>
-   <addaction name="mPlanif"/>
-   <addaction name="mCultures"/>
-   <addaction name="mFertilisation"/>
-   <addaction name="mStock"/>
-   <addaction name="mAnalyses"/>
   </widget>
   <action name="mSelecDB">
    <property name="icon">
@@ -732,7 +593,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Rotations</string>
+    <string>Détails</string>
    </property>
   </action>
   <action name="mParam">
@@ -1077,14 +938,6 @@
     <string>Analyses de sol</string>
    </property>
   </action>
-  <action name="mCuAFertiliser">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures à fertiliser</string>
-   </property>
-  </action>
   <action name="mBilanPlanches">
    <property name="enabled">
     <bool>false</bool>
@@ -1356,6 +1209,14 @@
    </property>
    <property name="text">
     <string>Schéma additionnel (champs)</string>
+   </property>
+  </action>
+  <action name="mLaunchers">
+   <property name="icon">
+    <iconset theme="applications-development"/>
+   </property>
+   <property name="text">
+    <string>Lanceurs</string>
    </property>
   </action>
  </widget>

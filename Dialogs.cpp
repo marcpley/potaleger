@@ -1,7 +1,7 @@
 #include "Dialogs.h"
 #include <QApplication>
 #include <QMessageBox>
-#include "classes/fdasqlformat.h"
+#include "FdaSqlFormat.h"
 #include "qcheckbox.h"
 #include "qcombobox.h"
 #include "qmenu.h"
@@ -14,7 +14,7 @@
 #include <QButtonGroup>
 #include <QLabel>
 #include <QLEInteger>
-#include "PotaUtils.h"
+#include "FdaUtils.h"
 #include <QPlainTextEdit>
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>

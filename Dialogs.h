@@ -14,16 +14,16 @@ const int xAxisGroupNo=0;
 const int xAxisGroupSame=1;
 
 const int xAxisGroupFirstWord=2;
-const int xAxisGroupfirstChar=3;
-const int xAxisGroupfirstChar2=4;
-const int xAxisGroupfirstChar3=5;
-const int xAxisGroupfirstChar4=6;
-const int xAxisGroupfirstChar5=7;
-const int xAxisGroupfirstChar6=8;
-const int xAxisGroupfirstChar7=9;
-const int xAxisGroupfirstChar8=10;
-const int xAxisGroupfirstChar9=11;
-const int xAxisGroupfirstChar10=12;
+const int xAxisGroupFirstChar=3;
+const int xAxisGroupFirstChar2=4;
+const int xAxisGroupFirstChar3=5;
+const int xAxisGroupFirstChar4=6;
+const int xAxisGroupFirstChar5=7;
+const int xAxisGroupFirstChar6=8;
+const int xAxisGroupFirstChar7=9;
+const int xAxisGroupFirstChar8=10;
+const int xAxisGroupFirstChar9=11;
+const int xAxisGroupFirstChar10=12;
 
 const int xAxisGroupYear=2;
 const int xAxisGroupMonth=3;
