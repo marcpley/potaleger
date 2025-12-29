@@ -15,7 +15,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.5.0b15"; //Update in what's new
+QString const Version="1.5.0b16"; //Update in what's new
 QString const DbVersion="2025-11-28"; //Update CREATE VIEW Info_Potaléger
 
 class MainWindow : public QMainWindow

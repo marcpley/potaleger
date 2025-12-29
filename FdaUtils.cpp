@@ -432,11 +432,11 @@ QVariant muParse(QString formula) {//, QString returnType
         returnError=true;
     }
     mup::string_type expr;
-    #ifdef _WIN32
-        expr=formula.trimmed().toStdWString();
-    #else
+    // #ifdef _WIN32
+    //     expr=formula.trimmed().toStdWString();
+    // #else
         expr=formula.trimmed().toStdString();
-    #endif
+    // #endif
     mup::ParserX parser;
 
     parser.SetExpr(expr);
@@ -454,22 +454,22 @@ QVariant muParse(QString formula) {//, QString returnType
         if (val.IsInteger())
             result=std::round(val.GetFloat());
         else if (val.IsString())
-            #ifdef _WIN32
-            result=QString::fromStdWString(val.GetString());
-            #else
+            // #ifdef _WIN32
+            // result=QString::fromStdWString(val.GetString());
+            // #else
             result=QString::fromStdString(val.GetString());
-            #endif
+            // #endif
         else
             result=val.GetFloat();
 
         return result;
     } catch (const mup::ParserError &e) {
         QString err;
-        #ifdef _WIN32
-            err=QString::fromStdWString(e.GetMsg());
-        #else
+        // #ifdef _WIN32
+        //     err=QString::fromStdWString(e.GetMsg());
+        // #else
             err=QString::fromStdString(e.GetMsg());
-        #endif
+        // #endif
         //qDebug() << e.GetMsg();
         if (returnError)
             return QVariant(err);
