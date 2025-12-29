@@ -36,6 +36,9 @@
 </pre>
 */
 #include <cassert>
+#ifdef _WIN32
+#include <cstdint>
+#endif
 
 #if defined(MUP_USE_WIDE_STRING)
   #if !defined(_T)
