@@ -23,7 +23,8 @@ QString fdaSqlFormat::formatSqlInit(const QString sql) {
 QString fdaSqlFormat::formatSqlExplore(const QString sql) {
     QString result=sql;
     int level=0;
-    result=result.replace("()","[]"); //count() make an infinite loop.
+    //result=
+    result.replace("()","[]"); //count() make an infinite loop.
     bool bStop=false;
     while (!bStop) { //Loop on deep levels.
         int pos = 0;
@@ -51,7 +52,8 @@ QString fdaSqlFormat::formatSqlExplore(const QString sql) {
             }
         }
     }
-    result=result.replace("[]","()");
+    //result=
+    result.replace("[]","()");
     return result;
 }
 
@@ -218,7 +220,8 @@ int fdaSqlFormat::originalLength(const QString s) {
     QString rebuild=s;
     for (int i=subSQLdata.size()-1;i>=0;i--) {
         if (rebuild.contains("["+str(i)+"]")) {
-            rebuild=rebuild.replace("["+str(i)+"]","("+subSQLdata[i][1].toString()+")");
+            //rebuild=
+            rebuild.replace("["+str(i)+"]","("+subSQLdata[i][1].toString()+")");
         }
     }
     return rebuild.length();

@@ -15,10 +15,11 @@
         <file>UpdateStru20250728.sql</file>
         <file>UpdateStru20250925.sql</file>
         <file>UpdateStru20251128.sql</file>
-        <file>UpdateFdaSchema.sql</file>
-        <file>CreateFDATables.sql</file>
-        <file>UpdateFdaSchemaModel.sql</file>
+        <file>UpdateFadaSchema.sql</file>
+        <file>CreateFadaTables.sql</file>
+        <file>UpdateFadaSchemaModel.sql</file>
         <file>CreateLaunchers.sql</file>
         <file>UpdateLaunchers.sql</file>
+        <file>script_test.sql</file>
     </qresource>
 </RCC>

@@ -15,7 +15,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-QString const Version="1.5.0b16"; //Update in what's new
+QString const Version="1.5.0b18"; //Update in what's new
 QString const DbVersion="2025-11-28"; //Update CREATE VIEW Info_Potaléger
 
 class MainWindow : public QMainWindow
@@ -50,9 +50,9 @@ private slots:
     void on_mCreateDB_triggered();
     void on_mCreateEmptyDB_triggered();
 
-    void on_FdaMenu(const QString &sTableName, const QString &sTitre, const QString &sDesc, const QString &sFilters, const QString &sGraph);
+    void on_FdaMenu(const QString &sActionName, const QString &sTitre, const QString &sDesc, const QString &sFilters, const QString &sGraph);
 
-    void on_mCreerCultures_triggered();
+    //void on_mCreerCultures_triggered();
     void on_tabWidget_currentChanged(int index);
     void on_mAbout_triggered();
     void on_mUpdateSchema_triggered();
@@ -71,6 +71,10 @@ private slots:
     void on_mFdaFSchema_triggered();
 
     void on_mLaunchers_triggered();
+
+    void on_mCloseDB_triggered();
+
+    void on_mScripts_triggered();
 
 private:
     void SetLaunchers(bool b);

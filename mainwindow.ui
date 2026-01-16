@@ -506,6 +506,7 @@
      <addaction name="mFdaTSchema"/>
      <addaction name="mFdaFSchema"/>
      <addaction name="mLaunchers"/>
+     <addaction name="mScripts"/>
     </widget>
     <addaction name="mSelecDB"/>
     <addaction name="mCopyDB"/>
@@ -513,6 +514,7 @@
     <addaction name="mCreateDB"/>
     <addaction name="mCreateEmptyDB"/>
     <addaction name="mSchema"/>
+    <addaction name="mCloseDB"/>
     <addaction name="mAbout"/>
     <addaction name="mWhatSNew"/>
    </widget>
@@ -537,65 +539,6 @@
     <string>Sélectionner une base de données</string>
    </property>
   </action>
-  <action name="mFamilles">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Familles botaniques</string>
-   </property>
-  </action>
-  <action name="mEspecesA">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Espèces annuelles</string>
-   </property>
-  </action>
-  <action name="mFournisseurs">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Fournisseurs</string>
-   </property>
-  </action>
-  <action name="mFertilisants">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Fertilisants</string>
-   </property>
-  </action>
-  <action name="mPlanches">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Planches</string>
-   </property>
-  </action>
-  <action name="mITP">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Itinéraires techniques (table)</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
-  <action name="mRotationsSaisie">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Détails</string>
-   </property>
-  </action>
   <action name="mParam">
    <property name="checked">
     <bool>false</bool>
@@ -608,140 +551,6 @@
    </property>
    <property name="text">
     <string>Paramètres</string>
-   </property>
-  </action>
-  <action name="mIlots">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Ilots</string>
-   </property>
-  </action>
-  <action name="mPlanifIlots">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures prévues par ilots</string>
-   </property>
-  </action>
-  <action name="mPlanifEspeces">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures prévues par espèce</string>
-   </property>
-  </action>
-  <action name="mPlanifPlanches">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures prévues par planche</string>
-   </property>
-  </action>
-  <action name="mCreerCultures">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="system-run"/>
-   </property>
-   <property name="text">
-    <string>Créer les cultures</string>
-   </property>
-  </action>
-  <action name="mSuccessionParPlanche">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Successions de cultures par planche</string>
-   </property>
-  </action>
-  <action name="mSemences">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Semences nécessaires</string>
-   </property>
-   <property name="toolTip">
-    <string>Inventaire et commandes des semences</string>
-   </property>
-  </action>
-  <action name="mVarietes">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Variétés</string>
-   </property>
-  </action>
-  <action name="mCuASemerEP">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Semis en place</string>
-   </property>
-  </action>
-  <action name="mCuAPlanter">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>A planter</string>
-   </property>
-  </action>
-  <action name="mCuARecolter">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>A récolter</string>
-   </property>
-  </action>
-  <action name="mCuSaisieRecoltes">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Récoltes</string>
-   </property>
-  </action>
-  <action name="mCuATerminer">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>A terminer</string>
-   </property>
-  </action>
-  <action name="mCuToutes">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Toutes les cultures</string>
-   </property>
-  </action>
-  <action name="mAnaITPA">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Itinéraires techniques annuelles</string>
-   </property>
-  </action>
-  <action name="mCuNonTer">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Toutes les cultures non terminées</string>
    </property>
   </action>
   <action name="mCloseTab">
@@ -799,46 +608,6 @@
     <string>Faire une copie de la BDD</string>
    </property>
   </action>
-  <action name="mITRotationsIlots">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures prévues dans les rotations, par ilots</string>
-   </property>
-  </action>
-  <action name="mITRotations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures prévues dans les rotations</string>
-   </property>
-  </action>
-  <action name="mITRotationsManq">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Cultures manquantes dans les rotations</string>
-   </property>
-  </action>
-  <action name="mRotationManquants">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Espèces manquantes dans les rotations</string>
-   </property>
-  </action>
-  <action name="mITPTempo">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Itinéraires techniques</string>
-   </property>
-  </action>
   <action name="mAbout">
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::HelpAbout"/>
@@ -858,62 +627,6 @@
     <string>Mettre à jour le schéma de BDD</string>
    </property>
   </action>
-  <action name="mIncDatesCultures">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Incohérences dates cultures</string>
-   </property>
-  </action>
-  <action name="mDestinations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Destinations</string>
-   </property>
-  </action>
-  <action name="mEsSaisieConso">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Saisie des consommations</string>
-   </property>
-  </action>
-  <action name="mInventaire">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Inventaire</string>
-   </property>
-  </action>
-  <action name="mCuASemerPep">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Semis pépinière</string>
-   </property>
-  </action>
-  <action name="mCuASemer">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Toutes</string>
-   </property>
-  </action>
-  <action name="mCouverture">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Bilans annuels par espèces</string>
-   </property>
-  </action>
   <action name="mNotes">
    <property name="enabled">
     <bool>false</bool>
@@ -930,132 +643,12 @@
     <string>Quoi d'neuf ?</string>
    </property>
   </action>
-  <action name="mAnalysesSol">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Analyses de sol</string>
-   </property>
-  </action>
-  <action name="mBilanPlanches">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Bilan par planches</string>
-   </property>
-  </action>
-  <action name="mFertilisations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Fertilisations</string>
-   </property>
-  </action>
-  <action name="mInventaireFert">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Inventaire</string>
-   </property>
-  </action>
-  <action name="mCuAIrriguer">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>A irriguer</string>
-   </property>
-  </action>
   <action name="mRequeteSQL">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
     <string>Requête SQL</string>
-   </property>
-  </action>
-  <action name="mPlanchesDeficit">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Planches en déficit</string>
-   </property>
-  </action>
-  <action name="mAnaITPV">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Itinéraires techniques vivaces</string>
-   </property>
-  </action>
-  <action name="mEspecesV">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Espèces vivaces</string>
-   </property>
-  </action>
-  <action name="mCuVivaces">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Vivaces</string>
-   </property>
-  </action>
-  <action name="mCuAFaire">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Trucs à faire</string>
-   </property>
-  </action>
-  <action name="mPlants">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Plants nécessaires</string>
-   </property>
-  </action>
-  <action name="mRecoltesParSemaine">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Récoltes prévues par semaine</string>
-   </property>
-  </action>
-  <action name="mAssociations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Associations</string>
-   </property>
-  </action>
-  <action name="mCuAssociations">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Associations dans les cultures non terminées</string>
-   </property>
-  </action>
-  <action name="mPlanifAsso">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Associations dans les cultures prévues</string>
    </property>
   </action>
   <action name="mFKErrors">
@@ -1069,31 +662,6 @@
     <string>Erreurs d'intégrité</string>
    </property>
   </action>
-  <action name="mTableList">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
-   </property>
-   <property name="text">
-    <string>Liste des tables</string>
-   </property>
-   <property name="toolTip">
-    <string>Liste des tables</string>
-   </property>
-  </action>
-  <action name="mViewList">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
-   </property>
-   <property name="text">
-    <string>Liste des vues</string>
-   </property>
-  </action>
   <action name="mSQLiteSchema">
    <property name="enabled">
     <bool>false</bool>
@@ -1105,14 +673,6 @@
     <string>Schéma SQLite</string>
    </property>
   </action>
-  <action name="mEspecesToutes">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Toutes</string>
-   </property>
-  </action>
   <action name="mFdaTSchema">
    <property name="enabled">
     <bool>false</bool>
@@ -1122,82 +682,6 @@
    </property>
    <property name="text">
     <string>Schéma additionnel (tables et vues)</string>
-   </property>
-  </action>
-  <action name="mUnitesProd">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Unités de production</string>
-   </property>
-  </action>
-  <action name="mBilans">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Bilans annuels</string>
-   </property>
-  </action>
-  <action name="mAnaCulture">
-   <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>par culture</string>
-   </property>
-  </action>
-  <action name="mAnaCultureEsp">
-   <property name="text">
-    <string>par espèce</string>
-   </property>
-  </action>
-  <action name="mAnaCultureITP">
-   <property name="text">
-    <string>par itinéraire</string>
-   </property>
-  </action>
-  <action name="mAnaCultureVar">
-   <property name="text">
-    <string>par variété</string>
-   </property>
-  </action>
-  <action name="mAnaCultureEspSaison">
-   <property name="text">
-    <string>par espèce et saison</string>
-   </property>
-  </action>
-  <action name="mAnaCultureEspTypeP">
-   <property name="text">
-    <string>par espèce type de planche</string>
-   </property>
-  </action>
-  <action name="mRotationsOccup">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Occupation des planches</string>
-   </property>
-  </action>
-  <action name="mRotationsEntetes">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Entêtes</string>
-   </property>
-  </action>
-  <action name="mRecoltesParMois">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Récoltes prévues par mois</string>
    </property>
   </action>
   <action name="mFdaFSchema">
@@ -1217,6 +701,25 @@
    </property>
    <property name="text">
     <string>Lanceurs</string>
+   </property>
+  </action>
+  <action name="mCloseDB">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="system-log-out"/>
+   </property>
+   <property name="text">
+    <string>Se déconnecter de la BDD</string>
+   </property>
+  </action>
+  <action name="mScripts">
+   <property name="icon">
+    <iconset theme="application-x-executable"/>
+   </property>
+   <property name="text">
+    <string>Scripts</string>
    </property>
   </action>
  </widget>

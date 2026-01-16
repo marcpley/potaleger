@@ -3125,50 +3125,50 @@ ORDER BY Famille,Espèce,Variété ---
 --------------
 
 -- Base
-UPDATE fda_t_schema SET color='#a17dc2'
+UPDATE fada_t_schema SET color='#a17dc2'
 WHERE (name LIKE 'Associations%')OR(name LIKE 'Destinations%')OR(name LIKE 'Fournisseurs%');
 
-UPDATE fda_f_schema SET color='#a17dc2'
+UPDATE fada_f_schema SET color='#a17dc2'
 WHERE (field_name LIKE 'Association%');
 
 -- Espèces
-UPDATE fda_t_schema SET color='#002bff'
+UPDATE fada_t_schema SET color='#002bff'
 WHERE (name LIKE 'Espèces%')OR(name LIKE 'Consommations%');
 
-UPDATE fda_f_schema SET color='#002bff'
+UPDATE fada_f_schema SET color='#002bff'
 WHERE (field_name LIKE 'Espèce%')OR(field_name LIKE '%_esp')OR
       (field_name IN('A_planifier','Catégories','Besoins','FG','Groupe',
                      'Irrig_espèce','Niveau','N_espèce','Obj_annuel','S_taille','Usages','Rendement'));
 
 -- Cultures
-UPDATE fda_t_schema SET color='#00ff00'
+UPDATE fada_t_schema SET color='#00ff00'
 WHERE (name LIKE 'Cultures%')OR(name LIKE 'Récoltes%');
 
-UPDATE fda_f_schema SET color='#00ff00'
+UPDATE fada_f_schema SET color='#00ff00'
 WHERE (field_name LIKE 'Culture%')OR(field_name LIKE 'Nb_cu%')OR
       (field_name IN('Min_semis','Max_semis"','Min_plantation','Max_plantation','Min_recolte','Max_recolte','Qté_réc_moy'))OR
       ((field_name LIKE '%_MEP')AND(field_name!='S_MEP'));
 
 -- Familles
-UPDATE fda_t_schema SET color='#0085c4'
+UPDATE fada_t_schema SET color='#0085c4'
 WHERE (name LIKE 'Familles%');
 
-UPDATE fda_f_schema SET color='#0085c4'
+UPDATE fada_f_schema SET color='#0085c4'
 WHERE (field_name LIKE 'Famille%')OR(field_name IN('N_famille,Intervalle'));
 
 -- Fertilisations
-UPDATE fda_t_schema SET color='#00A67A'
+UPDATE fada_t_schema SET color='#00A67A'
 WHERE (name LIKE 'Fertilisa%')OR(name LIKE 'Analyses_de_sol%');
 
-UPDATE fda_f_schema SET color='#00A67A'
+UPDATE fada_f_schema SET color='#00A67A'
 WHERE (field_name LIKE 'Fert%')OR(field_name LIKE '%_sol')OR(field_name LIKE '%_fert')OR
       (field_name IN('Analyse','Fertilisant','Apports_NPK','N_manq','P_manq"','K_manq'));
 
 -- ITP
-UPDATE fda_t_schema SET color='#ff0000'
+UPDATE fada_t_schema SET color='#ff0000'
 WHERE (name LIKE 'ITP%');
 
-UPDATE fda_f_schema SET color='#ff0000'
+UPDATE fada_f_schema SET color='#ff0000'
 WHERE (field_name LIKE 'ITP%')OR
       (field_name IN('IT_plante','S_semis','S_plantation','Décal_max','Esp_rangs','Nb_graines_plant','N_IT_plante'))OR
       ((field_name IN('Type_planche','Type_culture'))AND(name NOT LIKE 'Rotations%'))OR
@@ -3177,40 +3177,40 @@ WHERE (field_name LIKE 'ITP%')OR
       ((field_name IN('Dose_semis'))AND(name NOT LIKE 'Espèces%'));
 
 -- Assolement
-UPDATE fda_t_schema SET color='#ff8100'
+UPDATE fada_t_schema SET color='#ff8100'
 WHERE (name LIKE 'Planches%')OR(name LIKE 'Assolement%');
 
-UPDATE fda_f_schema SET color='#ff8100'
+UPDATE fada_f_schema SET color='#ff8100'
 WHERE (field_name LIKE 'Planche%')OR
       (field_name IN('Ilot','Largeur','N_Planche'))OR
       ((field_name IN('Longueur','Nb_planches','Surface','Unités_prod'))AND(name LIKE '%Bilans%'));
 
 -- Rotations
-UPDATE fda_t_schema SET color='#ce9462'
+UPDATE fada_t_schema SET color='#ce9462'
 WHERE (name LIKE 'Rotations%');
 
 -- Variétés
-UPDATE fda_t_schema SET color='#b7b202'
+UPDATE fada_t_schema SET color='#b7b202'
 WHERE (name LIKE 'Variétés%');
 
-UPDATE fda_f_schema SET color='#b7b202'
+UPDATE fada_f_schema SET color='#b7b202'
 WHERE (field_name LIKE 'Variété%')OR
       (field_name IN('Qté_stock'))OR
       ((field_name IN('S_récolte','D_récolte'))AND(name LIKE 'Variétés%'));
 
 -- Params
-UPDATE fda_f_schema SET color='#7f7f7f'
+UPDATE fada_f_schema SET color='#7f7f7f'
 WHERE (field_name IN('Saison_à_planifier'));
 
 ---------------
 -- col width --
 ---------------
-UPDATE fda_f_schema SET col_width=150 WHERE (field_name='Notes')OR(field_name LIKE 'N\_%' ESCAPE '\');
-UPDATE fda_f_schema SET col_width=40  WHERE (field_name LIKE 'Pc\_%' ESCAPE '\');
-UPDATE fda_f_schema SET col_width=70  WHERE (field_name LIKE 'S\_%' ESCAPE '\');
-UPDATE fda_f_schema SET col_width=365*1.5 WHERE (field_name='Graph');
---UPDATE fda_f_schema SET col_width=400 WHERE (field_name='TEMPO');
---UPDATE fda_f_schema SET col_width=367 WHERE (field_name LIKE 'TEMPO\_%' ESCAPE '\');
-UPDATE fda_f_schema SET col_width=100 WHERE (field_name='Type_culture');
-UPDATE fda_f_schema SET col_width=65 WHERE (field_name='Type_planche');
+UPDATE fada_f_schema SET col_width=150 WHERE (field_name='Notes')OR(field_name LIKE 'N\_%' ESCAPE '\');
+UPDATE fada_f_schema SET col_width=40  WHERE (field_name LIKE 'Pc\_%' ESCAPE '\');
+UPDATE fada_f_schema SET col_width=70  WHERE (field_name LIKE 'S\_%' ESCAPE '\');
+UPDATE fada_f_schema SET col_width=365*1.5 WHERE (field_name='Graph');
+--UPDATE fada_f_schema SET col_width=400 WHERE (field_name='TEMPO');
+--UPDATE fada_f_schema SET col_width=367 WHERE (field_name LIKE 'TEMPO\_%' ESCAPE '\');
+UPDATE fada_f_schema SET col_width=100 WHERE (field_name='Type_culture');
+UPDATE fada_f_schema SET col_width=65 WHERE (field_name='Type_planche');
 

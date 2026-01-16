@@ -8,6 +8,7 @@
 
 bool MainWindow::UpdateDBShema(QString sDBVersion)
 {
+    //QString modelPath="/home/marc/Bureau/greli.net/potaleger/model"; //todo
     PotaQuery *query=new PotaQuery(db);
     PotaQuery *qNewTableFields=new PotaQuery(db);
     PotaQuery *qOldTableFields=new PotaQuery(db);
@@ -39,12 +40,12 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
     if (sDBVersion=="New" or sDBVersion=="NewWithBaseData") { //Create new DB.
 
-        if (bResult){ //Create fda tables
+        if (bResult){ //Create fada tables
             pb->setValue(0);
             pb->setMaximum(0);
-            pb->setFormat("FDA schema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFDATables"),";",pb, true, true);
-            sResult.append("Init FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
+            pb->setFormat("Fada schema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFadaTables"),";",pb, true, true);
+            sResult.append("Init Fada schema : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult){ //Create empty tables.
@@ -205,13 +206,13 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
         //Update schema (general).
 
-        if (bResult){ //Create fda tables
+        if (bResult){ //Create fada tables
             pb->setValue(0);
             pb->setMaximum(0);
-            pb->setFormat("FDA schema %p%");
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFDATables"),";",pb, true,true);
+            pb->setFormat("Fada schema %p%");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateFadaTables"),";",pb, true,true);
             //bResult=false;
-            sResult.append("Init FDA schema : "+iif(bResult,"ok","Err").toString()+"\n");
+            sResult.append("Init Fada schema : "+iif(bResult,"ok","Err").toString()+"\n");
         }
 
         if (bResult) { //Other tables.
@@ -225,7 +226,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             while (query->next()) {
                 if (query->value("type").toString()=="table" and
                     query->value("name").toString()!="Params" and
-                    !query->value("name").toString().startsWith("fda_") and
+                    !query->value("name").toString().startsWith("fada_") and
                     !query->value("name").toString().startsWith("sqlite")) {//No sqlite tables.
                     if (query->value("name").toString().startsWith("Temp_"))
                         sUpdateSchema +="DROP TABLE IF EXISTS "+query->value("name").toString()+";";
@@ -322,23 +323,23 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateTriggers"),";;",pb);//";" exists in CREATE TRIGGER statments
             sResult.append("Triggers : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-        if (bResult){ //Update fda schema model properties
+        if (bResult){ //Update fada schema model properties
             pb->setValue(0);
             pb->setMaximum(0);
-            pb->setFormat("FDA model properties %p%");
+            pb->setFormat("Fada model properties %p%");
 
-            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateFdaSchema")+
-                                            loadSQLFromResource("UpdateFdaSchemaModel"),";",pb, true,false);
-            sResult.append("FDA model properties : "+iif(bResult,"ok","Err").toString()+"\n");
+            bResult=query->ExecMultiShowErr(loadSQLFromResource("UpdateFadaSchema")+
+                                            loadSQLFromResource("UpdateFadaSchemaModel"),";",pb, true,false);
+            sResult.append("Fada model properties : "+iif(bResult,"ok","Err").toString()+"\n");
         }
-        if (bResult){ //Update fda table with SQLite info
+        if (bResult){ //Update fada table with SQLite info
             pb->setValue(0);
             pb->setMaximum(0);
             pb->setFormat("SQLite info %p%");
-            QString sAddSQLiteInfoInFdaSchema="";
+            QString sAddSQLiteInfoInFadaSchema="";
             PotaQuery query2(db);
 
-            query->ExecShowErr("SELECT name,tbl_type FROM fda_t_schema;");
+            query->ExecShowErr("SELECT name,tbl_type FROM fada_t_schema;");
             while (query->next()) {
                 QString sTableName=query->value("name").toString();
                 QString sPK="";
@@ -352,7 +353,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                     }
                 }
 
-                int FdaFieldCount=query2.Select0ShowErr("SELECT count() FROM fda_f_schema "
+                int FadaFieldCount=query2.Select0ShowErr("SELECT count() FROM fada_f_schema "
                                                         "WHERE (name='"+sTableName+"')").toInt();
 
                 int triggerCount=query2.Select0ShowErr("SELECT count() FROM sqlite_schema "
@@ -364,10 +365,10 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                                                         "((sql LIKE '% "+sTableName+" %')OR"
                                                          "(sql LIKE '% "+sTableName+")%')OR"
                                                          "(sql LIKE '% "+sTableName+"'))").toInt();
-                sAddSQLiteInfoInFdaSchema+="UPDATE fda_t_schema SET "
+                sAddSQLiteInfoInFadaSchema+="UPDATE fada_t_schema SET "
                          "PK_field_name="+iif(sPK.isEmpty(),"NULL","'"+sPK+"'").toString()+","+
                          "SQLite_field_count="+str(fieldCount)+","+
-                         "FDA_field_count="+str(FdaFieldCount)+","+
+                         "FDA_field_count="+str(FadaFieldCount)+","+
                          "Trigger_count="+str(triggerCount)+","+
                          "Internal_use_count="+str(useCount)+","+
                          "Menu_use_count="+str(0)+","+
@@ -379,17 +380,46 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
 
 
 
-            bResult=query->ExecMultiShowErr(sAddSQLiteInfoInFdaSchema,";",pb, true,false);
+            bResult=query->ExecMultiShowErr(sAddSQLiteInfoInFadaSchema,";",pb, true,false);
             sResult.append("SQLite info : "+iif(bResult,"ok","Err").toString()+"\n");
         }
         if (bResult){ //Create launchers
             pb->setValue(0);
             pb->setMaximum(0);
-            pb->setFormat("FDA launchers %p%");
+            pb->setFormat("Fada launchers %p%");
 
             bResult=query->ExecMultiShowErr(loadSQLFromResource("CreateLaunchers")+
                                             loadSQLFromResource("UpdateLaunchers"),";",pb,true,false);
-            sResult.append("FDA launchers : "+iif(bResult,"ok","Err").toString()+"\n");
+            sResult.append("Fada launchers : "+iif(bResult,"ok","Err").toString()+"\n");
+        }
+        if (bResult){ //Create scripts
+            pb->setValue(0);
+            pb->setMaximum(0);
+            pb->setFormat("Fada scripts %p%");
+
+            QDir dir(":/model");
+            dir.setFilter(QDir::Files | QDir::NoSymLinks);
+            QStringList fileList = dir.entryList();
+            QString sInsertScripts="";
+            for (int i=0;i<fileList.count();i++) {
+                if (fileList[i].toUpper().endsWith(".SQL")) {
+                    QFile scriptFile(dir.absolutePath()+"/"+fileList[i]);
+                    if (scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                        QString name=fileList[i].removeLast().removeLast().removeLast().removeLast();
+                        QTextStream in(&scriptFile);
+                        QString script=in.readAll();
+                        scriptFile.close();
+                        sInsertScripts+="INSERT INTO Fada_scripts (name,script,created) "
+                                        "VALUES ('"+name+"',"+
+                                        EscapeSQL(script)+",CURRENT_TIMESTAMP);;\n";
+                    }
+
+                }
+            }
+
+            qDebug() << sInsertScripts;
+            bResult=query->ExecMultiShowErr(sInsertScripts,";;",pb,true,false);
+            sResult.append("Fada scripts : "+iif(bResult,"ok","Err").toString()+"\n");
         }
     }
 

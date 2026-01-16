@@ -66,7 +66,11 @@ SOURCES += \
     muParser/mpValReader.cpp \
     muParser/mpValue.cpp \
     muParser/mpValueCache.cpp \
-    muParser/mpVariable.cpp
+    muParser/mpVariable.cpp \
+    script/ScriptEditor.cpp \
+    script/fadahighlighter.cpp \
+    script/fadascriptedit.cpp \
+    script/fadascriptengine2.cpp
 
 HEADERS += \
     Dialogs.h \
@@ -126,7 +130,11 @@ HEADERS += \
     muParser/mpVariable.h \
     muParser/suSortPred.h \
     muParser/suStringTokens.h \
-    muParser/utGeneric.h
+    muParser/utGeneric.h \
+    script/ScriptEditor.h \
+    script/fadahighlighter.h \
+    script/fadascriptedit.h \
+    script/fadascriptengine2.h
 
 FORMS += \
     mainwindow.ui
@@ -142,7 +150,9 @@ DISTFILES += \
 
 RESOURCES += \
     SQL/sql.qrc \
-    images/images.qrc
+    images/images.qrc \
+    md/md.qrc \
+    model/model.qrc
 
 RC_ICONS=images/potaleger.ico
 

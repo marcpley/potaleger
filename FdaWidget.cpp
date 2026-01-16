@@ -5,6 +5,7 @@
 #include "qheaderview.h"
 #include "qlineedit.h"
 #include "qmenu.h"
+#include "qplaintextedit.h"
 #include "qsettings.h"
 #include "qshortcut.h"
 #include "qsqlerror.h"
@@ -19,6 +20,7 @@
 #include <QFileDialog>
 #include <QWidgetAction>
 #include <QScrollBar>
+#include "script/ScriptEditor.h"
 
 PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
 {
@@ -29,8 +31,6 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     delegate=new PotaItemDelegate();
     delegate->setParent(this);
     //query=new PotaQuery(nullptr);
-    lTabTitle=new QLabel();
-    lTabTitle->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
 
     //Toolbar
     toolbar=new QWidget(this);
@@ -380,15 +380,21 @@ PotaWidget::PotaWidget(QWidget *parent) : QWidget(parent)
     setLayout(lw);
 }
 
-void PotaWidget::Init(QString TableName)
-{
-    //AppBusy(true,model->progressBar,16,"Init");
+bool PotaWidget::Init(QString Titre, QString TableName,bool ReadOnlyDb, QProgressBar *progressBar, QLabel *lErr) {
+    this->title=Titre;
+    PotaQuery query(*model->db);
+    int fieldCount=query.Select0ShowErr("SELECT count(*) FROM pragma_table_xinfo('"+TableName+"')").toInt();
+    progressBar->setMaximum(fieldCount*2+12);
+    model->progressBar=progressBar;
+    delegate->cTableColor=FdaColor(model->db,TableName,"");
+    model->progressBar->setValue(model->progressBar->value()+1);
+    this->lErr=lErr;
+
 
     model->setTable(TableName);
 
-    PotaQuery query(*model->db);
+    //PotaQuery query(*model->db);
     PotaQuery query2(*model->db);
-
 
     qInfo() << "Open "+TableName+iif(TableName!=model->RealTableName()," ("+model->RealTableName()+")","").toString();
 
@@ -445,11 +451,6 @@ void PotaWidget::Init(QString TableName)
     tv->verticalHeader()->setDefaultAlignment(Qt::AlignTop);
     tv->verticalHeader()->hide();
     tv->setTabKeyNavigation(false);
-    // QString natSortCols=NaturalSortCol(model->db,TableName);
-    // PotaHeaderView *phv=dynamic_cast<PotaHeaderView*>(tv->horizontalHeader());
-    // phv->iSortCol=model->FieldIndex(natSortCols.split(',')[0]);
-    // for (int i=0;i<natSortCols.split(',').count();i++)
-    //     phv->model()->setHeaderData(model->FieldIndex(natSortCols.split(',')[i]), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown.svg")), Qt::DecorationRole);
 
     tv->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tv, &QTableView::customContextMenuRequested, this, &PotaWidget::showContextMenu);
@@ -458,7 +459,180 @@ void PotaWidget::Init(QString TableName)
 
     //widget width according to font size
     SetSizes();
-    //AppBusy(false,model->progressBar);
+
+    int pos=progressBar->value();
+    AppBusy(false,progressBar);
+
+    if (model->SelectShowErr()) {
+        AppBusy(true,progressBar,fieldCount*2+12,pos,TableName+" - UI");
+        bool bEdit=false;
+        //PotaQuery query(db);
+        if (!ReadOnlyDb and
+            !FdaReadonly(model->db,TableName)and
+            (query.Select0ShowErr("SELECT count() FROM sqlite_schema "      //Table
+                                 "WHERE (tbl_name='"+TableName+"')AND"
+                                       "(sql LIKE 'CREATE TABLE "+TableName+" (%')").toInt()+
+            query.Select0ShowErr("SELECT count() FROM sqlite_schema "
+                                 "WHERE (tbl_name='"+TableName+"')AND"    //View with trigger instead of insert
+                                       "(sql LIKE 'CREATE TRIGGER "+TableName+"_INSERT INSTEAD OF INSERT ON "+TableName+" %')").toInt()==1)){
+            QPalette palette=sbInsertRows->palette();
+            palette.setColor(QPalette::Text, Qt::white);
+            palette.setColor(QPalette::Base, QColor(234,117,0,110));
+            palette.setColor(QPalette::Button, QColor(234,117,0,110));
+            sbInsertRows->setPalette(palette);
+            sbInsertRows->setEnabled(true);
+            pbInsertRow->setEnabled(true);
+            pbDuplicRow->setEnabled(true);
+            pbDeleteRow->setEnabled(true);
+            bEdit=true;
+        } else if (ReadOnlyDb or
+                   FdaReadonly(model->db,TableName)or
+                   (query.Select0ShowErr("SELECT count() FROM sqlite_schema "
+                                         "WHERE (tbl_name='"+TableName+"')AND"    //View without trigger INSTEAD OF UPDATE.
+                                               "(sql LIKE 'CREATE TRIGGER "+TableName+"_UPDATE INSTEAD OF UPDATE ON "+TableName+" %')").toInt()==0)) {
+            pbEdit->setVisible(false);
+        }
+        model->progressBar->setValue(model->progressBar->value()+1);
+        bool bCanOpen=FdaCanOpenTab(model->db,model->RealTableName());
+        if(model->rowCount()==0 or !bCanOpen) {
+            if (bEdit and bCanOpen) {
+                lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(model->RealTableName().replace("_"," ").toLower()));
+            } else {
+                SetColoredText(lErr,"","");
+                AppBusy(false,progressBar);
+                MessageDlg(QApplication::activeWindow()->windowTitle(),Titre,FdaNoDataText(model->db,model->tableName()),QStyle::SP_MessageBoxInformation,450);
+                deleteLater();
+                return false;
+            }
+        }
+
+        model->progressBar->setValue(model->progressBar->value()+1);
+
+        for (int i=0; i<model->columnCount();i++){
+            //Store field name in header EditRole.
+            model->setHeaderData(i,Qt::Horizontal,model->headerData(i,Qt::Horizontal,Qt::DisplayRole),Qt::EditRole);
+            //Store corrected field name in header DisplayRole.
+            QString headerDataDisplayRole=model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString();
+            headerDataDisplayRole=headerDataDisplayRole.replace("_pc",""); //'%' rigth added to the data.
+            headerDataDisplayRole=headerDataDisplayRole.replace("_"," ");
+            if (model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" 🔺️";
+            model->setHeaderData(i,Qt::Horizontal,headerDataDisplayRole,Qt::DisplayRole);
+
+            //Table color.
+            delegate->cColColors[i]=FdaColor(model->db,TableName,model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
+
+            if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="color")
+                delegate->RowColorCol=i;
+            // else if (TableName.startsWith("Cultures") and model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Etat")
+            //     delegate->RowColorCol=i;
+            // else if (TableName.startsWith("Cultures") and model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="num_planche")
+            //     delegate->RowColorCol=i;
+            // else if (TableName.startsWith("Params") and model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="color")
+            //     delegate->RowColorCol=i;
+
+            if (model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="break")
+                delegate->breakCol=i;
+
+            //Tooltip
+            QString sTT=FdaToolTip(model->db,TableName,model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),
+                                     model->dataTypes[i],model->baseDataFields[i]);
+            if (sTT!="")
+                model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
+
+            //All columns read only for start
+            model->nonEditableColumns.insert(i);
+
+            if (model->dataTypes[i]=="DATE")
+                model->dateColumns.insert(i);
+            else if (TableName!="Params" and
+                     FdaMoney(model->db,model->tableName(),model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
+                model->moneyColumns.insert(i);
+
+            model->progressBar->setValue(model->progressBar->value()+1);
+
+        }
+
+        RefreshHorizontalHeader();
+
+        model->progressBar->setValue(model->progressBar->value()+1);
+
+        QString natSortCols=FdaNaturalSortFields(model->db,TableName);
+        //PotaHeaderView *phv=dynamic_cast<PotaHeaderView*>(tv->horizontalHeader());
+        iSortCol=model->FieldIndex(natSortCols.split(',')[0]);
+        for (int i=0;i<natSortCols.split(',').count();i++)
+            model->setHeaderData(model->FieldIndex(natSortCols.split(',')[i]), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown"+str(i)+".svg")), Qt::DecorationRole);
+        showBreaks=(iSortCol!=model->FieldIndex(model->sPrimaryKey));
+
+        //Tab user settings
+        QSettings settings;//("greli.net", "Potaléger");
+
+        //filter
+        settings.beginGroup("Filter");
+        iTypeText=settings.value(TableName+"-FilterTypeText").toInt();
+        iTypeDate=settings.value(TableName+"-FilterTypeDate").toInt();
+        iTypeReal=settings.value(TableName+"-FilterTypeReal").toInt();
+        settings.endGroup();
+
+        model->progressBar->setValue(model->progressBar->value()+1);
+
+        //col width
+        settings.beginGroup("ColWidth");
+        for (int i=0; i<model->columnCount();i++) {
+            int iWidth;
+            //if (!model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_")){
+                iWidth=settings.value(TableName+"-"+model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toInt(nullptr);
+                if (iWidth<=0 or iWidth>700)
+                    iWidth=FdaColWidth(model->db, TableName,model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
+            // } else {
+            //     iWidth=FdaColWidth(model->db, TableName,model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
+            // }
+            if (iWidth<=0)
+                tv->resizeColumnToContents(i);
+            else
+                tv->setColumnWidth(i,iWidth);
+            if (tv->columnWidth(i)>700)
+                tv->setColumnWidth(i,700);
+
+        }
+        settings.endGroup();
+
+        model->progressBar->setValue(model->progressBar->value()+1);
+
+        settings.beginGroup("ColHidden");
+        for (int i=0; i<model->columnCount();i++) {
+            if (settings.value(TableName+"-"+model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toBool() or
+                FdaHidden(model->db,TableName,model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
+                tv->hideColumn(i);
+            //settings.setValue(model->tableName()+"-"+model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),tv->isColumnHidden(i));
+        }
+        settings.endGroup();
+
+        model->progressBar->setValue(model->progressBar->value()+1);
+
+        //tv->setFocus();
+        SetColoredText(lErr,TableName+
+                                  iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
+                                  iif(ReadOnlyDb,"Info","Ok").toString());
+
+        AppBusy(false,progressBar);
+        AppBusy(true);
+
+        if (FdaGotoLast(model->db,TableName)) { // go to last row
+            QTimer::singleShot(100, [=]() {
+                tv->setCurrentIndex(model->index(model->rowCount()-1, 1));
+            });
+        }
+
+        tv->setFocus();
+        AppBusy(false);
+        return true;
+    } else {
+        deleteLater();//Echec de la création de l'onglet.
+        return false;
+    }
+
+
+    return true;
 }
 
 void PotaWidget::curChanged(const QModelIndex cur, const QModelIndex pre)
@@ -642,7 +816,7 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
     if (FileExport.write(data)!=-1) {
         data.clear();
 
-        AppBusy(true,model->progressBar,totalRow,0,lTabTitle->text().trimmed()+" %p%");
+        AppBusy(true,model->progressBar,totalRow,0,title+" %p%");
 
         //Data export
         exportedRow=0;
@@ -709,7 +883,7 @@ void PotaWidget::exportData() {
 
     QString selectedFilter;
     QString sFileName=QFileDialog::getSaveFileName(this, tr("Exporter les données dans un fichier %1").arg("CSV"),
-                                                     PathExport+lTabTitle->text().trimmed(),  "*.csv;;SQL INSERT (*.sql);;SQL UPDATE (*.sql)",
+                                                     PathExport+title,  "*.csv;;SQL INSERT (*.sql);;SQL UPDATE (*.sql)",
                                                      &selectedFilter,QFileDialog::DontConfirmOverwrite);
     //Check filename.
     if (sFileName.endsWith("."))
@@ -733,7 +907,7 @@ void PotaWidget::exportData() {
         OkCancelDialog("Potaléger",tr("Le fichier existe déjà")+"\n"+
                            sFileName+"\n"+
                            FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
-                           tr("Remplacer ?"),QStyle::SP_MessageBoxWarning,600)) {
+                           tr("Remplacer ?"),false,QStyle::SP_MessageBoxWarning,600)) {
         QFile FileInfo2;
         if (FileInfoVerif.exists()) {
             FileInfo2.setFileName(sFileName);
@@ -770,7 +944,7 @@ void PotaWidget::exportData() {
 
 void PotaWidget::importData() {
     if (pbCommit->isEnabled()) {
-        if (YesNoDialog("Potaléger",lTabTitle->text().trimmed()+"\n\n"+
+        if (YesNoDialog("Potaléger",title+"\n\n"+
                         tr("Valider les modifications en cours ?"))) {
             if (!model->SubmitAllShowErr())
                 return;
@@ -789,7 +963,7 @@ void PotaWidget::importData() {
         PathImport=settings.value("PathExport").toString();;
 
     QString sFileName=QFileDialog::getOpenFileName(this, tr("Importer des données"),
-                                                     PathImport+lTabTitle->text().trimmed(), "*.csv");
+                                                     PathImport+title, "*.csv");
 
     //Check filename.
     if (sFileName.isEmpty()) return;
@@ -838,7 +1012,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
         }
         if(fieldNames[col]==model->sPrimaryKey) {
             PotaQuery query(*model->db);
-            if (query.Select0ShowErr("SELECT field_type FROM fda_f_schema "
+            if (query.Select0ShowErr("SELECT field_type FROM fada_f_schema "
                                      "WHERE (name='"+model->RealTableName()+"')AND"
                                            "(field_name='"+fieldNames[col]+"')").toString()!="AUTOINCREMENT")
                 primaryFieldImport=col;
@@ -865,7 +1039,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
     if (info.isEmpty()) {
         MessageDlg("Potaléger",QObject::tr("Aucun champ dans le fichier %1 n'est modifiable dans l'onglet %2.")
                           .arg(FileInfoVerif.fileName())
-                          .arg(lTabTitle->text().trimmed()),"",QStyle::SP_MessageBoxWarning);
+                          .arg(title),"",QStyle::SP_MessageBoxWarning);
         return;
     } else if (lines.count()<2) {
         MessageDlg("Potaléger",QObject::tr("Aucune ligne à importer dans le fichier %1.").arg(FileInfoVerif.fileName()),"",QStyle::SP_MessageBoxWarning);
@@ -883,7 +1057,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
     if(linesToImport.count()>4)
         info2+="<br>...";
 
-    choice=RadiobuttonDialog("Potaléger",lTabTitle->text().trimmed()+"<br><br>"+
+    choice=RadiobuttonDialog("Potaléger",title+"<br><br>"+
                                    iif(baseData,
                                        tr("Réinitialiser les données de base."),
                                        "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
@@ -912,7 +1086,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
     int TypeValid=0;
     TypeValid=settings.value("TypeImportValid").toInt();
 
-    choice=RadiobuttonDialog("Potaléger",lTabTitle->text().trimmed()+"<br><br>"+
+    choice=RadiobuttonDialog("Potaléger",title+"<br><br>"+
                                    iif(baseData,
                                        tr("Réinitialiser les données de base."),
                                        "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
@@ -936,7 +1110,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
     QString decimalSep=QString(locale.decimalPoint());
     if (TypeImport==5 or TypeImport==6) {//Delete selected lines
         if(model->rowCount()>1 and
-            !OkCancelDialog("Potaléger",tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(model->rowCount()),QStyle::SP_MessageBoxWarning,600)) {
+            !OkCancelDialog("Potaléger",tr("Attention, %1 lignes sont susceptibles d'être supprimées!").arg(model->rowCount()),false,QStyle::SP_MessageBoxWarning,600)) {
            //dbSuspend(&db,true,userDataEditing,ui->lDBErr);
             return;
         }
@@ -1068,7 +1242,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
 
 void PotaWidget::resetBaseData() {
     if (pbCommit->isEnabled()) {
-        if (YesNoDialog("Potaléger",lTabTitle->text().trimmed()+"\n\n"+
+        if (YesNoDialog("Potaléger",title+"\n\n"+
                         tr("Valider les modifications en cours ?"))) {
             if (!model->SubmitAllShowErr())
                 return;
@@ -1082,7 +1256,7 @@ void PotaWidget::resetBaseData() {
 
     //Read fda schema
     PotaQuery query(*model->db);
-    query.exec("SELECT name,field_name FROM fda_f_schema WHERE (name='"+model->RealTableName()+"')AND(base_data='x')"); //,field_type,base_data
+    query.exec("SELECT name,field_name FROM fada_f_schema WHERE (name='"+model->RealTableName()+"')AND(base_data='x')"); //,field_type,base_data
     bool bResetTable=false;
     QString fieldNames="";
     while (query.next()){
@@ -1242,9 +1416,9 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     mImport.setEnabled(pbInsertRow->isEnabled() and pbEdit->isChecked());
     mResetBaseData.setEnabled(pbEdit->isChecked());
     PotaQuery query(*model->db);
-    mResetBaseData.setVisible((query.Select0ShowErr("SELECT count() FROM fda_f_schema "
+    mResetBaseData.setVisible((query.Select0ShowErr("SELECT count() FROM fada_f_schema "
                                                     "WHERE (name='"+model->RealTableName()+"')AND(base_data='x')").toInt()>0)and
-                              (query.Select0ShowErr("SELECT count() FROM fda_t_schema "
+                              (query.Select0ShowErr("SELECT count() FROM fada_t_schema "
                                                     "WHERE (name='"+model->tableName()+"')AND(tbl_type IN('Table','View as table'))").toInt()>0));
 
     connect(&mDefColWidth, &QAction::triggered, this, &PotaWidget::hDefColWidth);
@@ -1309,7 +1483,9 @@ void PotaWidget::showContextMenu(const QPoint& pos) {
     contextMenu.addAction(&mResetBaseData);
 
     QFont font=contextMenu.font();
-    font.setPointSize(cbFontSize->currentText().toInt());
+
+    QSettings settings;
+    font.setPointSize(settings.value("font").toInt());
     contextMenu.setFont(font);
 
     contextMenu.exec(tv->viewport()->mapToGlobal(pos));
@@ -1351,20 +1527,26 @@ void PotaWidget::toogleReadOnlyEditNotes(const QModelIndex index, bool discard) 
             editNotes->setReadOnly(true);
             aSaveNotes->setEnabled(false);
             aCommit->setEnabled(true);
-            QString save=editNotes->toPlainText().trimmed().replace("\n\n","\n").replace("\n","\n\n");
-            int i=editNotes->toPlainText().count("<");
-            editNotes->setMarkdown(editNotes->toPlainText().trimmed());
-            if (i != editNotes->toMarkdown().count("<")) {
-                //qDebug() << save;
-                editNotes->setPlainText(save);
-                editNotes->setReadOnly(false);
-                aSaveNotes->setEnabled(true);
-                aCommit->setEnabled(false);
-                MessageDlg(tr("Editeur"),tr("Les balises HTML ne sont pas accéptées."));
-            } else {
-                if (save!=model->data(index).toString())
-                    model->setData(index,save);
+            if (model->headerData(tv->currentIndex().column(),Qt::Horizontal,Qt::EditRole)=="script") {
+                if (editNotes->toPlainText()!=model->data(index).toString())
+                    model->setData(index,editNotes->toPlainText());
                 tv->setFocus();
+            } else {
+                QString save=editNotes->toPlainText().trimmed().replace("\n\n","\n").replace("\n","\n\n");
+                int i=editNotes->toPlainText().count("<");
+                editNotes->setMarkdown(editNotes->toPlainText().trimmed());
+                if (i != editNotes->toMarkdown().count("<")) {
+                    //qDebug() << save;
+                    editNotes->setPlainText(save);
+                    editNotes->setReadOnly(false);
+                    aSaveNotes->setEnabled(true);
+                    aCommit->setEnabled(false);
+                    MessageDlg(tr("Editeur"),tr("Les balises HTML ne sont pas accéptées."));
+                } else {
+                    if (save!=model->data(index).toString())
+                        model->setData(index,save);
+                    tv->setFocus();
+                }
             }
         }
         SetVisibleEditNotes(true);
@@ -1387,7 +1569,7 @@ void PotaWidget::showGraphDialog()
     }
 
     if (sGraph.count()==0) {
-        sGraph=GraphDialog(tr("Graphique sur '%1'").arg(lTabTitle->text()),
+        sGraph=GraphDialog(tr("Graphique sur '%1'").arg(title),
                                        tr("Indiquez quels champs utiliser pour les abscisses et les ordonnées.")+"\n\n"+
                                        tr("Ce graphique sera enregistré et utilisable sur cet ordinateur uniquement."),
                                        columns,dataTypes);
@@ -1463,15 +1645,35 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible){
     if (bVisible){
         int EditNotesWidth=fmax(tv->columnWidth(tv->currentIndex().column()),400);
         int EditNotesHeight=200;
-
+        QFont font;
+        editNotes->setLineWrapMode(QTextEdit::LineWrapMode::WidgetWidth);
         if (editNotes->isReadOnly()) {
-            editNotes->setMarkdown(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
+            if (model->headerData(tv->currentIndex().column(),Qt::Horizontal,Qt::EditRole)=="script") {
+                // qDebug() << font.styleHint();
+                // qDebug() << font.family();
+                // qDebug() <<  editNotes->font();
+                //font.setStyleHint(QFont::Monospace);
+                font.setFamily("Monospace");
+                editNotes->setLineWrapMode(QTextEdit::LineWrapMode::NoWrap);
+                editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
+            } else
+                editNotes->setMarkdown(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
             tc.setAlpha(80);
         } else {
-            editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString().replace("\n\n","\n"));
-            tc.setAlpha(0);
-            editNotes->setFocus();
+            if (model->headerData(tv->currentIndex().column(),Qt::Horizontal,Qt::EditRole)=="script") {
+                //QString modifiedScript=scriptEditor(model->data( model->index(tv->currentIndex().row(),model->FieldIndex("name")),Qt::EditRole).toString(),"",model->data(tv->currentIndex(),Qt::EditRole).toString(),*model->db);
+                font.setFamily("Monospace");
+                editNotes->setLineWrapMode(QTextEdit::LineWrapMode::NoWrap);
+                editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString());
+                tc.setAlpha(0);
+                editNotes->setFocus();
+            } else {
+                editNotes->setPlainText(model->data(tv->currentIndex(),Qt::DisplayRole).toString().replace("\n\n","\n"));
+                tc.setAlpha(0);
+                editNotes->setFocus();
+            }
         }
+        editNotes->setFont(font);
         QPalette palette=editNotes->palette();
         palette.setColor(QPalette::Base, blendColors(tv->palette().color(QPalette::Base),tc));
         palette.setColor(QPalette::Text, tv->palette().color(QPalette::Text));
@@ -1494,7 +1696,8 @@ void PotaWidget::SetVisibleEditNotes(bool bVisible){
             // editNotes->setFixedSize(min(maxWidth+50,400),
             //                         min(lines.count()*22+5,200));
             EditNotesWidth=min((maxWidth*1.2)+50,EditNotesWidth);
-            EditNotesHeight=min((lines.count()+returns)*22/10*cbFontSize->currentText().toInt()+7,200);
+            QSettings settings;
+            EditNotesHeight=min((lines.count()+returns)*22/10*settings.value("font").toInt()+7,200);
             //qDebug() << "autosize";
         }
         int x=tv->columnViewportPosition(tv->currentIndex().column())+5;
@@ -1628,7 +1831,8 @@ void PotaWidget::RefreshHorizontalHeader() {
 }
 
 void PotaWidget::SetSizes() {
-    int UserFont=cbFontSize->currentText().toInt();
+    QSettings settings;
+    int UserFont=settings.value("font").toInt();
     int ButtonSize=24*UserFont/10;
     pbRefresh->setFixedSize(ButtonSize,ButtonSize);
     pbRefresh->setIconSize(QSize(ButtonSize,ButtonSize));
@@ -1669,15 +1873,16 @@ void PotaWidget::SetSizes() {
     QColor c=delegate->cTableColor;
     if (model->tableName().startsWith("Cultures"))
         c=cCulture;
-    lTabTitle->setStyleSheet(QString(
-                             "background-color: rgba(%1, %2, %3, %4);"
-                             "font-weight: bold;"
-                             "font-size: "+str(UserFont)+";"
-                             )
-                             .arg(c.red())
-                             .arg(c.green())
-                             .arg(c.blue())
-                             .arg(60));
+    if (lTabTitle)
+        lTabTitle->setStyleSheet(QString(
+                                 "background-color: rgba(%1, %2, %3, %4);"
+                                 "font-weight: bold;"
+                                 "font-size: "+str(UserFont)+";"
+                                 )
+                                 .arg(c.red())
+                                 .arg(c.green())
+                                 .arg(c.blue())
+                                 .arg(60));
 }
 
 void PotaWidget::SetLeFilterWith(QString sFieldName, QString sDataType, QString sData){
@@ -1789,12 +1994,12 @@ void PotaWidget::headerRowClicked() //int logicalIndex
 
 void PotaWidget::pbRefreshClick(){
 
-    QString snowden="'"+lPageFilter->text();
-    for (int i=0;i<cbPageFilter->count();i++) {
-        snowden+="'||x'0a0a'||'"+cbPageFilter->itemText(i)+"|"+pageFilterFilters[i];
-    }
-    snowden+="')";
-    qDebug() << snowden;
+    // QString snowden="'"+lPageFilter->text();
+    // for (int i=0;i<cbPageFilter->count();i++) {
+    //     snowden+="'||x'0a0a'||'"+cbPageFilter->itemText(i)+"|"+pageFilterFilters[i];
+    // }
+    // snowden+="')";
+    // qDebug() << snowden;
 
     if (pbCommit->isEnabled())
         model->SubmitAllShowErr();
@@ -2045,7 +2250,11 @@ void PotaWidget::pbFilterClick(bool checked)
             filter=pageFilter;
         else
             filter="("+filter+")AND("+pageFilter+")";
-    }
+    } else if (!scriptFilter.isEmpty()) {
+        if (filter.isEmpty())
+            filter=scriptFilter;
+        else
+            filter="("+filter+")AND("+scriptFilter+")";    }
 
     tv->setFocus();
 
@@ -2195,7 +2404,7 @@ QString PotaTableModel::FieldName(int index)
 QString PotaTableModel::childrenList(int row,QString childTable,bool showList) {
     PotaQuery childTables(*db);
     PotaQuery query(*db);
-    childTables.exec("SELECT name,field_name,master_field FROM fda_f_schema "
+    childTables.exec("SELECT name,field_name,master_field FROM fada_f_schema "
                "WHERE (tbl_type='Table')AND(master_table='"+RealTableName()+"')"+
                iif(!childTable.isEmpty(),"AND(name='"+childTable+"')","").toString());
     //int result=0;
@@ -2548,10 +2757,19 @@ bool PotaTableModel::DeleteRowShowErr()
 void PotaTableView::keyPressEvent(QKeyEvent *event) {
     QModelIndex currentIndex=selectionModel()->currentIndex();
 
-    if ((event->key()==Qt::Key_Return || event->key()==Qt::Key_Enter) && !(event->modifiers()==Qt::ControlModifier)) {
+    if ((event->key()==Qt::Key_Return || event->key()==Qt::Key_Enter) && !(event->modifiers() & Qt::ControlModifier)) {
         if (currentIndex.isValid()) {
             PotaWidget *pw=dynamic_cast<PotaWidget*>(parent());
-            if (pw->editNotes->isVisible() and pw->editNotes->isReadOnly())
+
+            if (pw->model->headerData(currentIndex.column(),Qt::Horizontal,Qt::EditRole).toString()=="script" and pw->pbEdit->isChecked()) {
+                pw->SetVisibleEditNotes(false);
+                QString modifiedScript=scriptEditor(pw->model->data(pw->model->index(currentIndex.row(),pw->model->FieldIndex("name")),Qt::DisplayRole).toString(),"",
+                                                    pw->model->data(currentIndex,Qt::EditRole).toString(),*pw->model->db,pw->model->progressBar,pw->lErr);
+                if (!modifiedScript.isEmpty())
+                    pw->model->setData(currentIndex,modifiedScript,Qt::EditRole);
+
+
+            } else if (pw->editNotes->isVisible() and pw->editNotes->isReadOnly())
                 pw->toogleReadOnlyEditNotes(currentIndex);
             else if (!pw->editNotes->isVisible() and FdaMultiline(pw->model->db,pw->model->tableName(),currentIndex.model()->headerData(currentIndex.column(),Qt::Horizontal,Qt::EditRole).toString()))
                 pw->toogleReadOnlyEditNotes(currentIndex);

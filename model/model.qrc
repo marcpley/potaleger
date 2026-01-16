@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/model">
+        <file>Planif_creer_cultures.sql</file>
+    </qresource>
+</RCC>

@@ -40,7 +40,7 @@ bool FdaHidden(QSqlDatabase *db, QString sTableName, QString sFieldName);
 bool FdaGotoLast(QSqlDatabase *db, const QString sTableName);
 QString FdaNaturalSortFields(QSqlDatabase *db, const QString sTableName);
 QString FdaNoDataText(QSqlDatabase *db, const QString sTableName);
-bool FdaReadonly(QSqlDatabase *db, const QString sTableName,const QString sFieldName);
+bool FdaReadonly(QSqlDatabase *db, const QString sTableName,const QString sFieldName="");
 //QColor RowColor(QString sValue, QString sTableName);
 QString FdaRowSummary(QSqlDatabase *db, const QString sTableName, const QString rowSummaryModel, const QSqlTableModel *model, const int row);
 QString FdaRowSummaryModel(QSqlDatabase *db, QString sTableName);

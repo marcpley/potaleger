@@ -3,7 +3,7 @@
 -- Main menu --
 ---------------
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index)
 VALUES ('Données de base','Submenu','Main menu',100),
        ('Assolement','Submenu','Main menu',110),
        ('Planification','Submenu','Main menu',120),
@@ -14,7 +14,7 @@ VALUES ('Données de base','Submenu','Main menu',100),
 
 -- Données de base
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters)
 VALUES ('Familles botaniques','Menu item','Données de base',10,'Familles','Familles',NULL),
        ('Espèces','Submenu','Données de base',20,NULL,NULL,NULL),
        ('Associations','Menu item','Données de base',30,'Associations_détails__Saisies',NULL,
@@ -37,21 +37,21 @@ VALUES ('Familles botaniques','Menu item','Données de base',10,'Familles','Fami
         'Génériques|(Espèce ISNULL)'||x'0a0a'||
         'A planifier|(SELECT (E.A_planifier NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)');
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters)
 VALUES ('Espèces annuelles','Menu item','Espèces',10,'Espèces__a','Espèces an.',NULL),
        ('Espèces vivaces','Menu item','Espèces',20,'Espèces__v','Espèces vi.',NULL),
        ('Toutes','Menu item','Espèces',30,'Espèces','Espèces',NULL);
 
 -- Assolement
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters)
 VALUES ('Rotations','Submenu','Assolement',10,NULL,NULL,NULL),
        ('Planches','Menu item','Assolement',20,'Planches',NULL,NULL),
        ('Succession de cultures parent planches','Menu item','Assolement',30,'Cultures__Succ_planches','Succ. planches',NULL),
        ('Ilots','Menu item','Assolement',40,'Assolement_Ilots',NULL,NULL),
        ('Unités de production','Menu item','Assolement',50,'Assolement_Unités_prod','Unités prod.',NULL);
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters)
 VALUES ('Entetes','Menu item','Rotations',10,'Rotations',NULL,NULL),
        ('Détails','Menu item','Rotations',20,'Rotations_détails__Tempo','Rot. (détails)',NULL),
        ('Occupation des planches','Menu item','Rotations',30,'Rotations_détails__Tempo_occup','Rot. (occupation)',NULL),
@@ -59,7 +59,7 @@ VALUES ('Entetes','Menu item','Rotations',10,'Rotations',NULL,NULL),
 
 -- Planification
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('Cultures prévues par espèce','Menu item','Planification',10,'Planif_espèces','Cult.prévues espèces',NULL,NULL),
        ('Cultures prévues par ilots','Menu item','Planification',20,'Planif_ilots','Cult.prévues ilots',NULL,NULL),
        ('Cultures prévues par planches','Menu item','Planification',30,'Planif_planches','Cult.prévues',
@@ -77,7 +77,8 @@ VALUES ('Cultures prévues par espèce','Menu item','Planification',10,'Planif_e
        ('Récoltes prévues par semaines','Menu item','Planification',50,'Planif_récoltes_s','Réc. prévues sem.',NULL,
         'Date|GroupWeek||Qté_réc|Sum|Line|||Valeur|Sum|Line'),
        ('Associations dans les cultures prévues','Menu item','Planification',60,'Planif_associations','Asso.prévues',NULL,NULL),
-       ('Créer les cultures','Menu item','Planification',70,'CreerCultures',NULL,NULL,NULL),
+       ('Créer les cultures','Menu item','Planification',70,'Planif_creer_cultures',NULL,NULL,NULL),
+       --('Créer les cultures (script)','Menu item','Planification',71,'CreerCulturesScript',NULL,NULL,NULL),
        ('Semences nécessaires','Menu item','Planification',80,'Variétés__inv_et_cde','Inv. et cde semences',
         'Voir'||x'0a0a'||
         'Toutes|TRUE'||x'0a0a'||
@@ -93,7 +94,7 @@ VALUES ('Cultures prévues par espèce','Menu item','Planification',10,'Planif_e
 
 -- Cultures
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('Toutes les cultures non terminées','Menu item','Cultures',10,'Cultures__non_terminées','Non terminées',
         'Voir'||x'0a0a'||
         'Toutes|TRUE'||x'0a0a'||
@@ -146,7 +147,7 @@ VALUES ('Toutes les cultures non terminées','Menu item','Cultures',10,'Cultures
         'Annuelles|(SELECT (E.Vivace ISNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)'||x'0a0a'||
         'Vivaces|(SELECT (E.Vivace NOTNULL) FROM Espèces E WHERE E.Espèce=TN.Espèce)',NULL);
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('Toutes','Menu item','A semer',10,'Cultures__à_semer','A semer',
         'Voir'||x'0a0a'||
         'Toutes|TRUE'||x'0a0a'||
@@ -157,7 +158,7 @@ VALUES ('Toutes','Menu item','A semer',10,'Cultures__à_semer','A semer',
 
 -- Fertilisation
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('Analyses de sol','Menu item','Fertilisation',10,'Analyses_de_sol','Analyses sol',NULL,NULL),
        ('Fertilisants','Menu item','Fertilisation',20,'Fertilisants',NULL,NULL,NULL),
        ('Inventaire','Menu item','Fertilisation',30,'Fertilisants__inventaire','Inventaire F.',NULL,NULL),
@@ -174,14 +175,14 @@ VALUES ('Analyses de sol','Menu item','Fertilisation',10,'Analyses_de_sol','Anal
 
 -- Stock
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('Destinations','Menu item','Stock',10,'Destinations__conso',NULL,NULL,NULL),
        ('Saisie des consommations','Menu item','Stock',20,'Consommations__Saisies','Consommations',NULL,NULL),
        ('Inventaire','Menu item','Stock',30,'Espèces__inventaire','Inventaire E.',NULL,NULL);
 
 -- Analyses
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('Bilans annuels','Menu item','Analyses',10,'Bilans_annuels','Bilans',NULL,NULL),
        ('Bilans annuels par espèces','Menu item','Analyses',20,'Espèces__Bilans_annuels','Bilan espèces',
         'Saison'||x'0a0a'||
@@ -198,7 +199,7 @@ VALUES ('Bilans annuels','Menu item','Analyses',10,'Bilans_annuels','Bilans',NUL
        ('Cultures annuelles','Submenu','Analyses',60,NULL,NULL,NULL,NULL),
        ('Incohérences dates cultures','Menu item','Analyses',70,'Cultures__inc_dates','Inc. dates cultures',NULL,NULL);
 
-INSERT INTO fda_l_schema (launcher_name,type,parent,item_index,name,title,filters,graph)
+INSERT INTO fada_launchers (launcher_name,type,parent,item_index,name,title,filters,graph)
 VALUES ('par culture','Menu item','Cultures annuelles',10,'Cultures__analyse','Analyse cultures',NULL,NULL),
        ('par variété','Menu item','Cultures annuelles',20,'Variétés__analyse','Analyse variétés',NULL,NULL),
        ('par itinéraire','Menu item','Cultures annuelles',30,'ITP__analyse','Analyse itinéraires',NULL,NULL),

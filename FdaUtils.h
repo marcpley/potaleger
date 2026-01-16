@@ -16,9 +16,12 @@ public:
 
     //QSqlDatabase *db;
     QLabel *lErr=nullptr;
+    int lErrStatements=0;
     bool ExecShowErr(QString query);
     bool ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool stopIfError=true, bool FDAInsert=false); //, bool keepReturns=false
     QVariant Select0ShowErr(QString query);
+    QList<QVariant> SelectCol0(QString query);
+
 
     QSqlDatabase& database() { return m_db; }
 

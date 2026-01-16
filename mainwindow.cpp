@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "Dialogs.h"
+#include "script/fadascriptengine2.h"
+//#include "script/ScriptEditor.h"
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <QStackedLayout>
@@ -35,7 +37,7 @@ MainWindow::~MainWindow()
 
 bool MainWindow::OpenPotaTab(QString const sTableName, QString const sTitre, QString const sDesc) {
     AppBusy(true,ui->progressBar,0,0,sTitre);
-    //Recherche parmis les onglets existants.
+    //Search in existing tabs.
     for (int i=0; i < ui->tabWidget->count(); i++) {
         if (ui->tabWidget->widget(i)->objectName()=="PW"+sTableName ) {
             ui->tabWidget->setCurrentIndex(i);
@@ -54,185 +56,23 @@ bool MainWindow::OpenPotaTab(QString const sTableName, QString const sTitre, QSt
 
     if (ui->tabWidget->currentWidget()->objectName()!="PW"+sTableName) { //Existing tab not found.
         AppBusy(true,ui->progressBar,100,0,sTableName+" - init");
-        PotaQuery query(db);
-        int fieldCount=query.Select0ShowErr("SELECT count(*) FROM pragma_table_xinfo('"+sTableName+"')").toInt();
-        ui->progressBar->setMaximum(fieldCount*2+12);
         //Create tab
         PotaWidget *w=new PotaWidget(ui->tabWidget);
         w->setObjectName("PW"+sTableName);
-        w->lErr=ui->lDBErr;
-        w->cbFontSize=ui->cbFont;
+        //w->lErr=ui->lDBErr;
+        //w->cbFontSize=ui->cbFont;
         w->model->db=&db;
-        w->model->progressBar=ui->progressBar;
-        w->delegate->cTableColor=FdaColor(w->model->db,sTableName,"");//before init
-        w->model->progressBar->setValue(w->model->progressBar->value()+1);
+        w->lTabTitle=new QLabel();
 
-        w->Init(sTableName);
-
-        int pos=ui->progressBar->value();
-        AppBusy(false,ui->progressBar);
-
-        if (w->model->SelectShowErr()) {
-            AppBusy(true,ui->progressBar,fieldCount*2+12,pos,sTableName+" - UI");
-            bool bEdit=false;
-            PotaQuery query(db);
-            if (!ReadOnlyDb and
-                (query.Select0ShowErr("SELECT count() FROM sqlite_schema "      //Table
-                                     "WHERE (tbl_name='"+sTableName+"')AND"
-                                           "(sql LIKE 'CREATE TABLE "+sTableName+" (%')").toInt()+
-                query.Select0ShowErr("SELECT count() FROM sqlite_schema "
-                                     "WHERE (tbl_name='"+sTableName+"')AND"    //View with trigger instead of insert
-                                           "(sql LIKE 'CREATE TRIGGER "+sTableName+"_INSERT INSTEAD OF INSERT ON "+sTableName+" %')").toInt()==1)){
-                QPalette palette=w->sbInsertRows->palette();
-                palette.setColor(QPalette::Text, Qt::white);
-                palette.setColor(QPalette::Base, QColor(234,117,0,110));
-                palette.setColor(QPalette::Button, QColor(234,117,0,110));
-                w->sbInsertRows->setPalette(palette);
-                w->sbInsertRows->setEnabled(true);
-                w->pbInsertRow->setEnabled(true);
-                w->pbDuplicRow->setEnabled(true);
-                w->pbDeleteRow->setEnabled(true);
-                bEdit=true;
-            } else if (ReadOnlyDb or
-                       (query.Select0ShowErr("SELECT count() FROM sqlite_schema "
-                                             "WHERE (tbl_name='"+sTableName+"')AND"    //View without trigger INSTEAD OF UPDATE.
-                                                   "(sql LIKE 'CREATE TRIGGER "+sTableName+"_UPDATE INSTEAD OF UPDATE ON "+sTableName+" %')").toInt()==0)) {
-                w->pbEdit->setVisible(false);
-            }
-            w->model->progressBar->setValue(w->model->progressBar->value()+1);
-            bool bCanOpen=FdaCanOpenTab(&db,w->model->RealTableName());
-            if(w->model->rowCount()==0 or !bCanOpen) {
-                if (bEdit and bCanOpen) {
-                    w->lRowSummary->setText(tr("<- cliquez ici pour saisir des %1").arg(w->model->RealTableName().replace("_"," ").toLower()));
-                } else {
-                    SetColoredText(ui->lDBErr,"","");
-                    AppBusy(false,ui->progressBar);
-                    MessageDlg(windowTitle(),sTitre,FdaNoDataText(&db,w->model->tableName()),QStyle::SP_MessageBoxInformation,450);
-                    w->deleteLater();
-                    return false;
-                }
-            }
-
-            w->model->progressBar->setValue(w->model->progressBar->value()+1);
-
-            for (int i=0; i<w->model->columnCount();i++){
-                //Store field name in header EditRole.
-                w->model->setHeaderData(i,Qt::Horizontal,w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole),Qt::EditRole);
-                //Store corrected field name in header DisplayRole.
-                QString headerDataDisplayRole=w->model->headerData(i,Qt::Horizontal,Qt::DisplayRole).toString();
-                headerDataDisplayRole=headerDataDisplayRole.replace("_pc",""); //'%' rigth added to the data.
-                headerDataDisplayRole=headerDataDisplayRole.replace("_"," ");
-                if (w->model->baseDataFields[i]=='x') headerDataDisplayRole=headerDataDisplayRole+" 🔺️";
-                w->model->setHeaderData(i,Qt::Horizontal,headerDataDisplayRole,Qt::DisplayRole);
-
-                //Table color.
-                w->delegate->cColColors[i]=FdaColor(w->model->db,sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
-
-                if (w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="color")
-                    w->delegate->RowColorCol=i;
-                // else if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="Etat")
-                //     w->delegate->RowColorCol=i;
-                // else if (sTableName.startsWith("Cultures") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="num_planche")
-                //     w->delegate->RowColorCol=i;
-                // else if (sTableName.startsWith("Params") and w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="color")
-                //     w->delegate->RowColorCol=i;
-
-                if (w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()=="break")
-                    w->delegate->breakCol=i;
-
-                //Tooltip
-                QString sTT=FdaToolTip(&db,sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),
-                                         w->model->dataTypes[i],w->model->baseDataFields[i]);
-                if (sTT!="")
-                    w->model->setHeaderData(i, Qt::Horizontal, sTT, Qt::ToolTipRole);
-
-                //All columns read only for start
-                w->model->nonEditableColumns.insert(i);
-
-                if (w->model->dataTypes[i]=="DATE")
-                    w->model->dateColumns.insert(i);
-                else if (sTableName!="Params" and
-                         FdaMoney(w->model->db,w->model->tableName(),w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
-                    w->model->moneyColumns.insert(i);
-
-                w->model->progressBar->setValue(w->model->progressBar->value()+1);
-
-            }
-
-            w->RefreshHorizontalHeader();
-
-            w->model->progressBar->setValue(w->model->progressBar->value()+1);
-
-            QString natSortCols=FdaNaturalSortFields(&db,sTableName);
-            //PotaHeaderView *phv=dynamic_cast<PotaHeaderView*>(w->tv->horizontalHeader());
-            w->iSortCol=w->model->FieldIndex(natSortCols.split(',')[0]);
-            for (int i=0;i<natSortCols.split(',').count();i++)
-                w->model->setHeaderData(w->model->FieldIndex(natSortCols.split(',')[i]), Qt::Horizontal, QVariant::fromValue(QIcon(":/images/Arrow_BlueDown"+str(i)+".svg")), Qt::DecorationRole);
-            w->showBreaks=(w->iSortCol!=w->model->FieldIndex(w->model->sPrimaryKey));
-
-            //Tab user settings
-            QSettings settings;//("greli.net", "Potaléger");
-
-            //filter
-            settings.beginGroup("Filter");
-            w->iTypeText=settings.value(sTableName+"-FilterTypeText").toInt();
-            w->iTypeDate=settings.value(sTableName+"-FilterTypeDate").toInt();
-            w->iTypeReal=settings.value(sTableName+"-FilterTypeReal").toInt();
-            settings.endGroup();
-
-            w->model->progressBar->setValue(w->model->progressBar->value()+1);
-
-            //col width
-            settings.beginGroup("ColWidth");
-            for (int i=0; i<w->model->columnCount();i++) {
-                int iWidth;
-                //if (!w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString().startsWith("TEMPO_")){
-                    iWidth=settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toInt(nullptr);
-                    if (iWidth<=0 or iWidth>700)
-                        iWidth=FdaColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
-                // } else {
-                //     iWidth=FdaColWidth(&db, sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString());
-                // }
-                if (iWidth<=0)
-                    w->tv->resizeColumnToContents(i);
-                else
-                    w->tv->setColumnWidth(i,iWidth);
-                if (w->tv->columnWidth(i)>700)
-                    w->tv->setColumnWidth(i,700);
-
-            }
-            settings.endGroup();
-
-            w->model->progressBar->setValue(w->model->progressBar->value()+1);
-
-            settings.beginGroup("ColHidden");
-            for (int i=0; i<w->model->columnCount();i++) {
-                if (settings.value(sTableName+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()).toBool() or
-                    FdaHidden(w->model->db,sTableName,w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString()))
-                    w->tv->hideColumn(i);
-                //settings.setValue(w->model->tableName()+"-"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),w->tv->isColumnHidden(i));
-            }
-            settings.endGroup();
-
-            w->model->progressBar->setValue(w->model->progressBar->value()+1);
-
+        if (w->Init(sTitre,sTableName,ReadOnlyDb,ui->progressBar,ui->lDBErr)) {
             ui->mCloseTabs->setEnabled(true);
             ui->mCloseTab->setEnabled(true);
-
-            w->tv->setFocus();
-            SetColoredText(ui->lDBErr,sTableName+
-                                      iif(ReadOnlyDb," ("+tr("lecture seule")+")","").toString(),
-                                      iif(ReadOnlyDb,"Info","Ok").toString());
-
-            AppBusy(false,ui->progressBar);
-            AppBusy(true);
-
             ui->tabWidget->addTab(w,sTitre);
             ui->tabWidget->setCurrentWidget(w);
-
             //Colored tab title
             ui->tabWidget->tabBar()->setTabText(ui->tabWidget->currentIndex(), ""); // Remove normal text
             QFont font=this->font();
+            w->lTabTitle->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
             w->lTabTitle->setFont(font);
             w->lTabTitle->setText(" "+sTitre+" ");
             w->lTabTitle->setContentsMargins(10, 4, 10, 4);
@@ -258,17 +98,12 @@ bool MainWindow::OpenPotaTab(QString const sTableName, QString const sTitre, QSt
             if (!sDesc.isEmpty())
                 ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),sDesc);
             else
-                ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),FdaToolTip(&db,w->model->tableName()));
-
-            if (FdaGotoLast(w->model->db,sTableName)) // go to last row
-                w->tv->setCurrentIndex(w->model->index(w->model->rowCount()-1,1));
+                ui->tabWidget->setTabToolTip(ui->tabWidget->currentIndex(),FdaToolTip(&db,sTableName));
 
             w->tv->setFocus();
-            AppBusy(false);
+
             return true;
-        }
-        else {
-            w->deleteLater();//Echec de la création de l'onglet.
+        } else {
             return false;
         }
     }
@@ -281,8 +116,8 @@ void MainWindow::ClosePotaTab(QWidget *Tab)
         PotaWidget *w=dynamic_cast<PotaWidget*>(Tab);
 
         if (w->pbCommit->isEnabled()) {
-            if (YesNoDialog(windowTitle(),
-                            w->lTabTitle->text().trimmed()+"\n\n"+
+            if (YesNoDialog(QApplication::activeWindow()->windowTitle(),
+                            w->title+"\n\n"+
                                tr("Valider les modifications avant de fermer ?"))) {
                 if (!w->model->SubmitAllShowErr())
                     return;
@@ -348,10 +183,12 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     for (int i=0; i < ui->tabWidget->count(); ++i) {
         if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
             PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
-            if (i==index)//ui->tabWidget->currentIndex()
-                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
-            else
-                w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+            if (w->lTabTitle) {
+                if (i==index)//ui->tabWidget->currentIndex()
+                    w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: normal;", "font-weight: bold;"));
+                else
+                    w->lTabTitle->setStyleSheet(w->lTabTitle->styleSheet().replace("font-weight: bold;", "font-weight: normal;"));
+            }
             //w->lTabTitle->updateGeometry();
             //ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, w->lTabTitle);
             //ui->tabWidget->tabBar()->tabButton(i,QTabBar::LeftSide)->updateGeometry();
@@ -385,7 +222,7 @@ void MainWindow::on_mUpdateSchema_triggered()
                        ui->lDB->text()+"\n\n"+
                        tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
                        tr("Vos données vont être conservées.")+"\n"+
-                       tr("En cas d'échec, votre BDD sera remise dans son état initial."),QStyle::SP_MessageBoxQuestion,600)){
+                       tr("En cas d'échec, votre BDD sera remise dans son état initial."),false,QStyle::SP_MessageBoxQuestion,600)){
         QString sFileName=ui->lDB->text();
         PotaDbClose();
         if(!PotaDbOpen(sFileName,"",true))
@@ -412,7 +249,7 @@ void MainWindow::on_mCopyDB_triggered()
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par")+"\n"+
                        ui->lDB->text()+"\n"+
-                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",QStyle::SP_MessageBoxWarning,600)) {
+                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",false,QStyle::SP_MessageBoxWarning,600)) {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists()) {
             FileInfo2.setFileName(sFileName);
@@ -479,7 +316,7 @@ void MainWindow::CreateNewDB(bool bEmpty)
         OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
-                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),QStyle::SP_MessageBoxWarning,600))
+                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),false,QStyle::SP_MessageBoxWarning,600))
     {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists())
@@ -550,7 +387,7 @@ void MainWindow::on_mFKErrors_triggered()
     sQuery=StrRemoveLasts(sQuery,8);
     if (!sQuery.isEmpty()) {
         query1.ExecShowErr("DROP VIEW IF EXISTS FK_errors;");
-        query1.ExecShowErr("CREATE VIEW FK_errors AS "+sQuery);
+        query1.ExecShowErr("CREATE TEMP VIEW FK_errors AS "+sQuery);
         OpenPotaTab("FK_errors",tr("Erreurs d'intégrité"),"");
     }
 }
@@ -562,18 +399,24 @@ void MainWindow::on_mSQLiteSchema_triggered()
 
 void MainWindow::on_mFdaTSchema_triggered()
 {
-    OpenPotaTab("fda_t_schema__view",tr("Schéma %1 tables").arg("FDA"),"");
+    OpenPotaTab("fada_t_schema__view",tr("Schéma %1 tables").arg("FDA"),"");
 }
 
 void MainWindow::on_mFdaFSchema_triggered()
 {
-    OpenPotaTab("fda_f_schema__view",tr("Schéma %1 champs").arg("FDA"),"");
+    OpenPotaTab("fada_f_schema__view",tr("Schéma %1 champs").arg("FDA"),"");
 }
 
 void MainWindow::on_mLaunchers_triggered()
 {
-    OpenPotaTab("fda_l_schema",tr("Lanceurs %1").arg("FDA"),"");
+    OpenPotaTab("fada_launchers",tr("Lanceurs %1").arg("FDA"),"");
 }
+
+void MainWindow::on_mScripts_triggered()
+{
+    OpenPotaTab("fada_scripts",tr("Scripts %1").arg("FDA"),"");
+}
+
 
 void MainWindow::on_mAbout_triggered()
 {
@@ -607,6 +450,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "<br><u>"+tr("Evolutions noyau et interface")+" :</u><br>"+
                   "- "+tr("<b>Logique métier et définition des menus entièrement SQL</b> (sauf Planification/Créer les cultures).")+"<br>"+
                   "- "+tr("<b>Formatteur automatique</b> dans l'éditeur de requête SQL.")+"<br>"+
+                  "- "+tr("Les formules peuvent manipuler des chaînes de caractères (saisie commençant par '=').")+"<br>"+
                   "- "+tr("Affichage de la liste des enregistrements enfants qui empêchent une suppression.")+"<br>"+
                   "- "+tr("Barre de progression pendant la mise à jour de la BDD à l'ouverture.")+"<br>"+
                   "<br><u>"+tr("Corrections")+" :</u><br>"+
@@ -773,8 +617,8 @@ void MainWindow::on_mRequeteSQL_triggered()
     if (values.count()>0 and values[0]!="") {
         PotaQuery pQuery(db);
         pQuery.ExecShowErr("DROP VIEW IF EXISTS Temp_UserSQL;");
-        pQuery.ExecShowErr("DELETE FROM fda_f_schema WHERE name='Temp_UserSQL';");
-        pQuery.ExecShowErr("DELETE FROM fda_t_schema WHERE name='Temp_UserSQL';");
+        pQuery.ExecShowErr("DELETE FROM fada_f_schema WHERE name='Temp_UserSQL';");
+        pQuery.ExecShowErr("DELETE FROM fada_t_schema WHERE name='Temp_UserSQL';");
         //pQuery.ExecShowErr("CREATE VIEW Temp_UserSQL AS "+values[0]);
 
         QString fda_cmd="";
@@ -798,189 +642,210 @@ void MainWindow::on_mRequeteSQL_triggered()
     }
 }
 
-void MainWindow::on_mCreerCultures_triggered()
-{
-    PotaQuery pQuery(db);
-    pQuery.lErr=ui->lDBErr;
-    int NbCultPlanif=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches").toInt();
-    int NbCultPlanifValid=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (Validée NOTNULL)").toInt();
-    if (NbCultPlanifValid==0) {
-        if (NbCultPlanif==0)
-            MessageDlg(windowTitle(),tr("Aucune culture à planifier:")+"\n\n"+
-                              tr("- Créez des rotations")+"\n"+
-                              tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
-        else
-            MessageDlg(windowTitle(),tr("Aucune culture à planifier validée.")+"\n\n"+
-                                     tr("Menu 'Planification', onglet 'Cultures prévues par planche', colonne 'Validée'."),"",QStyle::SP_MessageBoxInformation);
-        return;
-    }
+// void MainWindow::on_mCreerCultures_triggered()
+// {
+//     PotaQuery pQuery(db);
+//     pQuery.lErr=ui->lDBErr;
+//     int NbCultPlanif=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches").toInt();
+//     int NbCultPlanifValid=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (Validée NOTNULL)").toInt();
+//     if (NbCultPlanifValid==0) {
+//         if (NbCultPlanif==0)
+//             MessageDlg(windowTitle(),tr("Aucune culture à planifier:")+"\n\n"+
+//                               tr("- Créez des rotations")+"\n"+
+//                               tr("- Vérifiez que le paramètre 'Planifier_planches' n'exclut pas toutes les planches."),"",QStyle::SP_MessageBoxInformation);
+//         else
+//             MessageDlg(windowTitle(),tr("Aucune culture à planifier validée.")+"\n\n"+
+//                                      tr("Menu 'Planification', onglet 'Cultures prévues par planche', colonne 'Validée'."),"",QStyle::SP_MessageBoxInformation);
+//         return;
+//     }
 
-    int NbCultPlanifRetard=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (coalesce(Date_semis,Date_plantation)<DATE('now'))AND(Validée NOTNULL)").toInt();
-    int NbCultPlanifConflitCreer=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (Déjà_en_place NOTNULL)AND(Validée NOTNULL)").toInt();
-    int NbCultPlanifNonValidees=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (Validée ISNULL)").toInt();
-    int NbCultAVenir=pQuery.Select0ShowErr("SELECT count() FROM Cu_non_commencées").toInt();
-    int NDerCult=pQuery.Select0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
-    QStyle::StandardPixmap icon;
-    QString CultAVenir;
-    if(NbCultAVenir>0) {
-        icon=QStyle::SP_MessageBoxWarning;
-        CultAVenir="<br><br>"+tr("Il y a déjà %1 cultures ni semées ni plantés.").arg(NbCultAVenir)+"<br>"+
-                   iif(NbCultAVenir>NbCultPlanifValid*0.9,tr("Peut-être avez-vous déjà généré les prochaines cultures.\n"
-                                                        "Si c'est le cas, vous devriez les supprimer avant d'aller plus loin."),"").toString();
-    } else {
-        icon=QStyle::SP_MessageBoxQuestion;
-        CultAVenir="";
-    }
-    if (OkCancelDialog(windowTitle(),
-                       tr("La saison courante est : %1").arg(pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toString())+"<br><br>"+
-                       "<b>"+tr("Créer les cultures de la saison suivante (%1) à partir des plans de rotation ?").arg(pQuery.Select0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString())+"</b><br><br>"+
-                       tr("La saison courante peut être modifiée dans les paramètres (menu 'Edition', paramétre 'Année_culture').")+"<br><br>"+
-                       tr("%1 cultures vont être créées.").arg("<b>"+str(NbCultPlanifValid)+"</b>")+"<br>"+
-                       tr("%1 cultures vont être en conflit avec des cultures déjà existantes.").arg(NbCultPlanifConflitCreer)+"<br>"+
-                       tr("%1 cultures ne vont pas être créées car non validée.").arg(NbCultPlanifNonValidees)+"<br>"+
-                       tr("Id de la dernière culture:")+" "+str(NDerCult)+
-                       CultAVenir,
-                       icon,400)) {
-        int choice=2;
-        if (NbCultPlanifRetard>0){
-            choice=RadiobuttonDialog(windowTitle(),tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanifValid).arg(NbCultPlanifRetard),
-                                           {tr("Ne pas créer ces cultures en retard"),
-                                            tr("Créer aussi ces cultures en retard")},
-                                            iif(NbCultPlanifRetard<NbCultPlanifValid/10,1,0).toInt(),{},
-                                            false,QStyle::SP_MessageBoxWarning);
-            if (choice<0)
-                return;
-        }
-        int IdCult1=pQuery.Select0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
-        bool result;
+//     int NbCultPlanifRetard=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (coalesce(Date_semis,Date_plantation)<DATE('now'))AND(Validée NOTNULL)").toInt();
+//     int NbCultPlanifConflitCreer=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (Déjà_en_place NOTNULL)AND(Validée NOTNULL)").toInt();
+//     int NbCultPlanifNonValidees=pQuery.Select0ShowErr("SELECT count() FROM Planif_planches WHERE (Validée ISNULL)").toInt();
+//     int NbCultAVenir=pQuery.Select0ShowErr("SELECT count() FROM Cu_non_commencées").toInt();
+//     int NDerCult=pQuery.Select0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
+//     QStyle::StandardPixmap icon;
+//     QString CultAVenir;
+//     if(NbCultAVenir>0) {
+//         icon=QStyle::SP_MessageBoxWarning;
+//         CultAVenir="<br><br>"+tr("Il y a déjà %1 cultures ni semées ni plantés.").arg(NbCultAVenir)+"<br>"+
+//                    iif(NbCultAVenir>NbCultPlanifValid*0.9,tr("Peut-être avez-vous déjà généré les prochaines cultures.\n"
+//                                                         "Si c'est le cas, vous devriez les supprimer avant d'aller plus loin."),"").toString();
+//     } else {
+//         icon=QStyle::SP_MessageBoxQuestion;
+//         CultAVenir="";
+//     }
+//     if (OkCancelDialog(windowTitle(),
+//                        tr("La saison courante est : %1").arg(pQuery.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='Année_culture'").toString())+"<br><br>"+
+//                        "<b>"+tr("Créer les cultures de la saison suivante (%1) à partir des plans de rotation ?").arg(pQuery.Select0ShowErr("SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'").toString())+"</b><br><br>"+
+//                        tr("La saison courante peut être modifiée dans les paramètres (menu 'Edition', paramétre 'Année_culture').")+"<br><br>"+
+//                        "<b>"+tr("%1 cultures vont être créées.").arg(str(NbCultPlanifValid))+"</b>"+"<br>"+
+//                        tr("%1 cultures vont être en conflit avec des cultures déjà existantes.").arg(NbCultPlanifConflitCreer)+"<br>"+
+//                        tr("%1 cultures ne vont pas être créées car non validée.").arg(NbCultPlanifNonValidees)+"<br>"+
+//                        tr("Id de la dernière culture:")+" "+str(NDerCult)+
+//                        CultAVenir,false,
+//                        icon,600)) {
+//         int choice=2;
+//         if (NbCultPlanifRetard>0){
+//             choice=RadiobuttonDialog(windowTitle(),tr("Parmis les %1 cultures à créer, il y en a %2 dont la date de la 1ère opération (semis ou plantation) est déjà passée.").arg(NbCultPlanifValid).arg(NbCultPlanifRetard),
+//                                            {tr("Ne pas créer ces cultures en retard"),
+//                                             tr("Créer aussi ces cultures en retard")},
+//                                             iif(NbCultPlanifRetard<NbCultPlanifValid/10,1,0).toInt(),{},
+//                                             false,QStyle::SP_MessageBoxWarning);
+//             if (choice<0)
+//                 return;
+//         }
+//         int IdCult1=pQuery.Select0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
+//         bool result;
 
-        if (choice==0)
-            result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement,Notes) "
-                                       "SELECT Espèce,IT_plante,NULL,NULL,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),"
-                                       "Longueur,Nb_rangs,Espacement,Notes||iif(Validée!='x',x'0a0a'||Validée,'') "
-                                       "FROM Planif_planches WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')AND(Validée NOTNULL)");
-        else
-            result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,"
-                                                            "Date_semis,Date_plantation,Début_récolte,Fin_Récolte,"
-                                                            "Longueur,Nb_rangs,Espacement,Notes) "
-                                       "SELECT Espèce,IT_plante,NULL,NULL,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),"
-                                       "Date_semis,Date_plantation,Début_récolte,Fin_Récolte,"
-                                       "Longueur,Nb_rangs,Espacement,iif(Validée!='x',coalesce(Notes||x'0a0a','')||Validée,Notes) "
-                                       "FROM Planif_planches WHERE (Validée NOTNULL)");
-            // result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement,Notes) "
-            //                            "SELECT Espèce,IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),"
-            //                            "Longueur,Nb_rangs,Espacement,iif(Validée!='x',coalesce(Notes||x'0a0a','')||Validée,Notes) "
-            //                            "FROM Planif_planches WHERE (Validée NOTNULL)");
-        if (result) {
-            pQuery.ExecShowErr("DELETE FROM Planif_validations "
-                               "WHERE (SELECT (PP.Déjà_créée NOTNULL) FROM Planif_pl_date2 PP WHERE PP.IdxIdPl=Planif_validations.IdxIdPl)");
-            int NbValidNonCrees=pQuery.Select0ShowErr("SELECT count() FROM Planif_validations WHERE Validée NOTNULL").toInt();
-            int IdCult2=pQuery.Select0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
-            int IdCult3=pQuery.Select0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
-            QString mess=tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanifValid)+"\n\n"+
-                         tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3)+
-                         iif(NbValidNonCrees>0,"\n"+tr("%1 culture validées mais non crées.").arg(NbValidNonCrees),"").toString();
-            if (IdCult3>IdCult2 and IdCult2>IdCult1 and NbValidNonCrees==0)
-                MessageDlg(windowTitle(),mess,"",QStyle::SP_MessageBoxInformation);
-            else
-                MessageDlg(windowTitle(),mess,"",QStyle::SP_MessageBoxWarning);
-        }
-        else
-            MessageDlg(windowTitle(),tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
+//         if (choice==0)
+//             result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement,Notes) "
+//                                        "SELECT Espèce,IT_plante,NULL,NULL,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),"
+//                                        "Longueur,Nb_rangs,Espacement,Notes||iif(Validée!='x',x'0a0a'||Validée,'') "
+//                                        "FROM Planif_planches WHERE coalesce(Date_semis,Date_plantation)>=DATE('now')AND(Validée NOTNULL)");
+//         else
+//             result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,"
+//                                                             "Date_semis,Date_plantation,Début_récolte,Fin_Récolte,"
+//                                                             "Longueur,Nb_rangs,Espacement,Notes) "
+//                                        "SELECT Espèce,IT_plante,NULL,NULL,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),"
+//                                        "Date_semis,Date_plantation,Début_récolte,Fin_Récolte,"
+//                                        "Longueur,Nb_rangs,Espacement,iif(Validée!='x',coalesce(Notes||x'0a0a','')||Validée,Notes) "
+//                                        "FROM Planif_planches WHERE (Validée NOTNULL)");
+//             // result=pQuery.ExecShowErr("INSERT INTO Cultures (Espèce,IT_plante,Variété,Fournisseur,Planche,D_planif,Longueur,Nb_rangs,Espacement,Notes) "
+//             //                            "SELECT Espèce,IT_plante,Variété,Fournisseur,Planche,(SELECT Valeur+1 FROM Params WHERE Paramètre='Année_culture'),"
+//             //                            "Longueur,Nb_rangs,Espacement,iif(Validée!='x',coalesce(Notes||x'0a0a','')||Validée,Notes) "
+//             //                            "FROM Planif_planches WHERE (Validée NOTNULL)");
+//         if (result) {
+//             pQuery.ExecShowErr("DELETE FROM Planif_validations "
+//                                "WHERE (SELECT (PP.Déjà_créée NOTNULL) FROM Planif_pl_date2 PP WHERE PP.IdxIdPl=Planif_validations.IdxIdPl)");
+//             int NbValidNonCrees=pQuery.Select0ShowErr("SELECT count() FROM Planif_validations WHERE Validée NOTNULL").toInt();
+//             int IdCult2=pQuery.Select0ShowErr("SELECT min(Culture) FROM Cultures WHERE Culture>"+str(IdCult1)).toInt();
+//             int IdCult3=pQuery.Select0ShowErr("SELECT max(Culture) FROM Cultures").toInt();
+//             QString mess=tr("%1 cultures créées sur %2 cultures prévues.").arg(IdCult3-IdCult2+1).arg(NbCultPlanifValid)+"\n\n"+
+//                          tr("Id culture:")+" "+str(IdCult2)+" > "+str(IdCult3)+
+//                          iif(NbValidNonCrees>0,"\n"+tr("%1 culture validées mais non crées.").arg(NbValidNonCrees),"").toString();
+//             if (IdCult3>IdCult2 and IdCult2>IdCult1 and NbValidNonCrees==0)
+//                 MessageDlg(windowTitle(),mess,"",QStyle::SP_MessageBoxInformation);
+//             else
+//                 MessageDlg(windowTitle(),mess,"",QStyle::SP_MessageBoxWarning);
+//         }
+//         else
+//             MessageDlg(windowTitle(),tr("Impossible de créer les cultures."),"",QStyle::SP_MessageBoxCritical);
 
-    }
-}
+//     }
+// }
 
 //Model menu
-void MainWindow::on_FdaMenu(const QString &sTableName, const QString &sTitre, const QString &sDesc, const QString &sFilters, const QString &sGraph) {
-    if (sTableName=="CreerCultures") { //todo
-        on_mCreerCultures_triggered();
-        return;
-    }
+void MainWindow::on_FdaMenu(const QString &sActionName, const QString &sTitle, const QString &sDesc, const QString &sFilters, const QString &sGraph) {
+    // if (sActionName=="CreerCultures") { //todo
+    //     on_mCreerCultures_triggered();
+    //     return;
+    // }
 
-    if (OpenPotaTab(sTableName,sTitre,sDesc)) {
-        if (!sFilters.isEmpty()) {
-            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-            QStringList filters=sFilters.split("\n");
-            w->lPageFilter->setText(filters[0]); //Combox label.
-            for (int i=1;i<filters.count();i++) {
-                QString filter=filters[i];
-                int sep=filter.indexOf("|");
-                if (sep>0 and filter.length()>sep) {
-                    w->cbPageFilter->addItem(filter.first(sep));
-                    w->pageFilterFilters.append(filter.mid(sep+1));
+    PotaQuery query(db);
+    if (query.Select0ShowErr("SELECT count() FROM fada_t_schema WHERE name='"+sActionName+"'").toInt()>0) {
+        if (OpenPotaTab(sActionName,sTitle,sDesc)) {
+            if (!sFilters.isEmpty()) {
+                PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+                QStringList filters=sFilters.split("\n");
+                w->lPageFilter->setText(filters[0]); //Combox label.
+                for (int i=1;i<filters.count();i++) {
+                    QString filter=filters[i];
+                    int sep=filter.indexOf("|");
+                    if (sep>0 and filter.length()>sep) {
+                        w->cbPageFilter->addItem(filter.first(sep));
+                        w->pageFilterFilters.append(filter.mid(sep+1));
+                    }
                 }
-            }
-            QSettings settings;//("greli.net", "Potaléger");
-            w->cbPageFilter->setCurrentIndex(settings.value(sTableName+"-pageFilter").toInt());
-            w->pageFilterFrame->setVisible(true);
-            if (w->cbPageFilter->currentIndex()>0)
-                w->pbFilterClick(false);
-        } else if (!sGraph.isEmpty()) {
-            PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
-            w->sGraph.clear();
-            w->sGraph.resize(23);
-            QStringList graphParams=sGraph.split("|");
-            for (int i=0;i<graphParams.count();i++) {
-                QString graphParam=graphParams[i];
-                QList<int> fieldNameParams={0,3,8,13,18};
-                if (i==0 or i==3 or i==8 or i==13 or i==18) {
-                    w->sGraph[i]=str(w->model->FieldIndex(graphParam));
-                } else if (i==1) {
-                    if (graphParam=="GroupSame") w->sGraph[i]=str(xAxisGroupSame);
-                    else if (graphParam=="GroupFirstWord") w->sGraph[i]=str(xAxisGroupFirstWord);
-                    else if (graphParam=="GroupFirstChar") w->sGraph[i]=str(xAxisGroupFirstChar);
-                    else if (graphParam=="GroupFirstChar2") w->sGraph[i]=str(xAxisGroupFirstChar2);
-                    else if (graphParam=="GroupFirstChar3") w->sGraph[i]=str(xAxisGroupFirstChar3);
-                    else if (graphParam=="GroupFirstChar4") w->sGraph[i]=str(xAxisGroupFirstChar4);
-                    else if (graphParam=="GroupFirstChar5") w->sGraph[i]=str(xAxisGroupFirstChar5);
-                    else if (graphParam=="GroupFirstChar6") w->sGraph[i]=str(xAxisGroupFirstChar6);
-                    else if (graphParam=="GroupFirstChar7") w->sGraph[i]=str(xAxisGroupFirstChar7);
-                    else if (graphParam=="GroupFirstChar8") w->sGraph[i]=str(xAxisGroupFirstChar8);
-                    else if (graphParam=="GroupFirstChar9") w->sGraph[i]=str(xAxisGroupFirstChar9);
-                    else if (graphParam=="GroupYear") w->sGraph[i]=str(xAxisGroupYear);
-                    else if (graphParam=="GroupMonth") w->sGraph[i]=str(xAxisGroupMonth);
-                    else if (graphParam=="GroupWeek") w->sGraph[i]=str(xAxisGroupWeek);
-                    else if (graphParam=="GroupDay") w->sGraph[i]=str(xAxisGroupDay);
-                    else if (graphParam=="Group1000") w->sGraph[i]=str(xAxisGroup1000);
-                    else if (graphParam=="Group100") w->sGraph[i]=str(xAxisGroup100);
-                    else if (graphParam=="Group10") w->sGraph[i]=str(xAxisGroup10);
-                    else if (graphParam=="Group1") w->sGraph[i]=str(xAxisGroup1);
-                    else if (graphParam=="Group1Dec") w->sGraph[i]=str(xAxisGroup1Decimal);
-                    else if (graphParam=="Group2Dec") w->sGraph[i]=str(xAxisGroup2Decimals);
-                    else if (graphParam=="Group3Dec") w->sGraph[i]=str(xAxisGroup3Decimals);
-                    else if (graphParam=="Group4Dec") w->sGraph[i]=str(xAxisGroup4Decimals);
-                    else if (graphParam=="Group5Dec") w->sGraph[i]=str(xAxisGroup5Decimals);
-                    else if (graphParam=="Group6Dec") w->sGraph[i]=str(xAxisGroup6Decimals);
-                    else w->sGraph[i]=str(xAxisGroupNo);
-                } else if (i==2) {
-                    if (!graphParam.isEmpty()) w->sGraph[i]="1";
-                } else if (i==4 or i==9 or i==14 or i==19) {
-                    if (graphParam=="NotNull") w->sGraph[i]=str(calcSeriesNotNull);
-                    else if (graphParam=="Distinct") w->sGraph[i]=str(calcSeriesDistinct);
-                    else if (graphParam=="First") w->sGraph[i]=str(calcSeriesFirst);
-                    else if (graphParam=="Last") w->sGraph[i]=str(calcSeriesLast);
-                    else if (graphParam=="Average") w->sGraph[i]=str(calcSeriesAverage);
-                    else if (graphParam=="Min") w->sGraph[i]=str(calcSeriesMin);
-                    else if (graphParam=="Max") w->sGraph[i]=str(calcSeriesMax);
-                    else if (graphParam=="Sum") w->sGraph[i]=str(calcSeriesSum);
-                } else if (i==5 or i==10 or i==15 or i==20) {
-                    if (graphParam=="Line") w->sGraph[i]=str(typeSeriesLine);
-                    else if (graphParam=="Points") w->sGraph[i]=str(typeSeriesScatter);
-                    else if (graphParam=="NotNullPoints") w->sGraph[i]=str(typeSeriesScatNotNull);
-                    else if (graphParam=="Bars") w->sGraph[i]=str(typeSeriesBar);
-                } else if (i==6 or i==11 or i==16 or i==21) { //Serie color
-                    if (QColor(graphParam).isValid())
-                        w->sGraph[i]=graphParam;
-                } else if (i==7 or i==12 or i==17 or i==22) { //Right y-axis
-                    if (!graphParam.isEmpty()) w->sGraph[i]="1";
+                QSettings settings;//("greli.net", "Potaléger");
+                w->cbPageFilter->setCurrentIndex(settings.value(sActionName+"-pageFilter").toInt());
+                w->pageFilterFrame->setVisible(true);
+                if (w->cbPageFilter->currentIndex()>0)
+                    w->pbFilterClick(false);
+            } else if (!sGraph.isEmpty()) {
+                PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
+                w->sGraph.clear();
+                w->sGraph.resize(23);
+                QStringList graphParams=sGraph.split("|");
+                for (int i=0;i<graphParams.count();i++) {
+                    QString graphParam=graphParams[i];
+                    QList<int> fieldNameParams={0,3,8,13,18};
+                    if (i==0 or i==3 or i==8 or i==13 or i==18) {
+                        w->sGraph[i]=str(w->model->FieldIndex(graphParam));
+                    } else if (i==1) {
+                        if (graphParam=="GroupSame") w->sGraph[i]=str(xAxisGroupSame);
+                        else if (graphParam=="GroupFirstWord") w->sGraph[i]=str(xAxisGroupFirstWord);
+                        else if (graphParam=="GroupFirstChar") w->sGraph[i]=str(xAxisGroupFirstChar);
+                        else if (graphParam=="GroupFirstChar2") w->sGraph[i]=str(xAxisGroupFirstChar2);
+                        else if (graphParam=="GroupFirstChar3") w->sGraph[i]=str(xAxisGroupFirstChar3);
+                        else if (graphParam=="GroupFirstChar4") w->sGraph[i]=str(xAxisGroupFirstChar4);
+                        else if (graphParam=="GroupFirstChar5") w->sGraph[i]=str(xAxisGroupFirstChar5);
+                        else if (graphParam=="GroupFirstChar6") w->sGraph[i]=str(xAxisGroupFirstChar6);
+                        else if (graphParam=="GroupFirstChar7") w->sGraph[i]=str(xAxisGroupFirstChar7);
+                        else if (graphParam=="GroupFirstChar8") w->sGraph[i]=str(xAxisGroupFirstChar8);
+                        else if (graphParam=="GroupFirstChar9") w->sGraph[i]=str(xAxisGroupFirstChar9);
+                        else if (graphParam=="GroupYear") w->sGraph[i]=str(xAxisGroupYear);
+                        else if (graphParam=="GroupMonth") w->sGraph[i]=str(xAxisGroupMonth);
+                        else if (graphParam=="GroupWeek") w->sGraph[i]=str(xAxisGroupWeek);
+                        else if (graphParam=="GroupDay") w->sGraph[i]=str(xAxisGroupDay);
+                        else if (graphParam=="Group1000") w->sGraph[i]=str(xAxisGroup1000);
+                        else if (graphParam=="Group100") w->sGraph[i]=str(xAxisGroup100);
+                        else if (graphParam=="Group10") w->sGraph[i]=str(xAxisGroup10);
+                        else if (graphParam=="Group1") w->sGraph[i]=str(xAxisGroup1);
+                        else if (graphParam=="Group1Dec") w->sGraph[i]=str(xAxisGroup1Decimal);
+                        else if (graphParam=="Group2Dec") w->sGraph[i]=str(xAxisGroup2Decimals);
+                        else if (graphParam=="Group3Dec") w->sGraph[i]=str(xAxisGroup3Decimals);
+                        else if (graphParam=="Group4Dec") w->sGraph[i]=str(xAxisGroup4Decimals);
+                        else if (graphParam=="Group5Dec") w->sGraph[i]=str(xAxisGroup5Decimals);
+                        else if (graphParam=="Group6Dec") w->sGraph[i]=str(xAxisGroup6Decimals);
+                        else w->sGraph[i]=str(xAxisGroupNo);
+                    } else if (i==2) {
+                        if (!graphParam.isEmpty()) w->sGraph[i]="1";
+                    } else if (i==4 or i==9 or i==14 or i==19) {
+                        if (graphParam=="NotNull") w->sGraph[i]=str(calcSeriesNotNull);
+                        else if (graphParam=="Distinct") w->sGraph[i]=str(calcSeriesDistinct);
+                        else if (graphParam=="First") w->sGraph[i]=str(calcSeriesFirst);
+                        else if (graphParam=="Last") w->sGraph[i]=str(calcSeriesLast);
+                        else if (graphParam=="Average") w->sGraph[i]=str(calcSeriesAverage);
+                        else if (graphParam=="Min") w->sGraph[i]=str(calcSeriesMin);
+                        else if (graphParam=="Max") w->sGraph[i]=str(calcSeriesMax);
+                        else if (graphParam=="Sum") w->sGraph[i]=str(calcSeriesSum);
+                    } else if (i==5 or i==10 or i==15 or i==20) {
+                        if (graphParam=="Line") w->sGraph[i]=str(typeSeriesLine);
+                        else if (graphParam=="Points") w->sGraph[i]=str(typeSeriesScatter);
+                        else if (graphParam=="NotNullPoints") w->sGraph[i]=str(typeSeriesScatNotNull);
+                        else if (graphParam=="Bars") w->sGraph[i]=str(typeSeriesBar);
+                    } else if (i==6 or i==11 or i==16 or i==21) { //Serie color
+                        if (QColor(graphParam).isValid())
+                            w->sGraph[i]=graphParam;
+                    } else if (i==7 or i==12 or i==17 or i==22) { //Right y-axis
+                        if (!graphParam.isEmpty()) w->sGraph[i]="1";
+                    }
                 }
+                if (graphParams.count()<9) w->sGraph[8]="-1";
+                if (graphParams.count()<14) w->sGraph[13]="-1";
+                if (graphParams.count()<19) w->sGraph[18]="-1";
+                w->showGraphDialog();
             }
-            if (graphParams.count()<9) w->sGraph[8]="-1";
-            if (graphParams.count()<14) w->sGraph[13]="-1";
-            if (graphParams.count()<19) w->sGraph[18]="-1";
-            w->showGraphDialog();
         }
+    } else if (query.Select0ShowErr("SELECT count() FROM fada_scripts WHERE name='"+sActionName+"'").toInt()>0) {
+        query.ExecShowErr("SELECT * FROM fada_scripts WHERE name='"+sActionName+"'");
+        if (query.next()) {
+            if (!query.value("dev").toString().isEmpty()) {
+                MessageDlg("FADA",tr("Script '%1' en cours de développement.").arg(sActionName)+
+                                  iif(query.value("dev").toString()!="x","\n\n"+query.value("dev").toString(),"").toString(),"",QStyle::SP_MessageBoxWarning);
+                // scriptEditor(sActionName,"",query.value("script").toString(),db);
+            } else {
+                FadaScriptEngine2 *se=new FadaScriptEngine2(QApplication::activeWindow());
+                se->scriptTitle=sTitle;
+                se->feProgressBar=ui->progressBar;
+                se->feLErr=ui->lDBErr;
+                se->runScript(query.value("script").toString(),&db,false);
+                query.ExecShowErr("UPDATE fada_scripts SET executed=CURRENT_TIMESTAMP WHERE name='"+sActionName+"'");
+            }
+        }
+    } else {
+        MessageDlg("FADA",tr("Table, vue ou script '%1' non trouvé.").arg(sActionName),"",QStyle::SP_MessageBoxWarning);
     }
 }
 
@@ -1067,8 +932,10 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
     for (int i=0; i < ui->tabWidget->count(); ++i) {
         if (ui->tabWidget->widget(i)->objectName().startsWith("PW")){
             PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->widget(i));
-            ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, nullptr);
-            ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, w->lTabTitle);
+            if (w->lTabTitle) {
+                ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, nullptr);
+                ui->tabWidget->tabBar()->setTabButton(i, QTabBar::LeftSide, w->lTabTitle);
+            }
             // w->cbFilterType->setFont(font);
             // w->cbFilterType->setMinimumHeight(w->cbFilterType->sizeHint().height());
             // w->cbFilterType->updateGeometry();
@@ -1076,8 +943,15 @@ void MainWindow::on_cbFont_currentTextChanged(const QString &arg1)
     }
 
     ui->lDBlabel->setFixedWidth(110*arg1.toInt()/10);
+
+    QSettings settings;//("greli.net", "Potaléger");
+    settings.setValue("font",ui->cbFont->currentText());
 }
 
+void MainWindow::on_mCloseDB_triggered()
+{
+    PotaDbClose();
+}
 
 
 

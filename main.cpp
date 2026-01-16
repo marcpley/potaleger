@@ -18,7 +18,11 @@
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
 #include <QImage>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QtSvgWidgets/QGraphicsSvgItem>
 #include "FdaUtils.h"
+#include "script/ScriptEditor.h"
 
 bool MainWindow::dbOpen(QString sFichier, bool bNew, bool SetFkOn)
 {
@@ -265,69 +269,88 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
         //Activer les menus
         SetLaunchers(true);
         ui->lDBErr->clear();
-    }
 
-    QFileInfo file(sFichier);
-    QFile imgFile(file.absolutePath()+QDir::toNativeSeparators("/imgtab1.png"));
-    if (result and imgFile.exists()) { //Final user image found un db folder.
-        QPixmap pixmap(imgFile.fileName());
-        ui->graphicsView->setImage(pixmap);
-        fitSplittersToPixmap(pixmap);
-    } else {
-        imgFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
-        if (imgFile.exists()) { //Model image found in app folder.
-            //Image on first tab.
+
+        QFileInfo file(sFichier);
+        QFile imgFile(file.absolutePath()+QDir::toNativeSeparators("/imgtab1.png"));
+        if (result and imgFile.exists()) { //Final user image found un db folder.
             QPixmap pixmap(imgFile.fileName());
             ui->graphicsView->setImage(pixmap);
             fitSplittersToPixmap(pixmap);
         } else {
-            QPixmap pixmap(":/images/FDAtext.svg");
-            ui->graphicsView->setImage(pixmap);
-            fitSplittersToPixmap(pixmap);
-            // QGraphicsScene *scene=new QGraphicsScene(this);
-            // QPixmap pixmap(700,40);
-            // pixmap.fill(Qt::transparent);
-            // QColor cPen=QColor();
-            // if (!isDarkTheme())
-            //     cPen=QColor("#000000");
-            // else
-            //     cPen=QColor("#ffffff");
-            // cPen=QApplication::palette().color(QPalette::WindowText);
-            // QPainter painter(&pixmap);
-            // painter.setPen(cPen);
-            // QFont font( "Arial", 10); //, QFont::Bold
-            // painter.setFont(font);
+            imgFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
+            if (imgFile.exists()) { //Model image found in app folder.
+                //Image on first tab.
+                QPixmap pixmap(imgFile.fileName());
+                ui->graphicsView->setImage(pixmap);
+                fitSplittersToPixmap(pixmap);
+            } else {
+                //QGraphicsScene *scene=new QGraphicsScene(this);
+                QPixmap pixmap(700,40);
+                pixmap.fill(Qt::transparent);
+                QColor cPen=QColor();
+                if (!isDarkTheme())
+                    cPen=QColor("#000000");
+                else
+                    cPen=QColor("#ffffff");
+                cPen=QApplication::palette().color(QPalette::WindowText);
+                QPainter painter(&pixmap);
+                painter.setPen(cPen);
+                QFont font( "Arial", 10); //, QFont::Bold
+                painter.setFont(font);
 
-            // QRect rect(5, 2, 690, 15);
-            // painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
-            // rect.setRect(5, 17, 690, 15);
-            // painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
-            // scene->addPixmap(pixmap);
-            // ui->graphicsView->setScene(scene);
+                QRect rect(5, 2, 690, 15);
+                painter.drawText(rect, Qt::AlignLeft,tr("Fichier non trouvé :"));
+                rect.setRect(5, 17, 690, 15);
+                painter.drawText(rect, Qt::AlignLeft,QApplication::applicationDirPath()+QDir::toNativeSeparators("/infotab1.png"));
+                //scene->addPixmap(pixmap);
+                //ui->graphicsView->setScene(scene);
+                ui->graphicsView->setImage(pixmap);
+                fitSplittersToPixmap(pixmap);
+            }
         }
-    }
 
-    QFile mdFile(file.absolutePath()+QDir::toNativeSeparators("/texttab1.md"));
-    if (result and mdFile.exists()) {
-        mdFile.open(QFile::ReadOnly);
-        ui->pteNotes->setMarkdown(mdFile.readAll());
-    } else {
-        mdFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/readme.md"));
-        if (mdFile.exists()) {
+        QFile mdFile(file.absolutePath()+QDir::toNativeSeparators("/texttab1.md"));
+        if (result and mdFile.exists()) {
             mdFile.open(QFile::ReadOnly);
             ui->pteNotes->setMarkdown(mdFile.readAll());
-        } else
-            ui->pteNotes->setPlainText(tr("Fichiers non trouvés :")+"\n"+
-                                       file.absolutePath()+QDir::toNativeSeparators("/texttab1.md")+"\n"+
-                                       QApplication::applicationDirPath()+QDir::toNativeSeparators("/readme.md"));
-    }
+        } else {
+            mdFile.setFileName(QApplication::applicationDirPath()+QDir::toNativeSeparators("/readme.md"));
+            if (mdFile.exists()) {
+                mdFile.open(QFile::ReadOnly);
+                ui->pteNotes->setMarkdown(mdFile.readAll());
+            } else
+                ui->pteNotes->setPlainText(tr("Fichiers non trouvés :")+"\n"+
+                                           file.absolutePath()+QDir::toNativeSeparators("/texttab1.md")+"\n"+
+                                           QApplication::applicationDirPath()+QDir::toNativeSeparators("/readme.md"));
+        }
 
-    if (result) {
         if (ReadOnlyDb)
             SetColoredText(ui->lDBErr, tr("Base de données en lecture seule (%1).").arg(sVerBDD), "Info");
         else
             SetColoredText(ui->lDBErr, tr("Base de données ouverte."), "Ok");
+        ui->mCloseDB->setEnabled(true);
+    } else {
+        setWindowTitle("FADA");
+        QPixmap pixmap(":/images/FDAtext.svg");
+        ui->graphicsView->setImage(pixmap);
+        fitSplittersToPixmap(pixmap);
+        QFile mdFile(":/md/fada.md");
+        mdFile.open(QFile::ReadOnly);
+        ui->pteNotes->setMarkdown(mdFile.readAll());
     }
+
+    #ifdef QT_DEBUG
+    if (false) {
+        QSettings settings;
+        QString s=scriptEditor( "test","",settings.value("scriptdebug").toString(),db,ui->progressBar,ui->lDBErr);
+        settings.setValue("scriptdebug",s);
+        close();
+        QApplication::closeAllWindows();
+        QCoreApplication::quit();
+        std::exit(0);
+    }
+    #endif
 
     return result;
 }
@@ -350,6 +373,14 @@ void MainWindow::PotaDbClose()
     //userDataEditing=false;
     ui->lDB->clear();
     ui->lDBErr->clear();
+    ui->mCloseDB->setEnabled(false);
+    setWindowTitle("FADA");
+    QPixmap pixmap(":/images/FDAtext.svg");
+    ui->graphicsView->setImage(pixmap);
+    fitSplittersToPixmap(pixmap);
+    QFile mdFile(":/md/fada.md");
+    mdFile.open(QFile::ReadOnly);
+    ui->pteNotes->setMarkdown(mdFile.readAll());
 }
 
 void MainWindow::RestaureParams()
@@ -418,8 +449,6 @@ void MainWindow::SauvParams()
         settings.setValue("theme","dark");
     else
         settings.setValue("theme","");
-
-    settings.setValue("font",ui->cbFont->currentText());
 
     if (!ui->lDB->text().isEmpty()) {
         QFile file(ui->lDB->text());
@@ -499,13 +528,14 @@ void MainWindow::SetLaunchers(bool b)
 {
     ui->mCopyDB->setEnabled(b);
     ui->mUpdateSchema->setEnabled(b);
-    ui->mTableList->setEnabled(b);
-    ui->mViewList->setEnabled(b);
+    // ui->mTableList->setEnabled(b);
+    // ui->mViewList->setEnabled(b);
     ui->mFKErrors->setEnabled(b);
     ui->mSQLiteSchema->setEnabled(b);
     ui->mFdaTSchema->setEnabled(b);
     ui->mFdaFSchema->setEnabled(b);
     ui->mLaunchers->setEnabled(b);
+    ui->mScripts->setEnabled(b);
     ui->mParam->setEnabled(b);
     ui->mNotes->setEnabled(b);
     ui->mRequeteSQL->setEnabled(b);
@@ -519,7 +549,7 @@ void MainWindow::SetLaunchers(bool b)
 void MainWindow::CreateLaunchers(QString parentName,QWidget *parent) {
     PotaQuery query(db);
     PotaQuery query2(db);
-    query.exec("SELECT * FROM fda_l_schema WHERE parent='"+parentName+"' ORDER BY item_index;");
+    query.exec("SELECT * FROM fada_launchers WHERE parent='"+parentName+"' ORDER BY item_index;");
     while (query.next()) {
 
         if (query.value("type").toString()=="Menu item") {
@@ -529,7 +559,7 @@ void MainWindow::CreateLaunchers(QString parentName,QWidget *parent) {
                 if (!query.value("graph").isNull()) {
                     text="G";
                 } else {
-                    QString tblType=query2.Select0ShowErr("SELECT tbl_type FROM fda_t_schema "
+                    QString tblType=query2.Select0ShowErr("SELECT tbl_type FROM fada_t_schema "
                                                           "WHERE (name='"+query.value("name").toString()+"')").toString();
                     if (tblType=="Table" or tblType=="View as table") text="T";
                     else if (tblType=="View") text="V";

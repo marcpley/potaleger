@@ -5,7 +5,6 @@
 #include "qdir.h"
 #include "qlabel.h"
 //#include "qregularexpression.h"
-#include "qregularexpression.h"
 #include "qsqlerror.h"
 #include "FdaUtils.h"
 #include <QFont>
@@ -41,31 +40,28 @@ bool PotaQuery::ExecShowErr(QString query)
 bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QProgressBar *progressBar, bool stopIfError, bool FDAInsert) //,bool keepReturns
 {
     QStringList QueryList=querys.split(spliter);
-    int queryListSize=QueryList.count();
     if (lErr) {
         QString s;
         s=lErr->text();
         if ((s.length()>11)and(s.last(11)==" statements"))
-            lErrStatements+=queryListSize;
+            s=str(s.first(s.length()-11).toInt()+QueryList.count())+" statements";
         else
-            lErrStatements=queryListSize;
-        s=str(lErrStatements)+" statements";
+            s=str(QueryList.count())+" statements";
         SetColoredText(lErr,s,"Info");
     }
     if (progressBar) {
         progressBar->setValue(0);
-        progressBar->setMaximum(queryListSize);
+        progressBar->setMaximum(QueryList.count());
     }
-    for (int i=0;i<queryListSize;i++) {
-        QString trimmedQuery=QueryList[i].trimmed();
-        if (trimmedQuery.isEmpty())
+    for (int i=0;i<QueryList.count();i++) {
+        if (QueryList[i].trimmed().isEmpty())
             continue;
         QString fda_cmd="";
         QString sQuery;
         if (FDAInsert)
-            sQuery=RemoveSQLcomment(trimmedQuery,false,&fda_cmd); //keepReturns
+            sQuery=RemoveSQLcomment(QueryList[i].trimmed(),false,&fda_cmd); //keepReturns
         else
-            sQuery=RemoveSQLcomment(trimmedQuery,false);
+            sQuery=RemoveSQLcomment(QueryList[i].trimmed(),false);
         clear();
         ExecShowErr(sQuery);
         if (progressBar) progressBar->setValue(progressBar->value()+1);
@@ -73,7 +69,7 @@ bool PotaQuery::ExecMultiShowErr(const QString querys, const QString spliter, QP
             //qWarning() << sQuery;
             //qWarning() << lastError().text();
             if (lErr)
-                SetColoredText(lErr,trimmedQuery+"\n"+lastError().text(),//+"\n"+DBInfo(db),
+                SetColoredText(lErr,QueryList[i].trimmed()+"\n"+lastError().text(),//+"\n"+DBInfo(db),
                                "Err");
             return false;
         } else if (!fda_cmd.isEmpty()) {
@@ -91,17 +87,6 @@ QVariant PotaQuery::Select0ShowErr(QString query)
         return value(0);
     else
         return vNull;
-}
-
-QList<QVariant> PotaQuery::SelectCol0(QString query)
-{
-    QList<QVariant> result;
-    if (ExecShowErr(query)) {
-        while (next()) {
-            result.append(value(0));
-        }
-    }
-    return result;
 }
 
 void AppBusy(bool busy,QProgressBar *pb,int max,int pos,QString text) {
@@ -446,89 +431,11 @@ QVariant muParse(QString formula) {//, QString returnType
         formula=formula.removeLast();
         returnError=true;
     }
-
-    //Switch to muParserX standard:
-
-    //Support null keyword.
-    while (formula.contains(" ==") or formula.contains("== ")) {
-        formula.replace(" ==","==");
-        formula.replace("== ","==");
-    }
-    formula.replace("null==null","true");
-    formula.replace("!null","true");
-
-    //String concat //
-    //String delimiter "
-    int pos=0;
-    int exprSize=formula.size();
-    bool inString=false;
-    QString muFormula;
-    QChar c;
-    QString varChars="abcdefghijklmnopqrstuvwxyz_1234567890";
-
-    while (pos<exprSize) {
-        c=formula[pos];
-
-        if (!inString) {
-            if (c=='|') { //Concat operator || -> //.
-                if (pos+1<exprSize and formula[pos+1]=='|') {
-                    muFormula+="//";
-                    pos+=2;
-                    continue;
-                }
-            } else if (c=="'") { //String delimiter ' -> "
-                inString=true;
-                muFormula+='"';
-                pos++;
-                continue;
-            } else if (c=="n" and formula.mid(pos).startsWith("null") and
-                       (pos+4==exprSize or ((pos+4<exprSize) and !varChars.contains(formula[pos+4],Qt::CaseInsensitive)))) { //null value
-                return QVariant();
-            }
-        } else {
-            if (c=="'") { //In string '' -> '.
-                if (pos+1<exprSize and formula[pos+1]=="'") {
-                    muFormula+="'";
-                    pos+=2;
-                    continue;
-                }
-                inString=false;
-                muFormula+="\"";
-                pos++;
-                continue;
-            } else if (c=='"') { //In string " -> \".
-                muFormula+="\\\"";
-                pos++;
-                continue;
-            }
-        }
-
-        muFormula+=c;
-        pos++;
-    }
-
-    // //Concat literal strings.
-    // QRegularExpression rx(R"((\'\s*\|\|\s*\'))");
-    // QRegularExpressionMatch rxm = rx.match(formula);
-    // //formula=
-    // formula.replace(rxm.captured(1),"");
-
-    // //muParserX string delimiter is ". Switch ' to ".
-    // if (formula=="''") {
-    //     formula="\"\"";
-    // } else if (formula.contains("'")) {
-    //     //formula=
-    //     formula.replace("\"","\"\"");                  //' '' " ' > ' '' "" '
-    //     formula.replace("''","lkrthgldbkrhvhytlhiub"); //' '' " ' > ' lkrthgldbkrhvhytlhiub "" '
-    //     formula.replace("'","\"");                     //' lkrthgldbkrhvhytlhiub "" ' > " lkrthgldbkrhvhytlhiub "" "
-    //     formula.replace("lkrthgldbkrhvhytlhiub","'");  //" lkrthgldbkrhvhytlhiub "" " > " ' "" "
-    // }
-
     mup::string_type expr;
     // #ifdef _WIN32
     //     expr=formula.trimmed().toStdWString();
     // #else
-        expr=muFormula.trimmed().toStdString();
+        expr=formula.trimmed().toStdString();
     // #endif
     mup::ParserX parser;
 
@@ -536,11 +443,7 @@ QVariant muParse(QString formula) {//, QString returnType
 
     QVariant result;
     try {
-
-        ///////////////////////////////
         mup::Value val = parser.Eval();
-        ///////////////////////////////
-
         // if (returnType.startsWith("BOOL"))
         //     result=val.GetBool();
         // else if (returnType.startsWith("INT"))
@@ -571,7 +474,7 @@ QVariant muParse(QString formula) {//, QString returnType
         if (returnError)
             return QVariant(err);
         else
-            return QVariant("="+muFormula+"!");
+            return QVariant("="+formula+"!");
     };
 }
 
@@ -620,16 +523,14 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
     QStringList cdeLines=sCde.split("\n");
     QString cdeLine;
     QString resultWithoutComment="";
-    resultWithoutComment.reserve(sCde.size());
     QString tablename="";
-    //QString fda_cmd="";
-    QVector<QString> fdaCmds;
+    QString fda_cmd="";
     int comment_index;
     int field_index=1;
     bool bTable;
-    int cdeLinesSize=cdeLines.size();
-    for (int i=0;i<cdeLinesSize;i++) { //Main loop : on file lines
-        cdeLine=cdeLines[i].trimmed();
+    for (int i=0;i<cdeLines.count();i++) {
+        cdeLine=cdeLines[i];
+        cdeLine=cdeLine.trimmed();
         QString comment="";
         comment_index=cdeLine.indexOf("--");
         if (comment_index!=-1) {
@@ -639,8 +540,8 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
             comment=cdeLine.mid(comment_index);
         } else {
             resultWithoutComment+=iif(i>0 and keepReturns,"\n","").toString()+
-                     cdeLine+
-                     iif(cdeLine.isEmpty(),""," ").toString();
+                     cdeLine.trimmed()+
+                     iif(cdeLine.trimmed().isEmpty(),""," ").toString();
         }
 
         if (fda_cmd_from_comments and comment.startsWith("---")) { //FDA comment
@@ -651,11 +552,10 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                 comment=comment.first(comment.indexOf("--"));
 
             //Read multiline FDA comment.
-            for (int j=i+1;j<cdeLinesSize;j++) {
-                QString cdeLineTrimmed=cdeLines[j].trimmed();
-                if (cdeLineTrimmed.startsWith("--")) {
-                    if (cdeLineTrimmed.startsWith("---"))
-                        comment+="\n"+cdeLineTrimmed.mid(3);
+            for (int j=i+1;j<cdeLines.count();j++) {
+                if (cdeLines[j].trimmed().startsWith("--")) {
+                    if (cdeLines[j].trimmed().startsWith("---"))
+                        comment+="\n"+cdeLines[j].trimmed().mid(3);
                     i++;//don't read again those comment lines next loop.
                 } else {
                     break;
@@ -664,14 +564,13 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
 
             //extract properties from multiline FDA comment.
             QStringList commentLines=comment.split("\n");
-            int commentLinesSize=commentLines.size();
             QString description="";
             QList<QStringList> properties={{},{}};
-            for (int j=0;j<commentLinesSize;j++) {
+            for (int j=0;j<commentLines.count();j++) {
                 // if (commentLines[j]=="goto_last")
                 //     qDebug() << "stop";
                 if (commentLines[j].contains("--")) // FDA comment (---) ends with dév comment (--).
-                    commentLines[j]=commentLines[j].first(commentLines[j].indexOf("--")).trimmed();
+                    commentLines[j]=commentLines[j].first(commentLines[j].indexOf("--"));
                 if (commentLines[j].startsWith(" ") or commentLines[j].isEmpty()) { //No keyword
                     description+=iif(!description.isEmpty(),"\n\n","").toString()+commentLines[j].trimmed();
                 } else {
@@ -682,7 +581,7 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                         sValue="x";
                     } else {
                         keyWord=commentLines[j].first(keyWordPos);
-                        sValue=commentLines[j].mid(keyWordPos+1).trimmed();
+                        sValue=commentLines[j].mid(keyWordPos+1);
                     }
                     if (properties[0].contains(keyWord)) {
                         properties[1][properties[0].indexOf(keyWord)]+="\n\n"+iif(sValue=="x","",sValue).toString();
@@ -693,18 +592,16 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                 }
             }
 
-            int properties0size=properties[0].size();
             if (cdeLine.startsWith("CREATE TABLE ")) {
                 bTable=true;
                 tablename=SubString(cdeLine,13);
                 int space_index=tablename.indexOf(" ");
                 tablename=tablename.first(space_index);
-                fdaCmds.clear();
-                fdaCmds.append("INSERT INTO fada_t_schema (name,tbl_type,description) "
-                               "VALUES ('"+tablename+"','Table',"+EscapeSQL(description)+");");
-                for (int j=0;j<properties0size;j++) {
-                    fdaCmds.append("UPDATE fada_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                   "WHERE name='"+tablename+"';");
+                fda_cmd="INSERT INTO fda_t_schema (name,tbl_type,description) "
+                        "VALUES ('"+tablename+"','Table',"+EscapeSQL(description)+");";
+                for (int j=0;j<properties[0].count();j++) {
+                    fda_cmd+="UPDATE fda_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                             "WHERE name='"+tablename+"';";
                 }
 
             } else if (cdeLine.startsWith("CREATE VIEW ")) {
@@ -713,15 +610,14 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                 int space_index=tablename.indexOf(" ");
                 tablename=tablename.first(space_index);
 
-                fdaCmds.clear();
-                fdaCmds.append("INSERT INTO fada_t_schema (name,tbl_type,description) "
-                               "VALUES ('"+tablename+"','View',"+EscapeSQL(description)+");");
-                for (int j=0;j<properties0size;j++) {
-                    fdaCmds.append("UPDATE fada_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                   "WHERE name='"+tablename+"';");
+                fda_cmd="INSERT INTO fda_t_schema (name,tbl_type,description) "
+                        "VALUES ('"+tablename+"','View',"+EscapeSQL(description)+");";
+                for (int j=0;j<properties[0].count();j++) {
+                    fda_cmd+="UPDATE fda_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                             "WHERE name='"+tablename+"';";
                 }
 
-            } else if (!fdaCmds.isEmpty() and !cdeLine.startsWith("--")) {  //Parse fields.
+            } else if (fda_cmd!="" and !cdeLine.startsWith("--")) {  //Parse fields.
                 if (bTable) { //Parse fields of a CREATE TABLE
                     int space_index=cdeLine.indexOf(" ");
                     if (space_index>0) {
@@ -733,17 +629,16 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                         if (type_index1==-1) type_index1=1000000;
                         if (type_index2==-1) type_index2=1000000;
                         if (type_index3==-1) type_index3=1000000;
-                        type_index1=std::min(std::min(type_index1,type_index2),type_index3);
+                        type_index1=fmin(fmin(type_index1,type_index2),type_index3);
                         if (type_index1<1000000) {
                             QString fieldtype=cdeLine.first(type_index1);
-                            QString cdeLineUpper=cdeLine.toUpper();
-                            bool pk=cdeLineUpper.contains("PRIMARY KEY");
-                            QString readOnly=iif(cdeLineUpper.contains(" AS "),"'Calculated'","NULL").toString();
-                            if (cdeLineUpper.contains(" AUTOINCREMENT")) {
+                            bool pk=cdeLine.toUpper().contains("PRIMARY KEY");
+                            QString readOnly=iif(cdeLine.toUpper().contains(" AS "),"'Calculated'","NULL").toString();
+                            if (cdeLine.contains(" AUTOINCREMENT")) {
                                 fieldtype="AUTOINCREMENT";
                                 readOnly="'x'";
                             }
-                            int ref_index=cdeLineUpper.indexOf("REFERENCES ");
+                            int ref_index=cdeLine.indexOf("REFERENCES ");
                             QString masterTable="NULL";
                             QString masterField="NULL";
                             if (ref_index>0) {
@@ -756,14 +651,14 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                                     masterTable="'"+masterTable.first(ref_index)+"'";
                                 }
                             }
-                            fdaCmds.append("INSERT INTO fada_f_schema (name,field_index,field_name,field_type,description,"
-                                                                     "natural_sort,master_table,master_field,readonly) "
-                                           "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"','"+fieldtype+"',"+EscapeSQL(description)+","+
-                                                    iif(pk,"0","NULL").toString()+","+masterTable+","+masterField+","+readOnly+");");
+                            fda_cmd+="INSERT INTO fda_f_schema (name,field_index,field_name,field_type,description,"
+                                                               "natural_sort,master_table,master_field,readonly) "
+                                     "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"','"+fieldtype+"',"+EscapeSQL(description)+","+
+                                              iif(pk,"0","NULL").toString()+","+masterTable+","+masterField+","+readOnly+");";
                             field_index++;
-                            for (int j=0;j<properties0size;j++) {
-                                fdaCmds.append("UPDATE fada_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                               "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');");
+                            for (int j=0;j<properties[0].count();j++) {
+                                fda_cmd+="UPDATE fda_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                                         "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');";
                             }
                         } else {
                             qWarning() << "SQL parse error 0: "+cdeLine;
@@ -780,8 +675,8 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                             if (orderBy[j].endsWith(")")) orderBy[j].removeLast();
                             if (orderBy[j].contains("."))
                                 orderBy[j]=orderBy[j].split(".")[1];
-                            fdaCmds.append("UPDATE fada_f_schema SET natural_sort="+str(j)+" "
-                                           "WHERE (name='"+tablename+"')AND(field_name='"+orderBy[j]+"');");
+                            fda_cmd+="UPDATE fda_f_schema SET natural_sort="+str(j)+" "
+                                     "WHERE (name='"+tablename+"')AND(field_name='"+orderBy[j]+"');";
                         }
                     } else { //Parse fields of a CREATE VIEW
                         int fieldIndex=cdeLine.lastIndexOf(" ");
@@ -794,12 +689,12 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                         if (!fieldname.isEmpty()) {
                             if (fieldname.endsWith(",")) fieldname.removeLast();
                             QString readOnly=iif(cdeLine.contains("(") or cdeLine.contains(")"),"'Calculated'","'x'").toString();
-                            fdaCmds.append("INSERT INTO fada_f_schema (name,field_index,field_name,description,readonly) "
-                                           "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"',"+EscapeSQL(description)+","+readOnly+");");
+                            fda_cmd+="INSERT INTO fda_f_schema (name,field_index,field_name,description,readonly) "
+                                     "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"',"+EscapeSQL(description)+","+readOnly+");";
                             field_index++;
-                            for (int j=0;j<properties0size;j++) {
-                                fdaCmds.append("UPDATE fada_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                               "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');");
+                            for (int j=0;j<properties[0].count();j++) {
+                                fda_cmd+="UPDATE fda_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
+                                         "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');";
                             }
                         } else {
                             qWarning() << "SQL parse error 2: "+cdeLine;
@@ -811,7 +706,7 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
         }
     }
     if (fda_cmd_from_comments)
-        *fda_cmd_from_comments=fdaCmds.join("\n");
+        *fda_cmd_from_comments=fda_cmd;
 
     //qDebug() << fda_cmd;
 
@@ -927,23 +822,21 @@ QString StrRemoveLasts(QString s, int i){
 }
 
 QString StrReplace(QString s, const QString sTarg, const QString sRepl) {
-    // int index=0;
-    // int index2=0;
-    // if (sTarg.isEmpty())
-    //     return s;
-    // while ((index=s.indexOf(sTarg, index2)) != -1) {
-    //     s.replace(index, sTarg.length(), sRepl);
-    //     index2=index+sRepl.length();  // To avoid infinite loop
-    // }
-    // return s;
-    return s.replace(sTarg,sRepl);
+    int index=0;
+    int index2=0;
+    if (sTarg.isEmpty())
+        return s;
+    while ((index=s.indexOf(sTarg, index2)) != -1) {
+        s.replace(index, sTarg.length(), sRepl);
+        index2=index+sRepl.length();  // To avoid infinite loop
+    }
+    return s;
 }
 
 QString StrReplaceAll(QString s, const QString sTarg, const QString sRepl) {
     int i=0;
     while (s.contains(sTarg)) {
-        //s=
-        s.replace(sTarg,sRepl);
+        s=s.replace(sTarg,sRepl);
         i++;
         if (i>1000) break;
     }

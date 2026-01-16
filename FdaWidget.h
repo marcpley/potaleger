@@ -129,7 +129,7 @@ public:
             }
         }
         if (role==Qt::TextAlignmentRole) {
-            if (StrLast(data(index,Qt::EditRole).toString(),1)=='%' or
+            if (StrLast(data(index,Qt::EditRole).toString(),1)=="%" or
                 moneyColumns.contains(index.column())) {
                 return Qt::AlignRight;
             }
@@ -479,14 +479,15 @@ class PotaWidget: public QWidget
 public:
     PotaWidget(QWidget *parent=0);
 
-    void Init(QString TableName);
+    bool Init(QString Titre, QString TableName, bool ReadOnlyDb, QProgressBar *progressBar, QLabel *lErr);
     PotaTableModel *model;
     QTableView *tv;
     PotaItemDelegate *delegate;
     //PotaQuery *query;//for specials coded querys.
     QTabWidget *twParent;
     bool isCommittingError=false;
-    QLabel *lTabTitle;
+    QLabel *lTabTitle=nullptr;
+    QString title;
     QTextEdit *editNotes;
     QAction *aSaveNotes;
     QTextEdit *editSelInfo;
@@ -535,10 +536,11 @@ public:
     QLabel *lPageFilter;
     QComboBox *cbPageFilter;
     QStringList pageFilterFilters;
+    QString scriptFilter;
 
     QLabel *lErr;
     QAction *mEditNotes;
-    QComboBox *cbFontSize;
+    //QComboBox *cbFontSize;
 
     QWidget *toolbarCV;
     QToolButton *pbRefreshCV;

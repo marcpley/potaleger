@@ -2,10 +2,15 @@
 #include <QApplication>
 #include <QMessageBox>
 #include "FdaSqlFormat.h"
+#include "FdaWidget.h"
+//#include "data/FdaCalls.h"
 #include "qcheckbox.h"
 #include "qcombobox.h"
+#include "qdatetimeedit.h"
+#include "qlineedit.h"
 #include "qmenu.h"
 #include "qscrollarea.h"
+#include "qspinbox.h"
 #include "qsqlerror.h"
 #include <QDialog>
 #include <QVBoxLayout>
@@ -161,83 +166,6 @@ QString selectionInfo(QPlainTextEdit* SQLEdit) {
 }
 
 } // namespace
-
-void MessageDlg(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
-{
-    QDialog dialog(QApplication::activeWindow());
-    dialog.setWindowTitle(titre);
-
-    QVBoxLayout *layout=new QVBoxLayout(&dialog);
-    QHBoxLayout *headerLayout=new QHBoxLayout();
-
-    if (iconType!=QStyle::SP_CustomBase) {
-        QLabel *iconLabel=new QLabel();
-        QIcon icon;
-        if (iconType==QStyle::NStandardPixmap)
-            icon=QIcon(":/images/potaleger.svg");
-        else
-            icon=QApplication::style()->standardIcon(iconType);
-        iconLabel->setPixmap(icon.pixmap( 150, 64));
-        iconLabel->setFixedSize(150,64);
-        headerLayout->addWidget(iconLabel);
-    }
-
-    QString sMess=message;
-    QString sMess2=message2;
-    if (isDarkTheme()){
-        sMess=StrReplace(sMess,"<a href","<a style=\"color: #7785ff\" href");
-        sMess2=StrReplace(sMess2,"<a href","<a style=\"color: #7785ff\" href");
-    }
-    QLabel *messageLabel=new QLabel(sMess);
-    //messageLabel->setWordWrap(true);
-    messageLabel->setOpenExternalLinks(true);
-    messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    messageLabel->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
-    headerLayout->addWidget(messageLabel);
-    headerLayout->addStretch();
-    layout->addLayout(headerLayout);
-
-    if (message2!=""){
-        QScrollArea *scrollArea=new QScrollArea();
-        //scrollArea->setWidgetResizable(true);
-
-        QLabel *messageLabel2=new QLabel(sMess2);
-        messageLabel2->setWordWrap(true);
-        messageLabel2->setOpenExternalLinks(true);
-        messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
-        SetFontWeight(messageLabel2,QFont::Light);
-        SetFontWeight(messageLabel,QFont::DemiBold);
-        messageLabel2->setFixedWidth(fmax(dialog.sizeHint().width(),MinWidth)-45);
-        //messageLabel2->adjustSize();
-        QSize screenSize=QGuiApplication::primaryScreen()->size();
-        int maxHeight=screenSize.height()-200;
-        scrollArea->setMaximumHeight(maxHeight);
-        scrollArea->setWidget(messageLabel2);
-
-        layout->addWidget(scrollArea);
-    }
-
-    QHBoxLayout *buttonLayout=new QHBoxLayout();
-    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
-    okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
-
-    buttonLayout->addStretch();
-    buttonLayout->addWidget(okButton);
-    layout->addLayout(buttonLayout);
-
-    QObject::connect(okButton, &QPushButton::clicked, [&]() {
-        dialog.accept();
-    });
-
-    int w,h;
-    w=fmax(dialog.sizeHint().width(),MinWidth);
-    h=fmax(dialog.sizeHint().height(),150);
-    dialog.setFixedSize(w,h);//User can't resize the window.
-    //dialog.setMinimumWidth(w);
-
-
-    dialog.exec();
-}
 
 QStringList GraphDialog(const QString &titre, const QString &message, QStringList columns, QStringList dataTypes)
 {
@@ -828,10 +756,10 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
 
     QPlainTextEdit *SQLEdit=new QPlainTextEdit(&dialog);
     new SqlHighlighter(SQLEdit->document());
-    QFont monospaceFont;
-    monospaceFont.setStyleHint(QFont::Monospace);
-    monospaceFont.setFamily("Monospace");
-    SQLEdit->setFont(monospaceFont);
+    QFont font;
+    //font.setStyleHint(QFont::Monospace);
+    font.setFamily("Monospace");
+    SQLEdit->setFont(font);
     SQLEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
 
     QSettings settings;//("greli.net", "Potaléger");
@@ -858,7 +786,7 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
 
     bool result=false;
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
-        PotaQuery pQuery(db);        
+        PotaQuery pQuery(db);
         QStringList values;
         if (SQLEdit->toPlainText().toUpper().startsWith("SELECT ") or
             //SQLEdit->toPlainText().toUpper().startsWith("PRAGMA TABLE_") or
@@ -1024,7 +952,273 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
 }
 
 
-bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
+QList<inputResult> inputDialog(const QString &titre, const QString &message,QList<inputStructure> inputs,
+                               const bool bNext, QStyle::StandardPixmap iconType, const int MinWidth) {
+    QDialog dialog(QApplication::activeWindow());
+    dialog.setWindowTitle(titre);
+
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
+
+    if (iconType!=QStyle::SP_CustomBase) {
+        QLabel *iconLabel=new QLabel();
+        QIcon icon;
+        if (iconType==QStyle::NStandardPixmap)
+            icon=QIcon(":/images/potaleger.svg");
+        else
+            icon=QApplication::style()->standardIcon(iconType);
+        iconLabel->setPixmap(icon.pixmap(64, 64));
+        iconLabel->setFixedSize(64,64);
+        headerLayout->addWidget(iconLabel);
+    }
+
+    QLabel *messageLabel=new QLabel(message);
+    messageLabel->setWordWrap(true);
+    messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    headerLayout->addWidget(messageLabel);
+    layout->addLayout(headerLayout);
+
+    QVBoxLayout *inputsLayout=new QVBoxLayout();
+    QList<QHBoxLayout*> HInputLayoutList;
+    QHBoxLayout *curHBoxLayout;
+    int lastInputRigth=0;
+
+    for (int i=0;i<inputs.count();i++) {
+        if (HInputLayoutList.count()==0 or lastInputRigth>inputs[i].left) {
+            if (HInputLayoutList.count()>0) curHBoxLayout->addStretch();
+            QHBoxLayout *inputLayout=new QHBoxLayout();
+            HInputLayoutList.append(inputLayout);
+            inputsLayout->addLayout(inputLayout);
+            lastInputRigth=0;
+        }
+        curHBoxLayout=HInputLayoutList[HInputLayoutList.count()-1]; //Last QHBoxLayout.
+
+        if(inputs[i].type!="BOOL") {
+            QLabel *inputLabel=new QLabel(inputs[i].label);
+            if (inputs[i].labelWidth>-1)
+                inputLabel->setFixedWidth(inputs[i].labelWidth);
+            if (inputs[i].left>0)
+                curHBoxLayout->addSpacing(inputs[i].left-lastInputRigth);
+            curHBoxLayout->addWidget(inputLabel);
+        }
+        QWidget *inputWidget=new QWidget();
+
+        QString autoToolTip;
+        if(inputs[i].type=="INTEGER") {
+            QSpinBox *input=new QSpinBox();
+            QStringList sl=inputs[i].valDef.split('|');
+            if (sl.count()>2) {
+                input->setValue(sl[0].toInt());
+                input->setMinimum(sl[1].toInt());
+                input->setMaximum(sl[2].toInt());
+                autoToolTip="\n\n"+QObject::tr("Min : ")+sl[1]+
+                            "\n"+QObject::tr("Max : ")+sl[2];
+            } else {
+                input->setValue(inputs[i].valDef.toInt());
+                input->setMinimum(-100000);
+                input->setMaximum(100000);
+            }
+            inputWidget=input;
+        } else if(inputs[i].type=="REAL") {
+            QDoubleSpinBox *input=new QDoubleSpinBox();
+            QStringList sl=inputs[i].valDef.split('|');
+            if (sl.count()>2) {
+                input->setValue(sl[0].toDouble());
+                input->setMinimum(sl[1].toDouble());
+                input->setMaximum(sl[2].toDouble());
+                autoToolTip="\n\n"+QObject::tr("Min : ")+sl[1]+
+                            "\n"+QObject::tr("Max : ")+sl[2];
+            } else {
+                input->setValue(inputs[i].valDef.toDouble());
+                input->setMinimum(-100000);
+                input->setMaximum(100000);
+            }
+            // QLocale l=input->locale();
+            // l.decimalPoint()=".";
+            // input->setLocale(l);
+            inputWidget=input;
+        } else if(inputs[i].type=="DATE") {
+            QDateEdit *input=new QDateEdit();
+            QStringList sl=inputs[i].valDef.split('|');
+            if (sl.count()>2) {
+                input->setDate(QDate::fromString(sl[0],"yyyy-MM-dd"));
+                input->setMinimumDate(QDate::fromString(sl[1],"yyyy-MM-dd"));
+                input->setMaximumDate(QDate::fromString(sl[2],"yyyy-MM-dd"));
+                autoToolTip="\n\n"+QObject::tr("Min : ")+QDate::fromString(sl[1],"yyyy-MM-dd").toString("dd/MM/yyyy")+
+                            "\n"+QObject::tr("Max : ")+QDate::fromString(sl[2],"yyyy-MM-dd").toString("dd/MM/yyyy");
+            } else
+                input->setDate(QDate::fromString(inputs[i].valDef,"yyyy-MM-dd"));
+            inputWidget=input;
+        } else if(inputs[i].type=="BOOL") {
+            if (inputs[i].left>0)
+                curHBoxLayout->addSpacing(inputs[i].left-lastInputRigth);
+            QCheckBox *input=new QCheckBox(inputs[i].label);
+            input->setChecked(inputs[i].valDef=="1" or inputs[i].valDef.toLower()=="true");
+            inputWidget=input;
+        } else {
+            QStringList sl=inputs[i].valDef.split('|');
+            if (sl.count()>1) {
+                QComboBox *input=new QComboBox();
+                input->addItems(sl);
+                inputWidget=input;
+            } else {
+                QLineEdit *input=new QLineEdit();
+                input->setText(inputs[i].valDef);
+                inputWidget=input;
+            }
+        }
+        inputWidget->setObjectName("vn_"+inputs[i].varName);
+        inputWidget->setFixedWidth(inputs[i].inputWidth);
+        inputWidget->setToolTip(inputs[i].toolTip+autoToolTip);
+        curHBoxLayout->addWidget(inputWidget);
+        lastInputRigth=inputs[i].left+inputs[i].labelWidth+inputs[i].inputWidth;
+    }
+    if (HInputLayoutList.count()>0) curHBoxLayout->addStretch();
+
+    layout->addLayout(inputsLayout);
+
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
+    QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
+    if (bNext)
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    else
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
+
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(okButton);
+    buttonLayout->addWidget(cancelButton);
+    layout->addLayout(buttonLayout);
+
+    QList<inputResult> result; // Valeur par défaut si annulé
+    QObject::connect(okButton, &QPushButton::clicked, [&]() {
+        for (int i=0;i<HInputLayoutList.count();i++) {
+            curHBoxLayout=HInputLayoutList[i];
+            for (int j=0;j<curHBoxLayout->count();j++) {
+                QLayoutItem *item = curHBoxLayout->itemAt(j);
+                if (QWidget *widget = item->widget()) {
+                    if (widget->objectName().startsWith("vn_")) {
+                        if (QSpinBox *widget2 = qobject_cast<QSpinBox*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->value()});
+                        else if (QSpinBox *widget2 = qobject_cast<QSpinBox*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->value()});
+                        else if (QDoubleSpinBox *widget2 = qobject_cast<QDoubleSpinBox*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->value()});
+                        else if (QDateEdit *widget2 = qobject_cast<QDateEdit*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->date()});
+                        else if (QCheckBox *widget2 = qobject_cast<QCheckBox*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->isChecked()});
+                        else if (QComboBox *widget2 = qobject_cast<QComboBox*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->currentText()});
+                        else if (QLineEdit *widget2 = qobject_cast<QLineEdit*>(widget))
+                            result.append({widget2->objectName().mid(3),
+                                           widget2->text()});
+                    }
+                }
+            }
+        }
+        dialog.accept();
+    });
+    QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
+        dialog.reject();
+    });
+
+    int w,h;
+    w=fmax(dialog.sizeHint().width(),MinWidth);
+    h=fmax(dialog.sizeHint().height(),150);
+    dialog.setFixedSize(w,h);//User can't resize the window.
+
+    dialog.exec();
+
+    return result;
+}
+
+void MessageDlg(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
+{
+    QDialog dialog(QApplication::activeWindow());
+    dialog.setWindowTitle(titre);
+
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
+
+    if (iconType!=QStyle::SP_CustomBase) {
+        QLabel *iconLabel=new QLabel();
+        QIcon icon;
+        if (iconType==QStyle::NStandardPixmap)
+            icon=QIcon(":/images/potaleger.svg");
+        else
+            icon=QApplication::style()->standardIcon(iconType);
+        iconLabel->setPixmap(icon.pixmap( 150, 64));
+        iconLabel->setFixedSize(150,64);
+        headerLayout->addWidget(iconLabel);
+    }
+
+    QString sMess=message;
+    QString sMess2=message2;
+    if (isDarkTheme()){
+        sMess=StrReplace(sMess,"<a href","<a style=\"color: #7785ff\" href");
+        sMess2=StrReplace(sMess2,"<a href","<a style=\"color: #7785ff\" href");
+    }
+    QLabel *messageLabel=new QLabel(sMess);
+    //messageLabel->setWordWrap(true);
+    messageLabel->setOpenExternalLinks(true);
+    messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    messageLabel->setTextInteractionFlags(Qt::LinksAccessibleByMouse);
+    headerLayout->addWidget(messageLabel);
+    headerLayout->addStretch();
+    layout->addLayout(headerLayout);
+
+    if (message2!=""){
+        QScrollArea *scrollArea=new QScrollArea();
+        //scrollArea->setWidgetResizable(true);
+
+        QLabel *messageLabel2=new QLabel(sMess2);
+        messageLabel2->setWordWrap(true);
+        messageLabel2->setOpenExternalLinks(true);
+        messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
+        SetFontWeight(messageLabel2,QFont::Light);
+        SetFontWeight(messageLabel,QFont::DemiBold);
+        messageLabel2->setFixedWidth(fmax(dialog.sizeHint().width(),MinWidth)-45);
+        //messageLabel2->adjustSize();
+        QSize screenSize=QGuiApplication::primaryScreen()->size();
+        int maxHeight=screenSize.height()-200;
+        scrollArea->setMaximumHeight(maxHeight);
+        scrollArea->setWidget(messageLabel2);
+
+        layout->addWidget(scrollArea);
+    }
+
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+    okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(okButton);
+    layout->addLayout(buttonLayout);
+
+    QObject::connect(okButton, &QPushButton::clicked, [&]() {
+        dialog.accept();
+    });
+
+    int w,h;
+    w=fmax(dialog.sizeHint().width(),MinWidth);
+    h=fmax(dialog.sizeHint().height(),150);
+    dialog.setFixedSize(w,h);//User can't resize the window.
+    //dialog.setMinimumWidth(w);
+
+
+    dialog.exec();
+}
+
+bool OkCancelDialog(const QString &titre, const QString &message, const bool bNext, QStyle::StandardPixmap iconType, const int MinWidth)
 {
     QDialog dialog(QApplication::activeWindow());
     dialog.setWindowTitle(titre);
@@ -1051,9 +1245,13 @@ bool OkCancelDialog(const QString &titre, const QString &message, QStyle::Standa
     layout->addLayout(headerLayout);
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
-    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
+
+    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
-    okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    if (bNext)
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    else
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
     buttonLayout->addStretch();
@@ -1152,6 +1350,112 @@ int RadiobuttonDialog(const QString &titre, const QString &message, const QStrin
     dialog.setFixedSize(w,h);//User can't resize the window.
 
     dialog.exec();
+
+    return result;
+}
+
+QList<inputResult> selectDialog(const QString &titre, const QString &message, QSqlDatabase db, QString varName, QString tableName, QString whereClose,
+                                QProgressBar *progressBar, QLabel *lErr, const bool bNext, QStyle::StandardPixmap iconType, QString toolTip) {
+    QList<inputResult> result;
+
+    QDialog dialog(QApplication::activeWindow());
+    dialog.setWindowTitle(titre);
+
+    QVBoxLayout *layout=new QVBoxLayout(&dialog);
+    QHBoxLayout *headerLayout=new QHBoxLayout();
+
+    if (iconType!=QStyle::SP_CustomBase) {
+        QLabel *iconLabel=new QLabel();
+        QIcon icon;
+        if (iconType==QStyle::NStandardPixmap)
+            icon=QIcon(":/images/potaleger.svg");
+        else
+            icon=QApplication::style()->standardIcon(iconType);
+        iconLabel->setPixmap(icon.pixmap(64, 64));
+        iconLabel->setFixedSize(64,64);
+        headerLayout->addWidget(iconLabel);
+    }
+
+    QLabel *messageLabel=new QLabel(message);
+    messageLabel->setWordWrap(true);
+    messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    headerLayout->addWidget(messageLabel);
+    layout->addLayout(headerLayout);
+
+    QVBoxLayout *selectLayout=new QVBoxLayout();
+    PotaWidget *w=new PotaWidget(&dialog);
+    w->setObjectName("PW"+tableName);
+    w->model->db=&db;
+
+    if (!w->Init(titre,tableName,true,progressBar,lErr)) {
+        result.append({"error",w->model->lastError().text()});
+        return result;
+    }
+    if (!whereClose.isEmpty()) {
+        w->scriptFilter=whereClose;
+        w->pbFilterClick(false);
+    }
+    if (!toolTip.isEmpty()) {
+        QToolButton *dialogToolTip=new QToolButton(w);
+        dialogToolTip->setIcon(QIcon(":/images/help.svg"));
+        dialogToolTip->setToolTip(toolTip);
+        w->toolbar->layout()->addWidget(dialogToolTip);
+    }
+
+    selectLayout->addWidget(w);
+    layout->addLayout(selectLayout);
+
+    QHBoxLayout *buttonLayout=new QHBoxLayout();
+    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
+    QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
+    if (bNext)
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    else
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    okButton->setEnabled(w->model->rowCount()>0);
+    cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
+
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(okButton);
+    buttonLayout->addWidget(cancelButton);
+    layout->addLayout(buttonLayout);
+
+    QObject::connect(w->tv, &PotaTableView::doubleClicked, [&]() {
+        okButton->clicked();
+    });
+    QObject::connect(okButton, &QPushButton::clicked, [&]() {
+        for (int i=0; i<w->model->columnCount();i++){
+            result.append({varName+"_"+w->model->headerData(i,Qt::Horizontal,Qt::EditRole).toString(),
+                           w->model->data(w->model->index(w->tv->currentIndex().row(),i),Qt::EditRole)});
+        }
+        result.append({varName+"_selectedColName",w->model->headerData(w->tv->currentIndex().column(),Qt::Horizontal,Qt::EditRole)});
+        result.append({varName+"_selectedColValue",w->model->data(w->model->index(w->tv->currentIndex().row(),w->tv->currentIndex().column()),Qt::EditRole)});
+        dialog.accept();
+    });
+    QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
+        dialog.reject();
+    });
+
+    //dialog.setFixedSize(w,h);//User can't resize the window.
+    //dialog.setMinimumWidth(fmax(dialog.sizeHint().width(),MinWidth));
+    //dialog.setMinimumHeight(fmax(dialog.sizeHint().height(),150));
+    QSettings settings;
+    settings.beginGroup(titre);
+    const auto geometry=settings.value("geometry").toByteArray();
+    if (!geometry.isEmpty())
+        dialog.restoreGeometry(geometry);
+    settings.endGroup();
+
+    //////////////
+    dialog.exec();
+    //////////////
+
+    if (dialog.result()==QDialog::Accepted) {
+        settings.beginGroup(titre);
+        settings.setValue("geometry", dialog.saveGeometry());
+        settings.endGroup();
+    }
 
     return result;
 }

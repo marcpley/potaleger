@@ -3,6 +3,8 @@
 
 #include "qcombobox.h"
 #include "qcontainerfwd.h"
+#include "qlabel.h"
+#include "qprogressbar.h"
 #include "qsqldatabase.h"
 #include <QStyle>
 #include <QFrame>
@@ -62,8 +64,27 @@ void setYAxisCalc(QComboBox *cb, QString dataType);
 
 QString QueryDialog(const QString &titre, const QString &message, QSqlDatabase db);
 
-bool OkCancelDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
+    struct inputStructure{
+        QString varName="";
+        QString label="";
+        QString type="TEXT";
+        int left=0;
+        int labelWidth=250;
+        int inputWidth=100;
+        QString valDef="";
+        QString toolTip="";
+    };
+    struct inputResult{
+        QString varName;
+        QVariant value;
+    };
+
+    QList<inputResult> inputDialog(const QString &titre, const QString &message, QList<inputStructure> inputs,
+                                   const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
+bool OkCancelDialog(const QString &titre, const QString &message, const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
 int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, const QSet<int> disabledOptions={}, const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
+QList<inputResult> selectDialog(const QString &titre, const QString &message, QSqlDatabase db, QString varName, QString tableName, QString whereClose,
+                                QProgressBar *progressBar, QLabel *lErr,const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, QString toolTip="");
 bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
 
 

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/md">
+        <file>fada.md</file>
+    </qresource>
+</RCC>

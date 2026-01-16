@@ -12,7 +12,7 @@ CREATE TABLE Params ( ---
     Unité TEXT,
     color TEXT) ---HIDDEN
     ;
-UPDATE fda_f_schema SET readonly='x' WHERE (name='Params')AND(field_name!='Valeur');
+UPDATE fada_f_schema SET readonly='x' WHERE (name='Params')AND(field_name!='Valeur');
 
 INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
     VALUES  ('Général', 'Utilisateur', 'Personne, entreprise ou organisation utilisant cette BDD Potaléger', NULL, NULL),
@@ -74,7 +74,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
 
 UPDATE Params SET
     Valeur=coalesce((SELECT T.Valeur FROM Temp_Params T WHERE T.Paramètre=Params.Paramètre),Params.Valeur),
-    color=(SELECT F.color FROM fda_t_schema F WHERE F.name LIKE Section||'%');
+    color=(SELECT F.color FROM fada_t_schema F WHERE F.name LIKE Section||'%');
 
 DROP TABLE Temp_Params;
 
