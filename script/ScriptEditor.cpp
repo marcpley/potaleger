@@ -52,7 +52,7 @@ QString scriptEditor(const QString &title, const QString &message, const QString
     layout->addLayout(headerLayout);
 
     PotaQuery query(db);
-    QList<QVariant> TableAndFieldNames=query.SelectCol0("SELECT DISTINCT name FROM fada_t_schema "
+    QList<QVariant> TableAndFieldNames=query.SelectCol0("SELECT DISTINCT tv_name FROM fada_t_schema "
                                                         "UNION "
                                                         "SELECT DISTINCT field_name FROM fada_f_schema ");
     QStringList dbNames;

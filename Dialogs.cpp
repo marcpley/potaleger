@@ -953,8 +953,8 @@ QString QueryDialog(const QString &titre, const QString &message,QSqlDatabase db
 
 
 QList<inputResult> inputDialog(const QString &titre, const QString &message,QList<inputStructure> inputs,
-                               const bool bNext, QStyle::StandardPixmap iconType, const int MinWidth) {
-    QDialog dialog(QApplication::activeWindow());
+                               QString &buttons, QStyle::StandardPixmap iconType, const QString geometry) {
+    QDialog dialog(nullptr);
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout=new QVBoxLayout(&dialog);
@@ -1079,17 +1079,30 @@ QList<inputResult> inputDialog(const QString &titre, const QString &message,QLis
     layout->addLayout(inputsLayout);
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
-    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
+    QPushButton *prevButton=new QPushButton("<< "+QObject::tr("Précédent"));
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
-    if (bNext)
+    if (buttons=="NextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
-    else
+        prevButton->setVisible(false);
+    } else if (buttons=="PrevNextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    } else if (buttons=="PrevFinishCancel") {
+        okButton->setText(QObject::tr("Terminer"));
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    } else {
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+        prevButton->setVisible(false);
+    }
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
     buttonLayout->addStretch();
+    buttonLayout->addWidget(prevButton);
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
+    layout->addStretch();
     layout->addLayout(buttonLayout);
 
     QList<inputResult> result; // Valeur par défaut si annulé
@@ -1125,25 +1138,42 @@ QList<inputResult> inputDialog(const QString &titre, const QString &message,QLis
                 }
             }
         }
+        buttons="ok";
         dialog.accept();
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
+        buttons="cancel";
+        dialog.reject();
+    });
+    QObject::connect(prevButton, &QPushButton::clicked, [&]() {
+        buttons="previous";
         dialog.reject();
     });
 
-    int w,h;
-    w=fmax(dialog.sizeHint().width(),MinWidth);
-    h=fmax(dialog.sizeHint().height(),150);
-    dialog.setFixedSize(w,h);//User can't resize the window.
+    setGeometry(&dialog,geometry);
 
     dialog.exec();
+
+    dialog.deleteLater();
 
     return result;
 }
 
-void MessageDlg(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const int MinWidth)
+void setGeometry(QDialog *dialog, QString sGeometry) {
+    QStringList iGeometry=QString(sGeometry+"||||").split("|");
+    int w=std::max(std::max(dialog->sizeHint().width(),iGeometry[0].toInt()),350);
+    int h=std::max(std::max(dialog->sizeHint().height(),iGeometry[1].toInt()),150);
+    int l=iGeometry[2].toInt();
+    int t=iGeometry[3].toInt();
+    dialog->setFixedSize(w,h);//User can't resize the window.
+    if (l!=0 or t!=0) {
+        dialog->setGeometry(l,t,w,h);
+    }
+}
+
+void MessageDlg(const QString &titre, const QString &message, const QString &message2, QStyle::StandardPixmap iconType, const QString geometry)
 {
-    QDialog dialog(QApplication::activeWindow());
+    QDialog dialog(nullptr);
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout=new QVBoxLayout(&dialog);
@@ -1186,8 +1216,7 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
         messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
         SetFontWeight(messageLabel2,QFont::Light);
         SetFontWeight(messageLabel,QFont::DemiBold);
-        messageLabel2->setFixedWidth(fmax(dialog.sizeHint().width(),MinWidth)-45);
-        //messageLabel2->adjustSize();
+        //messageLabel2->setFixedWidth(fmax(dialog.sizeHint().width(),MinWidth)-45);
         QSize screenSize=QGuiApplication::primaryScreen()->size();
         int maxHeight=screenSize.height()-200;
         scrollArea->setMaximumHeight(maxHeight);
@@ -1208,19 +1237,16 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
         dialog.accept();
     });
 
-    int w,h;
-    w=fmax(dialog.sizeHint().width(),MinWidth);
-    h=fmax(dialog.sizeHint().height(),150);
-    dialog.setFixedSize(w,h);//User can't resize the window.
-    //dialog.setMinimumWidth(w);
-
+    setGeometry(&dialog,geometry);
 
     dialog.exec();
+
+    dialog.deleteLater();
 }
 
-bool OkCancelDialog(const QString &titre, const QString &message, const bool bNext, QStyle::StandardPixmap iconType, const int MinWidth)
+bool OkCancelDialog(const QString &titre, const QString &message, QString &buttons, QStyle::StandardPixmap iconType, const QString geometry)
 {
-    QDialog dialog(QApplication::activeWindow());
+    QDialog dialog(nullptr);//QApplication::activeWindow()
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout=new QVBoxLayout(&dialog);
@@ -1246,15 +1272,27 @@ bool OkCancelDialog(const QString &titre, const QString &message, const bool bNe
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
 
-    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
+    QPushButton *prevButton=new QPushButton("<< "+QObject::tr("Précédent"));
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
-    if (bNext)
+    if (buttons=="NextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
-    else
+        prevButton->setVisible(false);
+    } else if (buttons=="PrevNextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    } else if (buttons=="PrevFinishCancel") {
+        okButton->setText(QObject::tr("Terminer"));
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    } else {
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+        prevButton->setVisible(false);
+    }
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
     buttonLayout->addStretch();
+    buttonLayout->addWidget(prevButton);
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
@@ -1262,25 +1300,31 @@ bool OkCancelDialog(const QString &titre, const QString &message, const bool bNe
     int result=false;
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
         result=true;
+        buttons="ok";
         dialog.accept();
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
-        result=false;
+        buttons="cancel";
+        dialog.reject();
+    });
+    QObject::connect(prevButton, &QPushButton::clicked, [&]() {
+        buttons="previous";
         dialog.reject();
     });
 
-    int w,h;
-    w=fmax(dialog.sizeHint().width(),MinWidth);
-    h=fmax(dialog.sizeHint().height(),150);
-    dialog.setFixedSize(w,h);//User can't resize the window.
+    setGeometry(&dialog,geometry);
 
     dialog.exec();
+
+    dialog.deleteLater();
 
     return result;
 }
 
-int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, const QSet<int> disabledOptions, const bool bNext, QStyle::StandardPixmap iconType, const int MinWidth) {
-    QDialog dialog(QApplication::activeWindow());
+int RadiobuttonDialog(const QString &titre, const QString &message, QString &buttons,
+                      const QStringList &options, const int iDef, const QSet<int> disabledOptions,
+                      QStyle::StandardPixmap iconType, const QString geometry) {
+    QDialog dialog(nullptr);
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout=new QVBoxLayout(&dialog);
@@ -1321,41 +1365,57 @@ int RadiobuttonDialog(const QString &titre, const QString &message, const QStrin
     }
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
-    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
+    QPushButton *prevButton=new QPushButton("<< "+QObject::tr("Précédent"));
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
-    if (bNext)
+    if (buttons=="NextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
-    else
+        prevButton->setVisible(false);
+    } else if (buttons=="PrevNextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    } else if (buttons=="PrevFinishCancel") {
+        okButton->setText(QObject::tr("Terminer"));
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+    } else {
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+        prevButton->setVisible(false);
+    }
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
     buttonLayout->addStretch();
+    buttonLayout->addWidget(prevButton);
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
 
-    int result=-1; // Valeur par défaut si annulé
+    int result=-1;
     QObject::connect(okButton, &QPushButton::clicked, [&]() {
         result=buttonGroup->checkedId(); // Récupère l'ID du bouton sélectionné
+        buttons="ok";
         dialog.accept();
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
-        result=-1;
+        buttons="cancel";
+        dialog.reject();
+    });
+    QObject::connect(prevButton, &QPushButton::clicked, [&]() {
+        buttons="previous";
         dialog.reject();
     });
 
-    int w,h;
-    w=fmax(dialog.sizeHint().width(),MinWidth);
-    h=fmax(dialog.sizeHint().height(),150);
-    dialog.setFixedSize(w,h);//User can't resize the window.
+    setGeometry(&dialog,geometry);
 
     dialog.exec();
+
+    dialog.deleteLater();
 
     return result;
 }
 
 QList<inputResult> selectDialog(const QString &titre, const QString &message, QSqlDatabase db, QString varName, QString tableName, QString whereClose,
-                                QProgressBar *progressBar, QLabel *lErr, const bool bNext, QStyle::StandardPixmap iconType, QString toolTip) {
+                                QProgressBar *progressBar, QLabel *lErr, QString &buttons, QStyle::StandardPixmap iconType, QString toolTip) {
     QList<inputResult> result;
 
     QDialog dialog(QApplication::activeWindow());
@@ -1407,16 +1467,27 @@ QList<inputResult> selectDialog(const QString &titre, const QString &message, QS
     layout->addLayout(selectLayout);
 
     QHBoxLayout *buttonLayout=new QHBoxLayout();
-    QPushButton *okButton=new QPushButton(iif(bNext,QObject::tr("Suivant")+" >>",QObject::tr("OK")).toString());
+    QPushButton *prevButton=new QPushButton("<< "+QObject::tr("Précédent"));
+    QPushButton *okButton=new QPushButton(QObject::tr("OK"));
     QPushButton *cancelButton=new QPushButton(QObject::tr("Annuler"));
-    if (bNext)
+    if (buttons=="NextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
-    else
+        prevButton->setVisible(false);
+    } else if (buttons=="PrevNextCancel") {
+        okButton->setText(QObject::tr("Suivant")+" >>");
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogYesButton));
+    } else if (buttons=="PrevFinishCancel") {
+        okButton->setText(QObject::tr("Terminer"));
         okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
-    okButton->setEnabled(w->model->rowCount()>0);
+    } else {
+        okButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogOkButton));
+        prevButton->setVisible(false);
+    }
     cancelButton->setIcon(dialog.style()->standardIcon(QStyle::SP_DialogCancelButton));
 
     buttonLayout->addStretch();
+    buttonLayout->addWidget(prevButton);
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
@@ -1431,9 +1502,15 @@ QList<inputResult> selectDialog(const QString &titre, const QString &message, QS
         }
         result.append({varName+"_selectedColName",w->model->headerData(w->tv->currentIndex().column(),Qt::Horizontal,Qt::EditRole)});
         result.append({varName+"_selectedColValue",w->model->data(w->model->index(w->tv->currentIndex().row(),w->tv->currentIndex().column()),Qt::EditRole)});
+        buttons="ok";
         dialog.accept();
     });
     QObject::connect(cancelButton, &QPushButton::clicked, [&]() {
+        buttons="cancel";
+        dialog.reject();
+    });
+    QObject::connect(prevButton, &QPushButton::clicked, [&]() {
+        buttons="previous";
         dialog.reject();
     });
 
@@ -1460,9 +1537,9 @@ QList<inputResult> selectDialog(const QString &titre, const QString &message, QS
     return result;
 }
 
-bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const int MinWidth)
+bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType, const QString geometry)
 {
-    QDialog dialog(QApplication::activeWindow());
+    QDialog dialog(nullptr);
     dialog.setWindowTitle(titre);
 
     QVBoxLayout *layout=new QVBoxLayout(&dialog);
@@ -1507,12 +1584,11 @@ bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardP
         dialog.reject();
     });
 
-    int w,h;
-    w=fmax(dialog.sizeHint().width(),MinWidth);
-    h=fmax(dialog.sizeHint().height(),150);
-    dialog.setFixedSize(w,h);//User can't resize the window.
+    setGeometry(&dialog,geometry);
 
     dialog.exec();
+
+    dialog.deleteLater();
 
     return result;
 }

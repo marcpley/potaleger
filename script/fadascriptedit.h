@@ -13,7 +13,7 @@ public:
     explicit FadaScriptEdit(QWidget *parent = nullptr, QStringList dbNames={}, QStringList varNames={});
 
     void setCompleterKeywords(QStringList varNames);
-    void removeTraillingSpaces();
+    void removeTrailingSpaces();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -23,7 +23,7 @@ protected:
     bool setLineCommented(QTextCursor cursor, bool comment);
     bool lineCommented(QTextCursor cursor);
     void addineIndent(QTextCursor cursor, int indent);
-    int removeTraillingSpaces(QTextCursor cursor, int keepIndent);
+    int removeTrailingSpaces(QTextCursor cursor, int keepIndent);
 
 
 private slots:

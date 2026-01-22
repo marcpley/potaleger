@@ -129,7 +129,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
             sVerBDD="?";
         } else {
             MessageDlg("Potaléger "+ui->lVer->text(),tr("Cette BDD n'est pas une BDD %1.").arg("Potaléger"),
-                          sFichier,QStyle::SP_MessageBoxCritical,600);
+                          sFichier,QStyle::SP_MessageBoxCritical,"600");
             dbClose();
             result=false;
         }
@@ -146,7 +146,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
 
         if (result and (sVerBDD < "2024-12-30")) {
             MessageDlg("Potaléger "+ui->lVer->text(),tr("La version de cette BDD %1 est trop ancienne: ").arg("Potaléger")+sVerBDD,
-                          sFichier,QStyle::SP_MessageBoxCritical,600);
+                          sFichier,QStyle::SP_MessageBoxCritical,"600");
             dbClose();
             result=false;
         }
@@ -158,7 +158,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                           tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                           tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
                           tr("Vous devriez désinstaller %1 et intaller une version plus récente.").arg("Potaléger"),"",
-                          QStyle::SP_MessageBoxWarning,600);
+                          QStyle::SP_MessageBoxWarning,"600");
             // dbClose();
             // return false;
         } else if (result and (bUpdate or (sVerBDD != DbVersion))) {
@@ -168,14 +168,14 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                                               tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
                                               tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion),
-                                              QStyle::SP_MessageBoxQuestion,600))or
+                                              QStyle::SP_MessageBoxQuestion,"600"))or
                 (sVerBDD=="?" and YesNoDialog("Potaléger "+ui->lVer->text(),tr("Base de données trop ancienne.")+"\n\n"+
                                               sFichier+"\n"+
                                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
                                               tr("Version attendue: %1").arg(DbVersion)+"\n\n"+
                                               tr("Mettre à jour cette BDD vers la version %1 ?").arg(DbVersion)+"\n\n"+
                                               tr("ATTENTION, version de BDD inconnue, résultat de mise à jour incertain."),
-                                              QStyle::SP_MessageBoxWarning,600))) {   //Mettre à jour la BDD.
+                                              QStyle::SP_MessageBoxWarning,"600"))) {   //Mettre à jour la BDD.
                 //Delete previous backup file.
                 QFile FileInfo;
                 QString FileName=ui->lDB->text(); //Pourquoi pas sFichier ?
@@ -183,7 +183,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                 if (FileInfo.exists()) {
                     if (!FileInfo.remove()) {
                         MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
-                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
+                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical,"600");
                         dbClose();
                         result=false;
                     }
@@ -195,7 +195,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                                           FileName+"\n"+
                                           tr("vers le fichier")+"\n"+
-                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical,600);
+                                          FileName+"-backup","",QStyle::SP_MessageBoxCritical,"600");
                         dbClose();
                         return false;
                     }
@@ -209,7 +209,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         FileInfo.setFileName(FileName+"-backup");
                         if (!FileInfo.remove()) {
                             MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de supprimer le fichier")+"\n"+
-                                              FileName+"-backup","",QStyle::SP_MessageBoxWarning,600);
+                                              FileName+"-backup","",QStyle::SP_MessageBoxWarning,"600");
                         }
                     } else {
                         dbClose();
@@ -226,12 +226,12 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                         if (FileInfo.copy(FileName))
                             MessageDlg("Potaléger "+ui->lVer->text(),tr("Le fichier")+"\n"+
                                               FileName+"\n"+
-                                              tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation,600);
+                                              tr("n'a pas été modifié."),"",QStyle::SP_MessageBoxInformation,"600");
                         else
                             MessageDlg("Potaléger "+ui->lVer->text(),tr("Impossible de copier le fichier")+"\n"+
                                               FileName+"-backup\n"+
                                               tr("vers le fichier")+"\n"+
-                                              FileName,"",QStyle::SP_MessageBoxCritical,600);
+                                              FileName,"",QStyle::SP_MessageBoxCritical,"600");
 
                         result=false;
                     }
@@ -242,7 +242,7 @@ bool MainWindow::PotaDbOpen(QString sFichier, QString sNew,bool bUpdate)
                                  "la modifier et certains onglets peuvent ne pas fonctionner.").arg("ancienne")+"\n\n"+
                               sFichier+"\n"+
                               tr("Version de la BDD: %1").arg(sVerBDD)+"\n"+
-                              tr("Version attendue: %1").arg(DbVersion),"",QStyle::SP_MessageBoxWarning,600);
+                              tr("Version attendue: %1").arg(DbVersion),"",QStyle::SP_MessageBoxWarning,"600");
 
             }
         } else if (result) {
@@ -410,11 +410,13 @@ void MainWindow::RestaureParams()
 
     if (settings.value("database_path").toString().isEmpty() or
         !PotaDbOpen(settings.value("database_path").toString(),"",false)) {
+        QString buttons="";
         int choice=RadiobuttonDialog("Potaléger "+ui->lVer->text(),
-                                        tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
-                                       {tr("Sélectionner une base de données existante"),
-                                        tr("Créer une BDD avec les données de base"),
-                                        tr("Créer une BDD vide")},1,{},QStyle::NStandardPixmap);
+                                     tr("%1 stoque ses données dans un fichier unique à l'emplacement de votre choix.").arg("Potaléger"),
+                                     buttons,
+                                     {tr("Sélectionner une base de données existante"),
+                                      tr("Créer une BDD avec les données de base"),
+                                      tr("Créer une BDD vide")},1,{},QStyle::NStandardPixmap);
         if (choice==0)
             on_mSelecDB_triggered();
         else if (choice==1)
@@ -551,22 +553,24 @@ void MainWindow::CreateLaunchers(QString parentName,QWidget *parent) {
     PotaQuery query2(db);
     query.exec("SELECT * FROM fada_launchers WHERE parent='"+parentName+"' ORDER BY item_index;");
     while (query.next()) {
-
         if (query.value("type").toString()=="Menu item") {
-            if (!query.value("launcher_name").isNull() and !query.value("name").isNull()) {
+            if (!query.value("launcher_name").isNull() and
+                (!query.value("tv_name").isNull() or !query.value("script_name").isNull())) {
                 QAction *mainMenuLauncher = new QAction(query.value("launcher_name").toString(), parent);
                 QString text;
-                if (!query.value("graph").isNull()) {
+                if (!query.value("script_name").isNull()) {
+                    text="S";
+                } else if (!query.value("graph").isNull()) {
                     text="G";
                 } else {
-                    QString tblType=query2.Select0ShowErr("SELECT tbl_type FROM fada_t_schema "
-                                                          "WHERE (name='"+query.value("name").toString()+"')").toString();
+                    QString tblType=query2.Select0ShowErr("SELECT tv_type FROM fada_t_schema "
+                                                          "WHERE (tv_name='"+query.value("tv_name").toString()+"')").toString();
                     if (tblType=="Table" or tblType=="View as table") text="T";
                     else if (tblType=="View") text="V";
                 }
                 mainMenuLauncher->setProperty("modelMenu",true);
                 mainMenuLauncher->setIcon(QIcon(FdaMenuPixmap(&db,query.value("launcher_name").toString(),text)));
-                mainMenuLauncher->setData(QStringList{query.value("name").toString(),
+                mainMenuLauncher->setData(QStringList{iif(!query.value("script_name").isNull(),query.value("script_name").toString(),query.value("tv_name").toString()).toString(),
                                                       iif(query.value("title").isNull(),query.value("launcher_name"),query.value("title")).toString(),
                                                       query.value("description").toString(),
                                                       query.value("filters").toString(),

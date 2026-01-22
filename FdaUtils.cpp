@@ -700,11 +700,11 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                 int space_index=tablename.indexOf(" ");
                 tablename=tablename.first(space_index);
                 fdaCmds.clear();
-                fdaCmds.append("INSERT INTO fada_t_schema (name,tbl_type,description) "
+                fdaCmds.append("INSERT INTO fada_t_schema (tv_name,tv_type,description) "
                                "VALUES ('"+tablename+"','Table',"+EscapeSQL(description)+");");
                 for (int j=0;j<properties0size;j++) {
                     fdaCmds.append("UPDATE fada_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                   "WHERE name='"+tablename+"';");
+                                   "WHERE tv_name='"+tablename+"';");
                 }
 
             } else if (cdeLine.startsWith("CREATE VIEW ")) {
@@ -714,11 +714,11 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                 tablename=tablename.first(space_index);
 
                 fdaCmds.clear();
-                fdaCmds.append("INSERT INTO fada_t_schema (name,tbl_type,description) "
+                fdaCmds.append("INSERT INTO fada_t_schema (tv_name,tv_type,description) "
                                "VALUES ('"+tablename+"','View',"+EscapeSQL(description)+");");
                 for (int j=0;j<properties0size;j++) {
                     fdaCmds.append("UPDATE fada_t_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                   "WHERE name='"+tablename+"';");
+                                   "WHERE tv_name='"+tablename+"';");
                 }
 
             } else if (!fdaCmds.isEmpty() and !cdeLine.startsWith("--")) {  //Parse fields.
@@ -756,14 +756,14 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                                     masterTable="'"+masterTable.first(ref_index)+"'";
                                 }
                             }
-                            fdaCmds.append("INSERT INTO fada_f_schema (name,field_index,field_name,field_type,description,"
-                                                                     "natural_sort,master_table,master_field,readonly) "
+                            fdaCmds.append("INSERT INTO fada_f_schema (tv_name,field_index,field_name,field_type,description,"
+                                                                      "natural_sort,master_table,master_field,readonly) "
                                            "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"','"+fieldtype+"',"+EscapeSQL(description)+","+
                                                     iif(pk,"0","NULL").toString()+","+masterTable+","+masterField+","+readOnly+");");
                             field_index++;
                             for (int j=0;j<properties0size;j++) {
                                 fdaCmds.append("UPDATE fada_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                               "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');");
+                                               "WHERE (tv_name='"+tablename+"')AND(field_name='"+fieldname+"');");
                             }
                         } else {
                             qWarning() << "SQL parse error 0: "+cdeLine;
@@ -781,7 +781,7 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                             if (orderBy[j].contains("."))
                                 orderBy[j]=orderBy[j].split(".")[1];
                             fdaCmds.append("UPDATE fada_f_schema SET natural_sort="+str(j)+" "
-                                           "WHERE (name='"+tablename+"')AND(field_name='"+orderBy[j]+"');");
+                                           "WHERE (tv_name='"+tablename+"')AND(field_name='"+orderBy[j]+"');");
                         }
                     } else { //Parse fields of a CREATE VIEW
                         int fieldIndex=cdeLine.lastIndexOf(" ");
@@ -794,12 +794,12 @@ QString RemoveSQLcomment(QString sCde, bool keepReturns, QString *fda_cmd_from_c
                         if (!fieldname.isEmpty()) {
                             if (fieldname.endsWith(",")) fieldname.removeLast();
                             QString readOnly=iif(cdeLine.contains("(") or cdeLine.contains(")"),"'Calculated'","'x'").toString();
-                            fdaCmds.append("INSERT INTO fada_f_schema (name,field_index,field_name,description,readonly) "
+                            fdaCmds.append("INSERT INTO fada_f_schema (tv_name,field_index,field_name,description,readonly) "
                                            "VALUES ('"+tablename+"',"+str(field_index)+",'"+fieldname+"',"+EscapeSQL(description)+","+readOnly+");");
                             field_index++;
                             for (int j=0;j<properties0size;j++) {
                                 fdaCmds.append("UPDATE fada_f_schema SET "+properties[0][j]+"="+EscapeSQL(properties[1][j])+" "
-                                               "WHERE (name='"+tablename+"')AND(field_name='"+fieldname+"');");
+                                               "WHERE (tv_name='"+tablename+"')AND(field_name='"+fieldname+"');");
                             }
                         } else {
                             qWarning() << "SQL parse error 2: "+cdeLine;

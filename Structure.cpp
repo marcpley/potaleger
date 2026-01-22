@@ -339,9 +339,9 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             QString sAddSQLiteInfoInFadaSchema="";
             PotaQuery query2(db);
 
-            query->ExecShowErr("SELECT name,tbl_type FROM fada_t_schema;");
+            query->ExecShowErr("SELECT tv_name,tv_type FROM fada_t_schema;");
             while (query->next()) {
-                QString sTableName=query->value("name").toString();
+                QString sTableName=query->value("tv_name").toString();
                 QString sPK="";
                 int fieldCount=0;
 
@@ -354,7 +354,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 }
 
                 int FadaFieldCount=query2.Select0ShowErr("SELECT count() FROM fada_f_schema "
-                                                        "WHERE (name='"+sTableName+"')").toInt();
+                                                        "WHERE (tv_name='"+sTableName+"')").toInt();
 
                 int triggerCount=query2.Select0ShowErr("SELECT count() FROM sqlite_schema "
                                                       "WHERE (tbl_name='"+sTableName+"')AND"
@@ -374,7 +374,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                          "Menu_use_count="+str(0)+","+
                          "Total_use_count="+str(useCount)+","+
                          "Rec_count="+str(0)+" "+
-                         "WHERE Name='"+sTableName+"';";
+                         "WHERE tv_name='"+sTableName+"';";
             }
 
 
@@ -405,12 +405,12 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
                 if (fileList[i].toUpper().endsWith(".SQL")) {
                     QFile scriptFile(dir.absolutePath()+"/"+fileList[i]);
                     if (scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                        QString name=fileList[i].removeLast().removeLast().removeLast().removeLast();
+                        QString script_name=fileList[i].removeLast().removeLast().removeLast().removeLast();
                         QTextStream in(&scriptFile);
                         QString script=in.readAll();
                         scriptFile.close();
-                        sInsertScripts+="INSERT INTO Fada_scripts (name,script,created) "
-                                        "VALUES ('"+name+"',"+
+                        sInsertScripts+="INSERT INTO Fada_scripts (script_name,script,created) "
+                                        "VALUES ('"+script_name+"',"+
                                         EscapeSQL(script)+",CURRENT_TIMESTAMP);;\n";
                     }
 

@@ -65,47 +65,51 @@ void FadaScriptEdit::setCompleterKeywords(QStringList varNames) {
     completerKeywords.append("while (🔸) {}");
 
     completerKeywords.append("return;");
-
-    // completerKeywords.append("sp_Critical");
-    // completerKeywords.append("sp_Warning");
-    // completerKeywords.append("sp_Question");
-    // completerKeywords.append("sp_Information");
-    // completerKeywords.append("sp_None");
-
+    completerKeywords.append("break;");
+    completerKeywords.append("continue;");
 
     //Fada dialogs.
     completerKeywords.append("inputDialog");
-    completerKeywords.append("inputDialog('🔸','Valeur',it_Text);");
-    completerKeywords.append("inputDialog('🔸','Valeur',it_Text,100,'val1|val2',sp_,600,false);");
+    completerKeywords.append("inputDialog('🔸','Valeur',it_Text)");
+    completerKeywords.append("inputDialog('🔸','Valeur',it_Text,'0|300|200','val1|val2',sp_,'600|350||',bs_)");
 
     completerKeywords.append("inputsDialog");
-    completerKeywords.append("inputsDialog('🔸','var1','Valeur1',it_Text,0,200,100,'def1','toolTip1',sp_,600,false);");
+    completerKeywords.append("inputsDialog('🔸','var1','Valeur1',it_Text,'0|300|200','def1','toolTip1',sp_,'600|350||',bs_);");
 
     completerKeywords.append("messageDialog");
     completerKeywords.append("messageDialog('🔸');");
     completerKeywords.append("messageDialog('🔸','',sp_);");
 
     completerKeywords.append("okCancelDialog");
-    completerKeywords.append("okCancelDialog('🔸');");
-    completerKeywords.append("okCancelDialog('🔸',sp_);");
-    completerKeywords.append("okCancelDialog('🔸',sp_None,600,false);");
+    completerKeywords.append("okCancelDialog('🔸')");
+    completerKeywords.append("okCancelDialog('🔸',sp_)");
+    completerKeywords.append("okCancelDialog('🔸',sp_None,'600|350||',bs_)");
 
     completerKeywords.append("radioButtonDialog");
-    completerKeywords.append("radioButtonDialog('🔸');");
-    completerKeywords.append("radioButtonDialog('🔸','op1|op2',0,'',sp_,600,false);");
+    completerKeywords.append("radioButtonDialog('🔸')");
+    completerKeywords.append("radioButtonDialog('🔸','op1|op2',0,'',sp_,'600|350||',bs_)");
 
     completerKeywords.append("selectDialog");
-    completerKeywords.append("selectDialog('🔸','var1','SELECT * FROM ... WHERE ...','toolTip',sp_,600,false);");
+    completerKeywords.append("selectDialog('🔸','var1','SELECT * FROM ... WHERE ...','toolTip',sp_,'600|350||',bs_);");
 
     completerKeywords.append("tableDialog");
-    completerKeywords.append("tableDialog('🔸','var1','tableName','fieldName LIKE ''A%''','toolTip',sp_,600,false);");
+    completerKeywords.append("tableDialog('🔸','var1','tableName','fieldName LIKE ''A%''','toolTip',sp_,'600|350||',bs_);");
 
     completerKeywords.append("yesNoDialog");
-    completerKeywords.append("yesNoDialog('🔸');");
-    completerKeywords.append("yesNoDialog('🔸','sp_);");
+    completerKeywords.append("yesNoDialog('🔸')");
+    completerKeywords.append("yesNoDialog('🔸','sp_)");
+
+    completerKeywords.append("sysCmd");
+    completerKeywords.append("sysCmd('🔸')");
+    completerKeywords.append("sysOpen");
+    completerKeywords.append("sysOpen('🔸')");
+    completerKeywords.append("sysRun");
+    completerKeywords.append("sysRun('🔸')");
+
 
     completerKeywords.append(varNames);
     completerKeywords.append(completerDbName);
+
 
 }
 
@@ -331,7 +335,7 @@ void FadaScriptEdit::insertCompletion(QString completion)
     }
 }
 
-int FadaScriptEdit::removeTraillingSpaces(QTextCursor cursor, int keepIndent) {
+int FadaScriptEdit::removeTrailingSpaces(QTextCursor cursor, int keepIndent) {
     cursor.movePosition(QTextCursor::StartOfLine,QTextCursor::MoveAnchor);
     cursor.movePosition(QTextCursor::EndOfLine,QTextCursor::KeepAnchor);
     QString line=cursor.selectedText();
@@ -350,15 +354,17 @@ int FadaScriptEdit::removeTraillingSpaces(QTextCursor cursor, int keepIndent) {
     }
 }
 
-void FadaScriptEdit::removeTraillingSpaces() {
+void FadaScriptEdit::removeTrailingSpaces() {
     QTextCursor cursor=textCursor();
+    cursor.beginEditBlock();
     cursor.movePosition(QTextCursor::Start);
     int prevIndent=0;
     while (!cursor.atEnd()) {
-        prevIndent=removeTraillingSpaces(cursor,prevIndent);
+        prevIndent=removeTrailingSpaces(cursor,prevIndent);
         if (!cursor.movePosition(QTextCursor::Down))
             break;
     }
+    cursor.endEditBlock();
     return;
 }
 

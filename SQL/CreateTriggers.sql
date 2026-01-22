@@ -3,7 +3,7 @@ CREATE TRIGGER fada_f_schema__view_UPDATE INSTEAD OF UPDATE ON fada_f_schema__vi
 BEGIN
     UPDATE fada_f_schema SET
         draw=NEW.draw
-    WHERE (name=OLD.name)AND(field_name=OLD.field_name);
+    WHERE (tv_name=OLD.tv_name)AND(field_name=OLD.field_name);
 END;;
 
 DROP TRIGGER IF EXISTS fada_scripts_UPDATE;;
@@ -11,7 +11,7 @@ CREATE TRIGGER fada_scripts_UPDATE AFTER UPDATE ON fada_scripts
 WHEN NEW.script!=OLD.script
 BEGIN
     UPDATE fada_scripts SET modified=CURRENT_TIMESTAMP
-    WHERE name=NEW.name;
+    WHERE tv_name=NEW.tv_name;
 END;;
 
 DROP TRIGGER IF EXISTS Associations_détails_INSERT;;
@@ -967,7 +967,7 @@ WHEN NEW.Paramètre='C_modif_N_culture'
 BEGIN
     UPDATE fada_f_schema SET
         readonly=iif(NEW.Valeur!='Oui','x',NULL)
-    WHERE ((name='Cultures')OR(name LIKE 'Cultures__%'))AND(field_name='Culture');
+    WHERE ((tv_name='Cultures')OR(tv_name LIKE 'Cultures__%'))AND(field_name='Culture');
 END;;
 
 DROP TRIGGER IF EXISTS Planches_INSERT_Largeur;;

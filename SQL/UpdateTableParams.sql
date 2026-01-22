@@ -12,7 +12,7 @@ CREATE TABLE Params ( ---
     Unité TEXT,
     color TEXT) ---HIDDEN
     ;
-UPDATE fada_f_schema SET readonly='x' WHERE (name='Params')AND(field_name!='Valeur');
+UPDATE fada_f_schema SET readonly='x' WHERE (tv_name='Params')AND(field_name!='Valeur');
 
 INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
     VALUES  ('Général', 'Utilisateur', 'Personne, entreprise ou organisation utilisant cette BDD Potaléger', NULL, NULL),
@@ -21,8 +21,8 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
             ('Général', 'Montrer_modifs', 'Montrer les modifications depuis le dernier rechargement des données (plus lent)', 'Oui', 'Oui/Non'),
             ('Général', 'Combo_Notes_Type', 'Types de notes, séparés par des ''|'' (vide pour texte libre)', 'A faire|Fait|Important', NULL),
             ('Général', 'Notes_Modif_dates', 'Permettre de modifier l''ID et les dates de création/modification des notes', 'Non', 'Oui/Non'),
-            ('Général', 'Export_sep_col', 'Séparateur de colonnes pour les exports de données (défaut point-virgule)', NULL, NULL), -- todo: devrait être en anglais.
-            ('Général', 'Export_sep_decim', 'Séparateur décimal pour les exports de données (défaut système)', NULL, NULL),
+            ('Général', 'Export_sep_col', 'Séparateur de colonnes pour les exports de données CSV (défaut point-virgule)', NULL, NULL), -- todo: devrait être en anglais.
+            ('Général', 'Export_sep_decim', 'Séparateur décimal pour les exports de données CSV (défaut système)', NULL, NULL),
             ('Associations', 'Asso_bénéfique', 'Les associations bénéfiques se terminent par', ' +', NULL),
             ('Associations', 'Nb_sem_croisement', 'Temps de croisement mini pour que l''association soit effective.\nTemps de croisement : de la date de mise en place de la culture la plus tardive jusqu''au milieu de récolte de la culture la plus avancée.', 4, 'semaines'),
             ('Fournisseurs', 'Combo_Fournisseurs_Type', 'Types de fournisseur, séparés par des ''|'' (vide pour texte libre)', 'Semences|Irrigation|Outils|Autre', NULL),
@@ -74,7 +74,7 @@ INSERT INTO Params (Section, Paramètre, Description, Valeur, Unité)
 
 UPDATE Params SET
     Valeur=coalesce((SELECT T.Valeur FROM Temp_Params T WHERE T.Paramètre=Params.Paramètre),Params.Valeur),
-    color=(SELECT F.color FROM fada_t_schema F WHERE F.name LIKE Section||'%');
+    color=(SELECT F.color FROM fada_t_schema F WHERE F.tv_name LIKE Section||'%');
 
 DROP TABLE Temp_Params;
 

@@ -1,6 +1,7 @@
 #include "fadascriptengine2.h"
 #include "Dialogs.h"
 #include "FdaUtils.h"
+#include "qprocess.h"
 #include "qregularexpression.h"
 #include "qsqlerror.h"
 #include "script/fadascriptedit.h"
@@ -14,14 +15,14 @@ FadaScriptEngine2::FadaScriptEngine2(QObject *parent)
 int FadaScriptEngine2::runScript(QString script, QSqlDatabase *db, bool testScript, FadaScriptEdit *SQLEdit, FadaHighlighter *hl) {
 
     if (SQLEdit){
-        SQLEdit->removeTraillingSpaces();
+        SQLEdit->removeTrailingSpaces();
         script=SQLEdit->toPlainText();
     }
 
     scriptError.clear();
     lastStatementStart=0;
     this->db=db;
-    returnScript=false;
+    //returnScript=false;
 
     resetVars();
 
@@ -35,7 +36,7 @@ int FadaScriptEngine2::runScript(QString script, QSqlDatabase *db, bool testScri
     stmt level1Statement;
     level1Statement.statement=mapedScript;
 
-    bool result;
+    execResult result;
     ////////////////////////////////
     result=execute(level1Statement);
     ////////////////////////////////
@@ -44,7 +45,7 @@ int FadaScriptEngine2::runScript(QString script, QSqlDatabase *db, bool testScri
 
 
     if (transactionOpen) {
-        if(testScript or !result or !scriptError.isEmpty()) {
+        if(testScript or result==er_error or !scriptError.isEmpty()) {
             transactionOpen=!db->rollback();
             if (!transactionOpen)
                 qInfo() << "ROLLBACK";
@@ -100,10 +101,12 @@ QString FadaScriptEngine2::map(QString script) {
         if (!inString) {
             if (c=='\n') { //Line return.
                 regularChar=false;
-                lineStart=true;
+                if (!lineStart) { //replace in statement line return by space.
+                    lineStart=true;
+                    result+=" ";
+                    scriptMap.append(pos);
+                }
                 lineEnd=false;
-                result+=" "; //xxx
-                scriptMap.append(pos);
             } else if (c==' ' and lineStart) {//Indent space
                 regularChar=false;
             } else if (c==' ' and lineEnd) {//Trailing space
@@ -120,8 +123,7 @@ QString FadaScriptEngine2::map(QString script) {
                 lineEnd=false;
             } else {
                 lineStart=false;
-                if (c=='}' or c==';')
-                    lineEnd=true;
+                lineEnd=(c=='}' or c==';');
             }
         }
         if (c=="'") inString=!inString; // Start or end of literal string.
@@ -155,8 +157,9 @@ void FadaScriptEngine2::resetStmt(stmt &stmt, bool fromScript) {
     stmt.originalSize=0;
 }
 
-bool FadaScriptEngine2::execute(stmt statement) {
-    if (statement.statement.isEmpty() or returnScript) return true;
+FadaScriptEngine2::execResult FadaScriptEngine2::execute(stmt statement) {
+    execResult result=er_success; //-1 error, 0 success, 1 return, 2 continue, 3 break.
+    if (statement.statement.isEmpty()) return result; // or returnScript
 
     if (statement.stmtType==st_unknown) setStatementType(statement);
 
@@ -164,10 +167,10 @@ bool FadaScriptEngine2::execute(stmt statement) {
     if (statement.stmtType==st_braced) return executeBracedStatement(statement);
     if (statement.stmtType==st_multiple) {
         QList<stmt> statements=splitStatements(statement.statement,statement.originalPos);
-        bool result=true;
+        //bool result=true;
         for (int i=0;i<statements.count();i++) {
             result=execute(statements[i]);
-            if (!result) break;
+            if (result!=er_success) break;
         }
         return result;
     }
@@ -178,16 +181,18 @@ bool FadaScriptEngine2::execute(stmt statement) {
         lastStatementHintSize=statement.originalSize;
     }
     scriptError+="\nUnknown statement type";
-    return false;
+    return result;
 }
 
-bool FadaScriptEngine2::executeSimpleStatement(stmt statement) {
+FadaScriptEngine2::execResult FadaScriptEngine2::executeSimpleStatement(stmt statement) {
     if (statement.fromScript and !scriptError.isEmpty()) { //Not normal.
         qDebug() << "Script interpreter possible bug 1";
-        return false;
+        return er_error;
     }
 
-    if (returnScript) return true;
+    //if (returnScript) return er_success;
+
+    execResult result=er_success;
 
     QString error;
     bool done=false;
@@ -237,47 +242,43 @@ bool FadaScriptEngine2::executeSimpleStatement(stmt statement) {
     /////////
 
     if (!done) {
-        //inputsDialog(text
-        //             ,varName,label,type,left,labelWidth,inpuWidth,valDef,toolTip
-        //             [,varName,label,type,left,labelWidth,inpuWidth,valDef,toolTip]
+        //inputsDialog(text,
+        //             varName,label,type,left,labelWidth,inputWidth,valDef,toolTip
+        //             [,varName,inputLabel,inputType,inputGeometry,valDef,toolTip]
         //             ...
-        //             [,messageType[,dialogWidth[,NextButton]]]]])
+        //             [,dialogType[,dialogGeometry[,buttonSet]]]]);
         if (statement.statement.startsWith("inputsdialog(",Qt::CaseInsensitive)) {
             QList<QVariant> args=extractArgs(statement.statement);
             if (args.count()>8) {
                 QList<inputStructure> inputs;
                 int i;
                 for (i=1;i<args.count();i++) {
-                    if (args.count()<i+8) break;
+                    if (args.count()<i+6) break;
                     inputStructure input;
+                    QStringList inputGeometry=QString(args[i+3].toString()+"|||").split("|");
                     input.varName=args[i].toString();
                     input.label=args[i+1].toString();
-                    // QString type=args[i+2].toString().toLower();
-                    // if (type.startsWith("int")) input.type=QMetaType::Int;
-                    // else if (type=="real") input.type=QMetaType::Double;
-                    // else if (type=="date") input.type=QMetaType::QDate;
-                    // else if (type=="bool") input.type=QMetaType::Bool;
                     input.type=args[i+2].toString();
-                    input.left=args[i+3].toInt();
-                    input.labelWidth=args[i+4].toInt();
-                    input.inputWidth=args[i+5].toInt();
-                    input.valDef=args[i+6].toString();
-                    input.toolTip=args[i+7].toString();
+                    if (!inputGeometry[0].isEmpty()) input.left=inputGeometry[0].toInt();
+                    if (!inputGeometry[1].isEmpty()) input.labelWidth=inputGeometry[1].toInt();
+                    if (!inputGeometry[2].isEmpty()) input.inputWidth=inputGeometry[2].toInt();
+                    input.valDef=args[i+4].toString();
+                    input.toolTip=args[i+5].toString();
                     inputs.append(input);
-                    i+=7;
+                    i+=5;
                 }
-                QString messageType; if (args.count()>i) messageType=args[i].toString();
-                int dialogWidth=350; if (args.count()>i+1) dialogWidth=args[i+1].toInt();
-                bool bNext=false; if (args.count()>i+2) bNext=(args[i+2].toBool());
+                QString dialogType; if (args.count()>i) dialogType=args[i].toString();
+                QString dialogGeometry; if (args.count()>i+1) dialogGeometry=args[i+1].toString();
+                QString buttonSet=""; if (args.count()>i+2) buttonSet=args[i+2].toString();
 
-                QList<inputResult> result=inputDialog(scriptTitle,args[0].toString(),inputs,bNext,standardPixmap(messageType),dialogWidth);
+                QList<inputResult> inputResult=inputDialog(scriptTitle,args[0].toString(),inputs,buttonSet,standardPixmap(dialogType),dialogGeometry);
 
-                if (result.count()==0) {
-                    returnScript=true;
-                    qInfo() << unMap(statement.originalPos) << "cancel";
-                } else {
-                    for (int i=0;i<result.count();i++) {
-                        setVar(result[i].varName,result[i].value,statement.originalPos);
+                setVar("exitButtonDialog",buttonSet,statement.originalPos);
+                qInfo() << unMap(statement.originalPos) << buttonSet;
+
+                if (buttonSet=="ok") {
+                    for (int i=0;i<inputResult.count();i++) {
+                        setVar(inputResult[i].varName,inputResult[i].value,statement.originalPos);
                     }
                 }
             } else {
@@ -286,41 +287,41 @@ bool FadaScriptEngine2::executeSimpleStatement(stmt statement) {
             done=true;
         }
 
-        //messageDialog(shortText[,longText[,messageType]])
+        //messageDialog
         else if (statement.statement.startsWith("messagedialog(",Qt::CaseInsensitive)) {
             QList<QVariant> args=extractArgs(statement.statement);
             if (args.count()>0) {
                 QString longText; if (args.count()>1) longText=args[1].toString();
-                QString messageType; if (args.count()>2) messageType=args[2].toString();
-                int messageWidth=350; if (args.count()>3) messageWidth=args[3].toInt();
+                QString dialogType; if (args.count()>2) dialogType=args[2].toString();
+                QString messageGeometry; if (args.count()>3) messageGeometry=args[3].toString();
 
-                MessageDlg(scriptTitle,args[0].toString(),longText,standardPixmap(messageType),messageWidth);
+                MessageDlg(scriptTitle,args[0].toString(),longText,standardPixmap(dialogType),messageGeometry);
             } else {
                 error="messageDialog() without arguments.";
             }
             done=true;
         }
 
-        //selectDialog(text,varName,selectStatement[,toolTip[,messageType[NextButton]]])
+        //selectDialog(text,varName,selectStatement[,toolTip[,dialogType[nextButton]]])
         else if (statement.statement.startsWith("selectdialog(",Qt::CaseInsensitive)) {
             QList<QVariant> args=extractArgs(statement.statement);
             if (args.count()>2) {
                 QString toolTip; if (args.count()>3) toolTip=args[3].toString();
-                QString messageType; if (args.count()>4) messageType=args[4].toString();
-                bool bNext=false; if (args.count()>5) bNext=(args[5].toBool());
+                QString dialogType; if (args.count()>4) dialogType=args[4].toString();
+                QString buttonSet=""; if (args.count()>5) buttonSet=args[5].toString();
 
                 PotaQuery pQuery(*db);
                 pQuery.ExecShowErr("DROP VIEW IF EXISTS Temp_"+scriptTitle.replace("'","")+";");
                 pQuery.ExecShowErr("CREATE TEMP VIEW Temp_"+scriptTitle.replace("'","")+" AS "+args[2].toString());
 
-                QList<inputResult> result=selectDialog( scriptTitle,args[0].toString(),*db,args[1].toString(),"Temp_"+scriptTitle.replace("'",""),"", feProgressBar,feLErr, bNext, standardPixmap(messageType),toolTip);
+                QList<inputResult> selectResult=selectDialog(scriptTitle,args[0].toString(),*db,args[1].toString(),"Temp_"+scriptTitle.replace("'",""),"",
+                                                       feProgressBar,feLErr, buttonSet, standardPixmap(dialogType),toolTip);
 
-                if (result.count()==0) {
-                    returnScript=true;
-                    qInfo() << unMap(statement.originalPos) << "cancel";
-                } else {
-                    for (int i=0;i<result.count();i++) {
-                        setVar(result[i].varName,result[i].value,statement.originalPos);
+                setVar("exitButtonDialog",buttonSet,statement.originalPos);
+                qInfo() << unMap(statement.originalPos) << buttonSet;
+                if (buttonSet=="ok") {
+                    for (int i=0;i<selectResult.count();i++) {
+                        setVar(selectResult[i].varName,selectResult[i].value,statement.originalPos);
                     }
                 }
 
@@ -330,28 +331,27 @@ bool FadaScriptEngine2::executeSimpleStatement(stmt statement) {
             done=true;
         }
 
-        //tableDialog(text,varName,tableName[,whereClose[,toolTip[,messageType[,NextButton]]]])
+        //tableDialog(text,varName,tableName[,whereClose[,toolTip[,dialogType[,nextButton]]]])
         else if (statement.statement.startsWith("tabledialog(",Qt::CaseInsensitive)) {
             QList<QVariant> args=extractArgs(statement.statement);
             if (args.count()>2) {
                 QString whereClose; if (args.count()>3) whereClose=args[3].toString();
                 QString toolTip; if (args.count()>4) toolTip=args[4].toString();
-                QString messageType; if (args.count()>5) messageType=args[5].toString();
-                //int dialogWidth=350; if (args.count()>6) dialogWidth=args[6].toInt();
-                bool bNext=false; if (args.count()>6) bNext=(args[6].toBool());
+                QString dialogType; if (args.count()>5) dialogType=args[5].toString();
+                QString buttonSet=""; if (args.count()>6) buttonSet=args[6].toString();
 
-                QList<inputResult> result=selectDialog(scriptTitle,args[0].toString(),*db,args[1].toString(),args[2].toString(),whereClose,feProgressBar,feLErr, bNext, standardPixmap(messageType),toolTip);
+                QList<inputResult> selectResult=selectDialog(scriptTitle,args[0].toString(),*db,args[1].toString(),args[2].toString(),whereClose,feProgressBar,feLErr,
+                                                       buttonSet,standardPixmap(dialogType),toolTip);
 
-                if (result.count()==0) {
-                    returnScript=true;
-                    qInfo() << unMap(statement.originalPos) << "cancel";
-                } else if (result.count()==1 and result[0].varName=="error") {
-                    returnScript=true;
-                    qWarning() << unMap(statement.originalPos) << result[0].value;
-                    error=result[0].value.toString();
-                } else {
-                    for (int i=0;i<result.count();i++) {
-                        setVar(result[i].varName,result[i].value,statement.originalPos);
+                setVar("exitButtonDialog",buttonSet,statement.originalPos);
+                qInfo() << unMap(statement.originalPos) << buttonSet;
+                if (selectResult.count()==1 and selectResult[0].varName=="error") {
+                    //returnScript=true;
+                    qWarning() << unMap(statement.originalPos) << selectResult[0].value;
+                    error=selectResult[0].value.toString();
+                } else if (buttonSet=="ok") {
+                    for (int i=0;i<selectResult.count();i++) {
+                        setVar(selectResult[i].varName,selectResult[i].value,statement.originalPos);
                     }
                 }
 
@@ -366,11 +366,30 @@ bool FadaScriptEngine2::executeSimpleStatement(stmt statement) {
     //C-like
     ////////
 
-    //return;
-    if (!done and statement.statement.toLower()=="return") {
-        returnScript=true;
-        qInfo() << unMap(statement.originalPos) << "return";
-        done=true;
+    if (!done) {
+        if (statement.statement.toLower()=="return") {
+            //returnScript=true;
+            qInfo() << unMap(statement.originalPos) << "return";
+            result=er_return;
+            done=true;
+        } else if (statement.statement.toLower()=="break") {
+            qInfo() << unMap(statement.originalPos) << "break";
+            result=er_break;
+            done=true;
+        } else if (statement.statement.toLower()=="continue") {
+            qInfo() << unMap(statement.originalPos) << "continue";
+            result=er_continue;
+            done=true;
+        // } else if (statement.statement.endsWith(":") and statement.statement.size()>1) {
+        //     gotoLabels.insert(statement.statement.removeLast(),statement.originalPos);
+        //     qInfo() << unMap(statement.originalPos) << statement.statement;
+        //     done=true;
+        // } else if (statement.statement.toLower().startsWith("goto ") and statement.statement.size()>5) {
+        //     labelPos=gotoLabels.find(statement.statement.mid(5)).value();
+        //     qInfo() << unMap(statement.originalPos) << statement.statement;
+        //     result=er_goto;
+        //     done=true;
+        }
     }
 
     ////////////////
@@ -468,18 +487,23 @@ bool FadaScriptEngine2::executeSimpleStatement(stmt statement) {
         lastStatementStart=statement.originalPos;
         lastStatementHintSize=statement.originalSize;
     }
-    return error.isEmpty();
+    if (error.isEmpty())
+        return result;
+    else
+        return er_error;
 }
 
-bool FadaScriptEngine2::executeBracedStatement(stmt statement) {
-    if (returnScript) return true;
+FadaScriptEngine2::execResult FadaScriptEngine2::executeBracedStatement(stmt statement) {
+    //if (returnScript) return er_success;
     setStatementBracedType(statement,false);
     if (statement.bracedType==br_if) {
         return executeIfStatement(statement);
     // } else if (statement.bracedType==br_for) {
     //     return executeForStatement(statement);
     } else if (statement.bracedType==br_while) {
-        return executeWhileStatement(statement);
+        execResult result=executeWhileStatement(statement);
+        if (result==er_break or result==er_continue) return er_success;
+        else return result;
     } else { //Error
         if (scriptError.isEmpty()) {
             lastStatementStart=statement.originalPos;
@@ -492,11 +516,16 @@ bool FadaScriptEngine2::executeBracedStatement(stmt statement) {
             else
                 lastStatementHintSize=std::min(statement.originalSize,10);
         }
-        if (statement.statement.size()>9)
-            scriptError+="\nUnknown braced statement type: "+QString::number(statement.bracedType)+" - "+statement.statement.first(10);
+        QString startStatement;
+        if (statement.statement.size()>13)
+            startStatement=statement.statement.first(10)+"...'";
         else
-            scriptError+="\nUnknown braced statement type: "+QString::number(statement.bracedType)+" - "+statement.statement;
-        return false;
+            startStatement=statement.statement;
+        if (statement.bracedType==br_no)
+            scriptError+="\nNo braced statement type : '"+startStatement+"'";
+        else
+            scriptError+="\nUnknown braced statement type : '"+startStatement+"'";
+        return er_error;
     }
 }
 
@@ -555,10 +584,10 @@ void FadaScriptEngine2::setStatementType(stmt &statement) {
     }
 }
 
-void FadaScriptEngine2::setStatementBracedType(stmt &statement,bool onlyAtStart) {
+void FadaScriptEngine2::setStatementBracedType(stmt &statement,bool onlyAtParsingStart) {
     //Must be runned at begining of statement construction.
     if (statement.bracedType==br_unknown) {
-        if (!onlyAtStart or statement.statement.size()<7) {
+        if (!onlyAtParsingStart or statement.statement.size()<7) {
             if (statement.statement.startsWith("if ",Qt::CaseInsensitive) or statement.statement.startsWith("if(",Qt::CaseInsensitive))// or
                 //statement.statement.startsWith("else ",Qt::CaseInsensitive) or statement.statement.startsWith("else{",Qt::CaseInsensitive))
                 statement.bracedType=br_if;
@@ -587,6 +616,9 @@ QList<FadaScriptEngine2::stmt> FadaScriptEngine2::splitStatements(QString statem
     while (pos<scriptSize) {
         c=statements[pos];
 
+        if (pos==130)
+            qDebug() << "stop";
+
         if (c=="'") inString=!inString; // Start or end of literal string.
         else if (c=='{' and !inString) braceLevel++;
         else if (c=='}' and !inString) braceLevel--;
@@ -599,14 +631,14 @@ QList<FadaScriptEngine2::stmt> FadaScriptEngine2::splitStatements(QString statem
             statementStartPos=pos+1;
             curStatement.statement=curStatement.statement.trimmed();
 
-            if (!curStatement.statement.isEmpty()) //xxx
+            if (!curStatement.statement.isEmpty())
                 ////////////////////////////
                 result.append(curStatement);
                 ////////////////////////////
 
             resetStmt(curStatement);
             //inString=false;
-        } else if (c==' ' and curStatement.statement.isEmpty()) { //xxx
+        } else if (c==' ' and curStatement.statement.isEmpty()) { //No starting spaces.
             statementStartPos++;
         } else {
             //addToCurStatement(c,curStatement.statement);
@@ -669,9 +701,9 @@ void FadaScriptEngine2::addToCurStatement(QChar c,QString &statement) {
         statement+=c;
 }
 
-bool FadaScriptEngine2::executeIfStatement(stmt statement) {
+FadaScriptEngine2::execResult FadaScriptEngine2::executeIfStatement(stmt statement) {
     // if (...) {...} [else if (...) {...}] [else {...}]
-    bool result=true;
+    execResult result=er_success;
     int pos=0; //Position in statement.
     int offSet=0;
     QString toParse=statement.statement;
@@ -692,7 +724,7 @@ bool FadaScriptEngine2::executeIfStatement(stmt statement) {
                     lastStatementHintSize=1;
                 }
                 scriptError+="\nExtract condition fail.";
-                return false;
+                return er_error;
             }
             conditionPos=pos+1;
             toParse=toParse.mid(condition.size()+2);
@@ -709,37 +741,47 @@ bool FadaScriptEngine2::executeIfStatement(stmt statement) {
                 lastStatementHintSize=1;
             }
             scriptError+="\nExtract substatement fail.";
-            return false;
+            return er_error;
         }
 
         QString error;
+        /////////////////////////////////////////////
         bool eval=evalExpr(condition,error).toBool();
+        /////////////////////////////////////////////
         if (!error.isEmpty()) {
             //if (scriptError.isEmpty()) {
                 lastStatementStart=statement.originalPos+conditionPos;
                 lastStatementHintSize=condition.size();
             //}
             //scriptError+="\n"+error;
-            return false;
+            return er_error;
         } else if (eval) {
             qInfo() << unMap(statement.originalPos) << "if condition: " << condition << "true";
             stmt st;
             st.statement=subStatement;
             st.originalPos=statement.originalPos+offSet;
+            ///////////////////
             result=execute(st);
+            ///////////////////
+            if (result!=er_success) return result;
             break;
         } else {
             qInfo() << unMap(statement.originalPos) << "if condition: " << condition << "false";
             //Parse next condition and substatement.
             toParse=toParse.mid(subStatement.size()+2);
             offSet+=subStatement.size()+1;
+            int posParenth=toParse.indexOf("(");
             int posBrace=toParse.indexOf("{");
-            if (posBrace>-1) {
+            if (posParenth>-1 and posBrace>-1 and posBrace>posParenth) { //else if () {}
+                toParse=toParse.mid(posParenth);
+                offSet+=posParenth-1;
+            } else if (posBrace>-1) { //else {}
                 toParse=toParse.mid(posBrace);
                 offSet+=posBrace-1;
             } else {
                 break;
             }
+
         }
     }
 
@@ -763,9 +805,9 @@ bool FadaScriptEngine2::executeIfStatement(stmt statement) {
 //     return result;
 // }
 
-bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
+FadaScriptEngine2::execResult FadaScriptEngine2::executeWhileStatement(stmt statement) {
     //while (...) {...}
-    bool result=true;
+    execResult result=er_success;
     int pos=0; //Position in statement.
     int offSet=0;
     QString toParse=statement.statement;
@@ -785,7 +827,7 @@ bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
                 lastStatementHintSize=1;
             }
             scriptError+="\nExtract condition fail.";
-            return false;
+            return er_error;
         }
         conditionPos=pos+1;
         toParse=toParse.mid(condition.size()+2);
@@ -796,7 +838,7 @@ bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
             lastStatementHintSize=1;
         }
         scriptError+="\nNo condition.";
-        return false;
+        return er_error;
     }
 
     //Parse substatement.
@@ -807,11 +849,11 @@ bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
             lastStatementHintSize=1;
         }
         scriptError+="\nExtract substatement fail.";
-        return false;
+        return er_error;
     }
 
     int loop=0;
-    while (result) {
+    while (result!=er_error) {
         QString error;
         bool eval=evalExpr(condition,error).toBool();
         if (!error.isEmpty()) {
@@ -820,7 +862,7 @@ bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
                 lastStatementHintSize=condition.size();
             //}
             //scriptError+="\n"+error;
-            return false;
+            return er_error;
         }
         if (!eval) break;
 
@@ -828,7 +870,11 @@ bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
         stmt st;
         st.statement=subStatement;
         st.originalPos=statement.originalPos+offSet;
+        ///////////////////
         result=execute(st);
+        ///////////////////
+        if (result==er_return) return result;
+        if (result==er_break or result==er_error) break;
         loop++;
         if (loop>10) { //Infinite loop error.
             if (scriptError.isEmpty()) {
@@ -836,10 +882,10 @@ bool FadaScriptEngine2::executeWhileStatement(stmt statement) {
                 lastStatementHintSize=1;
             }
             scriptError+="\nLoop overflow (10).";
-            return false;
+            return er_error;
         }
+        //if (result==er_continue) continue;
     }
-
     return result;
 }
 
@@ -871,7 +917,7 @@ QString FadaScriptEngine2::extractSubExpr(QString expr, QChar startDelimiter, QC
 
         if (c=="'") inString=!inString; // Start or end of literal string.
 
-        if (level>0)// and (!result.isEmpty() or c!=startDelimiter))
+        if (level>0 and (!result.isEmpty() or c!=' '))
             result+=c;
         else
             offSet++;
@@ -1074,6 +1120,9 @@ QVariant FadaScriptEngine2::evalExpr(QString expr, QString &error) {
     // Replace function by function result.
     fadaFunction("format",expr,error);
     fadaFunction("iif",expr,error);
+    fadaFunction("sysCmd",expr,error);
+    fadaFunction("sysOpen",expr,error);
+    fadaFunction("sysRun",expr,error);
 
     // Replace dialogs by user response (1,0).
     fadaFunction("inputDialog",expr,error);
@@ -1117,17 +1166,32 @@ void FadaScriptEngine2::setVar(QString varName,QVariant value,int originalPos) {
 
 void FadaScriptEngine2::resetVars() {
     vars.clear();
+
+    //Standard pixmap
     setVar("sp_Critical","Critical",-1); //QStyle::SP_MessageBoxCritical
     setVar("sp_Warning","Warning",-1);
     setVar("sp_Question","Question",-1);
     setVar("sp_Information","Information",-1);
     setVar("sp_None","",-1);
 
+    //Input type
     setVar("it_Integer","INTEGER",-1); // QVariant::fromValue(static_cast<int>(QMetaType::Int))
     setVar("it_Real","REAL",-1);
     setVar("it_Date","DATE",-1);
     setVar("it_Bool","BOOL",-1);
     setVar("it_Text","TEXT",-1);
+
+    //Button set
+    setVar("bs_OkCancel","OkCancel",-1);
+    setVar("bs_NextCancel","NextCancel",-1);
+    setVar("bs_PrevNextCancel","PrevNextCancel",-1);
+    setVar("bs_PrevFinishCancel","PrevFinishCancel",-1);
+
+    //exitButtonDialog
+    setVar("exitButtonDialog","",-1);
+    setVar("eb_Ok","ok",-1);
+    setVar("eb_Cancel","cancel",-1);
+    setVar("eb_Previous","previous",-1);
 }
 
 void FadaScriptEngine2::fadaFunction(QString funcName, QString &expr, QString &error) {
@@ -1164,25 +1228,28 @@ void FadaScriptEngine2::fadaFunction(QString funcName, QString &expr, QString &e
                             result="'"+args[0].toDate().toString("dd/MM/yyyy")+"'";
                         newExpr+=result;
                     } else if (funcName=="inputDialog") { //inputDialog(text
-                                                                             //            ,label,type[,width[,valDef
-                                                                             //            [,messageType[,dialogWidth[,NextButton]]]]])
+                                                          //            ,label,type[,width[,valDef
+                                                          //            [,dialogType[,dialogGeometry[,nextButton]]]]])
                         if (args.count()>2) {
                             inputStructure input;
                             input.label=args[1].toString();
-                            // QVariant varType;
-                            // if (args[2].toLower().startsWith("int")) input.type=QMetaType::Int;
-                            // else if (args[2].toLower()=="real") input.type=QMetaType::Double;
-                            // else if (args[2].toLower()=="date") input.type=QMetaType::QDate;
-                            // else if (args[2].toLower()=="bool") input.type=QMetaType::Bool;
                             input.type=args[2].toString();
-                            if (args.count()>3) input.inputWidth=args[3].toInt();
+
+                            if (args.count()>3) {
+                                QStringList inputGeometry=QString(args[3].toString()+"|||").split("|");
+                                if (!inputGeometry[0].isEmpty()) input.left=inputGeometry[0].toInt();
+                                if (!inputGeometry[1].isEmpty()) input.labelWidth=inputGeometry[1].toInt();
+                                if (!inputGeometry[2].isEmpty()) input.inputWidth=inputGeometry[2].toInt();
+                            }
                             if (args.count()>4) input.valDef=args[4].toString();
 
-                            QString messageType; if (args.count()>5) messageType=args[5].toString();
-                            int dialogWidth=350; if (args.count()>6) dialogWidth=args[6].toInt();
-                            bool bNext=false; if (args.count()>7) bNext=(args[7].toBool());
+                            QString dialogType; if (args.count()>5) dialogType=args[5].toString();
+                            QString dialogGeometry; if (args.count()>6) dialogGeometry=args[6].toString();
+                            QString buttonSet=""; if (args.count()>7) buttonSet=args[7].toString();
 
-                            QList<inputResult> result=inputDialog(scriptTitle,args[0].toString(),{input},bNext,standardPixmap(messageType),dialogWidth);
+                            QList<inputResult> result=inputDialog(scriptTitle,args[0].toString(),{input},buttonSet,standardPixmap(dialogType),dialogGeometry);
+
+                            setVar("exitButtonDialog",buttonSet,-1);
 
                             if (result.count()==0)
                                 newExpr+="null";
@@ -1197,25 +1264,27 @@ void FadaScriptEngine2::fadaFunction(QString funcName, QString &expr, QString &e
                             error=funcName+"() needs 3 arguments minimum.";
                             break;
                         }
-                    } else if (funcName=="okCancelDialog") { //okCancelDialog(text[,messageType[,messageWidth[,NextButton]]])
-                        QString messageType; if (args.count()>1) messageType=args[1].toString();
-                        int dialogWidth=350; if (args.count()>2) dialogWidth=args[2].toInt();
-                        bool bNext=false; if (args.count()>3) bNext=(args[3].toBool());
-                        newExpr+=iif(OkCancelDialog(scriptTitle,args[0].toString(),bNext,standardPixmap(messageType),dialogWidth),"1","0").toString();
-                    } else if (funcName=="yesNoDialog") { //yesNoDialog(text[,messageType[,messageWidth]])
-                        QString messageType; if (args.count()>1) messageType=args[1].toString();
-                        int dialogWidth=350; if (args.count()>2) dialogWidth=args[2].toInt();
-                        newExpr+=iif(YesNoDialog(scriptTitle,args[0].toString(),standardPixmap(messageType),dialogWidth),"1","0").toString();
-                    } else if (funcName=="radioButtonDialog") { //radioButtonDialog(text,option1|option2...[,DefOptionIndex[,didabledOpIndexes[messageType[,messageWidth[,NextButton]]]]])
+                    } else if (funcName=="okCancelDialog") { //okCancelDialog(text[,dialogType[,messageWidth[,NextButton]]])
+                        QString dialogType; if (args.count()>1) dialogType=args[1].toString();
+                        QString dialogGeometry; if (args.count()>2) dialogGeometry=args[2].toString();
+                        QString buttonSet=""; if (args.count()>3) buttonSet=args[3].toString();
+                        newExpr+=iif(OkCancelDialog(scriptTitle,args[0].toString(),buttonSet,standardPixmap(dialogType),dialogGeometry),"1","0").toString();
+                        setVar("exitButtonDialog",buttonSet,-1);
+                    } else if (funcName=="yesNoDialog") { //yesNoDialog(text[,dialogType[,messageWidth]])
+                        QString dialogType; if (args.count()>1) dialogType=args[1].toString();
+                        QString dialogGeometry="350"; if (args.count()>2) dialogGeometry=args[2].toString();
+                        newExpr+=iif(YesNoDialog(scriptTitle,args[0].toString(),standardPixmap(dialogType),dialogGeometry),"1","0").toString();
+                    } else if (funcName=="radioButtonDialog") { //radioButtonDialog(text,option1|option2...[,DefOptionIndex[,didabledOpIndexes[dialogType[,messageWidth[,NextButton]]]]])
                         if (args.count()>1) {
                             QStringList options=args[1].toString().split("|");
                             int iDef=0; if (args.count()>2) iDef=args[2].toInt();
                             QStringList disabledOptionsSL; if (args.count()>3 and !args[3].toString().isEmpty()) disabledOptionsSL=args[3].toString().split("|");
                             QSet<int> disabledOptions; for (int i=0;i<disabledOptionsSL.count();i++) disabledOptions.insert(disabledOptionsSL[i].toInt());
-                            QString messageType; if (args.count()>4) messageType=args[4].toString();
-                            int dialogWidth=350; if (args.count()>5) dialogWidth=args[5].toInt();
-                            bool bNext=false; if (args.count()>6) bNext=(args[6].toBool());
-                            int result=RadiobuttonDialog(scriptTitle,args[0].toString(),options,iDef,disabledOptions,bNext,standardPixmap(messageType),dialogWidth);
+                            QString dialogType; if (args.count()>4) dialogType=args[4].toString();
+                            QString dialogGeometry; if (args.count()>5) dialogGeometry=args[5].toString();
+                            QString buttonSet=""; if (args.count()>6) buttonSet=args[6].toString();
+                            int result=RadiobuttonDialog(scriptTitle,args[0].toString(),buttonSet,options,iDef,disabledOptions,standardPixmap(dialogType),dialogGeometry);
+                            setVar("exitButtonDialog",buttonSet,-1);
                             if (result==-1)
                                 newExpr+="null";
                             else
@@ -1224,6 +1293,55 @@ void FadaScriptEngine2::fadaFunction(QString funcName, QString &expr, QString &e
                             error=funcName+"() needs 2 arguments minimum.";
                             break;
                         }
+                    } else if (funcName.startsWith("sys")) {
+                        bool wait=false;
+                        int result=-1;
+                        QProcess p;
+                        QString program;
+                        QStringList sysArgs;
+                        if (funcName=="sysCmd") { //sysCmd(cmd[,wait]) ->cmd exit code.
+                            if (args.count()>1) wait=args[1].toBool();
+                            #if defined(Q_OS_WIN)
+                                program = "cmd";
+                                sysArgs << "/C" << args[0].toString();
+                            #elif defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+                                program = "/bin/sh";
+                                sysArgs << "-c" << args[0].toString();
+                            #endif
+                        } else if (funcName=="sysOpen") { //sysRun(fileName[,wait]) ->open cmd exit code.
+                            if (args.count()>1) wait=args[1].toBool();
+                            #if defined(Q_OS_LINUX)
+                                program="xdg-open";
+                                sysArgs={QDir::toNativeSeparators(args[0].toString())};
+                            #elif defined(Q_OS_MAC)
+                                program="open";
+                                sysArgs={QDir::toNativeSeparators(args[0].toString())};
+                            #elif defined(Q_OS_WIN)
+                                program="cmd";
+                                sysArgs={"/C", "start", "", QDir::toNativeSeparators(args[0].toString())};
+                            #endif
+                        } else if (funcName=="sysRun") { //sysRun(program[,args[,wait]]) ->program exit code.
+                            program=QDir::toNativeSeparators(args[0].toString());
+                            if (args.count()>1) sysArgs=args[1].toString().split("|");
+                            if (args.count()>2) wait=args[2].toBool();
+                        }
+                        if (program.isEmpty()) {
+                            error=funcName+"()<br>Unknown operating system.";
+                            break;
+                        }
+                        if (wait) {
+                            p.start(program,sysArgs);
+                            if (p.waitForStarted(5000) and p.waitForFinished(-1))
+                                result=p.exitCode();
+                            else
+                                setVar("sysLastError",p.errorString(),-1);
+                        } else {
+                            if (p.startDetached(program,sysArgs))
+                                result=0;
+                            else
+                                setVar("sysLastError",p.errorString(),-1);
+                        }
+                        newExpr+=QString::number(result);
                     } else {
                         error=funcName+"() unknown.";
                         break;

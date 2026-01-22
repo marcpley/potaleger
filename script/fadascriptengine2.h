@@ -27,6 +27,7 @@ public:
     int runScript(QString script, QSqlDatabase *db, bool testScript, FadaScriptEdit *SQLEdit=nullptr, FadaHighlighter *hl=nullptr);
 
 private:
+    enum execResult {er_error,er_success,er_continue,er_break,er_return};
     enum stType { st_single, st_braced, st_multiple, st_error, st_unknown };
     enum brType { br_if, br_while, br_no, br_unknown}; //, br_for
     struct stmt {
@@ -44,7 +45,9 @@ private:
     QString map(QString script);
     int unMap(int posInNoCommentScript);
 
-    bool returnScript;
+    //bool returnScript;
+    // QMap<QString,int> gotoLabels;
+    // int labelPos=-1;
 
     QSqlDatabase *db;
     bool transactionOpen=false;
@@ -52,15 +55,15 @@ private:
     bool endOfStatement(const QChar c, const int pos, const int scriptSize, const bool inString,
                         const int braceLevel, stmt &curStatement, QString statements);
     void addToCurStatement(QChar c, QString &statement);
-    bool execute(stmt statement);
-    bool executeSimpleStatement(stmt statement);
-    bool executeBracedStatement(stmt statement);
+    execResult execute(stmt statement);
+    execResult executeSimpleStatement(stmt statement);
+    execResult executeBracedStatement(stmt statement);
     void setStatementType(stmt &statement);
     QList<stmt> splitStatements(QString statements, int offSet);
-    void setStatementBracedType(stmt &statement,bool onlyAtStart);
-    bool executeIfStatement(stmt statement);
+    void setStatementBracedType(stmt &statement, bool onlyAtParsingStart);
+    execResult executeIfStatement(stmt statement);
     //bool executeForStatement(stmt statement);
-    bool executeWhileStatement(stmt statement);
+    execResult executeWhileStatement(stmt statement);
     QString extractSubExpr(QString expr, QChar startDelimiter, QChar endDelimiter, int &offSet);
     QList<QVariant> extractArgs(QString expr);
     QVariant evalExpr(QString expr, QString &error);

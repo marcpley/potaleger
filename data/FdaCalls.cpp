@@ -21,14 +21,14 @@ QString DynDDL(QString sQuery)
 QString FdaBaseData(QSqlDatabase *db, const QString sTableName,const QString sFieldName){
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT base_data FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toString();
 }
 
 bool FdaCanOpenTab(QSqlDatabase *db, const QString sTableName) {
     PotaQuery query(*db);
     QString queryTest=query.Select0ShowErr("SELECT can_open_tab FROM fada_t_schema "
-                                           "WHERE (name='"+sTableName+"')").toString();
+                                           "WHERE (tv_name='"+sTableName+"')").toString();
 
     return queryTest.isEmpty() or query.Select0ShowErr(queryTest).toBool();
 }
@@ -36,7 +36,7 @@ bool FdaCanOpenTab(QSqlDatabase *db, const QString sTableName) {
 QString FdaCombo(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
     PotaQuery query(*db);
     QString result=query.Select0ShowErr("SELECT combo FROM fada_f_schema "
-                                        "WHERE (name='"+sTableName+"')AND"
+                                        "WHERE (tv_name='"+sTableName+"')AND"
                                           "(field_name='"+sFieldName+"')").toString();
     if (!result.contains("|")) //User combo values
         result=query.Select0ShowErr("SELECT Valeur FROM Params WHERE Paramètre='"+result+"'").toString();
@@ -47,7 +47,7 @@ QString FdaCombo(QSqlDatabase *db, const QString sTableName,const QString sField
 int FdaColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
     PotaQuery query(*db);
     int result=query.Select0ShowErr("SELECT col_width FROM fada_f_schema "
-                                    "WHERE (name='"+sTableName+"')AND"
+                                    "WHERE (tv_name='"+sTableName+"')AND"
                                           "(field_name='"+sFieldName+"')").toInt();
     if (result>0)
         return result;
@@ -68,21 +68,21 @@ int FdaColWidth(QSqlDatabase *db, const QString sTableName,const QString sFieldN
 QString FdaCondFormats(QSqlDatabase *db, const QString sTableName,const QString sFieldName){
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT cond_formats FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toString();
 }
 
 QString FdaDraw(QSqlDatabase *db, const QString sTableName,const QString sFieldName){
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT draw FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toString();
 }
 
 QString FdaDynHeader(QSqlDatabase *db, const QString sTableName,const QString sFieldName){
     PotaQuery query(*db);
     QString sQuery=query.Select0ShowErr("SELECT dyn_header FROM fada_f_schema "
-                                        "WHERE (name='"+sTableName+"')AND"
+                                        "WHERE (tv_name='"+sTableName+"')AND"
                                               "(field_name='"+sFieldName+"')").toString();
     if (!sQuery.isEmpty())
         return query.Select0ShowErr(sQuery).toString();
@@ -97,7 +97,7 @@ QString FdaFkFilter(QSqlDatabase *db, const QString sTableName, const QString sF
     //Set the filter depending of row data.
     PotaQuery query(*db);
     QString filter=query.Select0ShowErr("SELECT fk_filter FROM fada_f_schema "
-                                        "WHERE (name='"+sTableName+"')AND"
+                                        "WHERE (tv_name='"+sTableName+"')AND"
                                               "(field_name='"+sFieldName+"')").toString();
 
     for (int i=0;i<index.model()->columnCount();i++) {
@@ -110,7 +110,7 @@ QString FdaFkFilter(QSqlDatabase *db, const QString sTableName, const QString sF
 QString FdaFkSortField(QSqlDatabase *db, const QString sTableName,const QString sFieldName){
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT fk_sort_field FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toString();
 }
 
@@ -118,28 +118,28 @@ bool FdaHidden(QSqlDatabase *db, QString sTableName,QString sFieldName)
 {
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT hidden NOTNULL FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toBool();
 }
 
 bool FdaGotoLast(QSqlDatabase *db, const QString sTableName){
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT goto_last NOTNULL FROM fada_t_schema "
-                                "WHERE (name='"+sTableName+"')").toBool();
+                                "WHERE (tv_name='"+sTableName+"')").toBool();
 }
 
 bool FdaMoney(QSqlDatabase *db, const QString sTableName, const QString sFieldName){
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT money NOTNULL FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toBool();
 }
 
 QString FdaNaturalSortFields(QSqlDatabase *db, const QString sTableName){
     PotaQuery query(*db);
     QString result=query.Select0ShowErr("SELECT group_concat(field_name,',') FROM (SELECT field_name FROM fada_f_schema "
-                                                                                  "WHERE (name='"+sTableName+"')AND(natural_sort NOTNULL)"
-                                                                                  "ORDER BY name,natural_sort)").toString();
+                                                                                  "WHERE (tv_name='"+sTableName+"')AND(natural_sort NOTNULL)"
+                                                                                  "ORDER BY tv_name,natural_sort)").toString();
     return result;
 }
 
@@ -147,7 +147,7 @@ bool FdaMultiline(QSqlDatabase *db, const QString sTableName,const QString sFiel
     PotaQuery query(*db);
     return sFieldName=="sql" or
            query.Select0ShowErr("SELECT multiline NOTNULL FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toBool();
 }
 
@@ -155,7 +155,7 @@ QString FdaNoDataText(QSqlDatabase *db, const QString sTableName){
 
     PotaQuery query(*db);
     QString result=query.Select0ShowErr("SELECT no_data_text FROM fada_t_schema "
-                                        "WHERE (name='"+sTableName+"')").toString();
+                                        "WHERE (tv_name='"+sTableName+"')").toString();
 
     if (!result.isEmpty())
         result=result.replace("\n\n","\n");
@@ -168,14 +168,14 @@ QString FdaNoDataText(QSqlDatabase *db, const QString sTableName){
 bool FdaReadonly(QSqlDatabase *db, const QString sTableName,const QString sFieldName) {
     PotaQuery query(*db);
     if (sFieldName.isEmpty()) {
-        if (query.Select0ShowErr("SELECT count() FROM fada_t_schema WHERE (name='"+sTableName+"')")!=1 or // fda definition does'nt exists.
-            query.Select0ShowErr("SELECT (readonly NOTNULL) FROM fada_t_schema WHERE (name='"+sTableName+"')").toBool())
+        if (query.Select0ShowErr("SELECT count() FROM fada_t_schema WHERE (tv_name='"+sTableName+"')")!=1 or // fda definition does'nt exists.
+            query.Select0ShowErr("SELECT (readonly NOTNULL) FROM fada_t_schema WHERE (tv_name='"+sTableName+"')").toBool())
             return true;
         else
             return false;
     } else {
-        if (query.Select0ShowErr("SELECT count() FROM fada_f_schema WHERE (name='"+sTableName+"')AND(field_name='"+sFieldName+"')")!=1 or // fda definition does'nt exists.
-            query.Select0ShowErr("SELECT (readonly NOTNULL) FROM fada_f_schema WHERE (name='"+sTableName+"')AND(field_name='"+sFieldName+"')").toBool())
+        if (query.Select0ShowErr("SELECT count() FROM fada_f_schema WHERE (tv_name='"+sTableName+"')AND(field_name='"+sFieldName+"')")!=1 or // fda definition does'nt exists.
+            query.Select0ShowErr("SELECT (readonly NOTNULL) FROM fada_f_schema WHERE (tv_name='"+sTableName+"')AND(field_name='"+sFieldName+"')").toBool())
             return true;
         else
             return false;
@@ -246,7 +246,7 @@ QString FdaRowSummary(QSqlDatabase *db, const QString sTableName, const QString 
 QString FdaRowSummaryModel(QSqlDatabase *db, QString sTableName) {
     PotaQuery query(*db);
     return query.Select0ShowErr("SELECT row_summary FROM fada_t_schema "
-                                "WHERE (name='"+sTableName+"')").toString();
+                                "WHERE (tv_name='"+sTableName+"')").toString();
 }
 
 QColor FdaColor(QSqlDatabase *db, QString sTableName,QString sFieldName)
@@ -254,10 +254,10 @@ QColor FdaColor(QSqlDatabase *db, QString sTableName,QString sFieldName)
     PotaQuery query(*db);
     if (sFieldName.isEmpty())
         return QColor(query.Select0ShowErr("SELECT color FROM fada_t_schema "
-                                           "WHERE (name='"+sTableName+"')").toString());
+                                           "WHERE (tv_name='"+sTableName+"')").toString());
     else
         return QColor(query.Select0ShowErr("SELECT color FROM fada_f_schema "
-                                           "WHERE (name='"+sTableName+"')AND"
+                                           "WHERE (tv_name='"+sTableName+"')AND"
                                                  "(field_name='"+sFieldName+"')").toString());
 }
 
@@ -308,10 +308,10 @@ QString FdaToolTip(QSqlDatabase *db,const QString sTableName,const QString sFiel
     PotaQuery query(*db);
 
     if (sFieldName.isEmpty()) { //Table tooltip.
-        sToolTip=query.Select0ShowErr("SELECT description FROM fada_t_schema WHERE (name='"+sTableName+"')").toString();
+        sToolTip=query.Select0ShowErr("SELECT description FROM fada_t_schema WHERE (tv_name='"+sTableName+"')").toString();
 
         if (sToolTip.isEmpty() and sTableName.contains("__"))
-            sToolTip=query.Select0ShowErr("SELECT description FROM fada_t_schema WHERE (name='"+sTableName.first(sTableName.indexOf("__"))+"')").toString();
+            sToolTip=query.Select0ShowErr("SELECT description FROM fada_t_schema WHERE (tv_name='"+sTableName.first(sTableName.indexOf("__"))+"')").toString();
 
         if (!sToolTip.isEmpty())
             sToolTip=sToolTip.replace("\n\n","\n");
@@ -347,7 +347,7 @@ QString FdaToolTip(QSqlDatabase *db,const QString sTableName,const QString sFiel
                          QObject::tr("La mise à jour du schéma de BDD peut modifier cette liste.")+"\n\n"+
                          QObject::tr("Nom de la vue : ")+sTableName;
         } else {
-            QString tblType=query.Select0ShowErr("SELECT tbl_type FROM fada_t_schema WHERE (name='"+sTableName+"')").toString();
+            QString tblType=query.Select0ShowErr("SELECT tv_type FROM fada_t_schema WHERE (tv_name='"+sTableName+"')").toString();
             if (tblType=="Table") {
                 sToolTip=sToolTip+
                          "\n\n"+QObject::tr("Ces informations sont enregistrées dans une table (T) et peuvent être directement modifiéees.")+"\n"+
@@ -373,30 +373,30 @@ QString FdaToolTip(QSqlDatabase *db,const QString sTableName,const QString sFiel
 
     } else { //field tooltip.
         sToolTip=query.Select0ShowErr("SELECT description FROM fada_f_schema "
-                                      "WHERE (name='"+sTableName+"')AND"
+                                      "WHERE (tv_name='"+sTableName+"')AND"
                                             "(field_name='"+sFieldName+"')").toString();
 
         if (sToolTip.isEmpty() and sTableName.contains("__")) //Search description of real table field.
             sToolTip=query.Select0ShowErr("SELECT description FROM fada_f_schema "
-                                          "WHERE (name='"+sTableName.first(sTableName.indexOf("__"))+"')AND"
+                                          "WHERE (tv_name='"+sTableName.first(sTableName.indexOf("__"))+"')AND"
                                                 "(field_name='"+sFieldName+"')").toString();
 
         while (sToolTip.startsWith("::")) //Reference to description of another table and field.
             sToolTip=query.Select0ShowErr("SELECT description FROM fada_f_schema "
-                                          "WHERE (name='"+sToolTip.mid(2).split(".")[0]+"')AND"
+                                          "WHERE (tv_name='"+sToolTip.mid(2).split(".")[0]+"')AND"
                                                 "(field_name='"+sToolTip.mid(2).split(".")[1]+"')").toString();
 
         if (sToolTip.isEmpty()) {//Search description of master table field.
             QString masterTable=query.Select0ShowErr("SELECT master_table FROM fada_f_schema "
-                                                     "WHERE (name='"+sTableName+"')AND"
+                                                     "WHERE (tv_name='"+sTableName+"')AND"
                                                            "(field_name='"+sFieldName+"')").toString();
             if (!masterTable.isEmpty()) {
                 QString masterField=query.Select0ShowErr("SELECT master_field FROM fada_f_schema "
-                                                         "WHERE (name='"+sTableName+"')AND"
+                                                         "WHERE (tv_name='"+sTableName+"')AND"
                                                                "(field_name='"+sFieldName+"')").toString();
                 if (!masterField.isEmpty())
                     sToolTip=query.Select0ShowErr("SELECT description FROM fada_f_schema "
-                                                  "WHERE (name='"+masterTable+"')AND"
+                                                  "WHERE (tv_name='"+masterTable+"')AND"
                                                         "(field_name='"+masterField+"')").toString();
             }
         }
@@ -470,7 +470,7 @@ QString FdaToolTip(QSqlDatabase *db,const QString sTableName,const QString sFiel
 QString FdaUnit(QSqlDatabase *db,const QString sTableName,const QString sFieldName, const bool bSpaceBefore) {
     PotaQuery query(*db);
     QString result=query.Select0ShowErr("SELECT unit FROM fada_f_schema "
-                                "WHERE (name='"+sTableName+"')AND"
+                                "WHERE (tv_name='"+sTableName+"')AND"
                                       "(field_name='"+sFieldName+"')").toString();
     if (result.isEmpty() and FdaMoney(db,sTableName,sFieldName))
         result=query.Select0ShowErr("SELECT Valeur FROM Params "

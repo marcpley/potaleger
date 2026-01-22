@@ -69,22 +69,26 @@ void FadaHighlighter::setRules(QStringList varNames) {
     //TableFormat.setUnderlineStyle(QTextCharFormat::SingleUnderline);
 
     QStringList SqlPatterns={
-        "\\bSELECT\\b", "\\bFROM\\b", "\\bWHERE\\b", "\\bGROUP BY\\b", "\\bORDER BY\\b", "\\bJOIN\\b", "\\bLEFT\\b", "\\bRIGHT\\b", "\\bUSING\\b"
+        "\\bSELECT\\b", "\\bFROM\\b", "\\bWHERE\\b", "\\bGROUP\\s+BY\\b", "\\bORDER\\s+BY\\b", "\\bJOIN\\b", "\\bLEFT\\b", "\\bRIGHT\\b", "\\bUSING\\b"
     };
     QStringList SqlModPatterns={
-        "\\bUPDATE\\b", "\\bINSERT\\b", "\\bDELETE\\b", "\\bSET\\b", "\\bBEGIN TRANSACTION\\b", "\\bCOMMIT\\b", "\\bROLLBACK\\b"
+        "\\bUPDATE\\b", "\\bINSERT\\s+INTO\\b", "\\bDELETE\\s+FROM\\b", "\\bSET\\b", "\\bBEGIN TRANSACTION\\b", "\\bNEW\\b", "\\bOLD\\b", "\\bVALUES\\b",
+        "\\bCOMMIT\\b", "\\bROLLBACK\\b"
     };
     QStringList SqlDefPatterns={
-        "\\bCREATE\\b", "\\bTABLE\\b", "\\bDROP\\b", "\\bALTER\\b"
+        "\\bCREATE\\b", "\\bTABLE\\b", "\\bVIEW\\b", "\\bTRIGGER\\b", "\\bDROP\\b", "\\bAFTER\\b", "\\bBEFORE\\b", "\\bALTER\\b",
+        "\\bINSTEAD\\s+OF\\b", "\\bINSERT\\s+ON\\b", "\\bUPDATE\\s+ON\\b", "\\bDELETE\\s+ON\\b"
     };
     QStringList CPatterns={
-        "\\bIF\\b", "\\bELSE\\b", "\\bWHILE\\b", "\\bRETURN\\b" //, "\\bFOR\\b"
+        "\\bIF\\b", "\\bELSE\\b", "\\bWHILE\\b", "\\bRETURN\\b", "\\bBREAK\\b", "\\bCONTINUE\\b" //, "\\bFOR\\b"
     };
     // QStringList OperatorPatterns={
     //     "\\bAND\\b", "\\bOR\\b", "\\bNULL\\b", "\\bISNULL\\b", "\\bNOTNULL\\b", "\\bNOT\\b", "\\bBETWEEN\\b", "\\|\\|"
     // };
     QStringList FadaPatterns={
-        "\\bINPUTDIALOG\\b", "\\bINPUTSDIALOG\\b", "\\bMESSAGEDIALOG\\b", "\\bOKCANCELDIALOG\\b", "\\bRADIOBUTTONDIALOG\\b", "\\bSELECTDIALOG\\b", "\\bTABLEDIALOG\\b", "\\bYESNODIALOG\\b"
+        "\\bINPUTDIALOG\\b", "\\bINPUTSDIALOG\\b", "\\bMESSAGEDIALOG\\b", "\\bOKCANCELDIALOG\\b", "\\bRADIOBUTTONDIALOG\\b",
+        "\\bSELECTDIALOG\\b", "\\bTABLEDIALOG\\b", "\\bYESNODIALOG\\b",
+        "\\bSYSCMD\\b", "\\bSYSOPEN\\b", "\\bSYSRUN\\b"
     };
     QStringList CommentPatterns={
         "--[^\n]*"

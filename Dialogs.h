@@ -10,7 +10,7 @@
 #include <QFrame>
 #include <QMouseEvent>
 
-void MessageDlg(const QString &titre, const QString &message, const QString &message2="", QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
+void MessageDlg(const QString &titre, const QString &message, const QString &message2="", QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const QString geometry="");
 
 const int xAxisGroupNo=0;
 const int xAxisGroupSame=1;
@@ -80,13 +80,15 @@ QString QueryDialog(const QString &titre, const QString &message, QSqlDatabase d
     };
 
     QList<inputResult> inputDialog(const QString &titre, const QString &message, QList<inputStructure> inputs,
-                                   const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
-bool OkCancelDialog(const QString &titre, const QString &message, const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
-int RadiobuttonDialog(const QString &titre, const QString &message, const QStringList &options, const int iDef, const QSet<int> disabledOptions={}, const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
+                                   QString &buttons, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const QString geometry="");
+    bool OkCancelDialog(const QString &titre, const QString &message, QString &buttons, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const QString geometry="");
+    int RadiobuttonDialog(const QString &titre, const QString &message, QString &buttons, const QStringList &options, const int iDef=0, const QSet<int> disabledOptions={},
+                          QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const QString geometry="");
 QList<inputResult> selectDialog(const QString &titre, const QString &message, QSqlDatabase db, QString varName, QString tableName, QString whereClose,
-                                QProgressBar *progressBar, QLabel *lErr,const bool bNext=false, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, QString toolTip="");
-bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const int MinWidth=350);
+                                QProgressBar *progressBar, QLabel *lErr,QString &buttons, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, QString toolTip="");
+bool YesNoDialog(const QString &titre, const QString &message, QStyle::StandardPixmap iconType=QStyle::SP_CustomBase, const QString geometry="");
 
+void setGeometry(QDialog *dialog, QString sGeometry);
 
 
 #endif // DIALOGS_H

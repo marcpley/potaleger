@@ -46,7 +46,7 @@ if (okCancelDialog(confirm,icon,600)) {
         choice=radioButtonDialog('Parmis les '||NbCultPlanifValid||' cultures à créer, '||
                                  'il y en a '||NbCultPlanifRetard||' dont la date de la 1ère opération (semis ou plantation) est déjà passée.',
                                  'Ne pas créer ces cultures en retard|Créer aussi ces cultures en retard',def,'',sp_Warning);
-        if (choice<0) {return;}
+        if (choice==null) {return;}
     } else {
         choice=1;
     }

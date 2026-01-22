@@ -218,11 +218,12 @@ void MainWindow::on_mSelecDB_triggered()
 void MainWindow::on_mUpdateSchema_triggered()
 {
     ClosePotaTabs();
+    QString buttons="";
     if (OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Mettre à jour le schéma de la BDD ?")+"\n\n"+
                        ui->lDB->text()+"\n\n"+
                        tr("La structures des tables, les vues et les déclencheurs vont être recréés.")+"\n"+
                        tr("Vos données vont être conservées.")+"\n"+
-                       tr("En cas d'échec, votre BDD sera remise dans son état initial."),false,QStyle::SP_MessageBoxQuestion,600)){
+                       tr("En cas d'échec, votre BDD sera remise dans son état initial."),buttons,QStyle::SP_MessageBoxQuestion,"600")){
         QString sFileName=ui->lDB->text();
         PotaDbClose();
         if(!PotaDbOpen(sFileName,"",true))
@@ -243,13 +244,14 @@ void MainWindow::on_mCopyDB_triggered()
     const QString sFileName=QFileDialog::getSaveFileName(this, tr("Copie de la base de données %1").arg("Potaléger"), ui->lDB->text(), "*.sqlite3",nullptr,QFileDialog::DontConfirmOverwrite);
     if (sFileName.isEmpty()) return;
     FileInfoVerif.setFile(sFileName);
+    QString buttons="";
     if (!FileInfoVerif.exists() or
         OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
                        tr("Remplacer par")+"\n"+
                        ui->lDB->text()+"\n"+
-                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",false,QStyle::SP_MessageBoxWarning,600)) {
+                       FileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfo.size()/1000)+" ko ?",buttons,QStyle::SP_MessageBoxWarning,"600")) {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists()) {
             FileInfo2.setFileName(sFileName);
@@ -312,11 +314,12 @@ void MainWindow::CreateNewDB(bool bEmpty)
     if (sFileName.isEmpty()) return;
 
     FileInfoVerif.setFile(sFileName);
+    QString buttons="";
     if (!FileInfoVerif.exists() or
         OkCancelDialog("Potaléger "+ui->lVer->text(),tr("Le fichier existe déjà")+"\n"+
                        sFileName+"\n"+
                        FileInfoVerif.lastModified().toString("yyyy-MM-dd HH:mm:ss")+" - " + QString::number(FileInfoVerif.size()/1000)+" ko\n\n"+
-                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),false,QStyle::SP_MessageBoxWarning,600))
+                       tr("Remplacer par une base de données %1 ?").arg(sEmpty),buttons,QStyle::SP_MessageBoxWarning,"600"))
     {
         QFile FileInfo1,FileInfo2,FileInfo3;
         if (FileInfoVerif.exists())
@@ -430,9 +433,9 @@ void MainWindow::on_mAbout_triggered()
                   "SQLiteStudio <a href=\"https://sqlitestudio.pl/\">sqlitestudio.pl/</a>, thanks Pawel !<br>"
                   "muParserX <a href=\"https://github.com/beltoforion/muparserx/\">github.com/beltoforion/muparserx</a><br>"
                   "Ferme Légère <a href=\"https://fermelegere.greli.net\">fermelegere.greli.net</a>, merci Silvère !<br>"
-                  "IA: ChatGPT, Mistral et Copilot<br>"
+                  "IA: Mistral et Copilot<br>"
                   "Le Guide du Potager Bio (éditions Terre Vivante) <a href=\"https://www.terrevivante.org\">www.terrevivante.org</a>",
-                  QStyle::NStandardPixmap,500);
+                  QStyle::NStandardPixmap,"500");
 }
 
 void MainWindow::on_mWhatSNew_triggered()
@@ -569,7 +572,7 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Plans de rotation et planification des cultures.")+"<br>"+
                   "- "+tr("Gestion des cultures.")+"<br>"+
                   "- "+tr("Récoltes et objectifs de production.")+"<br>",
-                  QStyle::NStandardPixmap,800);
+                  QStyle::NStandardPixmap,"800");
 }
 
 //edit menu
@@ -617,8 +620,8 @@ void MainWindow::on_mRequeteSQL_triggered()
     if (values.count()>0 and values[0]!="") {
         PotaQuery pQuery(db);
         pQuery.ExecShowErr("DROP VIEW IF EXISTS Temp_UserSQL;");
-        pQuery.ExecShowErr("DELETE FROM fada_f_schema WHERE name='Temp_UserSQL';");
-        pQuery.ExecShowErr("DELETE FROM fada_t_schema WHERE name='Temp_UserSQL';");
+        pQuery.ExecShowErr("DELETE FROM fada_f_schema WHERE tv_name='Temp_UserSQL';");
+        pQuery.ExecShowErr("DELETE FROM fada_t_schema WHERE tv_name='Temp_UserSQL';");
         //pQuery.ExecShowErr("CREATE VIEW Temp_UserSQL AS "+values[0]);
 
         QString fda_cmd="";
@@ -743,7 +746,7 @@ void MainWindow::on_FdaMenu(const QString &sActionName, const QString &sTitle, c
     // }
 
     PotaQuery query(db);
-    if (query.Select0ShowErr("SELECT count() FROM fada_t_schema WHERE name='"+sActionName+"'").toInt()>0) {
+    if (query.Select0ShowErr("SELECT count() FROM fada_t_schema WHERE tv_name='"+sActionName+"'").toInt()>0) {
         if (OpenPotaTab(sActionName,sTitle,sDesc)) {
             if (!sFilters.isEmpty()) {
                 PotaWidget *w=dynamic_cast<PotaWidget*>(ui->tabWidget->currentWidget());
@@ -828,8 +831,8 @@ void MainWindow::on_FdaMenu(const QString &sActionName, const QString &sTitle, c
                 w->showGraphDialog();
             }
         }
-    } else if (query.Select0ShowErr("SELECT count() FROM fada_scripts WHERE name='"+sActionName+"'").toInt()>0) {
-        query.ExecShowErr("SELECT * FROM fada_scripts WHERE name='"+sActionName+"'");
+    } else if (query.Select0ShowErr("SELECT count() FROM fada_scripts WHERE script_name='"+sActionName+"'").toInt()>0) {
+        query.ExecShowErr("SELECT * FROM fada_scripts WHERE script_name='"+sActionName+"'");
         if (query.next()) {
             if (!query.value("dev").toString().isEmpty()) {
                 MessageDlg("FADA",tr("Script '%1' en cours de développement.").arg(sActionName)+
@@ -841,7 +844,7 @@ void MainWindow::on_FdaMenu(const QString &sActionName, const QString &sTitle, c
                 se->feProgressBar=ui->progressBar;
                 se->feLErr=ui->lDBErr;
                 se->runScript(query.value("script").toString(),&db,false);
-                query.ExecShowErr("UPDATE fada_scripts SET executed=CURRENT_TIMESTAMP WHERE name='"+sActionName+"'");
+                query.ExecShowErr("UPDATE fada_scripts SET executed=CURRENT_TIMESTAMP WHERE script_name='"+sActionName+"'");
             }
         }
     } else {

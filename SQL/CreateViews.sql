@@ -3126,14 +3126,14 @@ ORDER BY Famille,Espèce,Variété ---
 
 -- Base
 UPDATE fada_t_schema SET color='#a17dc2'
-WHERE (name LIKE 'Associations%')OR(name LIKE 'Destinations%')OR(name LIKE 'Fournisseurs%');
+WHERE (tv_name LIKE 'Associations%')OR(tv_name LIKE 'Destinations%')OR(tv_name LIKE 'Fournisseurs%');
 
 UPDATE fada_f_schema SET color='#a17dc2'
 WHERE (field_name LIKE 'Association%');
 
 -- Espèces
 UPDATE fada_t_schema SET color='#002bff'
-WHERE (name LIKE 'Espèces%')OR(name LIKE 'Consommations%');
+WHERE (tv_name LIKE 'Espèces%')OR(tv_name LIKE 'Consommations%');
 
 UPDATE fada_f_schema SET color='#002bff'
 WHERE (field_name LIKE 'Espèce%')OR(field_name LIKE '%_esp')OR
@@ -3142,7 +3142,7 @@ WHERE (field_name LIKE 'Espèce%')OR(field_name LIKE '%_esp')OR
 
 -- Cultures
 UPDATE fada_t_schema SET color='#00ff00'
-WHERE (name LIKE 'Cultures%')OR(name LIKE 'Récoltes%');
+WHERE (tv_name LIKE 'Cultures%')OR(tv_name LIKE 'Récoltes%');
 
 UPDATE fada_f_schema SET color='#00ff00'
 WHERE (field_name LIKE 'Culture%')OR(field_name LIKE 'Nb_cu%')OR
@@ -3151,14 +3151,14 @@ WHERE (field_name LIKE 'Culture%')OR(field_name LIKE 'Nb_cu%')OR
 
 -- Familles
 UPDATE fada_t_schema SET color='#0085c4'
-WHERE (name LIKE 'Familles%');
+WHERE (tv_name LIKE 'Familles%');
 
 UPDATE fada_f_schema SET color='#0085c4'
 WHERE (field_name LIKE 'Famille%')OR(field_name IN('N_famille,Intervalle'));
 
 -- Fertilisations
 UPDATE fada_t_schema SET color='#00A67A'
-WHERE (name LIKE 'Fertilisa%')OR(name LIKE 'Analyses_de_sol%');
+WHERE (tv_name LIKE 'Fertilisa%')OR(tv_name LIKE 'Analyses_de_sol%');
 
 UPDATE fada_f_schema SET color='#00A67A'
 WHERE (field_name LIKE 'Fert%')OR(field_name LIKE '%_sol')OR(field_name LIKE '%_fert')OR
@@ -3166,37 +3166,37 @@ WHERE (field_name LIKE 'Fert%')OR(field_name LIKE '%_sol')OR(field_name LIKE '%_
 
 -- ITP
 UPDATE fada_t_schema SET color='#ff0000'
-WHERE (name LIKE 'ITP%');
+WHERE (tv_name LIKE 'ITP%');
 
 UPDATE fada_f_schema SET color='#ff0000'
 WHERE (field_name LIKE 'ITP%')OR
       (field_name IN('IT_plante','S_semis','S_plantation','Décal_max','Esp_rangs','Nb_graines_plant','N_IT_plante'))OR
-      ((field_name IN('Type_planche','Type_culture'))AND(name NOT LIKE 'Rotations%'))OR
-      ((field_name IN('S_récolte','D_récolte'))AND(name NOT LIKE 'Variétés%'))OR
-      ((field_name IN('Espacement'))AND(name NOT LIKE 'Cultures%'))OR
-      ((field_name IN('Dose_semis'))AND(name NOT LIKE 'Espèces%'));
+      ((field_name IN('Type_planche','Type_culture'))AND(tv_name NOT LIKE 'Rotations%'))OR
+      ((field_name IN('S_récolte','D_récolte'))AND(tv_name NOT LIKE 'Variétés%'))OR
+      ((field_name IN('Espacement'))AND(tv_name NOT LIKE 'Cultures%'))OR
+      ((field_name IN('Dose_semis'))AND(tv_name NOT LIKE 'Espèces%'));
 
 -- Assolement
 UPDATE fada_t_schema SET color='#ff8100'
-WHERE (name LIKE 'Planches%')OR(name LIKE 'Assolement%');
+WHERE (tv_name LIKE 'Planches%')OR(tv_name LIKE 'Assolement%');
 
 UPDATE fada_f_schema SET color='#ff8100'
 WHERE (field_name LIKE 'Planche%')OR
       (field_name IN('Ilot','Largeur','N_Planche'))OR
-      ((field_name IN('Longueur','Nb_planches','Surface','Unités_prod'))AND(name LIKE '%Bilans%'));
+      ((field_name IN('Longueur','Nb_planches','Surface','Unités_prod'))AND(tv_name LIKE '%Bilans%'));
 
 -- Rotations
 UPDATE fada_t_schema SET color='#ce9462'
-WHERE (name LIKE 'Rotations%');
+WHERE (tv_name LIKE 'Rotations%');
 
 -- Variétés
 UPDATE fada_t_schema SET color='#b7b202'
-WHERE (name LIKE 'Variétés%');
+WHERE (tv_name LIKE 'Variétés%');
 
 UPDATE fada_f_schema SET color='#b7b202'
 WHERE (field_name LIKE 'Variété%')OR
       (field_name IN('Qté_stock'))OR
-      ((field_name IN('S_récolte','D_récolte'))AND(name LIKE 'Variétés%'));
+      ((field_name IN('S_récolte','D_récolte'))AND(tv_name LIKE 'Variétés%'));
 
 -- Params
 UPDATE fada_f_schema SET color='#7f7f7f'

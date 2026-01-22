@@ -102,7 +102,7 @@ CREATE TABLE Associations_détails ( --- Associations d'espèces ou de familles 
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     ;
-UPDATE fada_f_schema SET base_data='x' WHERE name='Associations_détails';
+UPDATE fada_f_schema SET base_data='x' WHERE tv_name='Associations_détails';
 
 CREATE TABLE Consommations ( --- Quantités de légume sorties du stock.
     ---can_open_tab SELECT (count(*)>0) FROM Espèces WHERE Conservation NOTNULL
@@ -329,7 +329,7 @@ CREATE TABLE Espèces ( --- Plante pouvant se reproduire et engendrer une descen
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='x' WHERE (name='Espèces')AND(field_name IN('Espèce','Famille','Catégories','Rendement','Niveau','Densité','Dose_semis','Nb_graines_g','FG','T_germ','Levée','Vivace','Besoins','S_taille','Effet','Usages','N','P','K'));
+UPDATE fada_f_schema SET base_data='x' WHERE (tv_name='Espèces')AND(field_name IN('Espèce','Famille','Catégories','Rendement','Niveau','Densité','Dose_semis','Nb_graines_g','FG','T_germ','Levée','Vivace','Besoins','S_taille','Effet','Usages','N','P','K'));
 
 CREATE TABLE Familles ( --- Espèces ayant une certaine proximité phylogénétique.
                         --- Permet de d'enregistrer l'intervale de temps minimum entre 2 cultures d'une même famille.
@@ -349,7 +349,7 @@ CREATE TABLE Familles ( --- Espèces ayant une certaine proximité phylogénéti
                 --- ...
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='x' WHERE (name='Familles');
+UPDATE fada_f_schema SET base_data='x' WHERE (tv_name='Familles');
 
 CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la fertilisation des planches de culture.
                             --- Les engrais vert ne sont pas à saisir ici, ils sont gérés comme les autres cultures.
@@ -467,7 +467,7 @@ CREATE TABLE Fertilisants ( --- Engrais, ammendements et paillages pour la ferti
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='x' WHERE (name='Fertilisants')AND(field_name IN('Fertilisant','Type','Fonction','pH','N','N_coef','P','P_coef','K','K_coef','Ca','Ca_coef','Fe','Fe_coef','Mg','Mg_coef','Na','Na_coef','S','S_coef','Si','Si_coef'));
+UPDATE fada_f_schema SET base_data='x' WHERE (tv_name='Fertilisants')AND(field_name IN('Fertilisant','Type','Fonction','pH','N','N_coef','P','P_coef','K','K_coef','Ca','Ca_coef','Fe','Fe_coef','Mg','Mg_coef','Na','Na_coef','S','S_coef','Si','Si_coef'));
 
 CREATE TABLE Fertilisations ( --- Quantités de fertilisant apportées par planche.
     ---row_summary Date,Planche,Fertilisant,Quantité
@@ -520,7 +520,7 @@ CREATE TABLE Fournisseurs ( --- Fournisseurs, notamment des semences.
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='x' WHERE (name='Fournisseurs')AND(field_name IN('Fournisseur','Type','Site_web','Notes'));
+UPDATE fada_f_schema SET base_data='x' WHERE (tv_name='Fournisseurs')AND(field_name IN('Fournisseur','Type','Site_web','Notes'));
 
 CREATE TABLE ITP ( ---
     ---row_summary IT_plante,Type_planche,Type_culture
@@ -561,7 +561,7 @@ CREATE TABLE ITP ( ---
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='x' WHERE (name='ITP')AND(field_name IN('IT_plante','Espèce','Type_planche','S_semis','S_plantation','S_récolte','D_récolte','Décal_max','Espacement','Esp_rangs','Nb_graines_plant','Dose_semis','Notes'));
+UPDATE fada_f_schema SET base_data='x' WHERE (tv_name='ITP')AND(field_name IN('IT_plante','Espèce','Type_planche','S_semis','S_plantation','S_récolte','D_récolte','Décal_max','Espacement','Esp_rangs','Nb_graines_plant','Dose_semis','Notes'));
 
 CREATE TABLE Notes ( --- Notes utilisateurs.
     --- row_summary ID,Type,Description
@@ -604,7 +604,7 @@ CREATE TABLE Planches ( --- Planches de cultures.\n"
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='Example' WHERE (name='Planches')AND(field_name IN('Planche','Type','Longueur','Largeur','Rotation','Année'));
+UPDATE fada_f_schema SET base_data='Example' WHERE (tv_name='Planches')AND(field_name IN('Planche','Type','Longueur','Largeur','Rotation','Année'));
 
 CREATE TABLE Rotations ( --- Plan de rotations.
                          --- Ici vous ne saisissez que l'entête des rotations, avec un type de planche et une année de départ.
@@ -622,8 +622,8 @@ CREATE TABLE Rotations ( --- Plan de rotations.
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='Example' WHERE (name='Rotations')AND(field_name IN('Rotation','Type_planche','Année_1','Nb_années'));
-UPDATE fada_f_schema SET readonly='x' WHERE (name='Rotations')AND(field_name IN('Nb_années'));
+UPDATE fada_f_schema SET base_data='Example' WHERE (tv_name='Rotations')AND(field_name IN('Rotation','Type_planche','Année_1','Nb_années'));
+UPDATE fada_f_schema SET readonly='x' WHERE (tv_name='Rotations')AND(field_name IN('Nb_années'));
 
 
 CREATE TABLE Rotations_détails ( ---
@@ -662,7 +662,7 @@ CREATE TABLE Rotations_détails ( ---
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     ;
-UPDATE fada_f_schema SET base_data='Example' WHERE (name='Rotations_détails')AND(field_name IN('Rotation','Année','IT_plante','Pc_planches','Occupation','Fi_planches','Décalage'));
+UPDATE fada_f_schema SET base_data='Example' WHERE (tv_name='Rotations_détails')AND(field_name IN('Rotation','Année','IT_plante','Pc_planches','Occupation','Fi_planches','Décalage'));
 
 CREATE TABLE Planif_validations (
     IdxIdPl TEXT,
@@ -721,7 +721,7 @@ CREATE TABLE Variétés ( --- Variété cultivée (cultivar) qui a été sélect
     Notes TEXT) --- ::Familles.Notes
         ---multiline
     WITHOUT ROWID;
-UPDATE fada_f_schema SET base_data='x' WHERE (name='Variétés')AND(field_name IN('Variété','Espèce','Nb_graines_g'));
+UPDATE fada_f_schema SET base_data='x' WHERE (tv_name='Variétés')AND(field_name IN('Variété','Espèce','Nb_graines_g','S_récolte','D_récolte','PJ'));
 
 
 
