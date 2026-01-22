@@ -363,7 +363,7 @@ QString FdaToolTip(QSqlDatabase *db,const QString sTableName,const QString sFiel
             } else if (tblType=="View") {
                 sToolTip=sToolTip+
                          "\n\n"+QObject::tr("Ces informations constituent une vue et sont calculées à partir de plusieurs tables ou vues.")+"\n"+
-                         QObject::tr("Elles peuvent pas être modifiéees.")+"\n"+
+                         QObject::tr("Elles ne peuvent pas être modifiéees.")+"\n"+
                          QObject::tr("Nom de la vue : ")+sTableName;;
                  if (sTableName.contains("__"))
                     sToolTip+="\n"+

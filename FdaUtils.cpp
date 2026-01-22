@@ -449,13 +449,13 @@ QVariant muParse(QString formula) {//, QString returnType
 
     //Switch to muParserX standard:
 
-    //Support null keyword.
-    while (formula.contains(" ==") or formula.contains("== ")) {
-        formula.replace(" ==","==");
-        formula.replace("== ","==");
-    }
-    formula.replace("null==null","true");
-    formula.replace("!null","true");
+    // //Support null keyword.
+    // while (formula.contains(" ==") or formula.contains("== ")) {
+    //     formula.replace(" ==","==");
+    //     formula.replace("== ","==");
+    // }
+    // formula.replace("null==null","true");
+    // formula.replace("!null","true");
 
     //String concat //
     //String delimiter "
@@ -481,9 +481,9 @@ QVariant muParse(QString formula) {//, QString returnType
                 muFormula+='"';
                 pos++;
                 continue;
-            } else if (c=="n" and formula.mid(pos).startsWith("null") and
-                       (pos+4==exprSize or ((pos+4<exprSize) and !varChars.contains(formula[pos+4],Qt::CaseInsensitive)))) { //null value
-                return QVariant();
+            // } else if (c=="n" and formula.mid(pos).startsWith("null") and
+            //            (pos+4==exprSize or ((pos+4<exprSize) and !varChars.contains(formula[pos+4],Qt::CaseInsensitive)))) { //null value
+            //     return QVariant();
             }
         } else {
             if (c=="'") { //In string '' -> '.

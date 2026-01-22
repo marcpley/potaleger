@@ -436,7 +436,7 @@ ORDER BY Culture;
 --     DATE(coalesce(C.Date_plantation,C.Date_semis),
 --          '-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_avance')||' days') Début_fertilisation_possible,
 --     DATE(C.Début_récolte,
---          '+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_retard')||' days') Fin_fertilisation_possible
+--          (SELECT max(Valeur,0) FROM Params WHERE Paramètre='Ferti_retard')||' days') Fin_fertilisation_possible
 -- FROM Cultures C
 -- JOIN Planches P USING(Planche);
 
@@ -445,9 +445,9 @@ CREATE VIEW Cu_répartir_récolte AS SELECT
     max(DATE(C.Début_récolte,
              '-'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_avance')||' days'),
     DATE(coalesce(C.Date_plantation,C.Date_semis),
-         '+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_après_MEP')||' days')) Début_récolte_possible,
+         (SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_après_MEP')||' days')) Début_récolte_possible,
     DATE(C.Fin_récolte,
-         '+'||(SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_prolongation')||' days') Fin_récolte_possible,
+         (SELECT max(Valeur,0) FROM Params WHERE Paramètre='C_récolte_prolongation')||' days') Fin_récolte_possible,
     C.Récolte_faite,
     C.Terminée
 FROM Cultures C
@@ -502,7 +502,7 @@ WHERE (Terminée NOTNULL)AND(Terminée!='v')AND(Terminée!='V');
 -- WHERE (E.N+E.P+E.K>0)AND
 --       -- Cultures prévues
 --       (((C.Culture IN(SELECT CAV.Culture FROM Cu_à_venir CAV))AND
---         (coalesce(C.Date_plantation,C.Date_semis) < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_fertiliser')||' days')))OR
+--         (coalesce(C.Date_plantation,C.Date_semis) < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_fertiliser')||' days')))OR
 --       -- Cultures en place dont la récolte n'est pas commencée.
 --        ((C.Culture IN(SELECT CEP3.Culture FROM Cu_en_place CEP3))AND
 --         (C.Récolte_faite ISNULL))) -- coalesce(C.Récolte_faite,'') NOT LIKE 'x%'
@@ -514,8 +514,8 @@ CREATE VIEW Cu_à_irriguer AS SELECT
 FROM Cu_non_ter C
 LEFT JOIN Espèces E USING (Espèce)
 WHERE  (E.Irrig NOTNULL)AND
-       (coalesce(C.Date_plantation,C.Date_semis) < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_Irrig_avant_MEP')||' days'))AND
-       (coalesce(C.Date_plantation,C.Date_semis) > DATE('now','-'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_Irrig_après_MEP')||' days'));
+       (coalesce(C.Date_plantation,C.Date_semis) < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_Irrig_avant_MEP')||' days'))AND
+       (coalesce(C.Date_plantation,C.Date_semis) > DATE('now',(SELECT 0-CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_Irrig_après_MEP')||' days'));
 
 CREATE VIEW Cu_à_venir AS SELECT --- Cultures prévues mais pas encore en place sur leur planche.
                                  --- Sont incluses les cultures déjà semées en pépinière.
@@ -1132,7 +1132,7 @@ FROM Cu_non_ter C
 LEFT JOIN Espèces E USING (Espèce)
 LEFT JOIN ITP I USING (IT_plante)
 LEFT JOIN Planches PL USING (Planche)
-WHERE (Date_plantation < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_plantation')||' days'))AND
+WHERE (Date_plantation < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_plantation')||' days'))AND
       (coalesce(Plantation_faite,'') NOT LIKE 'x%')AND
       ((Semis_fait NOTNULL)OR(Date_semis ISNULL))
 ORDER BY C.Date_plantation,C.Planche,C.Espèce,C.IT_plante ---
@@ -1173,7 +1173,7 @@ FROM Cu_non_ter C
 LEFT JOIN Espèces E USING (Espèce)
 LEFT JOIN ITP I USING (IT_plante)
 LEFT JOIN Planches PL USING (Planche)
-WHERE (Début_récolte < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_récolte')||' days'))AND
+WHERE (Début_récolte < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_récolte')||' days'))AND
       (coalesce(Récolte_faite,'') NOT LIKE 'x%')AND
       ((Semis_fait NOTNULL)OR(Date_semis ISNULL))AND
       ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL))
@@ -1230,7 +1230,7 @@ FROM Cu_non_ter C
 LEFT JOIN Espèces E USING (Espèce)
 LEFT JOIN ITP I USING (IT_plante)
 LEFT JOIN Planches PL USING (Planche)
-WHERE (Date_semis < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_semis')||' days'))AND
+WHERE (Date_semis < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_semis')||' days'))AND
       (coalesce(Semis_fait,'') NOT LIKE 'x%')
 ORDER BY C.Date_semis,C.Date_plantation,C.Planche,C.Espèce,C.IT_plante ---
 ;
@@ -1284,7 +1284,7 @@ FROM Cu_non_ter C
 LEFT JOIN Espèces E USING (Espèce)
 LEFT JOIN ITP I USING (IT_plante)
 LEFT JOIN Planches PL USING (Planche)
-WHERE (Date_semis < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_semis')||' days'))AND
+WHERE (Date_semis < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_semis')||' days'))AND
       (coalesce(Semis_fait,'') NOT LIKE 'x%')AND
       (Date_plantation ISNULL)
 ORDER BY C.Date_semis,C.Planche,C.Espèce,C.IT_plante ---
@@ -1334,7 +1334,7 @@ FROM Cu_non_ter C
 LEFT JOIN Espèces E USING (Espèce)
 LEFT JOIN ITP I USING (IT_plante)
 LEFT JOIN Planches PL USING (Planche)
-WHERE (Date_semis < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_semis')||' days'))AND
+WHERE (Date_semis < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_semis')||' days'))AND
       (coalesce(Semis_fait,'') NOT LIKE 'x%')AND
       (Date_plantation NOTNULL)
 GROUP BY C.Espèce,C.IT_plante,C.Variété,C.Type,C.Etat,C.Date_semis
@@ -1385,7 +1385,7 @@ LEFT JOIN Espèces E USING (Espèce)
 LEFT JOIN ITP I USING (IT_plante)
 LEFT JOIN Planches PL USING (Planche)
 WHERE C.Terminée ISNULL AND -- Les vivaces ne sont jamais à terminer.
-      ((C.Fin_récolte ISNULL)OR(C.Fin_récolte < DATE('now','+'||(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_terminer')||' days')))AND
+      ((C.Fin_récolte ISNULL)OR(C.Fin_récolte < DATE('now',(SELECT CAST(Valeur AS INT) FROM Params WHERE Paramètre='C_horizon_terminer')||' days')))AND
       ((Semis_fait NOTNULL)OR(Date_semis ISNULL))AND
       ((Plantation_faite NOTNULL)OR(Date_plantation ISNULL))AND
       ((Récolte_faite NOTNULL)OR(Début_récolte ISNULL))

@@ -11,7 +11,7 @@ CREATE TRIGGER fada_scripts_UPDATE AFTER UPDATE ON fada_scripts
 WHEN NEW.script!=OLD.script
 BEGIN
     UPDATE fada_scripts SET modified=CURRENT_TIMESTAMP
-    WHERE tv_name=NEW.tv_name;
+    WHERE script_name=NEW.script_name;
 END;;
 
 DROP TRIGGER IF EXISTS Associations_détails_INSERT;;

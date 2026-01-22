@@ -95,12 +95,12 @@ private:
     //         return QMetaType::QString;
     // }
     QString variantToExpr(QVariant vExpr, bool toString=false) {
-        if (vExpr.isNull())
-            return "null";
+        if (vExpr.typeId()==QMetaType::QString or toString)
+            return "'"+vExpr.toString().replace("'","''")+"'";
+        else if (vExpr.isNull())
+            return 0;//"null";
         else if (vExpr.typeId()==QMetaType::QDate)
             return "'"+vExpr.toDate().toString("yyyy-MM-dd")+"'";
-        else if (vExpr.typeId()==QMetaType::QString or toString)
-            return "'"+vExpr.toString().replace("'","''")+"'";
         else if (vExpr.typeId()==QMetaType::Bool)
             return iif(vExpr.toBool(),"1","0").toString();
         else

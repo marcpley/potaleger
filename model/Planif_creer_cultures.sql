@@ -28,7 +28,7 @@ if(NbCultAVenir>0) {
     }
 } else {
     icon=sp_Question;
-    CultAVenir="";
+    CultAVenir='';
 }
 
 confirm='La saison courante est : '||(SELECT Valeur FROM Params WHERE Paramètre='Année_culture')||'<br><br>'||
@@ -78,8 +78,8 @@ if (okCancelDialog(confirm,icon,600)) {
         mess=nbCult||' cultures créées sur '||NbCultPlanifValid||' cultures prévues.<br><br>'||
              'Id culture: '||IdCult2||' > '||IdCult3||
               iif(NbValidNonCrees>0,'<br>'||NbValidNonCrees||' culture validées mais non crées.','');
-        messageDialog(mess,"",iif(IdCult3>IdCult2 and IdCult2>IdCult1 and NbValidNonCrees==0,sp_Information,sp_Warning));
+        messageDialog(mess,'',iif(IdCult3>IdCult2 and IdCult2>IdCult1 and NbValidNonCrees==0,sp_Information,sp_Warning));
     } else {
-        messageDialog('Aucune culture créée.',"",sp_Information);
+        messageDialog('Aucune culture créée.','',sp_Information);
     }
 }

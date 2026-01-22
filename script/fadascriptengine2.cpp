@@ -949,7 +949,7 @@ QList<QVariant> FadaScriptEngine2::extractArgs(QString expr) {
             level++;
         } else if (c==')' and !inString) {
             level--;
-            if (level==0) {
+            if (level==0) { //Last arg.
                 if (!arg.isEmpty()) {
 
                     /////////////////////////
@@ -957,8 +957,6 @@ QList<QVariant> FadaScriptEngine2::extractArgs(QString expr) {
                     /////////////////////////
 
                     if (!error.isEmpty()) break;
-                    //if (arg.size()>2 and arg.startsWith("'") and arg.endsWith("'"))
-                    //    arg=arg.removeFirst().removeLast();
                     result.append(vArg);
                 }
                 break;
@@ -967,16 +965,16 @@ QList<QVariant> FadaScriptEngine2::extractArgs(QString expr) {
 
         if (c=="'") inString=!inString; // Start or end of literal string.
 
-        if ((level==1 and c!='(') or level>1) {
-            if (level==1 and c==',' and !inString) {
+        if (level==1 and c=='(' and !inString) {
+            //Open parenthesis of the arg set. Don't take it.
+        } else if (level>=1) {
+            if (level==1 and c==',' and !inString) { //Arg is complete.
 
                 ///////////////////////////////////
                 arg=evalExpr(arg,error).toString();
                 ///////////////////////////////////
 
                 if (!error.isEmpty()) break;
-                //if (rawStrings and arg.size()>2 and arg.startsWith("'") and arg.endsWith("'"))
-                //    arg=arg.removeFirst().removeLast();
                 result.append(arg);
                 arg.clear();
             } else {
@@ -1090,10 +1088,13 @@ QVariant FadaScriptEngine2::evalExpr(QString expr, QString &error) {
                         }
                         pos+=sQuery.size();
                         bool nextCharIsPipe=(pos<exprSize and expr.mid(pos).trimmed().startsWith("|"));
-                        if (selectResult.isNull())
-                            newExpr+="null";
-                        else if (selectResult.typeId()==QMetaType::QString or lastCharIsPipe or nextCharIsPipe)
+                        // if (selectResult.isNull())
+                        //     newExpr+="null";
+                        // else
+                        if (selectResult.typeId()==QMetaType::QString or lastCharIsPipe or nextCharIsPipe)
                             newExpr+="'"+selectResult.toString().replace("'","''")+"'";
+                        else if (selectResult.isNull())
+                            newExpr+="0";
                         else
                             newExpr+=selectResult.toString();
                         continue;
@@ -1252,7 +1253,7 @@ void FadaScriptEngine2::fadaFunction(QString funcName, QString &expr, QString &e
                             setVar("exitButtonDialog",buttonSet,-1);
 
                             if (result.count()==0)
-                                newExpr+="null";
+                                newExpr+=variantToExpr(QVariant());//"null";
                             else
                                 newExpr+=variantToExpr(result[0].value);
                             // else if (args[2].toLower().startsWith("int")) newExpr+=result[0].value.toString();
@@ -1285,10 +1286,10 @@ void FadaScriptEngine2::fadaFunction(QString funcName, QString &expr, QString &e
                             QString buttonSet=""; if (args.count()>6) buttonSet=args[6].toString();
                             int result=RadiobuttonDialog(scriptTitle,args[0].toString(),buttonSet,options,iDef,disabledOptions,standardPixmap(dialogType),dialogGeometry);
                             setVar("exitButtonDialog",buttonSet,-1);
-                            if (result==-1)
-                                newExpr+="null";
-                            else
-                                newExpr+=QString::number(result);
+                            // if (result==-1)
+                            //     newExpr+="null";
+                            // else
+                            newExpr+=QString::number(result);
                         } else {
                             error=funcName+"() needs 2 arguments minimum.";
                             break;

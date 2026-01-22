@@ -47,7 +47,7 @@ VALUES ('Espèces annuelles','Menu item','Espèces',10,'Espèces__a','Espèces a
 INSERT INTO fada_launchers (launcher_name,type,parent,item_index,tv_name,title,filters)
 VALUES ('Rotations','Submenu','Assolement',10,NULL,NULL,NULL),
        ('Planches','Menu item','Assolement',20,'Planches',NULL,NULL),
-       ('Succession de cultures parent planches','Menu item','Assolement',30,'Cultures__Succ_planches','Succ. planches',NULL),
+       ('Succession de cultures par planches','Menu item','Assolement',30,'Cultures__Succ_planches','Succ. planches',NULL),
        ('Ilots','Menu item','Assolement',40,'Assolement_Ilots',NULL,NULL),
        ('Unités de production','Menu item','Assolement',50,'Assolement_Unités_prod','Unités prod.',NULL);
 

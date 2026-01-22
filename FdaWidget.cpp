@@ -737,6 +737,7 @@ int PotaWidget::exportToFile(QString sFileName, QString format, QString baseData
             return -1;
         exportModel=new PotaTableModel();
         exportModel->setTable(baseDataName);
+        exportModel->progressBar=model->progressBar;
         //exportModel->setHeaderData()
         exportModel->select();
         qDebug() << "exportModel->rowCount()" << exportModel->rowCount();
@@ -1066,7 +1067,7 @@ void PotaWidget::importCSV(QString sFileName, QString enableFields, bool enableR
                                              tr("Réinitialiser les données de base."),
                                              "<b>"+tr("Importer des données depuis un fichier %1.").arg("CSV")+"</b><br>"+
                                              sFileName).toString()+"<br><br>"+
-                                             "<b>"+tr("Les champs suivants vont être peuvent être mis à jour:")+"</b><br>"+info+"<br><br>"+
+                                             "<b>"+tr("Les champs suivants vont être mis à jour:")+"</b><br>"+info+"<br><br>"+
                                              "<b>"+tr("%1 lignes à importer:").arg(linesToImport.count()-1)+"</b>"+info2+"<br>"+
                                              tr("<u>Fusionner</u>: les lignes déjà présentes seront mises à jour, les autres seront créées.")+"<br>"+
                                              tr("<u>Mettre à jour</u>: seules les lignes visibles seront mises à jour, aucune nouvelle ligne ne sera créée.")+"<br>"+
