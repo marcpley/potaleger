@@ -846,9 +846,9 @@ BEGIN
         NEW.Quantité, -- kg
         round(NEW.Quantité*(SELECT N_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10 -- g
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_N')/100,3),
-        round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
+        round(NEW.Quantité*(SELECT P_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10 -- g
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_P')/100,3),
-        round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10*10 -- g
+        round(NEW.Quantité*(SELECT K_disp_pc FROM Fertilisants WHERE Fertilisant=NEW.Fertilisant)*10 -- g
                           *(SELECT CAST(Valeur AS REAL) FROM Params WHERE Paramètre='Ferti_coef_K')/100,3),
         NEW.Notes);
 END;;

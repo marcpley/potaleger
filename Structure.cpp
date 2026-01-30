@@ -403,7 +403,7 @@ bool MainWindow::UpdateDBShema(QString sDBVersion)
             QString sInsertScripts="";
             for (int i=0;i<fileList.count();i++) {
                 if (fileList[i].toUpper().endsWith(".SQL")) {
-                    QFile scriptFile(dir.absolutePath()+"/"+fileList[i]);
+                    QFile scriptFile(dir.absolutePath()+QDir::toNativeSeparators("/")+fileList[i]);
                     if (scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
                         QString script_name=fileList[i].removeLast().removeLast().removeLast().removeLast();
                         QTextStream in(&scriptFile);

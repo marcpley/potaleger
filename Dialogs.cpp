@@ -1186,8 +1186,8 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
             icon=QIcon(":/images/potaleger.svg");
         else
             icon=QApplication::style()->standardIcon(iconType);
-        iconLabel->setPixmap(icon.pixmap( 150, 64));
-        iconLabel->setFixedSize(150,64);
+        iconLabel->setPixmap(icon.pixmap( 64, 64));
+        iconLabel->setFixedSize(64,64);
         headerLayout->addWidget(iconLabel);
     }
 
@@ -1208,15 +1208,15 @@ void MessageDlg(const QString &titre, const QString &message, const QString &mes
 
     if (message2!=""){
         QScrollArea *scrollArea=new QScrollArea();
-        //scrollArea->setWidgetResizable(true);
+        scrollArea->setWidgetResizable(true);
 
         QLabel *messageLabel2=new QLabel(sMess2);
         messageLabel2->setWordWrap(true);
         messageLabel2->setOpenExternalLinks(true);
         messageLabel2->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
+        messageLabel2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         SetFontWeight(messageLabel2,QFont::Light);
         SetFontWeight(messageLabel,QFont::DemiBold);
-        //messageLabel2->setFixedWidth(fmax(dialog.sizeHint().width(),MinWidth)-45);
         QSize screenSize=QGuiApplication::primaryScreen()->size();
         int maxHeight=screenSize.height()-200;
         scrollArea->setMaximumHeight(maxHeight);

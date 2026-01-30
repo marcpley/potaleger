@@ -457,6 +457,8 @@ void MainWindow::on_mWhatSNew_triggered()
                   "- "+tr("Affichage de la liste des enregistrements enfants qui empêchent une suppression.")+"<br>"+
                   "- "+tr("Barre de progression pendant la mise à jour de la BDD à l'ouverture.")+"<br>"+
                   "<br><u>"+tr("Corrections")+" :</u><br>"+
+                  "- "+tr("Saisie de fertilisation, le calcul de l'apport en P et K était faux (x10) lors de l'INSERT mais corrigé lors d'un UPDATE.")+"<br>"+
+                  "- "+tr("Bilan annuel: la quantité prévue pour chaque culture se basait sur la largeur totale de planche même si la planche était partagée entre plusieurs cultures.")+"<br>"+
                   "- "+tr("Planification: le décalage des dates de semis, plantation, récolte n'était pas pris en compte lors de la création des cultures.")+"<br>"+
                   "- "+tr("Liste de cultures possibles dans les fertilisations était incorrecte.")+"<br>"+
                   "- "+tr("Certaines associations n'étaient pas détectées dans les plans de rotation, cultures planifiées et cultures réelles.")+"<br>"+

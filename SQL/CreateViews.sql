@@ -209,7 +209,9 @@ CREATE VIEW Cu_esp_prod_an AS SELECT
     E.Rendement,
     E.Niveau,
     CAST((CASE WHEN C.Saison=(SELECT Valeur FROM Params WHERE Paramètre='Année_culture') THEN E.Obj_annuel ELSE NULL END)AS REAL) Obj_annuel,
-    CAST(round(C.Longueur*P.Largeur*E.Rendement,3)AS REAL) Qté_prév,
+    CAST(round(C.Longueur*P.Largeur*E.Rendement*coalesce(C.Nb_rangs/ --Nb rangs réel
+                                                         max(round(P.Largeur*100/I.Esp_rangs),1), --Nb rangs théorique
+                                                         1),3)AS REAL) Qté_prév,
     CAST(round((SELECT total(Quantité) FROM Récoltes R WHERE R.Culture=C.Culture),3)AS REAL) Qté_réc,
     C.Terminée,
     E.Vivace,
@@ -217,6 +219,7 @@ CREATE VIEW Cu_esp_prod_an AS SELECT
 FROM Cultures C
 JOIN Planches P USING(Planche)
 JOIN Espèces E USING(Espèce)
+JOIN ITP I USING(IT_plante)
 WHERE (coalesce(C.Terminée,'') NOT LIKE 'v%')AND(E.Vivace ISNULL); -- AND(E.A_planifier NOTNULL)
 
 CREATE VIEW Cu_esp_prod_vi AS SELECT
