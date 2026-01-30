@@ -146,6 +146,7 @@ else: unix:!android: target.path=/opt/$${TARGET}/bin
 
 DISTFILES += \
     install/readme.md \
+    license.md \
     zNoRepo/todo.txt
 
 RESOURCES += \
