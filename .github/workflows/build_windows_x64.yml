@@ -17,7 +17,7 @@ jobs:
             version: 6.9.2
             host: 'windows'
             dir: '${{ env.DIR }}'
-            aqtversion: '==3.1.*'
+            aqtversion: '==3.1.20'
             target: 'desktop'
             arch: 'win64_mingw'
             tools: 'tools_mingw1310'
